@@ -612,6 +612,34 @@
     window.scrollTo(0,0);
   }
 
+  // ── Shift time filter ─────────────────────────────────────────
+  function isInShift(timeStr) {
+    if (!selectedShift) return true; // no shift selected = show all
+    if (!timeStr || timeStr === '—') return false;
+
+    // Convert HH:MM to minutes since midnight
+    const toMin = (t) => {
+      const parts = t.split(':');
+      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    };
+
+    const t = toMin(timeStr);
+
+    if (selectedShift.name === 'EARLY') {
+      // 06:00 - 14:00
+      return t >= toMin('06:00') && t < toMin('14:00');
+    }
+    if (selectedShift.name === 'LATE') {
+      // 14:00 - 22:00
+      return t >= toMin('14:00') && t < toMin('22:00');
+    }
+    if (selectedShift.name === 'NIGHT') {
+      // 22:00 - 06:00 (crosses midnight)
+      return t >= toMin('22:00') || t < toMin('06:00');
+    }
+    return true;
+  }
+
   // ── Parse FIDS ─────────────────────────────────────────────────
   // Le FIDS copié a ce format par ligne (séparé par espaces multiples ou tabs) :
   // [espaces] Arrivals/Departures [espaces] DATE [espaces] FLIGHT [espaces] REG [espaces] TYPE [espaces] ORIGIN [espaces] DEST [espaces] VIA [espaces] STAND [espaces] HANDLER [espaces] SCHED [espaces] EST [espaces] ACTUAL ...
@@ -726,7 +754,12 @@
       });
     }
 
-    selectedFlights = new Set(flights.map((_, i) => i));
+    // Auto-select only flights within the selected shift
+    selectedFlights = new Set();
+    flights.forEach((f, i) => {
+      if (isInShift(f.time)) selectedFlights.add(i);
+    });
+
     renderFlights();
     goToStep(3);
   }
