@@ -897,10 +897,10 @@
   }
   function printSheet() { window.print(); }
 
-  // ── Worksheet rules
+  // Worksheet rules
   function needsFullTransit(f) {
-    const flight  = (f.flight  || '').toUpperCase();
-    const handler = (f.handler || '').toUpperCase();
+    var flight  = (f.flight  || '').toUpperCase();
+    var handler = (f.handler || '').toUpperCase();
     if (flight.startsWith('ICL'))      return true;
     if (flight.startsWith('TAY'))      return true;
     if (flight.startsWith('CHG'))      return true;
@@ -911,161 +911,177 @@
   }
 
   function generateWorksheets() {
-    const date = document.getElementById('shift-date').value;
-    const eligible = flights.filter((f, i) => selectedFlights.has(i) && needsFullTransit(f));
+    var date = document.getElementById('shift-date').value;
+    var eligible = flights.filter(function(f, i) { return selectedFlights.has(i) && needsFullTransit(f); });
     if (eligible.length === 0) { alert('Aucun vol eligible trouve.'); return; }
 
-    const dateStr = date
+    var dateStr = date
       ? new Date(date + 'T12:00:00').toLocaleDateString('fr-BE', { day:'2-digit', month:'2-digit', year:'2-digit' })
       : '';
 
-    function makeSheet(f) {
-      const flight = (f.flight || '').toUpperCase();
-      const isABD  = flight.startsWith('ABD') || flight.startsWith('AAE');
-      const HL     = 'background:#FFE500;';
-      const B      = 'border:1.5pt solid #000;';
-      const C      = B + 'padding:3pt 4pt;font-weight:700;text-align:center;';
-      const H      = B + 'padding:5pt 8pt;font-weight:700;';
-
-      return '<div class="page">'
-
-        // HEADER
-        + '<div style="display:flex;align-items:flex-start;margin-bottom:10pt">'
-        +   '<div style="min-width:90pt">'
-        +     '<div style="' + B + 'width:80pt;padding:5pt 8pt">'
-        +       '<div style="font-size:22pt;font-weight:900;font-style:italic;line-height:1;font-family:Arial Black,Arial,sans-serif">AS</div>'
-        +       '<div style="font-size:10pt;font-weight:900;font-family:Arial Black,Arial,sans-serif;line-height:1.1">AERO</div>'
-        +       '<div style="font-size:10pt;font-weight:900;font-family:Arial Black,Arial,sans-serif;line-height:1.1">SERVICES</div>'
-        +     '</div>'
-        +   '</div>'
-        +   '<div style="flex:1;display:flex;align-items:center;justify-content:center;padding-top:6pt">'
-        +     '<div style="' + B + 'padding:8pt 50pt;font-size:11pt;font-weight:700;letter-spacing:1pt">WORK PERFORMED</div>'
-        +   '</div>'
-        + '</div>'
-
-        // INFO TABLE
-        + '<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:8.5pt">'
-        + '<tr>'
-        +   '<td style="' + H + 'width:18%">AEROSERVICES</td>'
-        +   '<td style="' + B + 'padding:5pt 8pt;width:12%">BRU</td>'
-        +   '<td style="' + B + 'padding:4pt 8pt;font-size:20pt;font-weight:900;text-decoration:underline;text-align:center;width:14%;font-family:Arial Black,Arial,sans-serif">LGG</td>'
-        +   '<td style="' + B + 'padding:5pt 8pt;font-size:14pt;font-weight:700;text-align:center" colspan="3">&nbsp;&nbsp;- ' + dateStr + '</td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + H + '">AS TEAM :</td>'
-        +   '<td style="' + B + 'padding:5pt 8pt" colspan="5">&nbsp;</td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + H + '">COMPANY :</td>'
-        +   '<td style="' + B + 'padding:5pt 8pt;font-weight:700;font-size:9pt" colspan="2">' + (f.handler || '') + '</td>'
-        +   '<td style="' + H + '">AIRCRAFT TYPE :</td>'
-        +   '<td style="' + B + 'padding:5pt 8pt" colspan="2">&nbsp;</td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + H + '">REGISTRATION :</td>'
-        +   '<td style="' + B + 'padding:5pt 8pt;font-weight:700;font-size:9pt" colspan="2">' + (f.reg || '') + '</td>'
-        +   '<td style="' + H + '">FLIGHT NUMBER :</td>'
-        +   '<td style="' + B + 'padding:5pt 8pt;font-weight:700;font-size:9pt" colspan="2">' + (f.flight || '') + '</td>'
-        + '</tr>'
-
-        // SERVICES GRID
-        + '<tr>'
-        +   '<td style="' + C + '">A WASH</td>'
-        +   '<td style="' + C + '">WET WHEELS</td>'
-        +   '<td style="' + C + '">BELLY WASH</td>'
-        +   '<td style="' + C + '">GEAR WASH TECH</td>'
-        +   '<td style="' + C + '" colspan="2">GEAR WASH COMM</td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + C + '">FULL WET WASH</td>'
-        +   '<td style="' + C + '">HORSE STALL</td>'
-        +   '<td style="' + C + '">HORSE STALL BUILD</td>'
-        +   '<td style="' + C + '">HORSE STALL</td>'
-        +   '<td style="' + C + '" colspan="2">OFFICE CLEANING</td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + C + '">APU WASH</td>'
-        +   '<td style="' + C + '">FLAPS WASH</td>'
-        +   '<td style="' + C + '">WINDSHIELD WASH</td>'
-        +   '<td style="' + C + '">CARGO DECK CL</td>'
-        +   '<td style="' + C + '" colspan="2">CARGO HOLDS CL</td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + C + '">INTERIOR DEEP</td>'
-        +   '<td style="' + C + HL + '">FULL TRANSIT SERVICE</td>'
-        +   '<td style="' + C + '">TRANSIT SERVICE</td>'
-        +   '<td style="' + C + '">WATER SERVICE</td>'
-        +   '<td style="' + C + '" colspan="2">LAVATORY SERVICE</td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + C + (isABD ? HL : '') + '">DISINFECTION</td>'
-        +   '<td style="' + C + (isABD ? HL : '') + '">LAUNDRY</td>'
-        +   '<td style="' + C + '">CATERING</td>'
-        +   '<td style="' + C + '">PRODUCT DELIVERY</td>'
-        +   '<td style="' + C + '" colspan="2">PMR</td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + C + '">HANDLING</td>'
-        +   '<td style="' + C + '">PUSH BACK</td>'
-        +   '<td style="' + C + '">HEADSET</td>'
-        +   '<td style="' + C + '">TOWING</td>'
-        +   '<td style="' + C + '" colspan="2">RENTING</td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + C + '">MAN HOUR</td>'
-        +   '<td style="' + C + '">CREW BUS</td>'
-        +   '<td style="' + C + '" colspan="2">SPECIAL REQUEST</td>'
-        +   '<td style="' + C + '" colspan="2">VIDANGE TOILETTE</td>'
-        + '</tr>'
-
-        // WORK TIME
-        + '<tr>'
-        +   '<td style="' + H + '">WORK START TIME</td>'
-        +   '<td style="' + B + 'padding:5pt 8pt;font-size:16pt;font-weight:900;text-align:center">H</td>'
-        +   '<td style="' + H + 'text-align:center" colspan="2">WORK END TIME</td>'
-        +   '<td style="' + B + 'padding:5pt 8pt;font-size:16pt;font-weight:900;text-align:center" colspan="2">H</td>'
-        + '</tr>'
-
-        // SPACER
-        + '<tr><td colspan="6" style="border:none;padding:4pt 0"></td></tr>'
-
-        // COMMENT
-        + '<tr>'
-        +   '<td style="' + B + 'padding:8pt;font-weight:700;vertical-align:middle;height:55pt" colspan="2">COMMENT / EXPLANATION</td>'
-        +   '<td style="' + B + 'padding:8pt;height:55pt" colspan="4"></td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + B + 'padding:8pt;font-weight:700;vertical-align:middle;height:55pt" colspan="2">SPECIAL REQUEST / COMMENT</td>'
-        +   '<td style="' + B + 'padding:8pt;height:55pt" colspan="4"></td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + B + 'padding:8pt;font-weight:700;vertical-align:middle;height:48pt" colspan="2">TEAM LEADER'S SIGNATURE</td>'
-        +   '<td style="' + B + 'padding:8pt;height:48pt" colspan="4"></td>'
-        + '</tr>'
-
-        // ACCEPTED BY
-        + '<tr>'
-        +   '<td style="' + H + 'text-align:center;vertical-align:middle" rowspan="3">ACCEPTED BY</td>'
-        +   '<td style="' + H + 'text-align:center">NAME</td>'
-        +   '<td style="' + B + 'padding:5pt 8pt" colspan="2"></td>'
-        +   '<td style="' + H + 'text-align:center;vertical-align:middle" rowspan="3" colspan="2">REMARKS</td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + H + 'text-align:center">SIGNATURE</td>'
-        +   '<td style="' + B + 'padding:5pt 8pt" colspan="2"></td>'
-        + '</tr>'
-        + '<tr>'
-        +   '<td style="' + H + 'text-align:center">TIME</td>'
-        +   '<td style="' + B + 'padding:5pt 8pt" colspan="2"></td>'
-        + '</tr>'
-
-        + '</table>'
-        + '</div>';
+    function td(style, content, extra) {
+      extra = extra || '';
+      return '<td style="border:1.5pt solid #000;' + style + '"' + extra + '>' + (content || '&nbsp;') + '</td>';
     }
 
-    const pages = eligible.map(f => makeSheet(f)).join('');
+    function makeSheet(f) {
+      var flight = (f.flight || '').toUpperCase();
+      var isABD  = flight.startsWith('ABD') || flight.startsWith('AAE');
+      var HL     = 'background:#FFE500;';
+      var C      = 'padding:3pt 4pt;font-weight:700;text-align:center;';
+      var H      = 'padding:5pt 8pt;font-weight:700;';
+      var P      = 'padding:5pt 8pt;';
 
-    const html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheets LGG</title>'
+      var html = '';
+      html += '<div class="page">';
+
+      // HEADER
+      html += '<div style="display:flex;align-items:flex-start;margin-bottom:10pt">';
+      html += '<div style="min-width:90pt">';
+      html += '<div style="border:2pt solid #000;width:80pt;padding:5pt 8pt">';
+      html += '<div style="font-size:22pt;font-weight:900;font-style:italic;line-height:1;font-family:Arial Black,Arial,sans-serif">AS</div>';
+      html += '<div style="font-size:10pt;font-weight:900;font-family:Arial Black,Arial,sans-serif">AERO</div>';
+      html += '<div style="font-size:10pt;font-weight:900;font-family:Arial Black,Arial,sans-serif">SERVICES</div>';
+      html += '</div></div>';
+      html += '<div style="flex:1;display:flex;align-items:center;justify-content:center;padding-top:6pt">';
+      html += '<div style="border:1.5pt solid #000;padding:8pt 50pt;font-size:11pt;font-weight:700;letter-spacing:1pt">WORK PERFORMED</div>';
+      html += '</div></div>';
+
+      // INFO TABLE
+      html += '<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:8.5pt">';
+
+      html += '<tr>';
+      html += td(H + 'width:18%', 'AEROSERVICES');
+      html += td(P + 'width:12%', 'BRU');
+      html += td(P + 'font-size:20pt;font-weight:900;text-decoration:underline;text-align:center;width:14%;font-family:Arial Black,Arial,sans-serif', 'LGG');
+      html += '<td style="border:1.5pt solid #000;' + P + 'font-size:14pt;font-weight:700;text-align:center" colspan="3">&nbsp;&nbsp;- ' + dateStr + '</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(H, 'AS TEAM :');
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="5">&nbsp;</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(H, 'COMPANY :');
+      html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + (f.handler || '') + '</td>';
+      html += td(H, 'AIRCRAFT TYPE :');
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2">&nbsp;</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(H, 'REGISTRATION :');
+      html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + (f.reg || '') + '</td>';
+      html += td(H, 'FLIGHT NUMBER :');
+      html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + (f.flight || '') + '</td>';
+      html += '</tr>';
+
+      // SERVICE GRID
+      html += '<tr>';
+      html += td(C, 'A WASH');
+      html += td(C, 'WET WHEELS');
+      html += td(C, 'BELLY WASH');
+      html += td(C, 'GEAR WASH TECH');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">GEAR WASH COMM</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(C, 'FULL WET WASH');
+      html += td(C, 'HORSE STALL');
+      html += td(C, 'HORSE STALL BUILD');
+      html += td(C, 'HORSE STALL');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">OFFICE CLEANING</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(C, 'APU WASH');
+      html += td(C, 'FLAPS WASH');
+      html += td(C, 'WINDSHIELD WASH');
+      html += td(C, 'CARGO DECK CL');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">CARGO HOLDS CL</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(C, 'INTERIOR DEEP');
+      html += td(C + HL, 'FULL TRANSIT SERVICE');
+      html += td(C, 'TRANSIT SERVICE');
+      html += td(C, 'WATER SERVICE');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">LAVATORY SERVICE</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(C + (isABD ? HL : ''), 'DISINFECTION');
+      html += td(C + (isABD ? HL : ''), 'LAUNDRY');
+      html += td(C, 'CATERING');
+      html += td(C, 'PRODUCT DELIVERY');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">PMR</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(C, 'HANDLING');
+      html += td(C, 'PUSH BACK');
+      html += td(C, 'HEADSET');
+      html += td(C, 'TOWING');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">RENTING</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(C, 'MAN HOUR');
+      html += td(C, 'CREW BUS');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">SPECIAL REQUEST</td>';
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">VIDANGE TOILETTE</td>';
+      html += '</tr>';
+
+      // WORK TIME
+      html += '<tr>';
+      html += td(H, 'WORK START TIME');
+      html += td('padding:5pt 8pt;font-size:16pt;font-weight:900;text-align:center', 'H');
+      html += '<td style="border:1.5pt solid #000;' + H + 'text-align:center" colspan="2">WORK END TIME</td>';
+      html += '<td style="border:1.5pt solid #000;padding:5pt 8pt;font-size:16pt;font-weight:900;text-align:center" colspan="2">H</td>';
+      html += '</tr>';
+
+      // SPACER
+      html += '<tr><td colspan="6" style="border:none;padding:5pt 0"></td></tr>';
+
+      // COMMENT
+      html += '<tr>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;font-weight:700;vertical-align:middle;height:55pt" colspan="2">COMMENT / EXPLANATION</td>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;height:55pt" colspan="4"></td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;font-weight:700;vertical-align:middle;height:55pt" colspan="2">SPECIAL REQUEST / COMMENT</td>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;height:55pt" colspan="4"></td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;font-weight:700;vertical-align:middle;height:48pt" colspan="2">TEAM LEADER&#39;S SIGNATURE</td>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;height:48pt" colspan="4"></td>';
+      html += '</tr>';
+
+      // ACCEPTED BY
+      html += '<tr>';
+      html += '<td style="border:1.5pt solid #000;' + H + 'text-align:center;vertical-align:middle" rowspan="3">ACCEPTED BY</td>';
+      html += td(H + 'text-align:center', 'NAME');
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2"></td>';
+      html += '<td style="border:1.5pt solid #000;' + H + 'text-align:center;vertical-align:middle" rowspan="3" colspan="2">REMARKS</td>';
+      html += '</tr>';
+      html += '<tr>';
+      html += td(H + 'text-align:center', 'SIGNATURE');
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2"></td>';
+      html += '</tr>';
+      html += '<tr>';
+      html += td(H + 'text-align:center', 'TIME');
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2"></td>';
+      html += '</tr>';
+
+      html += '</table></div>';
+      return html;
+    }
+
+    var pages = eligible.map(function(f) { return makeSheet(f); }).join('');
+
+    var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheets LGG</title>'
       + '<style>'
       + '@page{size:A4 portrait;margin:10mm}'
       + '*{box-sizing:border-box;margin:0;padding:0}'
@@ -1074,7 +1090,7 @@
       + '.page:last-child{page-break-after:avoid}'
       + '</style></head><body>' + pages + '</body></html>';
 
-    const w = window.open('', '_blank');
+    var w = window.open('', '_blank');
     if (w) {
       w.document.open();
       w.document.write(html);
