@@ -919,7 +919,9 @@
       ? new Date(date + 'T12:00:00').toLocaleDateString('fr-BE', { day:'2-digit', month:'2-digit', year:'2-digit' })
       : '';
 
-    const makeSheet = (f) => `
+    const makeSheet = (f) => {
+      const isABD = (f.flight || '').toUpperCase().startsWith('ABD') || (f.flight || '').toUpperCase().startsWith('AAE');
+      return `
 <div class="page">
 
   <!-- EN-TETE : logo gauche + WORK PERFORMED centre -->
@@ -999,8 +1001,8 @@
       <td style="border:1.5pt solid #000;padding:3pt 4pt;font-weight:700;text-align:center" colspan="2">LAVATORY SERVICE</td>
     </tr>
     <tr>
-      <td style="border:1.5pt solid #000;padding:3pt 4pt;font-weight:700;text-align:center">DISINFECTION</td>
-      <td style="border:1.5pt solid #000;padding:3pt 4pt;font-weight:700;text-align:center">LAUNDRY</td>
+      <td style="border:1.5pt solid #000;padding:3pt 4pt;font-weight:700;text-align:center;` + (isABD ? 'background:#FFE500;' : '') + `">DISINFECTION</td>
+      <td style="border:1.5pt solid #000;padding:3pt 4pt;font-weight:700;text-align:center;` + (isABD ? 'background:#FFE500;' : '') + `">LAUNDRY</td>
       <td style="border:1.5pt solid #000;padding:3pt 4pt;font-weight:700;text-align:center">CATERING</td>
       <td style="border:1.5pt solid #000;padding:3pt 4pt;font-weight:700;text-align:center">PRODUCT DELIVERY</td>
       <td style="border:1.5pt solid #000;padding:3pt 4pt;font-weight:700;text-align:center" colspan="2">PMR</td>
@@ -1067,6 +1069,7 @@
   </table>
 </div>`;
 
+    };
     const pages = eligible.map(f => makeSheet(f)).join('');
 
     const html = `<!DOCTYPE html>
