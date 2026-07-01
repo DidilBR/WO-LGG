@@ -960,7 +960,7 @@
     function makeSheet(f) {
       var flight = (f.flight || '').toUpperCase();
       var isABD  = flight.startsWith('ABD') || flight.startsWith('AAE');
-      var HL     = 'background:#FFE500;';
+      var HL     = 'background:#FFE500 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;';
       var C      = 'padding:3pt 4pt;font-weight:700;text-align:center;';
       var H      = 'padding:5pt 8pt;font-weight:700;';
       var P      = 'padding:5pt 8pt;';
