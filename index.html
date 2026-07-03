@@ -997,7 +997,15 @@
 
       html += '<tr>';
       html += td(H, 'COMPANY :');
-      html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + (f.handler || '') + '</td>';
+      var company = (f.handler || '');
+      if (flight.startsWith('AAE')) {
+        company = 'Lachs / Fly Meta';
+      } else if (flight.startsWith('ABD')) {
+        var h = (f.handler || '').toUpperCase();
+        if (h.includes('CHALLENGE')) company = 'Ana';
+        else if (h.includes('WFS'))  company = 'WFS / Magma';
+      }
+      html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + company + '</td>';
       html += td(H, 'AIRCRAFT TYPE :');
       html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2">&nbsp;</td>';
       html += '</tr>';
