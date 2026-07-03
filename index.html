@@ -938,7 +938,7 @@
     if (flight.startsWith('TAY'))      return true;
     if (flight.startsWith('CHG'))      return true;
     if (flight.startsWith('SWN'))      return true;
-    if (flight.startsWith('ETH') && handler.includes('AVIAPARTNER')) return true;
+    if (flight.startsWith('ETH') && handler.includes('AVIAPARTNER')) return true; // arrivées et départs
     if (handler.includes('CHALLENGE')) return true;
     if (handler.includes('WFS') && !flight.startsWith('SVA')) return true;
     return false;
