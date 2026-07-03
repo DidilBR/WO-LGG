@@ -730,7 +730,7 @@
         const actual = after[firstTimeIdx + 2] || '';
         const time   = actual || est || sched || '—';
 
-        if (!flight || !reg) return;
+        if (!flight) return; // reg peut être vide
 
         flights.push({ time, flight, reg, stand, handler, manual: false });
       });
@@ -938,6 +938,7 @@
     if (flight.startsWith('TAY'))      return true;
     if (flight.startsWith('CHG'))      return true;
     if (flight.startsWith('SWN'))      return true;
+    if (flight.startsWith('ETH') && handler.includes('AVIAPARTNER')) return true;
     if (handler.includes('CHALLENGE')) return true;
     if (handler.includes('WFS') && !flight.startsWith('SVA')) return true;
     return false;
@@ -987,7 +988,7 @@
       html += td(H + 'width:18%', 'AEROSERVICES');
       html += td(P + 'width:12%', 'BRU');
       html += td(P + 'font-size:20pt;font-weight:900;text-decoration:underline;text-align:center;width:14%;font-family:Arial Black,Arial,sans-serif', 'LGG');
-      html += '<td style="border:1.5pt solid #000;' + P + 'font-size:14pt;font-weight:700;text-align:center" colspan="3">&nbsp;&nbsp;- ' + dateStr + '</td>';
+      html += '<td style="border:1.5pt solid #000;padding:3pt 6pt;font-size:11pt;font-weight:700;text-align:right;width:28%" colspan="3">' + dateStr + '</td>';
       html += '</tr>';
 
       html += '<tr>';
@@ -1002,9 +1003,12 @@
         company = 'Lachs / Fly Meta';
       } else if (flight.startsWith('ABD')) {
         var h = (f.handler || '').toUpperCase();
-        if (h.includes('CHALLENGE')) company = 'Ana';
+        if (h.includes('CHALLENGE')) company = 'ANA';
         else if (h.includes('WFS'))  company = 'WFS / Magma';
+      } else if (flight.startsWith('ETH')) {
+        company = 'ETH';
       }
+      var isETH = flight.startsWith('ETH');
       html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + company + '</td>';
       html += td(H, 'AIRCRAFT TYPE :');
       html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2">&nbsp;</td>';
@@ -1053,7 +1057,7 @@
       html += '<tr>';
       html += td(C + (isABD ? HL : ''), 'DISINFECTION');
       html += td(C + (isABD ? HL : ''), 'LAUNDRY');
-      html += td(C, 'CATERING');
+      html += td(C + (isETH ? HL : ''), 'CATERING');
       html += td(C, 'PRODUCT DELIVERY');
       html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">PMR</td>';
       html += '</tr>';
@@ -1075,10 +1079,10 @@
 
       // WORK TIME
       html += '<tr>';
-      html += td(H, 'WORK START TIME');
-      html += td('padding:5pt 8pt;font-size:16pt;font-weight:900;text-align:center', 'H');
-      html += '<td style="border:1.5pt solid #000;' + H + 'text-align:center" colspan="2">WORK END TIME</td>';
-      html += '<td style="border:1.5pt solid #000;padding:5pt 8pt;font-size:16pt;font-weight:900;text-align:center" colspan="2">H</td>';
+      html += '<td style="border:1.5pt solid #000;padding:4pt 6pt;font-weight:700;font-size:7.5pt;width:18%">WORK START TIME</td>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt 12pt;font-size:14pt;font-weight:900;text-align:center;width:22%">H</td>';
+      html += '<td style="border:1.5pt solid #000;padding:4pt 6pt;font-weight:700;font-size:7.5pt;text-align:center;width:16%">WORK END TIME</td>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt 12pt;font-size:14pt;font-weight:900;text-align:center" colspan="3">H</td>';
       html += '</tr>';
 
       // SPACER
