@@ -7,24 +7,37 @@
   <title>Cleaning — LGG</title>
   <style>
     :root {
-      --bg: #0d0d0d;
-      --surface: #161616;
-      --surface2: #1e1e1e;
-      --border: #2a2a2a;
-      --accent: #e8b84b;
-      --accent-dim: rgba(232, 184, 75, 0.12);
-      --text: #f0f0f0;
-      --text-muted: #888;
-      --text-dim: #555;
-      --green: #4caf7d;
-      --red: #e05252;
+      --bg: #060610;
+      --surface: #0e0e1a;
+      --surface2: #14141f;
+      --border: #1e1e35;
+      --accent: #00d4ff;
+      --accent2: #7b2fff;
+      --accent-dim: rgba(0, 212, 255, 0.08);
+      --text: #e8eaf6;
+      --text-muted: #6b7db3;
+      --text-dim: #3a4466;
+      --green: #00ffaa;
+      --red: #ff4466;
       --font-mono: 'Courier New', monospace;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&display=swap');
+
+    body {
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(123,47,255,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(0,212,255,0.06) 0%, transparent 50%),
+        #060610;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: var(--bg);
+      background: rgba(6,6,16,0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,212,255,0.15);
+      box-shadow: 0 1px 30px rgba(0,212,255,0.05);
       color: var(--text);
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       min-height: 100vh;
@@ -46,7 +59,10 @@
       font-family: var(--font-mono);
       font-size: 11px;
       letter-spacing: 3px;
-      color: var(--accent);
+      background: linear-gradient(90deg, #00d4ff, #7b2fff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       text-transform: uppercase;
     }
     .logo span { color: var(--text-muted); }
@@ -71,7 +87,10 @@
     .step-number {
       font-family: var(--font-mono);
       font-size: 11px;
-      color: var(--accent);
+      background: linear-gradient(90deg, #00d4ff, #7b2fff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       letter-spacing: 3px;
       text-transform: uppercase;
       margin-bottom: 8px;
@@ -160,11 +179,16 @@
     }
     .shift-btn:hover { border-color: var(--accent); }
     .shift-btn.active {
-      background: var(--accent-dim);
-      border-color: var(--accent);
-      color: var(--accent);
+      background: rgba(0,212,255,0.08);
+      border-color: #00d4ff;
+      box-shadow: 0 0 20px rgba(0,212,255,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
     }
-    .shift-btn.active .shift-name { color: var(--accent); }
+    .shift-btn.active .shift-name {
+      background: linear-gradient(90deg, #00d4ff, #7b2fff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
     /* DIVIDER */
     .divider {
@@ -213,8 +237,9 @@
     }
     .flight-card:hover { border-color: #3a3a3a; }
     .flight-card.selected {
-      background: var(--accent-dim);
-      border-color: var(--accent);
+      background: rgba(0,212,255,0.07);
+      border-color: #00d4ff;
+      box-shadow: 0 0 16px rgba(0,212,255,0.12);
     }
     .flight-card .check {
       width: 20px;
@@ -230,16 +255,19 @@
       transition: all 0.15s;
     }
     .flight-card.selected .check {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #000;
+      background: linear-gradient(135deg, #00d4ff, #7b2fff);
+      border-color: #00d4ff;
+      color: #fff;
     }
     .flight-info { flex: 1; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
     .flight-reg {
       font-family: var(--font-mono);
       font-size: 13px;
       font-weight: 700;
-      color: var(--accent);
+      background: linear-gradient(90deg, #00d4ff, #7b2fff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       min-width: 80px;
     }
     .flight-num {
@@ -310,10 +338,17 @@
       font-family: inherit;
     }
     .btn-primary {
-      background: var(--accent);
-      color: #000;
+      background: linear-gradient(135deg, #00d4ff, #7b2fff);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(0,212,255,0.3);
+      font-weight: 700;
+      letter-spacing: 0.5px;
     }
-    .btn-primary:hover { background: #f0c55a; }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #22e0ff, #9b4fff);
+      box-shadow: 0 6px 28px rgba(0,212,255,0.45);
+      transform: translateY(-1px);
+    }
     .btn-ghost {
       background: transparent;
       color: var(--text-muted);
@@ -674,36 +709,35 @@
       const lines = raw.split('\n');
       const HANDLERS_OK = ['CHALLENGE', 'WFS', 'SWISSPORT'];
 
+      // First pass: collect ALL ETH departures indexed by registration
+      const ethDepartures = {}; // reg -> flight number
       lines.forEach(line => {
         const trimmed = line.trim();
-        if (!trimmed.includes('Arrivals') && !trimmed.includes('Departures')) return;
-
-        // Re-parse avec split sur espaces multiples ou tabs
+        if (!trimmed.includes('Departures')) return;
         const cols = trimmed.replace(/\t/g, '  ').split(/  +/).map(c => c.trim()).filter(c => c);
+        const dirIdx = cols.findIndex(c => c === 'Departures');
+        if (dirIdx === -1) return;
+        const flt = (cols[dirIdx + 2] || '').toUpperCase();
+        const reg = (cols[dirIdx + 3] || '').toUpperCase();
+        const hnd = (cols[dirIdx + 9] || '').toUpperCase();
+        if (flt.startsWith('ETH') && hnd.includes('AVIAPARTNER') && reg) {
+          ethDepartures[reg] = flt; // store departure flight number by reg
+        }
+      });
 
-        let dirIdx = cols.findIndex(c => c === 'Arrivals' || c === 'Departures');
+      // Second pass: process arrivals + ETH arrivals that have a matching departure
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed.includes('Arrivals')) return;
+
+        const cols = trimmed.replace(/\t/g, '  ').split(/  +/).map(c => c.trim()).filter(c => c);
+        let dirIdx = cols.findIndex(c => c === 'Arrivals');
         if (dirIdx === -1) return;
 
-        const direction = cols[dirIdx];
-        const fltCode   = (cols[dirIdx + 2] || '').toUpperCase();
-        const hndCode   = (cols[dirIdx + 9] || '').toUpperCase();
-        const isETHLine = fltCode.startsWith('ETH') && hndCode.includes('AVIAPARTNER');
-
-        // Garder : toutes les arrivées + les ETH AVIAPARTNER (arrivée ET départ)
-        if (direction !== 'Arrivals' && !isETHLine) return;
-
-        // cols après dirIdx : [date, flight, reg, type, origin, dest, via?, stand, handler, sched, est, actual, ...]
-        // La colonne "via" peut être vide donc absente dans le split
-        // On identifie SCHED/EST/ACTUAL par le pattern HH:MM
         const after = cols.slice(dirIdx + 1);
-        // after[0]=date, after[1]=flight, after[2]=reg, after[3]=type, after[4]=origin, after[5]=dest
-        // Ensuite via(optionnel), stand, handler, sched, est, actual
-
-        const date   = after[0] || '';
         const flight = after[1] || '';
         const reg    = after[2] || '';
-        // after[3]=type, after[4]=origin, after[5]=dest
-        // Trouver les heures HH:MM à partir de l'index 6
+
         const timePattern = /^\d{2}:\d{2}$/;
         let firstTimeIdx = -1;
         for (let i = 6; i < after.length; i++) {
@@ -711,28 +745,39 @@
         }
         if (firstTimeIdx === -1) return;
 
-        // Avant firstTimeIdx : via(opt), stand, handler  → les 2 derniers avant les heures
         const beforeTimes = after.slice(6, firstTimeIdx);
-        // stand = avant-dernier, handler = dernier avant les heures
         const stand   = beforeTimes.length >= 2 ? beforeTimes[beforeTimes.length - 2] : (beforeTimes[0] || '');
         const handler = (beforeTimes.length >= 1 ? beforeTimes[beforeTimes.length - 1] : '').toUpperCase();
 
-        // Filtrer handlers : CHALLENGE, WFS, SWISSPORT + AVIAPARTNER pour ETH
-        const flightUp = (flight || '').toUpperCase();
+        const flightUp    = (flight || '').toUpperCase();
         const isETHFlight = flightUp.startsWith('ETH') && handler.includes('AVIAPARTNER');
-        if (!HANDLERS_OK.some(h => handler.includes(h)) && !isETHFlight) return;
 
-        // Heures : sched=firstTimeIdx, est=+1, actual=+2
+        // For ETH: only include if there's a matching departure for this registration
+        if (isETHFlight) {
+          const regUp = reg.toUpperCase();
+          if (!ethDepartures[regUp]) return; // no departure found, skip
+          // Use the departure flight number for the worksheet
+          const depFlightNum = ethDepartures[regUp];
+          const sched  = after[firstTimeIdx]     || '';
+          const est    = after[firstTimeIdx + 1] || '';
+          const actual = after[firstTimeIdx + 2] || '';
+          const time   = actual || est || sched || '—';
+          flights.push({ time, flight: depFlightNum, reg, stand, handler, manual: false, isETH: true });
+          return;
+        }
+
+        // Normal handlers filter
+        const HANDLERS_OK2 = ['CHALLENGE', 'WFS', 'SWISSPORT'];
+        if (!HANDLERS_OK2.some(h => handler.includes(h))) return;
+
         const sched  = after[firstTimeIdx]     || '';
         const est    = after[firstTimeIdx + 1] || '';
         const actual = after[firstTimeIdx + 2] || '';
         const time   = actual || est || sched || '—';
 
-        if (!flight) return; // reg peut être vide
-
+        if (!flight) return;
         flights.push({ time, flight, reg, stand, handler, manual: false });
       });
-
       // Dédoublonner
       const seen = new Set();
       flights = flights.filter(f => {
@@ -788,14 +833,31 @@
         </div>
         ${f.manual ? `<button onclick="removeFlight(event,${i})" style="background:none;border:none;color:#e05252;cursor:pointer;font-size:16px;padding:0 4px">×</button>` : ''}
         ${(f.flight||'').toUpperCase().startsWith('QTR') ? `
-          <div onclick="event.stopPropagation()" style="margin-left:auto;display:flex;align-items:center">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.5);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;color:#f5a623;transition:all 0.15s"
-              onclick="event.stopPropagation()">
+          <div onclick="event.stopPropagation()" style="margin-left:auto;display:flex;align-items:center;padding-right:4px">
+            <label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:7px;cursor:pointer;
+              background:linear-gradient(135deg,rgba(255,140,0,0.1),rgba(255,200,0,0.08));
+              border:1px solid rgba(255,165,0,0.4);
+              border-radius:30px;padding:5px 13px;font-size:10px;font-weight:700;
+              color:#ffaa00;letter-spacing:0.8px;text-transform:uppercase;
+              box-shadow:0 0 8px rgba(255,165,0,0.15),inset 0 1px 0 rgba(255,255,255,0.05);
+              transition:all 0.2s ease">
               <input type="checkbox" id="qtr-catering-${i}"
                 onclick="event.stopPropagation()"
-                onchange="this.closest('label').style.background=this.checked?'rgba(245,166,35,0.35)':'rgba(245,166,35,0.15)';this.closest('label').style.borderColor=this.checked?'#f5a623':'rgba(245,166,35,0.5)'"
-                style="width:13px;height:13px;cursor:pointer;accent-color:#f5a623">
-              🍽 Catering
+                onchange="
+                  var lbl=this.closest('label');
+                  if(this.checked){
+                    lbl.style.background='linear-gradient(135deg,rgba(255,165,0,0.3),rgba(255,200,0,0.2))';
+                    lbl.style.borderColor='#ffaa00';
+                    lbl.style.boxShadow='0 0 14px rgba(255,165,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1)';
+                    lbl.style.color='#ffd000';
+                  } else {
+                    lbl.style.background='linear-gradient(135deg,rgba(255,140,0,0.1),rgba(255,200,0,0.08))';
+                    lbl.style.borderColor='rgba(255,165,0,0.4)';
+                    lbl.style.boxShadow='0 0 8px rgba(255,165,0,0.15),inset 0 1px 0 rgba(255,255,255,0.05)';
+                    lbl.style.color='#ffaa00';
+                  }"
+                style="width:13px;height:13px;cursor:pointer;accent-color:#ffaa00">
+              ✦ CATERING
             </label>
           </div>` : ''}
       </div>
@@ -947,7 +1009,7 @@
     if (flight.startsWith('TAY'))      return true;
     if (flight.startsWith('CHG'))      return true;
     if (flight.startsWith('SWN'))      return true;
-    if (flight.startsWith('ETH') && handler.includes('AVIAPARTNER')) return true;
+    if (f.isETH) return true; // ETH avec départ confirmé
     if (handler.includes('CHALLENGE')) return true;
     if (handler.includes('WFS') && !flight.startsWith('SVA')) return true;
     return false;
@@ -1017,11 +1079,11 @@
         var h = (f.handler || '').toUpperCase();
         if (h.includes('CHALLENGE')) company = 'ANA';
         else if (h.includes('WFS'))  company = 'WFS / Magma';
-      } else if (flight.startsWith('ETH')) {
+      } else if (f.isETH === true) {
         company = 'ETH';
       }
-      var isETHorCatering = flight.startsWith('ETH') || isQTRCatering;
-      var showFullTransit  = !isQTRCatering; // no Full Transit on catering-only sheets
+      var isETHorCatering = (f.isETH === true) || isQTRCatering;
+      var showFullTransit  = !isQTRCatering && !(f.isETH === true); // no Full Transit on catering/ETH sheets
       html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + company + '</td>';
       html += td(H, 'AIRCRAFT TYPE :');
       html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2">&nbsp;</td>';
