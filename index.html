@@ -676,7 +676,7 @@
 
       lines.forEach(line => {
         const trimmed = line.trim();
-        if (!trimmed.includes('Arrivals')) return;
+        if (!trimmed.includes('Arrivals') && !trimmed.includes('Departures')) return;
 
         // Regex robuste qui extrait les colonnes clés peu importe les séparateurs
         // Cherche : Arrivals DATE(jj/mm/aaaa) FLIGHT REG TYPE ORIGIN DEST [VIA] STAND HANDLER SCHED EST [ACTUAL]
@@ -732,7 +732,8 @@
 
         if (!flight) return; // reg peut être vide
 
-        flights.push({ time, flight, reg, stand, handler, manual: false });
+        var isETHFlight = (flight || '').toUpperCase().startsWith('ETH') && (handler || '').toUpperCase().includes('AVIAPARTNER');
+        flights.push({ time, flight, reg, stand, handler, manual: false, isETH: isETHFlight });
       });
 
       // Dédoublonner
@@ -789,6 +790,11 @@
           <span class="flight-stand" style="color:#888">${f.handler}</span>
         </div>
         ${f.manual ? `<button onclick="removeFlight(event,${i})" style="background:none;border:none;color:#e05252;cursor:pointer;font-size:16px;padding:0 4px">×</button>` : ''}
+        ${(f.flight||'').toUpperCase().startsWith('QTR') ? `
+          <label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:6px;font-size:11px;color:#f5a623;cursor:pointer;margin-left:4px">
+            <input type="checkbox" id="qtr-catering-${i}" onclick="event.stopPropagation()" style="width:14px;height:14px;cursor:pointer">
+            Catering ?
+          </label>` : ''}
       </div>
     `).join('');
   }
@@ -938,7 +944,7 @@
     if (flight.startsWith('TAY'))      return true;
     if (flight.startsWith('CHG'))      return true;
     if (flight.startsWith('SWN'))      return true;
-    if (flight.startsWith('ETH') && handler.includes('AVIAPARTNER')) return true; // arrivées et départs
+    if (flight.startsWith('ETH') && handler.includes('AVIAPARTNER')) return true;
     if (handler.includes('CHALLENGE')) return true;
     if (handler.includes('WFS') && !flight.startsWith('SVA')) return true;
     return false;
@@ -999,7 +1005,10 @@
       html += '<tr>';
       html += td(H, 'COMPANY :');
       var company = (f.handler || '');
-      if (flight.startsWith('AAE')) {
+      var isQTRCatering = f._qtrCatering === true;
+      if (isQTRCatering) {
+        company = 'QATAR';
+      } else if (flight.startsWith('AAE')) {
         company = 'Lachs / Fly Meta';
       } else if (flight.startsWith('ABD')) {
         var h = (f.handler || '').toUpperCase();
@@ -1008,7 +1017,7 @@
       } else if (flight.startsWith('ETH')) {
         company = 'ETH';
       }
-      var isETH = flight.startsWith('ETH');
+      var isETH = flight.startsWith('ETH') || isQTRCatering;
       html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + company + '</td>';
       html += td(H, 'AIRCRAFT TYPE :');
       html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2">&nbsp;</td>';
@@ -1124,7 +1133,19 @@
       return html;
     }
 
-    var pages = eligible.map(function(f) { return makeSheet(f); }).join('');
+    var pages = '';
+    eligible.forEach(function(f, idx) {
+      // Find original index in flights array
+      var origIdx = flights.indexOf(f);
+      pages += makeSheet(f);
+      // If QTR and catering checkbox is checked, add a second QATAR catering worksheet
+      if ((f.flight || '').toUpperCase().startsWith('QTR')) {
+        var cb = document.getElementById('qtr-catering-' + origIdx);
+        if (cb && cb.checked) {
+          pages += makeSheet(Object.assign({}, f, { _qtrCatering: true }));
+        }
+      }
+    });
 
     var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheets LGG</title>'
       + '<style>'
