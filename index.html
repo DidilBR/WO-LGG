@@ -1145,9 +1145,9 @@
       html += '</tr>';
 
       html += '<tr>';
-      html += td(C + (showCleaning ? HL : ''), 'INTERIOR DEEP');
+      html += td(C, 'INTERIOR DEEP');
       html += td(C + (showFullTransit ? HL : ''), 'FULL TRANSIT SERVICE');
-      html += td(C, 'TRANSIT SERVICE');
+      html += td(C + (showCleaning ? HL : ''), 'TRANSIT SERVICE');
       html += td(C + (showWater ? HL : ''), 'WATER SERVICE');
       html += '<td style="border:1.5pt solid #000;' + C + (showLavatory ? HL : '') + '" colspan="2">LAVATORY SERVICE</td>';
       html += '</tr>';
