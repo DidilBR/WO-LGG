@@ -807,6 +807,20 @@
     goToStep(3);
   }
 
+
+  function makePill(id, label, color, r, g, b) {
+    return '<div onclick="event.stopPropagation()" style="display:flex;align-items:center">' +
+      '<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;cursor:pointer;' +
+      'background:linear-gradient(135deg,rgba('+r+','+g+','+b+',0.1),rgba('+r+','+g+','+b+',0.05));' +
+      'border:1px solid rgba('+r+','+g+','+b+',0.35);border-radius:30px;padding:4px 10px;' +
+      'font-size:9.5px;font-weight:700;color:rgb('+r+','+g+','+b+');letter-spacing:0.8px;text-transform:uppercase;' +
+      'box-shadow:0 0 6px rgba('+r+','+g+','+b+',0.12);transition:all 0.2s ease">' +
+      '<input type="checkbox" id="'+id+'" onclick="event.stopPropagation()" ' +
+      'onchange="var l=this.closest(\'label\');if(this.checked){l.style.background=\'linear-gradient(135deg,rgba('+r+','+g+','+b+',0.28),rgba('+r+','+g+','+b+',0.15))\';l.style.borderColor=\'rgb('+r+','+g+','+b+')\';l.style.boxShadow=\'0 0 12px rgba('+r+','+g+','+b+',0.4)\';}else{l.style.background=\'linear-gradient(135deg,rgba('+r+','+g+','+b+',0.1),rgba('+r+','+g+','+b+',0.05))\';l.style.borderColor=\'rgba('+r+','+g+','+b+',0.35)\';l.style.boxShadow=\'0 0 6px rgba('+r+','+g+','+b+',0.12)\';}" ' +
+      'style="width:12px;height:12px;cursor:pointer;accent-color:rgb('+r+','+g+','+b+')">' +
+      label + '</label></div>';
+  }
+
   function renderFlights() {
     const list = document.getElementById('flights-list');
     document.getElementById('count-total').textContent = flights.length;
@@ -821,47 +835,41 @@
       return;
     }
 
-    list.innerHTML = flights.map((f, i) => `
-      <div class="flight-card ${selectedFlights.has(i) ? 'selected' : ''}" onclick="toggleFlight(${i})">
-        <div class="check">${selectedFlights.has(i) ? '✓' : ''}</div>
-        <div class="flight-info">
-          <span class="flight-reg">${f.reg || '—'}</span>
-          <span class="flight-num">${f.flight}</span>
-          <span class="flight-time">ETA ${f.time}</span>
-          ${f.stand ? `<span class="flight-stand">Stand ${f.stand}</span>` : ''}
-          <span class="flight-stand" style="color:#888">${f.handler}</span>
-        </div>
-        ${f.manual ? `<button onclick="removeFlight(event,${i})" style="background:none;border:none;color:#e05252;cursor:pointer;font-size:16px;padding:0 4px">×</button>` : ''}
-        ${(f.flight||'').toUpperCase().startsWith('QTR') ? `
-          <div onclick="event.stopPropagation()" style="margin-left:auto;display:flex;align-items:center;padding-right:4px">
-            <label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:7px;cursor:pointer;
-              background:linear-gradient(135deg,rgba(255,140,0,0.1),rgba(255,200,0,0.08));
-              border:1px solid rgba(255,165,0,0.4);
-              border-radius:30px;padding:5px 13px;font-size:10px;font-weight:700;
-              color:#ffaa00;letter-spacing:0.8px;text-transform:uppercase;
-              box-shadow:0 0 8px rgba(255,165,0,0.15),inset 0 1px 0 rgba(255,255,255,0.05);
-              transition:all 0.2s ease">
-              <input type="checkbox" id="qtr-catering-${i}"
-                onclick="event.stopPropagation()"
-                onchange="
-                  var lbl=this.closest('label');
-                  if(this.checked){
-                    lbl.style.background='linear-gradient(135deg,rgba(255,165,0,0.3),rgba(255,200,0,0.2))';
-                    lbl.style.borderColor='#ffaa00';
-                    lbl.style.boxShadow='0 0 14px rgba(255,165,0,0.5),inset 0 1px 0 rgba(255,255,255,0.1)';
-                    lbl.style.color='#ffd000';
-                  } else {
-                    lbl.style.background='linear-gradient(135deg,rgba(255,140,0,0.1),rgba(255,200,0,0.08))';
-                    lbl.style.borderColor='rgba(255,165,0,0.4)';
-                    lbl.style.boxShadow='0 0 8px rgba(255,165,0,0.15),inset 0 1px 0 rgba(255,255,255,0.05)';
-                    lbl.style.color='#ffaa00';
-                  }"
-                style="width:13px;height:13px;cursor:pointer;accent-color:#ffaa00">
-              ✦ CATERING
-            </label>
-          </div>` : ''}
-      </div>
-    `).join('');
+    list.innerHTML = flights.map((f, i) => {
+      const flt = (f.flight||'').toUpperCase();
+      const hnd = (f.handler||'').toUpperCase();
+      const isQTR  = flt.startsWith('QTR');
+      const isWFS  = hnd.includes('WFS') && !flt.startsWith('SVA');
+      const isSWISS = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE');
+
+      let pills = '';
+      if (isQTR) {
+        pills += makePill('qtr-catering-'+i, '✦ CATERING', null, 255, 170, 0);
+      }
+      if (isWFS) {
+        pills += makePill('wfs-handling-'+i, '⚙ HANDLING', null, 0, 200, 255);
+      }
+      if (isSWISS) {
+        pills += makePill('swi-ft-'+i,      '◈ FULL TRANSIT', null, 123, 47, 255);
+        pills += makePill('swi-cl-'+i,      '✧ CLEANING',     null, 0,  210, 140);
+        pills += makePill('swi-lav-'+i,     '◉ LAVATORY',     null, 0,  180, 255);
+        pills += makePill('swi-wat-'+i,     '≋ WATER',         null, 50, 150, 255);
+        pills += makePill('swi-hds-'+i,     '⟁ HEADSET',      null, 220, 80, 255);
+      }
+
+      return '<div class="flight-card ' + (selectedFlights.has(i) ? 'selected' : '') + '" onclick="toggleFlight(' + i + ')">' +
+        '<div class="check">' + (selectedFlights.has(i) ? '✓' : '') + '</div>' +
+        '<div class="flight-info">' +
+          '<span class="flight-reg">' + (f.reg || '—') + '</span>' +
+          '<span class="flight-num">' + f.flight + '</span>' +
+          '<span class="flight-time">ETA ' + f.time + '</span>' +
+          (f.stand ? '<span class="flight-stand">Stand ' + f.stand + '</span>' : '') +
+          '<span class="flight-stand" style="color:#888">' + f.handler + '</span>' +
+        '</div>' +
+        (f.manual ? '<button onclick="removeFlight(event,' + i + ')" style="background:none;border:none;color:#e05252;cursor:pointer;font-size:16px;padding:0 4px">×</button>' : '') +
+        (pills ? '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding-right:4px;margin-left:auto">' + pills + '</div>' : '') +
+      '</div>';
+    }).join('');
   }
 
   function toggleFlight(i) {
@@ -1082,8 +1090,18 @@
       } else if (f.isETH === true) {
         company = 'ETH';
       }
-      var isETHorCatering = (f.isETH === true) || isQTRCatering;
-      var showFullTransit  = !isQTRCatering && !(f.isETH === true); // no Full Transit on catering/ETH sheets
+      var isETHorCatering = (f.isETH === true) || isQTRCatering || (f._swissFT === true);
+      var showFullTransit  = !isQTRCatering && !(f.isETH === true) && !(f._handling) &&
+                             !(f._swissCl) && !(f._swissLav) && !(f._swissWat) && !(f._swissHds) &&
+                             (f._swissFT !== false);
+      if (f._swissFT === true || f._swissCl || f._swissLav || f._swissWat || f._swissHds) {
+        showFullTransit = f._swissFT === true;
+      }
+      var showHandling   = f._handling  === true;
+      var showCleaning   = f._swissCl   === true;
+      var showLavatory   = f._swissLav  === true;
+      var showWater      = f._swissWat  === true;
+      var showHeadset    = f._swissHds  === true;
       html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + company + '</td>';
       html += td(H, 'AIRCRAFT TYPE :');
       html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2">&nbsp;</td>';
@@ -1122,11 +1140,11 @@
       html += '</tr>';
 
       html += '<tr>';
-      html += td(C, 'INTERIOR DEEP');
+      html += td(C + (showCleaning ? HL : ''), 'INTERIOR DEEP');
       html += td(C + (showFullTransit ? HL : ''), 'FULL TRANSIT SERVICE');
       html += td(C, 'TRANSIT SERVICE');
-      html += td(C, 'WATER SERVICE');
-      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">LAVATORY SERVICE</td>';
+      html += td(C + (showWater ? HL : ''), 'WATER SERVICE');
+      html += '<td style="border:1.5pt solid #000;' + C + (showLavatory ? HL : '') + '" colspan="2">LAVATORY SERVICE</td>';
       html += '</tr>';
 
       html += '<tr>';
@@ -1138,9 +1156,9 @@
       html += '</tr>';
 
       html += '<tr>';
-      html += td(C, 'HANDLING');
+      html += td(C + (showHandling ? HL : ''), 'HANDLING');
       html += td(C, 'PUSH BACK');
-      html += td(C, 'HEADSET');
+      html += td(C + (showHeadset ? HL : ''), 'HEADSET');
       html += td(C, 'TOWING');
       html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">RENTING</td>';
       html += '</tr>';
@@ -1199,15 +1217,90 @@
       return html;
     }
 
+    // Collect Swissport departures by registration (for HEADSET worksheets)
+    var swissportDepartures = {};
+    flights.forEach(function(f2) {
+      // We stored departure info during parsing for ETH; for Swissport we need to re-scan
+    });
+    // Re-scan raw FIDS for Swissport departure flight numbers
+    var rawFids = document.getElementById('fids-text').value;
+    if (rawFids) {
+      rawFids.split('\n').forEach(function(line) {
+        var trimmed = line.trim();
+        if (!trimmed.includes('Departures')) return;
+        var cols = trimmed.replace(/\t/g, '  ').split(/  +/).map(function(c){return c.trim();}).filter(Boolean);
+        var dIdx = cols.findIndex(function(c){return c==='Departures';});
+        if (dIdx === -1) return;
+        var flt = (cols[dIdx+2]||'').toUpperCase();
+        var reg = (cols[dIdx+3]||'').toUpperCase();
+        var hnd = (cols[dIdx+9]||'').toUpperCase();
+        if (hnd.includes('SWISSPORT') && reg) {
+          swissportDepartures[reg] = flt;
+        }
+      });
+    }
+
     var pages = '';
-    eligible.forEach(function(f, idx) {
-      // Find original index in flights array
+    eligible.forEach(function(f) {
       var origIdx = flights.indexOf(f);
+      var flt = (f.flight || '').toUpperCase();
+      var hnd = (f.handler || '').toUpperCase();
+      var isQTR   = flt.startsWith('QTR');
+      var isWFS   = hnd.includes('WFS') && !flt.startsWith('SVA');
+      var isSWISS = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE');
+
+      // ── WFS Handling checkbox ──
+      if (isWFS) {
+        var cbHdl = document.getElementById('wfs-handling-' + origIdx);
+        if (cbHdl && cbHdl.checked) {
+          // Handling checked: worksheet with HANDLING highlighted, no Full Transit
+          pages += makeSheet(Object.assign({}, f, { _handling: true }));
+          return; // skip normal Full Transit worksheet
+        }
+      }
+
+      // ── SWISSPORT multi-checkbox ──
+      if (isSWISS) {
+        var cbFT  = document.getElementById('swi-ft-'  + origIdx);
+        var cbCl  = document.getElementById('swi-cl-'  + origIdx);
+        var cbLav = document.getElementById('swi-lav-' + origIdx);
+        var cbWat = document.getElementById('swi-wat-' + origIdx);
+        var cbHds = document.getElementById('swi-hds-' + origIdx);
+
+        var ftChecked  = cbFT  && cbFT.checked;
+        var clChecked  = cbCl  && cbCl.checked;
+        var lavChecked = cbLav && cbLav.checked;
+        var watChecked = cbWat && cbWat.checked;
+        var hdsChecked = cbHds && cbHds.checked;
+
+        var anyChecked = ftChecked || clChecked || lavChecked || watChecked || hdsChecked;
+
+        if (anyChecked) {
+          // Main worksheet (all except headset combined)
+          if (ftChecked || clChecked || lavChecked || watChecked) {
+            pages += makeSheet(Object.assign({}, f, {
+              _swissFT:  ftChecked,
+              _swissCl:  clChecked,
+              _swissLav: lavChecked,
+              _swissWat: watChecked,
+            }));
+          }
+          // Headset: separate worksheet with departure flight number
+          if (hdsChecked) {
+            var depFlt = swissportDepartures[((f.reg||'').toUpperCase())] || f.flight;
+            pages += makeSheet(Object.assign({}, f, { flight: depFlt, _swissHds: true }));
+          }
+          return;
+        }
+        // No checkbox checked for Swissport: skip (don't make worksheet)
+        return;
+      }
+
+      // ── QTR catering extra worksheet ──
       pages += makeSheet(f);
-      // If QTR and catering checkbox is checked, add a second QATAR catering worksheet
-      if ((f.flight || '').toUpperCase().startsWith('QTR')) {
-        var cb = document.getElementById('qtr-catering-' + origIdx);
-        if (cb && cb.checked) {
+      if (isQTR) {
+        var cbCat = document.getElementById('qtr-catering-' + origIdx);
+        if (cbCat && cbCat.checked) {
           pages += makeSheet(Object.assign({}, f, { _qtrCatering: true }));
         }
       }
