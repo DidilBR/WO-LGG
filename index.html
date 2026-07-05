@@ -1017,9 +1017,10 @@
     if (flight.startsWith('TAY'))      return true;
     if (flight.startsWith('CHG'))      return true;
     if (flight.startsWith('SWN'))      return true;
-    if (f.isETH) return true; // ETH avec départ confirmé
+    if (f.isETH) return true;
     if (handler.includes('CHALLENGE')) return true;
     if (handler.includes('WFS') && !flight.startsWith('SVA')) return true;
+    if (handler.includes('SWISSPORT')) return true; // SWISSPORT toujours eligible
     return false;
   }
 
@@ -1039,6 +1040,8 @@
 
     function makeSheet(f) {
       var flight = (f.flight || '').toUpperCase();
+      var flt    = flight;
+      var hnd    = (f.handler || '').toUpperCase();
       var isABD  = flight.startsWith('ABD') || flight.startsWith('AAE');
       var HL     = 'background:#FFE500 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;';
       var C      = 'padding:3pt 4pt;font-weight:700;text-align:center;';
@@ -1089,6 +1092,8 @@
         else if (h.includes('WFS'))  company = 'WFS / Magma';
       } else if (f.isETH === true) {
         company = 'ETH';
+      } else if (flt.startsWith('TAY') && hnd.includes('SWISSPORT')) {
+        company = 'ASL';
       }
       var isETHorCatering = (f.isETH === true) || isQTRCatering || (f._swissFT === true);
       var showFullTransit  = !isQTRCatering && !(f.isETH === true) && !(f._handling) &&
@@ -1253,9 +1258,15 @@
       if (isWFS) {
         var cbHdl = document.getElementById('wfs-handling-' + origIdx);
         if (cbHdl && cbHdl.checked) {
-          // Handling checked: worksheet with HANDLING highlighted, no Full Transit
           pages += makeSheet(Object.assign({}, f, { _handling: true }));
-          return; // skip normal Full Transit worksheet
+          // Still check QTR catering if applicable
+          if (isQTR) {
+            var cbCatH = document.getElementById('qtr-catering-' + origIdx);
+            if (cbCatH && cbCatH.checked) {
+              pages += makeSheet(Object.assign({}, f, { _qtrCatering: true }));
+            }
+          }
+          return;
         }
       }
 
