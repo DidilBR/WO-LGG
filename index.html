@@ -1095,11 +1095,13 @@
       } else if (flt.startsWith('TAY') && hnd.includes('SWISSPORT')) {
         company = 'ASL';
       }
-      var isETHorCatering = (f.isETH === true) || isQTRCatering || (f._swissFT === true);
+      var isETHorCatering = (f.isETH === true) || isQTRCatering;
       var showFullTransit  = !isQTRCatering && !(f.isETH === true) && !(f._handling) &&
                              !(f._swissCl) && !(f._swissLav) && !(f._swissWat) && !(f._swissHds) &&
                              (f._swissFT !== false);
-      if (f._swissFT === true || f._swissCl || f._swissLav || f._swissWat || f._swissHds) {
+      if (f._gtiSwiss === true) {
+        showFullTransit = true;
+      } else if (f._swissFT === true || f._swissCl || f._swissLav || f._swissWat || f._swissHds) {
         showFullTransit = f._swissFT === true;
       }
       var showHandling   = f._handling  === true;
@@ -1107,6 +1109,7 @@
       var showLavatory   = f._swissLav  === true;
       var showWater      = f._swissWat  === true;
       var showHeadset    = f._swissHds  === true;
+      var showGTILaundry = f._gtiSwiss  === true;
       html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + company + '</td>';
       html += td(H, 'AIRCRAFT TYPE :');
       html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2">&nbsp;</td>';
@@ -1154,7 +1157,7 @@
 
       html += '<tr>';
       html += td(C + (isABD ? HL : ''), 'DISINFECTION');
-      html += td(C + (isABD ? HL : ''), 'LAUNDRY');
+      html += td(C + ((isABD || showGTILaundry) ? HL : ''), 'LAUNDRY');
       html += td(C + (isETHorCatering ? HL : ''), 'CATERING');
       html += td(C, 'PRODUCT DELIVERY');
       html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">PMR</td>';
@@ -1252,7 +1255,7 @@
       var hnd = (f.handler || '').toUpperCase();
       var isQTR   = flt.startsWith('QTR');
       var isWFS   = hnd.includes('WFS') && !flt.startsWith('SVA');
-      var isSWISS = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE');
+      var isSWISS = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
 
       // ── WFS Handling checkbox ──
       if (isWFS) {
@@ -1268,6 +1271,12 @@
           }
           return;
         }
+      }
+
+      // ── GTI/SWISSPORT : auto worksheet, no checkbox needed ──
+      if (hnd.includes('SWISSPORT') && flt.startsWith('GTI')) {
+        pages += makeSheet(Object.assign({}, f, { _gtiSwiss: true }));
+        return;
       }
 
       // ── SWISSPORT multi-checkbox ──
