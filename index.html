@@ -16,10 +16,34 @@
   --mono:'JetBrains Mono',monospace;
   --sans:'Inter',sans-serif;
 }
-[data-theme="forest"]{--bg0:#030b04;--bg1:#061008;--bg2:#0b180d;--bg3:#102014;--b1:rgba(255,255,255,.04);--b2:rgba(52,208,88,.12);--b3:rgba(52,208,88,.22);--a1:#34d058;--a2:#059669;--t1:#e0fce8;--t2:#4a8a58;--t3:#1a3d22}
-[data-theme="inferno"]{--bg0:#0c0200;--bg1:#180500;--bg2:#220800;--bg3:#2e0b00;--b1:rgba(255,255,255,.04);--b2:rgba(255,80,0,.15);--b3:rgba(255,80,0,.28);--a1:#ff5c1a;--a2:#ff0044;--t1:#fff2ec;--t2:#99441e;--t3:#4d1e00}
-[data-theme="midnight"]{--bg0:#010111;--bg1:#030422;--bg2:#060830;--bg3:#0a0d40;--b1:rgba(255,255,255,.04);--b2:rgba(100,140,255,.15);--b3:rgba(100,140,255,.28);--a1:#6488ff;--a2:#a78bfa;--t1:#d0daff;--t2:#3355aa;--t3:#111e55}
-[data-theme="storm"]{--bg0:#07080a;--bg1:#0e1014;--bg2:#14181e;--bg3:#1c2028;--b1:rgba(255,255,255,.04);--b2:rgba(220,200,60,.15);--b3:rgba(220,200,60,.28);--a1:#dcc83c;--a2:#94a3b8;--t1:#d8dce8;--t2:#566080;--t3:#252d38}
+/* AURORA - violet/rose néon */
+[data-theme="aurora"]{
+  --bg0:#06010f;--bg1:#0d0320;--bg2:#130630;--bg3:#1a0a40;
+  --b1:rgba(255,255,255,.04);--b2:rgba(200,80,255,.18);--b3:rgba(200,80,255,.32);
+  --a1:#e040fb;--a2:#ff4081;
+  --t1:#f8e8ff;--t2:#9060aa;--t3:#3d1a55;
+}
+/* EMERALD - vert émeraude tech */
+[data-theme="emerald"]{
+  --bg0:#010c06;--bg1:#021a0d;--bg2:#032a14;--bg3:#04381c;
+  --b1:rgba(255,255,255,.04);--b2:rgba(0,255,150,.15);--b3:rgba(0,255,150,.28);
+  --a1:#00ffaa;--a2:#00cc88;
+  --t1:#e0fff5;--t2:#30996a;--t3:#0d4030;
+}
+/* INFERNO - rouge/orange plasma */
+[data-theme="inferno"]{
+  --bg0:#0d0100;--bg1:#1a0300;--bg2:#260500;--bg3:#330700;
+  --b1:rgba(255,255,255,.04);--b2:rgba(255,60,0,.18);--b3:rgba(255,60,0,.32);
+  --a1:#ff3d00;--a2:#ff9100;
+  --t1:#fff3ee;--t2:#993300;--t3:#4d1800;
+}
+/* MIDNIGHT - bleu abyssal */
+[data-theme="midnight"]{
+  --bg0:#00010d;--bg1:#00021a;--bg2:#000328;--bg3:#000438;
+  --b1:rgba(255,255,255,.04);--b2:rgba(80,120,255,.18);--b3:rgba(80,120,255,.32);
+  --a1:#748fff;--a2:#b4c8ff;
+  --t1:#e0e8ff;--t2:#2a40aa;--t3:#0d1550;
+}
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);background:var(--bg0);color:var(--t1);min-height:100vh;transition:background .4s,color .4s}
@@ -134,11 +158,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   </div>
   <div class="header-right">
     <div class="theme-dots">
-      <button class="tdot active" data-theme="cyber"    title="Cyber"    style="background:linear-gradient(135deg,#00d4ff,#8b5cf6)"></button>
-      <button class="tdot"        data-theme="forest"   title="Forest"   style="background:linear-gradient(135deg,#34d058,#059669)"></button>
-      <button class="tdot"        data-theme="inferno"  title="Inferno"  style="background:linear-gradient(135deg,#ff5c1a,#ff0044)"></button>
-      <button class="tdot"        data-theme="midnight" title="Midnight" style="background:linear-gradient(135deg,#6488ff,#a78bfa)"></button>
-      <button class="tdot"        data-theme="storm"    title="Storm"    style="background:linear-gradient(135deg,#dcc83c,#94a3b8)"></button>
+      <button class="tdot active" data-theme="cyber"    title="&#127759; Cyber"    style="background:linear-gradient(135deg,#00d4ff,#8b5cf6)"></button>
+      <button class="tdot"        data-theme="aurora"   title="&#9889; Aurora"   style="background:linear-gradient(135deg,#e040fb,#ff4081)"></button>
+      <button class="tdot"        data-theme="emerald"  title="&#128154; Emerald"  style="background:linear-gradient(135deg,#00ffaa,#00cc88)"></button>
+      <button class="tdot"        data-theme="inferno"  title="&#128293; Inferno"  style="background:linear-gradient(135deg,#ff3d00,#ff9100)"></button>
+      <button class="tdot"        data-theme="midnight" title="&#127769; Midnight" style="background:linear-gradient(135deg,#748fff,#b4c8ff)"></button>
     </div>
     <div class="step-pill" id="step-indicator">ETAPE 1 / 3</div>
   </div>
@@ -300,6 +324,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 <script>
 
 
+
   let selectedShift = null;
   let flights = [];
   let selectedFlights = new Set();
@@ -440,7 +465,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
         // Normal handlers filter
         const HANDLERS_OK2 = ['CHALLENGE', 'WFS', 'SWISSPORT'];
-        if (!HANDLERS_OK2.some(h => handler.includes(h))) return;
+        const flightUp2   = (flight || '').toUpperCase();
+        const regUp3      = (reg    || '').toUpperCase();
+        const isTAYFedex  = flightUp2.startsWith('TAY') && handler.includes('FEDEX');
+        const isOEIMDFedex = regUp3 === 'OEIMD' && handler.includes('FEDEX');
+        if (!HANDLERS_OK2.some(h => handler.includes(h)) && !isTAYFedex && !isOEIMDFedex) return;
 
         const sched  = after[firstTimeIdx]     || '';
         const est    = after[firstTimeIdx + 1] || '';
@@ -685,14 +714,17 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   function needsFullTransit(f) {
     var flight  = (f.flight  || '').toUpperCase();
     var handler = (f.handler || '').toUpperCase();
+    var reg     = (f.reg     || '').toUpperCase();
     if (flight.startsWith('ICL'))      return true;
     if (flight.startsWith('TAY'))      return true;
     if (flight.startsWith('CHG'))      return true;
     if (flight.startsWith('SWN'))      return true;
-    if (f.isETH) return true;
+    if (f.isETH)                       return true;
     if (handler.includes('CHALLENGE')) return true;
-    if (handler.includes('WFS') && !flight.startsWith('SVA')) return true;
-    if (handler.includes('SWISSPORT')) return true; // SWISSPORT toujours eligible
+    if (handler.includes('WFS'))       return true; // SVA/WFS aussi inclus maintenant
+    if (handler.includes('SWISSPORT')) return true;
+    if (flight.startsWith('TAY') && handler.includes('FEDEX')) return true;
+    if (reg === 'OEIMD' && handler.includes('FEDEX'))          return true;
     return false;
   }
 
@@ -714,6 +746,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       var flight = (f.flight || '').toUpperCase();
       var flt    = flight;
       var hnd    = (f.handler || '').toUpperCase();
+      var reg    = (f.reg    || '').toUpperCase();
       var isABD  = flight.startsWith('ABD') || flight.startsWith('AAE');
       var HL     = 'background:#FFE500 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;';
       var C      = 'padding:3pt 4pt;font-weight:700;text-align:center;';
@@ -768,6 +801,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         company = 'ASL';
       } else if (flt.startsWith('GTI') && hnd.includes('SWISSPORT')) {
         company = 'Atlas Air';
+      } else if ((flt.startsWith('TAY') && hnd.includes('FEDEX')) || (reg === 'OEIMD' && hnd.includes('FEDEX'))) {
+        company = 'ASL 737';
+      } else if (flt.startsWith('SVA') && hnd.includes('WFS')) {
+        company = 'WFS';
       }
       var isETHorCatering = (f.isETH === true) || isQTRCatering;
       var showFullTransit  = !isQTRCatering && !(f.isETH === true) && !(f._handling) &&
@@ -931,12 +968,20 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       var isWFS   = hnd.includes('WFS') && !flt.startsWith('SVA');
       var isSWISS = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
 
+      // ── SVA/WFS → Handling worksheet si coché ──
+      if (flt.startsWith('SVA') && hnd.includes('WFS')) {
+        var cbSva = document.getElementById('sva-handling-' + origIdx);
+        if (cbSva && cbSva.checked) {
+          pages += makeSheet(Object.assign({}, f, { _handling: true }));
+        }
+        return; // SVA never gets Full Transit
+      }
+
       // ── WFS Handling checkbox ──
       if (isWFS) {
         var cbHdl = document.getElementById('wfs-handling-' + origIdx);
         if (cbHdl && cbHdl.checked) {
           pages += makeSheet(Object.assign({}, f, { _handling: true }));
-          // Still check QTR catering if applicable
           if (isQTR) {
             var cbCatH = document.getElementById('qtr-catering-' + origIdx);
             if (cbCatH && cbCatH.checked) {
@@ -1087,6 +1132,41 @@ document.querySelectorAll('.tdot').forEach(b => {
   applyTheme(t);
   document.querySelectorAll('.tdot').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
 })();
+
+
+// Update progress bar when changing steps
+const _orig_gts2 = goToStep;
+function goToStep(n) {
+  [1,2,3].forEach(i => document.getElementById('step-'+i).classList.add('hidden'));
+  const s = document.getElementById('step-'+n);
+  if(s) s.classList.remove('hidden');
+  const ind = document.getElementById('step-indicator');
+  if(ind) ind.textContent = 'ETAPE ' + n + ' / 3';
+  window.scrollTo(0,0);
+  [1,2,3].forEach(i => {
+    const el = document.getElementById('prog-'+i);
+    if(!el) return;
+    el.classList.remove('active','done');
+    if(i < n) el.classList.add('done');
+    else if(i === n) el.classList.add('active');
+  });
+}
+
+document.querySelectorAll('.tdot').forEach(b => {
+  b.addEventListener('click', function(){
+    document.querySelectorAll('.tdot').forEach(x => x.classList.remove('active'));
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+
+(function(){
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
+})();
+
 </script>
 </body>
 </html>
