@@ -6,52 +6,25 @@
 <title>LGG - Cleaning Ops</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+
 :root{
   --bg0:#05050f;--bg1:#0a0a1a;--bg2:#0f0f22;--bg3:#15152c;
   --b1:rgba(255,255,255,.05);--b2:rgba(255,255,255,.10);--b3:rgba(255,255,255,.18);
   --a1:#00d4ff;--a2:#8b5cf6;
   --t1:#f0f2ff;--t2:#8892b8;--t3:#3d4570;
-  --red:#ff4d6d;--green:#00e5a0;
-  --r:12px;--r2:8px;
-  --mono:'JetBrains Mono',monospace;
-  --sans:'Inter',sans-serif;
+  --red:#ff4d6d;--r:12px;--r2:8px;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
 }
-/* AURORA - violet/rose néon */
-[data-theme="aurora"]{
-  --bg0:#06010f;--bg1:#0d0320;--bg2:#130630;--bg3:#1a0a40;
-  --b1:rgba(255,255,255,.04);--b2:rgba(200,80,255,.18);--b3:rgba(200,80,255,.32);
-  --a1:#e040fb;--a2:#ff4081;
-  --t1:#f8e8ff;--t2:#9060aa;--t3:#3d1a55;
-}
-/* EMERALD - vert émeraude tech */
-[data-theme="emerald"]{
-  --bg0:#010c06;--bg1:#021a0d;--bg2:#032a14;--bg3:#04381c;
-  --b1:rgba(255,255,255,.04);--b2:rgba(0,255,150,.15);--b3:rgba(0,255,150,.28);
-  --a1:#00ffaa;--a2:#00cc88;
-  --t1:#e0fff5;--t2:#30996a;--t3:#0d4030;
-}
-/* INFERNO - rouge/orange plasma */
-[data-theme="inferno"]{
-  --bg0:#0d0100;--bg1:#1a0300;--bg2:#260500;--bg3:#330700;
-  --b1:rgba(255,255,255,.04);--b2:rgba(255,60,0,.18);--b3:rgba(255,60,0,.32);
-  --a1:#ff3d00;--a2:#ff9100;
-  --t1:#fff3ee;--t2:#993300;--t3:#4d1800;
-}
-/* MIDNIGHT - bleu abyssal */
-[data-theme="midnight"]{
-  --bg0:#00010d;--bg1:#00021a;--bg2:#000328;--bg3:#000438;
-  --b1:rgba(255,255,255,.04);--b2:rgba(80,120,255,.18);--b3:rgba(80,120,255,.32);
-  --a1:#748fff;--a2:#b4c8ff;
-  --t1:#e0e8ff;--t2:#2a40aa;--t3:#0d1550;
-}
-
+[data-theme="aurora"]{--bg0:#06010f;--bg1:#0d0320;--bg2:#130630;--bg3:#1a0a40;--b1:rgba(255,255,255,.04);--b2:rgba(200,80,255,.18);--b3:rgba(200,80,255,.32);--a1:#e040fb;--a2:#ff4081;--t1:#f8e8ff;--t2:#9060aa;--t3:#3d1a55}
+[data-theme="emerald"]{--bg0:#010c06;--bg1:#021a0d;--bg2:#032a14;--bg3:#04381c;--b1:rgba(255,255,255,.04);--b2:rgba(0,255,150,.15);--b3:rgba(0,255,150,.28);--a1:#00ffaa;--a2:#00cc88;--t1:#e0fff5;--t2:#30996a;--t3:#0d4030}
+[data-theme="inferno"]{--bg0:#0d0100;--bg1:#1a0300;--bg2:#260500;--bg3:#330700;--b1:rgba(255,255,255,.04);--b2:rgba(255,60,0,.18);--b3:rgba(255,60,0,.32);--a1:#ff3d00;--a2:#ff9100;--t1:#fff3ee;--t2:#993300;--t3:#4d1800}
+[data-theme="midnight"]{--bg0:#00010d;--bg1:#00021a;--bg2:#000328;--bg3:#000438;--b1:rgba(255,255,255,.04);--b2:rgba(80,120,255,.18);--b3:rgba(80,120,255,.32);--a1:#748fff;--a2:#b4c8ff;--t1:#e0e8ff;--t2:#2a40aa;--t3:#0d1550}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);background:var(--bg0);color:var(--t1);min-height:100vh;transition:background .4s,color .4s}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 15% 10%,rgba(139,92,246,.08),transparent 60%),radial-gradient(ellipse 50% 40% at 85% 85%,rgba(0,212,255,.06),transparent 60%);pointer-events:none;z-index:0}
-
 header{position:sticky;top:0;z-index:200;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(5,5,15,.8);backdrop-filter:blur(30px);border-bottom:1px solid var(--b1)}
 .logo-wrap{display:flex;align-items:center;gap:12px}
-.logo-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 4px 14px rgba(0,200,255,.3);flex-shrink:0}
+.logo-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(0,200,255,.3);flex-shrink:0}
 .logo-text{font-size:13px;font-weight:700;background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .logo-sub{font-size:10px;color:var(--t3);letter-spacing:2px;text-transform:uppercase;font-family:var(--mono)}
 .header-right{display:flex;align-items:center;gap:18px}
@@ -60,39 +33,31 @@ header{position:sticky;top:0;z-index:200;height:60px;display:flex;align-items:ce
 .tdot{width:14px;height:14px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;padding:0}
 .tdot:hover{transform:scale(1.35)}
 .tdot.active{border-color:rgba(255,255,255,.9);box-shadow:0 0 0 3px rgba(255,255,255,.12);transform:scale(1.25)}
-
 .app-wrap{position:relative;z-index:1;max-width:680px;margin:0 auto;padding:44px 24px 100px}
-
 .progress-bar{display:flex;gap:8px;align-items:center;margin-bottom:44px}
 .prog-step{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-family:var(--mono);transition:color .3s}
-.prog-step.active{color:var(--a1)}
-.prog-step.done{color:var(--t2)}
+.prog-step.active{color:var(--a1)}.prog-step.done{color:var(--t2)}
 .prog-num{width:24px;height:24px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;transition:all .3s;flex-shrink:0}
 .prog-step.active .prog-num{box-shadow:0 0 12px rgba(0,212,255,.35)}
 .prog-step.done .prog-num{background:linear-gradient(135deg,var(--a1),var(--a2));border-color:transparent;color:#fff}
 .prog-line{flex:1;height:1px;background:var(--b2)}
-.prog-label{display:none}
-@media(min-width:400px){.prog-label{display:block}}
-
+.prog-label{display:none}@media(min-width:400px){.prog-label{display:block}}
 .section-hd{margin-bottom:28px}
 .section-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--a1);margin-bottom:10px}
 .eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--a1);animation:blink 2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 .section-title{font-size:26px;font-weight:800;letter-spacing:-.5px}
 .section-desc{margin-top:8px;font-size:14px;color:var(--t2);line-height:1.6}
-
-.panel{background:var(--bg1);border:1px solid var(--b2);border-radius:var(--r);padding:22px;margin-bottom:16px}
+.panel{background:var(--bg1);border:1px solid var(--b2);border-radius:var(--r);padding:22px;margin-bottom:16px;transition:border-color .2s}
 .panel:hover{border-color:var(--b3)}
 .panel-hint{background:var(--bg2);border:1px solid var(--b1);border-left:3px solid var(--a1);border-radius:var(--r2);padding:14px 16px;margin-bottom:14px;font-size:13px;color:var(--t2);line-height:1.75}
 .panel-hint strong{color:var(--t1)}
-
 .field{margin-bottom:16px}
 .field-label{display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t2);margin-bottom:8px}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 input[type=text],input[type=date],textarea,select{width:100%;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font:500 14px/1 var(--sans);padding:13px 16px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none}
 input:focus,textarea:focus{border-color:var(--a1);box-shadow:0 0 0 3px rgba(0,212,255,.08)}
 input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
-
 .shift-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
 .shift-btn{background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r);padding:16px 8px;cursor:pointer;text-align:center;transition:all .2s}
 .shift-btn:hover{border-color:var(--b3);transform:translateY(-1px)}
@@ -100,12 +65,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 .shift-name{display:block;font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t1);margin-bottom:4px}
 .shift-btn.active .shift-name{background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .shift-time{display:block;font-size:10px;font-family:var(--mono);color:var(--t2)}
-
 .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
 .stat-card{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:16px}
 .stat-card .num{font:700 26px/1 var(--mono);background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .stat-card .lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-top:5px}
-
 .flights-list{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
 .flight-card{background:var(--bg1);border:1px solid var(--b1);border-radius:var(--r2);padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;user-select:none}
 .flight-card:hover{border-color:var(--b2);background:var(--bg2)}
@@ -117,7 +80,6 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 .flight-num{font-size:13px;font-weight:600;min-width:64px}
 .flight-time{font:400 11px/1 var(--mono);color:var(--t2)}
 .flight-stand{font-size:10px;color:var(--t3);background:var(--bg3);border:1px solid var(--b1);padding:3px 8px;border-radius:20px}
-
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border-radius:var(--r2);font:700 11px/1 var(--sans);letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s}
 .btn-primary{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;box-shadow:0 4px 20px rgba(0,212,255,.2)}
 .btn-primary:hover{opacity:.85;transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,212,255,.3)}
@@ -129,12 +91,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 .btn-amber{background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-weight:800;box-shadow:0 4px 16px rgba(245,158,11,.2)}
 .btn-amber:hover{opacity:.88;transform:translateY(-2px)}
 .actions{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
-
 .add-manual-toggle{width:100%;padding:13px;background:none;color:var(--a1);border:1px dashed rgba(0,212,255,.2);border-radius:var(--r2);cursor:pointer;font:700 10px/1 var(--sans);letter-spacing:1.5px;text-transform:uppercase;transition:all .2s}
 .add-manual-toggle:hover{background:rgba(0,212,255,.04);border-color:rgba(0,212,255,.4)}
 .manual-form{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:18px;margin-top:10px}
 .manual-form-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t2);margin-bottom:14px;font-weight:700}
-
 .empty-state{text-align:center;padding:52px 20px;color:var(--t3)}
 .empty-state .icon{font-size:40px;margin-bottom:12px;opacity:.3}
 .empty-state p{font-size:13px}
@@ -144,6 +104,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 ::-webkit-scrollbar-track{background:var(--bg0)}
 ::-webkit-scrollbar-thumb{background:var(--b3);border-radius:2px}
 @media print{body>*:not(#print-overlay){display:none!important}#print-overlay{display:block!important;position:static!important;background:white!important;padding:0!important}#print-overlay>div{box-shadow:none!important;padding:0!important}.no-print{display:none!important}}
+
 </style>
 </head>
 <body>
@@ -158,67 +119,47 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   </div>
   <div class="header-right">
     <div class="theme-dots">
-      <button class="tdot active" data-theme="cyber"    title="&#127759; Cyber"    style="background:linear-gradient(135deg,#00d4ff,#8b5cf6)"></button>
-      <button class="tdot"        data-theme="aurora"   title="&#9889; Aurora"   style="background:linear-gradient(135deg,#e040fb,#ff4081)"></button>
-      <button class="tdot"        data-theme="emerald"  title="&#128154; Emerald"  style="background:linear-gradient(135deg,#00ffaa,#00cc88)"></button>
-      <button class="tdot"        data-theme="inferno"  title="&#128293; Inferno"  style="background:linear-gradient(135deg,#ff3d00,#ff9100)"></button>
-      <button class="tdot"        data-theme="midnight" title="&#127769; Midnight" style="background:linear-gradient(135deg,#748fff,#b4c8ff)"></button>
+      <button class="tdot active" data-theme="cyber"    title="Cyber"    style="background:linear-gradient(135deg,#00d4ff,#8b5cf6)"></button>
+      <button class="tdot"        data-theme="aurora"   title="Aurora"   style="background:linear-gradient(135deg,#e040fb,#ff4081)"></button>
+      <button class="tdot"        data-theme="emerald"  title="Emerald"  style="background:linear-gradient(135deg,#00ffaa,#00cc88)"></button>
+      <button class="tdot"        data-theme="inferno"  title="Inferno"  style="background:linear-gradient(135deg,#ff3d00,#ff9100)"></button>
+      <button class="tdot"        data-theme="midnight" title="Midnight" style="background:linear-gradient(135deg,#748fff,#b4c8ff)"></button>
     </div>
     <div class="step-pill" id="step-indicator">ETAPE 1 / 3</div>
   </div>
 </header>
 
 <div class="app-wrap">
-
   <div class="progress-bar">
-    <div class="prog-step active" id="prog-1">
-      <div class="prog-num">1</div>
-      <span class="prog-label">Shift</span>
-    </div>
+    <div class="prog-step active" id="prog-1"><div class="prog-num">1</div><span class="prog-label">Shift</span></div>
     <div class="prog-line"></div>
-    <div class="prog-step" id="prog-2">
-      <div class="prog-num">2</div>
-      <span class="prog-label">FIDS</span>
-    </div>
+    <div class="prog-step" id="prog-2"><div class="prog-num">2</div><span class="prog-label">FIDS</span></div>
     <div class="prog-line"></div>
-    <div class="prog-step" id="prog-3">
-      <div class="prog-num">3</div>
-      <span class="prog-label">Vols</span>
-    </div>
+    <div class="prog-step" id="prog-3"><div class="prog-num">3</div><span class="prog-label">Vols</span></div>
   </div>
 
-  <!-- STEP 1 -->
   <div id="step-1">
     <div class="section-hd">
       <div class="section-eyebrow"><span class="eyebrow-dot"></span>Etape 1 sur 3</div>
       <div class="section-title">Date &amp; Shift</div>
-      <div class="section-desc">Selectionne la date et ton shift de travail</div>
+      <div class="section-desc">Selectionnez la date et votre shift</div>
     </div>
     <div class="panel">
       <div class="field-row" style="margin-bottom:18px">
-        <div>
-          <label class="field-label">Date</label>
-          <input type="date" id="shift-date">
-        </div>
-        <div>
-          <label class="field-label">Agent / Equipe</label>
-          <input type="text" id="shift-agent" placeholder="Nom ou equipe">
-        </div>
+        <div><label class="field-label">Date</label><input type="date" id="shift-date"></div>
+        <div><label class="field-label">Agent / Equipe</label><input type="text" id="shift-agent" placeholder="Nom ou equipe"></div>
       </div>
       <div>
         <label class="field-label">Shift</label>
         <div class="shift-grid">
           <button class="shift-btn" data-shift="EARLY" data-time="06:00-14:00" onclick="selectShift(this)">
-            <span class="shift-name">Early</span>
-            <span class="shift-time">06:00 - 14:00</span>
+            <span class="shift-name">Early</span><span class="shift-time">06:00 - 14:00</span>
           </button>
           <button class="shift-btn" data-shift="LATE" data-time="14:00-22:00" onclick="selectShift(this)">
-            <span class="shift-name">Late</span>
-            <span class="shift-time">14:00 - 22:00</span>
+            <span class="shift-name">Late</span><span class="shift-time">14:00 - 22:00</span>
           </button>
           <button class="shift-btn" data-shift="NIGHT" data-time="22:00-06:00" onclick="selectShift(this)">
-            <span class="shift-name">Night</span>
-            <span class="shift-time">22:00 - 06:00</span>
+            <span class="shift-name">Night</span><span class="shift-time">22:00 - 06:00</span>
           </button>
         </div>
       </div>
@@ -228,22 +169,21 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     </div>
   </div>
 
-  <!-- STEP 2 -->
   <div id="step-2" class="hidden">
     <div class="section-hd">
       <div class="section-eyebrow"><span class="eyebrow-dot"></span>Etape 2 sur 3</div>
       <div class="section-title">Import FIDS</div>
-      <div class="section-desc">Colle les donnees copiees depuis fids.liegeairport.com/spw</div>
+      <div class="section-desc">Collez les donnees depuis fids.liegeairport.com/spw</div>
     </div>
     <div class="panel">
       <div class="panel-hint">
         <strong>Comment faire :</strong><br>
-        1. Ouvre <strong>fids.liegeairport.com/spw</strong><br>
-        2. Attends que tous les vols chargent<br>
-        3. Selectionne tout &rarr; Copier<br>
-        4. Colle ci-dessous
+        1. Ouvrez <strong>fids.liegeairport.com/spw</strong><br>
+        2. Attendez que tous les vols chargent<br>
+        3. Selectionnez tout &rarr; Copier<br>
+        4. Collez ci-dessous
       </div>
-      <textarea class="fids-input" id="fids-text" placeholder="Colle le texte du FIDS ici..."></textarea>
+      <textarea id="fids-text" placeholder="Collez le texte du FIDS ici..." style="width:100%;min-height:130px;resize:vertical;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:11px;line-height:1.6;padding:13px 16px;outline:none"></textarea>
     </div>
     <div class="actions">
       <button class="btn btn-ghost" onclick="goToStep(1)">&larr; Retour</button>
@@ -251,51 +191,37 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     </div>
   </div>
 
-  <!-- STEP 3 -->
   <div id="step-3" class="hidden">
     <div class="section-hd">
       <div class="section-eyebrow"><span class="eyebrow-dot"></span>Etape 3 sur 3</div>
       <div class="section-title">Vols detectes</div>
-      <div class="section-desc">Verifie et ajuste la selection avant de generer</div>
+      <div class="section-desc">Verifiez et ajustez avant de generer</div>
     </div>
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="num" id="count-selected">0</div>
-        <div class="lbl">Selectionnes</div>
-      </div>
-      <div class="stat-card">
-        <div class="num" id="count-total">0</div>
-        <div class="lbl">Total detectes</div>
-      </div>
+      <div class="stat-card"><div class="num" id="count-selected">0</div><div class="lbl">Selectionnes</div></div>
+      <div class="stat-card"><div class="num" id="count-total">0</div><div class="lbl">Total detectes</div></div>
     </div>
     <div class="flights-list" id="flights-list">
-      <div class="empty-state">
-        <div class="icon">&#9992;</div>
-        <p>Aucun vol detecte - ajoute-les manuellement</p>
+      <div class="empty-state"><div class="icon">&#9992;</div><p>Aucun vol detecte</p></div>
+    </div>
+    <div id="asl737-section" class="hidden" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
+        <div style="height:1px;flex:1;background:rgba(255,180,0,.2)"></div>
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ffb400;padding:5px 14px;border:1px solid rgba(255,180,0,.3);border-radius:20px;background:rgba(255,180,0,.06)">&#9992; ASL 737</div>
+        <div style="height:1px;flex:1;background:rgba(255,180,0,.2)"></div>
       </div>
+      <div class="flights-list" id="asl737-list"></div>
     </div>
     <button class="add-manual-toggle" onclick="toggleManualForm()">+ Ajouter un vol manuellement</button>
     <div class="manual-form hidden" id="manual-form">
       <div class="manual-form-title">Ajout manuel</div>
       <div class="field-row" style="margin-bottom:12px">
-        <div>
-          <label class="field-label">N de vol *</label>
-          <input type="text" id="m-flight" placeholder="ex: TNT123">
-        </div>
-        <div>
-          <label class="field-label">Heure ETA *</label>
-          <input type="text" id="m-time" placeholder="ex: 08:30">
-        </div>
+        <div><label class="field-label">N de vol *</label><input type="text" id="m-flight" placeholder="ex: TNT123"></div>
+        <div><label class="field-label">Heure ETA *</label><input type="text" id="m-time" placeholder="ex: 08:30"></div>
       </div>
       <div class="field-row" style="margin-bottom:14px">
-        <div>
-          <label class="field-label">Registration</label>
-          <input type="text" id="m-reg" placeholder="ex: OO-TNA">
-        </div>
-        <div>
-          <label class="field-label">Stand</label>
-          <input type="text" id="m-stand" placeholder="ex: A12">
-        </div>
+        <div><label class="field-label">Registration</label><input type="text" id="m-reg" placeholder="ex: OO-TNA"></div>
+        <div><label class="field-label">Stand</label><input type="text" id="m-stand" placeholder="ex: A12"></div>
       </div>
       <button class="btn btn-primary" onclick="addManualFlight()">Ajouter ce vol</button>
     </div>
@@ -306,11 +232,9 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       <button class="btn btn-danger" onclick="resetAll()">Recommencer</button>
     </div>
   </div>
-
 </div>
 
 <div id="pdf-sheet"></div>
-
 <div id="print-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:999;flex-direction:column;align-items:center;overflow-y:auto;padding:24px">
   <div style="background:#fff;max-width:820px;width:100%;border-radius:12px;padding:28px">
     <div id="print-content"></div>
@@ -322,6 +246,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 </div>
 
 <script>
+
 
 
 
@@ -541,14 +466,20 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       const hnd = (f.handler||'').toUpperCase();
       const isQTR  = flt.startsWith('QTR');
       const isWFS  = hnd.includes('WFS') && !flt.startsWith('SVA');
-      const isSWISS = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
+      const isSWISS  = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
+      const regR     = (f.reg || '').toUpperCase();
+      const isSVA    = flt.startsWith('SVA') && hnd.includes('WFS');
+      const isASL737 = (flt.startsWith('TAY') && hnd.includes('FEDEX')) || (regR === 'OEIMD' && hnd.includes('FEDEX'));
 
       let pills = '';
       if (isQTR) {
         pills += makePill('qtr-catering-'+i, '✦ CATERING', null, 255, 170, 0);
       }
-      if (isWFS) {
+      if (isWFS && !isSVA) {
         pills += makePill('wfs-handling-'+i, '⚙ HANDLING', null, 0, 200, 255);
+      }
+      if (isSVA) {
+        pills += makePill('sva-handling-'+i, '⚙ HANDLING', null, 255, 140, 0);
       }
       if (isSWISS) {
         pills += makePill('swi-ft-'+i,      '◈ FULL TRANSIT', null, 123, 47, 255);
@@ -556,6 +487,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         pills += makePill('swi-lav-'+i,     '◉ LAVATORY',     null, 0,  180, 255);
         pills += makePill('swi-wat-'+i,     '≋ WATER',         null, 50, 150, 255);
         pills += makePill('swi-hds-'+i,     '⟁ HEADSET',      null, 220, 80, 255);
+      }
+      // LHA → catering pill
+      if (flt.startsWith('LHA')) {
+        pills += makePill('lha-catering-'+i, '🍽 CATERING', null, 0, 210, 180);
       }
 
       return '<div class="flight-card ' + (selectedFlights.has(i) ? 'selected' : '') + '" onclick="toggleFlight(' + i + ')">' +
@@ -590,6 +525,37 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
   function updateSelectedCount() {
     document.getElementById('count-selected').textContent = selectedFlights.size;
+
+    // ── Populate ASL 737 column ──
+    var asl737Section = document.getElementById('asl737-section');
+    var asl737List    = document.getElementById('asl737-list');
+    if (asl737Section && asl737List) {
+      var asl737Flights = flights.filter(function(f2) {
+        var f2lt = (f2.flight||'').toUpperCase();
+        var f2nd = (f2.handler||'').toUpperCase();
+        var f2eg = (f2.reg||'').toUpperCase();
+        return (f2lt.startsWith('TAY') && f2nd.includes('FEDEX')) || (f2eg === 'OEIMD' && f2nd.includes('FEDEX'));
+      });
+      if (asl737Flights.length > 0) {
+        asl737Section.classList.remove('hidden');
+        asl737List.innerHTML = asl737Flights.map(function(f2) {
+          var origIdx2 = flights.indexOf(f2);
+          return '<div class="flight-card" style="border-color:rgba(255,180,0,.15);cursor:default">' +
+            '<div class="flight-info">' +
+              '<span class="flight-reg" style="background:linear-gradient(90deg,#ffb400,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent">' + (f2.reg||'—') + '</span>' +
+              '<span class="flight-num">' + f2.flight + '</span>' +
+              '<span class="flight-time">ETA ' + f2.time + '</span>' +
+              (f2.stand ? '<span class="flight-stand">Stand ' + f2.stand + '</span>' : '') +
+            '</div>' +
+            '<div onclick="event.stopPropagation()" style="margin-left:auto">' +
+              makePill('asl737-'+origIdx2, '✈ Worksheet', null, 255, 180, 0) +
+            '</div>' +
+          '</div>';
+        }).join('');
+      } else {
+        asl737Section.classList.add('hidden');
+      }
+    }
   }
 
   function toggleManualForm() {
@@ -725,6 +691,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     if (handler.includes('SWISSPORT')) return true;
     if (flight.startsWith('TAY') && handler.includes('FEDEX')) return true;
     if (reg === 'OEIMD' && handler.includes('FEDEX'))          return true;
+    if (flight.startsWith('LHA'))                                return true;
     return false;
   }
 
@@ -801,12 +768,14 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         company = 'ASL';
       } else if (flt.startsWith('GTI') && hnd.includes('SWISSPORT')) {
         company = 'Atlas Air';
-      } else if ((flt.startsWith('TAY') && hnd.includes('FEDEX')) || (reg === 'OEIMD' && hnd.includes('FEDEX'))) {
+      } else if (f._asl737 === true || (flt.startsWith('TAY') && hnd.includes('FEDEX')) || (reg === 'OEIMD' && hnd.includes('FEDEX'))) {
         company = 'ASL 737';
       } else if (flt.startsWith('SVA') && hnd.includes('WFS')) {
         company = 'WFS';
+      } else if (f._lhaCatering === true) {
+        company = 'GI';
       }
-      var isETHorCatering = (f.isETH === true) || isQTRCatering;
+      var isETHorCatering = (f.isETH === true) || isQTRCatering || (f._lhaCatering === true);
       var showFullTransit  = !isQTRCatering && !(f.isETH === true) && !(f._handling) &&
                              !(f._swissCl) && !(f._swissLav) && !(f._swissWat) && !(f._swissHds) &&
                              (f._swissFT !== false);
@@ -960,21 +929,36 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     }
 
     var pages = '';
+    var pagesASL737 = ''; // printed last
     eligible.forEach(function(f) {
       var origIdx = flights.indexOf(f);
       var flt = (f.flight || '').toUpperCase();
       var hnd = (f.handler || '').toUpperCase();
-      var isQTR   = flt.startsWith('QTR');
-      var isWFS   = hnd.includes('WFS') && !flt.startsWith('SVA');
-      var isSWISS = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
+      var reg2        = (f.reg || '').toUpperCase();
+      var isQTR       = flt.startsWith('QTR');
+      var isWFS       = hnd.includes('WFS') && !flt.startsWith('SVA');
+      var isSWISS     = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
+      var isASL737    = (flt.startsWith('TAY') && hnd.includes('FEDEX')) || (reg2 === 'OEIMD' && hnd.includes('FEDEX'));
 
       // ── SVA/WFS → Handling worksheet si coché ──
       if (flt.startsWith('SVA') && hnd.includes('WFS')) {
-        var cbSva = document.getElementById('sva-handling-' + origIdx);
-        if (cbSva && cbSva.checked) {
-          pages += makeSheet(Object.assign({}, f, { _handling: true }));
+        // Try both origIdx and loop through all possible checkbox IDs
+        var svaChecked = false;
+        for (var si = 0; si < flights.length; si++) {
+          var cbSvaX = document.getElementById('sva-handling-' + si);
+          if (cbSvaX && cbSvaX.checked) {
+            // Make sure this checkbox belongs to THIS flight
+            if (flights[si] === f) { svaChecked = true; break; }
+          }
         }
-        return; // SVA never gets Full Transit
+        // Also try origIdx directly
+        var cbSvaDirect = document.getElementById('sva-handling-' + origIdx);
+        if (cbSvaDirect && cbSvaDirect.checked) svaChecked = true;
+
+        if (svaChecked) {
+          pages += makeSheet(Object.assign({}, f, { _handling: true, handler: 'WFS' }));
+        }
+        return;
       }
 
       // ── WFS Handling checkbox ──
@@ -1035,8 +1019,25 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         return;
       }
 
+      // ── ASL 737 flights → worksheet printed last ──
+      if (isASL737) {
+        var cbASL = document.getElementById('asl737-' + origIdx);
+        if (cbASL && cbASL.checked) {
+          pagesASL737 += makeSheet(Object.assign({}, f, { _asl737: true }));
+        }
+        return;
+      }
+
+      // ── LHA catering extra worksheet (en plus du Full Transit normal) ──
+
       // ── QTR catering extra worksheet ──
       pages += makeSheet(f);
+      if (flt.startsWith('LHA')) {
+        var cbLha = document.getElementById('lha-catering-' + origIdx);
+        if (cbLha && cbLha.checked) {
+          pages += makeSheet(Object.assign({}, f, { _lhaCatering: true }));
+        }
+      }
       if (isQTR) {
         var cbCat = document.getElementById('qtr-catering-' + origIdx);
         if (cbCat && cbCat.checked) {
@@ -1045,6 +1046,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       }
     });
 
+    pages = pages + pagesASL737; // ASL737 printed last
     var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheets LGG</title>'
       + '<style>'
       + '@page{size:A4 portrait;margin:10mm}'
@@ -1102,21 +1104,6 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
 // Override goToStep to update progress bar
 const _orig_gts = goToStep;
-function goToStep(n) {
-  [1,2,3].forEach(i => document.getElementById('step-'+i).classList.add('hidden'));
-  const s = document.getElementById('step-'+n);
-  if(s) s.classList.remove('hidden');
-  const ind = document.getElementById('step-indicator');
-  if(ind) ind.textContent = 'ETAPE ' + n + ' / 3';
-  window.scrollTo(0,0);
-  [1,2,3].forEach(i => {
-    const el = document.getElementById('prog-'+i);
-    if(!el) return;
-    el.classList.remove('active','done');
-    if(i < n) el.classList.add('done');
-    else if(i === n) el.classList.add('active');
-  });
-}
 
 document.querySelectorAll('.tdot').forEach(b => {
   b.addEventListener('click', function(){
@@ -1136,21 +1123,6 @@ document.querySelectorAll('.tdot').forEach(b => {
 
 // Update progress bar when changing steps
 const _orig_gts2 = goToStep;
-function goToStep(n) {
-  [1,2,3].forEach(i => document.getElementById('step-'+i).classList.add('hidden'));
-  const s = document.getElementById('step-'+n);
-  if(s) s.classList.remove('hidden');
-  const ind = document.getElementById('step-indicator');
-  if(ind) ind.textContent = 'ETAPE ' + n + ' / 3';
-  window.scrollTo(0,0);
-  [1,2,3].forEach(i => {
-    const el = document.getElementById('prog-'+i);
-    if(!el) return;
-    el.classList.remove('active','done');
-    if(i < n) el.classList.add('done');
-    else if(i === n) el.classList.add('active');
-  });
-}
 
 document.querySelectorAll('.tdot').forEach(b => {
   b.addEventListener('click', function(){
@@ -1165,6 +1137,24 @@ document.querySelectorAll('.tdot').forEach(b => {
   var t = localStorage.getItem('lgg-theme') || 'cyber';
   applyTheme(t);
   document.querySelectorAll('.tdot').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
+})();
+
+
+// Theme switcher
+document.querySelectorAll('.tdot').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+(function() {
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
 })();
 
 </script>
