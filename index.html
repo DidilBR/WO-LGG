@@ -281,6 +281,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
 
 
+
   let selectedShift = null;
   let flights = [];
   let selectedFlights = new Set();
@@ -791,7 +792,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     <div>Agent(s) : <b>${agent}</b></div>
   </div>
 </div>
-\${cateringBlock}
+${cateringBlock}
 <table>
   <thead>
     <tr>
@@ -935,8 +936,8 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       } else if (f._lhaCatering === true) {
         company = 'GI';
       }
-      var isETHorCatering = (f.isETH === true) || isQTRCatering || (f._lhaCatering === true);
-      var showFullTransit  = !isQTRCatering && !(f.isETH === true) && !(f._handling) &&
+      var isETHorCatering = (f.isETH === true) || isQTRCatering || (f._lhaCatering === true) || (f._catering === true);
+      var showFullTransit  = !isQTRCatering && !(f.isETH === true) && !(f._handling) && !(f._catering) &&
                              !(f._swissCl) && !(f._swissLav) && !(f._swissWat) && !(f._swissHds) &&
                              (f._swissFT !== false);
       if (f._gtiSwiss === true) {
@@ -1206,7 +1207,21 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       }
     });
 
-    pages = pages + pagesASL737; // ASL737 printed last
+    // Catering worksheets - one per selected catering
+    var pagesCatering = '';
+    caterings.forEach(function(ct, i) {
+      if (!selectedCaterings.has(i)) return;
+      pagesCatering += makeSheet({
+        flight:  ct.flight  || '',
+        reg:     ct.reg     || '',
+        handler: ct.company || '',
+        time:    ct.delivery|| '',
+        stand:   '',
+        _catering: true
+      });
+    });
+
+    pages = pages + pagesASL737 + pagesCatering; // caterings printed last
     var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheets LGG</title>'
       + '<style>'
       + '@page{size:A4 portrait;margin:10mm}'
@@ -1337,6 +1352,7 @@ document.querySelectorAll('.tdot').forEach(function(b) {
     b.classList.toggle('active', b.dataset.theme === t);
   });
 })();
+
 
 </script>
 </body>
