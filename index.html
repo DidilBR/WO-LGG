@@ -185,9 +185,17 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       </div>
       <textarea id="fids-text" placeholder="Collez le texte du FIDS ici..." style="width:100%;min-height:130px;resize:vertical;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:11px;line-height:1.6;padding:13px 16px;outline:none"></textarea>
     </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-hint" style="border-left-color:#00e5a0">
+        <strong>Caterings (optionnel) :</strong><br>
+        Collez ici les lignes de catering depuis votre système.<br>
+        Format : <span style="font-family:var(--mono);font-size:11px;color:var(--t1)">11-JUIL  QTR  A7BFO  QR8169  22H45  23H45  4</span>
+      </div>
+      <textarea id="catering-text" placeholder="Collez les caterings ici (optionnel)..." style="width:100%;min-height:90px;resize:vertical;background:var(--bg2);border:1px solid rgba(0,229,160,.2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:11px;line-height:1.6;padding:13px 16px;outline:none"></textarea>
+    </div>
     <div class="actions">
       <button class="btn btn-ghost" onclick="goToStep(1)">&larr; Retour</button>
-      <button class="btn btn-primary" onclick="analyzeFids()">Analyser les vols &rarr;</button>
+      <button class="btn btn-primary" onclick="analyzeFids();parseCaterings();">Analyser &rarr;</button>
     </div>
   </div>
 
@@ -204,6 +212,28 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     <div class="flights-list" id="flights-list">
       <div class="empty-state"><div class="icon">&#9992;</div><p>Aucun vol detecte</p></div>
     </div>
+    <!-- Caterings section -->
+    <div id="catering-section" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
+        <div style="height:1px;flex:1;background:rgba(0,229,160,.2)"></div>
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#00e5a0;padding:5px 14px;border:1px solid rgba(0,229,160,.3);border-radius:20px;background:rgba(0,229,160,.06)">🍽 Caterings</div>
+        <div style="height:1px;flex:1;background:rgba(0,229,160,.2)"></div>
+      </div>
+      <div class="stats-row" style="margin-bottom:10px">
+        <div class="stat-card" style="border-color:rgba(0,229,160,.15)">
+          <div class="num" id="catering-selected-count" style="background:linear-gradient(90deg,#00e5a0,#00b37a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">0</div>
+          <div class="lbl">Caterings sél.</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(0,229,160,.15)">
+          <div class="num" id="catering-count" style="background:linear-gradient(90deg,#00e5a0,#00b37a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">0</div>
+          <div class="lbl">Total détectés</div>
+        </div>
+      </div>
+      <div id="catering-list">
+        <div class="empty-state"><div class="icon">🍽</div><p>Aucun catering — collez-les à l'étape 2</p></div>
+      </div>
+    </div>
+
     <div id="asl737-section" class="hidden" style="margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
         <div style="height:1px;flex:1;background:rgba(255,180,0,.2)"></div>
@@ -250,9 +280,12 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
 
 
+
   let selectedShift = null;
   let flights = [];
   let selectedFlights = new Set();
+  let caterings = [];
+  let selectedCaterings = new Set();
 
   document.getElementById('shift-date').value = new Date().toISOString().split('T')[0];
 
@@ -295,6 +328,99 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       return t >= toMin('22:00') || t < toMin('06:00');
     }
     return true;
+  }
+
+  // ── Parse Caterings ────────────────────────────────────────────
+  // Format: DD-MON  COMPANY  REG  FLTNR  HHhMM  HHhMM  CREW
+  function parseCaterings() {
+    const raw = document.getElementById('catering-text').value.trim();
+    caterings = [];
+    if (!raw) { renderCaterings(); return; }
+
+    const lines = raw.split('\n');
+    lines.forEach(line => {
+      const parts = line.trim().replace(/\t/g, ' ').replace(/ +/g, ' ').split(' ').filter(Boolean);
+      if (parts.length < 4) return;
+
+      // Try to detect: date, company, reg, flight, delivery, departure, crew
+      // Pattern: DD-MON  COMPANY  REG  FLTNR  HHhMM  HHhMM  CREW
+      // Times look like 22H45 or 22:45
+      const timePattern = /^\d{1,2}[Hh:]\d{2}$/;
+      const datePattern = /^\d{1,2}-[A-Z]{3,4}$/i;
+
+      let date='', company='', reg='', flight='', delivery='', departure='', crew='';
+
+      // Find times first
+      const timeIdxs = parts.map((p,i) => timePattern.test(p) ? i : -1).filter(i => i>=0);
+
+      if (timeIdxs.length >= 2) {
+        delivery  = parts[timeIdxs[0]].replace('H',':').replace('h',':');
+        departure = parts[timeIdxs[1]].replace('H',':').replace('h',':');
+        crew      = parts[timeIdxs[1]+1] || '';
+        // Before first time: date?, company, reg, flight
+        const before = parts.slice(0, timeIdxs[0]);
+        let idx = 0;
+        if (before[0] && datePattern.test(before[0])) { date = before[0]; idx = 1; }
+        company = before[idx]   || '';
+        reg     = before[idx+1] || '';
+        flight  = before[idx+2] || '';
+      } else if (parts.length >= 4) {
+        // Fallback: just grab what we can
+        let idx = 0;
+        if (datePattern.test(parts[0])) { date = parts[0]; idx = 1; }
+        company  = parts[idx]   || '';
+        reg      = parts[idx+1] || '';
+        flight   = parts[idx+2] || '';
+        delivery = parts[idx+3] || '';
+        departure= parts[idx+4] || '';
+        crew     = parts[idx+5] || '';
+      }
+
+      if (!company && !flight) return;
+      caterings.push({ date, company, reg, flight, delivery, departure, crew });
+    });
+
+    selectedCaterings = new Set(caterings.map((_,i) => i));
+    renderCaterings();
+    updateCateringCount();
+  }
+
+  function renderCaterings() {
+    const list = document.getElementById('catering-list');
+    if (!list) return;
+    document.getElementById('catering-count').textContent = caterings.length;
+    updateCateringCount();
+
+    if (caterings.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">🍽</div><p>Aucun catering détecté</p></div>';
+      return;
+    }
+
+    list.innerHTML = caterings.map((ct, i) => {
+      const sel = selectedCaterings.has(i);
+      return '<div class="flight-card ' + (sel ? 'selected' : '') + '" onclick="toggleCatering(' + i + ')" style="border-color:' + (sel ? 'rgba(0,229,160,.3)' : '') + '">' +
+        '<div class="check" style="' + (sel ? 'background:linear-gradient(135deg,#00e5a0,#00b37a);border-color:transparent;color:#fff' : '') + '">' + (sel ? '✓' : '') + '</div>' +
+        '<div class="flight-info">' +
+          '<span class="flight-reg" style="background:linear-gradient(90deg,#00e5a0,#00b37a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">' + (ct.reg || '—') + '</span>' +
+          '<span class="flight-num">' + (ct.flight || '—') + '</span>' +
+          '<span style="font-size:11px;color:#888;font-family:var(--mono)">' + (ct.company || '') + '</span>' +
+          (ct.delivery ? '<span class="flight-time">📦 ' + ct.delivery + '</span>' : '') +
+          (ct.departure ? '<span class="flight-time">✈ ' + ct.departure + '</span>' : '') +
+          (ct.crew ? '<span class="flight-stand">' + ct.crew + ' crew</span>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function toggleCatering(i) {
+    if (selectedCaterings.has(i)) selectedCaterings.delete(i);
+    else selectedCaterings.add(i);
+    renderCaterings();
+  }
+
+  function updateCateringCount() {
+    const el = document.getElementById('catering-selected-count');
+    if (el) el.textContent = selectedCaterings.size;
   }
 
   // ── Parse FIDS ─────────────────────────────────────────────────
@@ -587,6 +713,39 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       ? new Date(date + 'T12:00:00').toLocaleDateString('fr-BE', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
       : '—';
 
+    const chosenCaterings = caterings.filter((_,i) => selectedCaterings.has(i));
+
+    const cateringBlock = chosenCaterings.length > 0 ? `
+      <div style="margin-bottom:14pt">
+        <div style="font-size:13pt;font-weight:700;letter-spacing:1pt;text-transform:uppercase;border-bottom:2pt solid #000;padding-bottom:5pt;margin-bottom:8pt">
+          Catering(s) à livrer
+        </div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Date</th>
+              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Company</th>
+              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Reg.</th>
+              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Vol</th>
+              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Livraison</th>
+              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Départ</th>
+              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Crew</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${chosenCaterings.map((ct,ci) => `<tr style="background:${ci%2===0?'#f5f5f5':'#fff'}">
+              <td style="padding:10pt 7pt;font-size:12pt;font-weight:600">${ct.date||'—'}</td>
+              <td style="padding:10pt 7pt;font-size:12pt;font-weight:700">${ct.company||'—'}</td>
+              <td style="padding:10pt 7pt;font-size:12pt">${ct.reg||'—'}</td>
+              <td style="padding:10pt 7pt;font-size:12pt;font-weight:600">${ct.flight||'—'}</td>
+              <td style="padding:10pt 7pt;font-size:12pt">${ct.delivery||'—'}</td>
+              <td style="padding:10pt 7pt;font-size:12pt">${ct.departure||'—'}</td>
+              <td style="padding:10pt 7pt;font-size:12pt">${ct.crew||'—'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : '';
+
     const rows = chosen.map(f => `
       <tr>
         <td><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #000;border-radius:2px;vertical-align:middle"></span></td>
@@ -606,14 +765,14 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 <style>
   @page { size: A4 portrait; margin: 12mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #000; background: #fff; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; color: #000; background: #fff; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2pt solid #000; padding-bottom: 8pt; margin-bottom: 10pt; }
-  .title { font-size: 14pt; font-weight: 700; }
-  .subtitle { font-size: 8pt; color: #333; margin-top: 2pt; }
-  .meta { text-align: right; font-size: 9pt; line-height: 1.6; color: #000; }
+  .title { font-size: 16pt; font-weight: 700; }
+  .subtitle { font-size: 10pt; color: #333; margin-top: 2pt; }
+  .meta { text-align: right; font-size: 11pt; line-height: 1.6; color: #000; }
   table { width: 100%; border-collapse: collapse; }
-  th { background: #000; color: #fff; padding: 5pt 7pt; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5pt; text-align: left; }
-  td { padding: 10pt 7pt; border-bottom: 1pt solid #bbb; font-size: 9pt; color: #000; vertical-align: middle; }
+  th { background: #000; color: #fff; padding: 5pt 7pt; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.5pt; text-align: left; }
+  td { padding: 10pt 7pt; border-bottom: 1pt solid #bbb; font-size: 11pt; color: #000; vertical-align: middle; }
   tr:nth-child(even) td { background: #f0f0f0; }
   .notes-title { font-size: 8pt; text-transform: uppercase; letter-spacing: 1pt; color: #333; margin-bottom: 6pt; margin-top: 16pt; }
   .note-line { border-bottom: 1pt solid #999; margin-bottom: 16pt; }
@@ -632,6 +791,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     <div>Agent(s) : <b>${agent}</b></div>
   </div>
 </div>
+\${cateringBlock}
 <table>
   <thead>
     <tr>
@@ -1072,8 +1232,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     if (!confirm('Recommencer depuis le début ?')) return;
     flights = [];
     selectedFlights = new Set();
+    caterings = [];
+    selectedCaterings = new Set();
     selectedShift = null;
     document.getElementById('fids-text').value = '';
+    if (document.getElementById('catering-text')) document.getElementById('catering-text').value = '';
     document.getElementById('shift-agent').value = '';
     document.getElementById('shift-date').value = new Date().toISOString().split('T')[0];
     document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
@@ -1137,6 +1300,24 @@ document.querySelectorAll('.tdot').forEach(b => {
   var t = localStorage.getItem('lgg-theme') || 'cyber';
   applyTheme(t);
   document.querySelectorAll('.tdot').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
+})();
+
+
+// Theme switcher
+document.querySelectorAll('.tdot').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+(function() {
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
 })();
 
 
