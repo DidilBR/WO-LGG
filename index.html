@@ -255,6 +255,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       </div>
       <button class="btn btn-primary" onclick="addManualFlight()">Ajouter ce vol</button>
     </div>
+    <div class="panel" style="margin-top:16px;border-color:rgba(0,212,255,.15)">
+      <label class="field-label" style="margin-bottom:8px">&#128221; Informations complémentaires</label>
+      <textarea id="extra-notes" placeholder="Ajoutez vos notes ici... (elles apparaîtront dans la section Notes de la feuille)" style="width:100%;min-height:80px;resize:vertical;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--sans);font-size:13px;line-height:1.6;padding:13px 16px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--a1)'" onblur="this.style.borderColor='var(--b2)'"></textarea>
+    </div>
     <div class="actions">
       <button class="btn btn-ghost" onclick="goToStep(2)">&larr; Retour</button>
       <button class="btn btn-primary" onclick="generatePDF()">&#128424; Feuille nettoyage</button>
@@ -541,8 +545,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         if (!HANDLERS_OK2.some(h => handler.includes(h)) && !isTAYFedex && !isOEIMDFedex) return;
 
         const sched  = after[firstTimeIdx]     || '';
-        const est    = after[firstTimeIdx + 1] || '';
-        const actual = after[firstTimeIdx + 2] || '';
+        const rawEst    = after[firstTimeIdx + 1] || '';
+        const rawActual = after[firstTimeIdx + 2] || '';
+        // Validate: only use est/actual if they match the time pattern (reject runway like 04R, 22L)
+        const est    = timePattern.test(rawEst)    ? rawEst    : '';
+        const actual = timePattern.test(rawActual) ? rawActual : '';
         const time   = actual || est || sched || '—';
 
         if (!flight) return;
@@ -802,6 +809,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         <td></td>
       </tr>`).join('');
 
+    const extraNotesRaw = document.getElementById('extra-notes') ? document.getElementById('extra-notes').value.trim() : '';
+    const extraNotesHtml = extraNotesRaw
+      ? '<div style="font-size:13pt;font-weight:700;color:#000;padding:6pt 2pt 5pt 2pt;line-height:1.7;white-space:pre-wrap;margin-bottom:2pt">' + extraNotesRaw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
+      : '';
     const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -852,6 +863,7 @@ ${cateringBlock}
   <tbody>${rows}</tbody>
 </table>
 <div class="notes-title">Notes</div>
+${extraNotesHtml}
 <div class="note-line"></div>
 <div class="note-line"></div>
 <div class="note-line"></div>
@@ -1296,6 +1308,7 @@ ${cateringBlock}
     selectedShift = null;
     document.getElementById('fids-text').value = '';
     if (document.getElementById('catering-text')) document.getElementById('catering-text').value = '';
+    if (document.getElementById('extra-notes')) document.getElementById('extra-notes').value = '';
     document.getElementById('shift-agent').value = '';
     document.getElementById('shift-date').value = new Date().toISOString().split('T')[0];
     document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
