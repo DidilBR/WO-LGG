@@ -487,12 +487,29 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         const flight = after[1] || '';
         const reg    = after[2] || '';
 
-        const timePattern = /^\d{2}:\d{2}$/;
+        const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
         let firstTimeIdx = -1;
         for (let i = 6; i < after.length; i++) {
           if (timePattern.test(after[i])) { firstTimeIdx = i; break; }
         }
-        if (firstTimeIdx === -1) return;
+        const missingTime = firstTimeIdx === -1;
+        if (missingTime) {
+          // Include flight but mark time as missing
+          if (!flight) return;
+          var hnd2 = (beforeTimes && beforeTimes.length >= 1) ? beforeTimes[beforeTimes.length-1] : '';
+          hnd2 = hnd2.toUpperCase();
+          var HANDLERS_OK_MISSING = ['CHALLENGE', 'WFS', 'SWISSPORT'];
+          // For missing time, try to get handler from cols after dirIdx
+          var handlerGuess = '';
+          for (var ci = dirIdx+8; ci < cols.length; ci++) {
+            var col = (cols[ci]||'').toUpperCase();
+            if (HANDLERS_OK_MISSING.some(h => col.includes(h)) || col.includes('AVIAPARTNER') || col.includes('FEDEX')) {
+              handlerGuess = col; break;
+            }
+          }
+          flights.push({ time: '—', flight, reg, stand: '', handler: handlerGuess || '', manual: false, missingTime: true });
+          return;
+        }
 
         const beforeTimes = after.slice(6, firstTimeIdx);
         const stand   = beforeTimes.length >= 2 ? beforeTimes[beforeTimes.length - 2] : (beforeTimes[0] || '');
@@ -539,14 +556,22 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         return true;
       });
 
-      // Trier par heure
+      // Trier par heure avec gestion correcte du night shift (22h→23h→00h→01h→...)
       flights.sort((a, b) => {
-        const norm = t => {
-          if (!t || t === '—') return '99:99';
-          // Gérer les heures après minuit (00:xx < 06:xx pour un shift night)
-          return t;
+        const toMinutes = t => {
+          if (!t || t === '—') return 9999;
+          const parts = t.split(':');
+          if (parts.length !== 2) return 9999;
+          const h = parseInt(parts[0]), m = parseInt(parts[1]);
+          if (isNaN(h) || isNaN(m)) return 9999;
+          let mins = h * 60 + m;
+          // Night shift correction: treat 00h-09h as coming AFTER 22h-23h
+          if (selectedShift && selectedShift.name === 'NIGHT') {
+            if (h < 10) mins += 24 * 60; // push early morning after midnight
+          }
+          return mins;
         };
-        return norm(a.time).localeCompare(norm(b.time));
+        return toMinutes(a.time) - toMinutes(b.time);
       });
     }
 
@@ -620,12 +645,15 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         pills += makePill('lha-catering-'+i, '🍽 CATERING', null, 0, 210, 180);
       }
 
-      return '<div class="flight-card ' + (selectedFlights.has(i) ? 'selected' : '') + '" onclick="toggleFlight(' + i + ')">' +
+      const missingHighlight = f.missingTime ? 'box-shadow:0 0 0 2px #ffff00,0 0 12px #ffff00;' : '';
+      return '<div class="flight-card ' + (selectedFlights.has(i) ? 'selected' : '') + '" onclick="toggleFlight(' + i + ')" style="' + missingHighlight + '">' +
         '<div class="check">' + (selectedFlights.has(i) ? '✓' : '') + '</div>' +
         '<div class="flight-info">' +
           '<span class="flight-reg">' + (f.reg || '—') + '</span>' +
           '<span class="flight-num">' + f.flight + '</span>' +
-          '<span class="flight-time">ETA ' + f.time + '</span>' +
+          (f.missingTime
+            ? '<span style="font-size:10px;font-weight:700;color:#000;background:#ffff00;padding:2px 8px;border-radius:20px;font-family:var(--mono)">⚠ HEURE MANQUANTE</span>'
+            : '<span class="flight-time">ETA ' + f.time + '</span>') +
           (f.stand ? '<span class="flight-stand">Stand ' + f.stand + '</span>' : '') +
           '<span class="flight-stand" style="color:#888">' + f.handler + '</span>' +
         '</div>' +
@@ -695,9 +723,25 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     const reg    = document.getElementById('m-reg').value.trim().toUpperCase();
     const stand  = document.getElementById('m-stand').value.trim().toUpperCase();
     if (!flight || !time) { alert('N° de vol et heure requis.'); return; }
-    const idx = flights.length;
     flights.push({ flight, time, reg, stand, handler: 'MANUEL', manual: true });
-    selectedFlights.add(idx);
+    // Re-sort after adding
+    flights.sort((a, b) => {
+      const toMin = t => {
+        if (!t || t === '—') return 9999;
+        const p = t.split(':');
+        if (p.length !== 2) return 9999;
+        const h = parseInt(p[0]), m = parseInt(p[1]);
+        if (isNaN(h) || isNaN(m)) return 9999;
+        let mins = h * 60 + m;
+        if (selectedShift && selectedShift.name === 'NIGHT' && h < 10) mins += 24*60;
+        return mins;
+      };
+      return toMin(a.time) - toMin(b.time);
+    });
+    // Rebuild selectedFlights to match new order
+    const newSelected = new Set();
+    flights.forEach((f, i) => { if (f.manual || selectedFlights.has(i)) newSelected.add(i); });
+    selectedFlights = newSelected;
     ['m-flight','m-time','m-reg','m-stand'].forEach(id => document.getElementById(id).value = '');
     renderFlights();
   }
