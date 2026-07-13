@@ -290,6 +290,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
 
 
+
   let selectedShift = null;
   let flights = [];
   let selectedFlights = new Set();
@@ -776,31 +777,31 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     const chosenCaterings = caterings.filter((_,i) => selectedCaterings.has(i));
 
     const cateringBlock = chosenCaterings.length > 0 ? `
-      <div style="margin-bottom:14pt">
+      <div style="margin-bottom:8pt">
         <div style="font-size:13pt;font-weight:700;letter-spacing:1pt;text-transform:uppercase;border-bottom:2pt solid #000;padding-bottom:5pt;margin-bottom:8pt">
           Catering(s) à livrer
         </div>
         <table style="width:100%;border-collapse:collapse">
           <thead>
             <tr>
-              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Date</th>
-              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Company</th>
-              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Reg.</th>
-              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Vol</th>
-              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Livraison</th>
-              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Départ</th>
-              <th style="background:#111;color:#fff;padding:6pt 7pt;font-size:10pt;text-transform:uppercase;text-align:left">Crew</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Date</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Company</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Reg.</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Vol</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Livraison</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Départ</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Crew</th>
             </tr>
           </thead>
           <tbody>
             ${chosenCaterings.map((ct,ci) => `<tr style="background:${ci%2===0?'#f5f5f5':'#fff'}">
-              <td style="padding:10pt 7pt;font-size:12pt;font-weight:600">${ct.date||'—'}</td>
-              <td style="padding:10pt 7pt;font-size:12pt;font-weight:700">${ct.company||'—'}</td>
-              <td style="padding:10pt 7pt;font-size:12pt">${ct.reg||'—'}</td>
-              <td style="padding:10pt 7pt;font-size:12pt;font-weight:600">${ct.flight||'—'}</td>
-              <td style="padding:10pt 7pt;font-size:12pt">${ct.delivery||'—'}</td>
-              <td style="padding:10pt 7pt;font-size:12pt">${ct.departure||'—'}</td>
-              <td style="padding:10pt 7pt;font-size:12pt">${ct.crew||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt;font-weight:600">${ct.date||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt;font-weight:700">${ct.company||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt">${ct.reg||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt;font-weight:600">${ct.flight||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt">${ct.delivery||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt">${ct.departure||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt">${ct.crew||'—'}</td>
             </tr>`).join('')}
           </tbody>
         </table>
@@ -811,11 +812,51 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         <td><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #000;border-radius:2px;vertical-align:middle"></span></td>
         <td><b>${f.reg || '—'}</b></td>
         <td>${f.flight}</td>
-        <td>${f.time}</td>
+        <td><b>${f.time}</b></td>
         <td>${f.stand || '—'}</td>
         <td>${f.handler || '—'}</td>
         <td></td>
       </tr>`).join('');
+
+    // ASL 737 section (TAY/FEDEX + OEIMD/FEDEX only, not B744)
+    const asl737Flights = flights.filter(function(f) {
+      var flt = (f.flight||'').toUpperCase();
+      var hnd = (f.handler||'').toUpperCase();
+      var reg = (f.reg||'').toUpperCase();
+      return (flt.startsWith('TAY') && hnd.includes('FEDEX')) || (reg === 'OEIMD' && hnd.includes('FEDEX'));
+    }).filter(function(f, i) {
+      // Only include if checkbox is checked in the ASL737 list
+      var origIdx = flights.indexOf(f);
+      var cb = document.getElementById('asl737-' + origIdx);
+      return cb && cb.checked;
+    });
+
+    const asl737Block = asl737Flights.length > 0 ? `
+      <div style="border-top:2pt solid #000;margin-top:6pt;padding-top:5pt">
+        <div style="font-size:11pt;font-weight:700;letter-spacing:1pt;text-transform:uppercase;border-bottom:1.5pt solid #000;padding-bottom:4pt;margin-bottom:4pt">&#9992; ASL 737</div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th style="background:#111;color:#fff;padding:5pt 7pt;font-size:10pt;text-align:left;width:28pt">&#10003;</th>
+              <th style="background:#111;color:#fff;padding:5pt 7pt;font-size:10pt;text-align:left">Registration</th>
+              <th style="background:#111;color:#fff;padding:5pt 7pt;font-size:10pt;text-align:left">N&#176; de vol</th>
+              <th style="background:#111;color:#fff;padding:5pt 7pt;font-size:10pt;text-align:left">ETA</th>
+              <th style="background:#111;color:#fff;padding:5pt 7pt;font-size:10pt;text-align:left">Stand</th>
+              <th style="background:#111;color:#fff;padding:5pt 7pt;font-size:10pt;text-align:left">Remarques</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${asl737Flights.map((f,ci) => '<tr style="background:' + (ci%2===0?'#f5f5f5':'#fff') + '">' +
+              '<td style="padding:10pt 7pt"><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #000;border-radius:2px;vertical-align:middle"></span></td>' +
+              '<td style="padding:5pt 6pt;font-size:10pt;font-weight:700">' + (f.reg||'—') + '</td>' +
+              '<td style="padding:5pt 6pt;font-size:10pt">' + (f.flight||'—') + '</td>' +
+              '<td style="padding:5pt 6pt;font-size:10pt;font-weight:700">' + (f.time||'—') + '</td>' +
+              '<td style="padding:5pt 6pt;font-size:10pt">' + (f.stand||'—') + '</td>' +
+              '<td style="padding:5pt 6pt;font-size:10pt"></td>' +
+            '</tr>').join('')}
+          </tbody>
+        </table>
+      </div>` : '';
 
     const extraNotesRaw = document.getElementById('extra-notes') ? document.getElementById('extra-notes').value.trim() : '';
     const extraNotesHtml = extraNotesRaw
@@ -829,18 +870,18 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 <style>
   @page { size: A4 portrait; margin: 12mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; color: #000; background: #fff; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2pt solid #000; padding-bottom: 8pt; margin-bottom: 10pt; }
-  .title { font-size: 16pt; font-weight: 700; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; background: #fff; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2pt solid #000; padding-bottom: 5pt; margin-bottom: 6pt; }
+  .title { font-size: 14pt; font-weight: 700; }
   .subtitle { font-size: 10pt; color: #333; margin-top: 2pt; }
-  .meta { text-align: right; font-size: 11pt; line-height: 1.6; color: #000; }
+  .meta { text-align: right; font-size: 10pt; line-height: 1.4; color: #000; }
   table { width: 100%; border-collapse: collapse; }
-  th { background: #000; color: #fff; padding: 5pt 7pt; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.5pt; text-align: left; }
-  td { padding: 10pt 7pt; border-bottom: 1pt solid #bbb; font-size: 11pt; color: #000; vertical-align: middle; }
+  th { background: #000; color: #fff; padding: 4pt 6pt; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5pt; text-align: left; }
+  td { padding: 6pt 6pt; border-bottom: 1pt solid #bbb; font-size: 10pt; color: #000; vertical-align: middle; }
   tr:nth-child(even) td { background: #f0f0f0; }
-  .notes-title { font-size: 8pt; text-transform: uppercase; letter-spacing: 1pt; color: #333; margin-bottom: 6pt; margin-top: 16pt; }
-  .note-line { border-bottom: 1pt solid #999; margin-bottom: 16pt; }
-  .footer { margin-top: 12pt; border-top: 1pt solid #aaa; padding-top: 5pt; font-size: 7pt; color: #333; display: flex; justify-content: space-between; }
+  .notes-title { font-size: 8pt; text-transform: uppercase; letter-spacing: 1pt; color: #333; margin-bottom: 6pt; margin-top: 8pt; }
+  .note-line { border-bottom: 1pt solid #999; margin-bottom: 10pt; }
+  .footer { margin-top: 6pt; border-top: 1pt solid #aaa; padding-top: 5pt; font-size: 7pt; color: #333; display: flex; justify-content: space-between; }
 </style>
 </head>
 <body>
@@ -870,6 +911,7 @@ ${cateringBlock}
   </thead>
   <tbody>${rows}</tbody>
 </table>
+${asl737Block}
 <div class="notes-title">Notes</div>
 ${extraNotesHtml}
 <div class="note-line"></div>
@@ -1460,6 +1502,23 @@ document.querySelectorAll('.tdot').forEach(function(b) {
   });
 })();
 
+
+
+document.querySelectorAll('.tdot').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+(function() {
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
+})();
 
 
 document.querySelectorAll('.tdot').forEach(function(b) {
