@@ -15,10 +15,34 @@
   --red:#ff4d6d;--r:12px;--r2:8px;
   --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
 }
-[data-theme="aurora"]{--bg0:#06010f;--bg1:#0d0320;--bg2:#130630;--bg3:#1a0a40;--b1:rgba(255,255,255,.04);--b2:rgba(200,80,255,.18);--b3:rgba(200,80,255,.32);--a1:#e040fb;--a2:#ff4081;--t1:#f8e8ff;--t2:#9060aa;--t3:#3d1a55}
-[data-theme="emerald"]{--bg0:#010c06;--bg1:#021a0d;--bg2:#032a14;--bg3:#04381c;--b1:rgba(255,255,255,.04);--b2:rgba(0,255,150,.15);--b3:rgba(0,255,150,.28);--a1:#00ffaa;--a2:#00cc88;--t1:#e0fff5;--t2:#30996a;--t3:#0d4030}
-[data-theme="inferno"]{--bg0:#0d0100;--bg1:#1a0300;--bg2:#260500;--bg3:#330700;--b1:rgba(255,255,255,.04);--b2:rgba(255,60,0,.18);--b3:rgba(255,60,0,.32);--a1:#ff3d00;--a2:#ff9100;--t1:#fff3ee;--t2:#993300;--t3:#4d1800}
-[data-theme="midnight"]{--bg0:#00010d;--bg1:#00021a;--bg2:#000328;--bg3:#000438;--b1:rgba(255,255,255,.04);--b2:rgba(80,120,255,.18);--b3:rgba(80,120,255,.32);--a1:#748fff;--a2:#b4c8ff;--t1:#e0e8ff;--t2:#2a40aa;--t3:#0d1550}
+/* AURORA - violet/rose néon - VISIBLE */
+[data-theme="aurora"]{
+  --bg0:#0a0015;--bg1:#130025;--bg2:#1c0035;--bg3:#250045;
+  --b1:rgba(255,255,255,.07);--b2:rgba(220,100,255,.25);--b3:rgba(220,100,255,.4);
+  --a1:#dd55ff;--a2:#ff4488;
+  --t1:#ffffff;--t2:#cc99ee;--t3:#885599;
+}
+/* OCEAN - bleu profond clair */
+[data-theme="ocean"]{
+  --bg0:#001830;--bg1:#002444;--bg2:#003058;--bg3:#003c6c;
+  --b1:rgba(255,255,255,.07);--b2:rgba(0,180,255,.25);--b3:rgba(0,180,255,.4);
+  --a1:#00c8ff;--a2:#0088cc;
+  --t1:#ffffff;--t2:#88ccee;--t3:#336688;
+}
+/* FOREST - vert profond clair */
+[data-theme="forest"]{
+  --bg0:#001a08;--bg1:#002810;--bg2:#003618;--bg3:#004420;
+  --b1:rgba(255,255,255,.07);--b2:rgba(0,220,100,.25);--b3:rgba(0,220,100,.4);
+  --a1:#00ee66;--a2:#00aa44;
+  --t1:#ffffff;--t2:#88ddaa;--t3:#336644;
+}
+/* SUNSET - orange/rouge chaleureux */
+[data-theme="sunset"]{
+  --bg0:#1a0a00;--bg1:#2a1200;--bg2:#381a00;--bg3:#462200;
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,140,0,.25);--b3:rgba(255,140,0,.4);
+  --a1:#ff9900;--a2:#ff5500;
+  --t1:#ffffff;--t2:#ffcc88;--t3:#996633;
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);background:var(--bg0);color:var(--t1);min-height:100vh;transition:background .4s,color .4s}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 15% 10%,rgba(139,92,246,.08),transparent 60%),radial-gradient(ellipse 50% 40% at 85% 85%,rgba(0,212,255,.06),transparent 60%);pointer-events:none;z-index:0}
@@ -119,11 +143,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   </div>
   <div class="header-right">
     <div class="theme-dots">
-      <button class="tdot active" data-theme="cyber"    title="Cyber"    style="background:linear-gradient(135deg,#00d4ff,#8b5cf6)"></button>
-      <button class="tdot"        data-theme="aurora"   title="Aurora"   style="background:linear-gradient(135deg,#e040fb,#ff4081)"></button>
-      <button class="tdot"        data-theme="emerald"  title="Emerald"  style="background:linear-gradient(135deg,#00ffaa,#00cc88)"></button>
-      <button class="tdot"        data-theme="inferno"  title="Inferno"  style="background:linear-gradient(135deg,#ff3d00,#ff9100)"></button>
-      <button class="tdot"        data-theme="midnight" title="Midnight" style="background:linear-gradient(135deg,#748fff,#b4c8ff)"></button>
+      <button class="tdot active" data-theme="cyber"   title="🌌 Cyber"   style="background:linear-gradient(135deg,#00d4ff,#8b5cf6)"></button>
+      <button class="tdot"        data-theme="aurora"  title="💜 Aurora"  style="background:linear-gradient(135deg,#dd55ff,#ff4488)"></button>
+      <button class="tdot"        data-theme="ocean"   title="🌊 Ocean"   style="background:linear-gradient(135deg,#00c8ff,#0088cc)"></button>
+      <button class="tdot"        data-theme="forest"  title="🌿 Forest"  style="background:linear-gradient(135deg,#00ee66,#00aa44)"></button>
+      <button class="tdot"        data-theme="sunset"  title="🌅 Sunset"  style="background:linear-gradient(135deg,#ff9900,#ff5500)"></button>
     </div>
     <div class="step-pill" id="step-indicator">ETAPE 1 / 3</div>
   </div>
@@ -208,6 +232,12 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     <div class="stats-row">
       <div class="stat-card"><div class="num" id="count-selected">0</div><div class="lbl">Selectionnes</div></div>
       <div class="stat-card"><div class="num" id="count-total">0</div><div class="lbl">Total detectes</div></div>
+    </div>
+    <!-- Avions à nettoyer -->
+    <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
+      <div style="height:1px;flex:1;background:var(--b2)"></div>
+      <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--a1);padding:5px 14px;border:1px solid rgba(0,212,255,.3);border-radius:20px;background:rgba(0,212,255,.06)">🛩 Avions à nettoyer</div>
+      <div style="height:1px;flex:1;background:var(--b2)"></div>
     </div>
     <div class="flights-list" id="flights-list">
       <div class="empty-state"><div class="icon">&#9992;</div><p>Aucun vol detecte</p></div>
@@ -303,6 +333,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
 
 
+
   let selectedShift = null;
   let flights = [];
   let selectedFlights = new Set();
@@ -320,8 +351,16 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   function goToStep(n) {
     [1,2,3].forEach(i => document.getElementById('step-'+i).classList.add('hidden'));
     document.getElementById('step-'+n).classList.remove('hidden');
-    document.getElementById('step-indicator').textContent = 'ÉTAPE ' + n + ' / 3';
+    document.getElementById('step-indicator').textContent = 'ETAPE ' + n + ' / 3';
     window.scrollTo(0,0);
+    // Update progress bar
+    [1,2,3].forEach(i => {
+      var el = document.getElementById('prog-'+i);
+      if (!el) return;
+      el.classList.remove('active','done');
+      if (i < n) el.classList.add('done');
+      else if (i === n) el.classList.add('active');
+    });
   }
 
   // ── Shift time filter ─────────────────────────────────────────
@@ -649,6 +688,8 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       const isSVA    = flt.startsWith('SVA') && hnd.includes('WFS');
       const ASL_B744 = ['OEIFB','OEIFK','OEIFD','OEILC'];
       const isASL737 = (
+        f._manualASL737 === true ||
+        (flt.startsWith('TAY') && regR.startsWith('OEI') && !['OEIFB','OEIFK','OEIFD','OEILC'].includes(regR)) ||
         (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !['OEIFB','OEIFK','OEIFD','OEILC'].includes(regR)) ||
         (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
         (regR === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
@@ -716,11 +757,18 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     var asl737Section = document.getElementById('asl737-section');
     var asl737List    = document.getElementById('asl737-list');
     if (asl737Section && asl737List) {
+      var ASL_B744_DISP = ['OEIFB','OEIFK','OEIFD','OEILC'];
       var asl737Flights = flights.filter(function(f2) {
         var f2lt = (f2.flight||'').toUpperCase();
         var f2nd = (f2.handler||'').toUpperCase();
         var f2eg = (f2.reg||'').toUpperCase();
-        return (f2lt.startsWith('TAY') && f2nd.includes('FEDEX')) || (f2eg === 'OEIMD' && f2nd.includes('FEDEX'));
+        return (
+          f2._manualASL737 === true ||
+          (f2lt.startsWith('TAY') && f2eg.startsWith('OEI') && !ASL_B744_DISP.includes(f2eg)) ||
+          (f2lt.startsWith('TAY') && (f2nd.includes('FEDEX') || f2nd.includes('AERO')) && !ASL_B744_DISP.includes(f2eg)) ||
+          (f2lt.startsWith('FDX') && (f2nd.includes('FEDEX') || f2nd.includes('AERO'))) ||
+          (f2eg === 'OEIMD' && (f2nd.includes('FEDEX') || f2nd.includes('AERO')))
+        );
       });
       if (asl737Flights.length > 0) {
         asl737Section.classList.remove('hidden');
@@ -813,7 +861,20 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     const date  = document.getElementById('shift-date').value;
     const agent = document.getElementById('shift-agent').value.trim() || '—';
     const shift = selectedShift ? selectedShift.name + ' · ' + selectedShift.time : '—';
-    const chosen = flights.filter((_, i) => selectedFlights.has(i));
+    const ASL_B744_CHOSEN = ['OEIFB','OEIFK','OEIFD','OEILC'];
+    const chosen = flights.filter((f, i) => {
+      if (!selectedFlights.has(i)) return false;
+      var flt2 = (f.flight||'').toUpperCase();
+      var hnd2 = (f.handler||'').toUpperCase();
+      var reg2c = (f.reg||'').toUpperCase();
+      // Exclude ASL737 from main list
+      var isA737 = f._manualASL737 === true ||
+        (flt2.startsWith('TAY') && reg2c.startsWith('OEI') && !ASL_B744_CHOSEN.includes(reg2c)) ||
+        (flt2.startsWith('TAY') && (hnd2.includes('FEDEX') || hnd2.includes('AERO')) && !ASL_B744_CHOSEN.includes(reg2c)) ||
+        (flt2.startsWith('FDX') && (hnd2.includes('FEDEX') || hnd2.includes('AERO'))) ||
+        (reg2c === 'OEIMD' && (hnd2.includes('FEDEX') || hnd2.includes('AERO')));
+      return !isA737;
+    });
     if (chosen.length === 0) { alert('Sélectionne au moins un vol.'); return; }
 
     const fmt = date
@@ -871,10 +932,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       var hnd = (f.handler||'').toUpperCase();
       var reg = (f.reg||'').toUpperCase();
       return (
+        f._manualASL737 === true ||
+        (flt.startsWith('TAY') && reg.startsWith('OEI') && !ASL_B744_PDF.includes(reg)) ||
         (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_PDF.includes(reg)) ||
         (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
-        (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
-        f._manualASL737 === true
+        (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
       );
     }).filter(function(f, i) {
       // Only include if checkbox is checked in the ASL737 list
@@ -1262,6 +1324,8 @@ ${(function(){
       var isSWISS     = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
       var ASL_B744_W = ['OEIFB','OEIFK','OEIFD','OEILC'];
       var isASL737 = (
+        f._manualASL737 === true ||
+        (flt.startsWith('TAY') && reg2.startsWith('OEI') && !ASL_B744_W.includes(reg2)) ||
         (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_W.includes(reg2)) ||
         (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
         (reg2 === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
@@ -1408,7 +1472,9 @@ ${(function(){
       var flt = (f.flight||'').toUpperCase();
       var hnd = (f.handler||'').toUpperCase();
       var reg = (f.reg||'').toUpperCase();
-      return f._manualASL737 === true || (
+      return (
+        f._manualASL737 === true ||
+        (flt.startsWith('TAY') && reg.startsWith('OEI') && !ASL_B744_ONLY.includes(reg)) ||
         (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_ONLY.includes(reg)) ||
         (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
         (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
@@ -1553,6 +1619,23 @@ document.querySelectorAll('.tdot').forEach(function(b) {
   });
 })();
 
+
+
+document.querySelectorAll('.tdot').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+(function() {
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
+})();
 
 
 document.querySelectorAll('.tdot').forEach(function(b) {
