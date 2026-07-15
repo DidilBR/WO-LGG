@@ -249,14 +249,25 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     <div class="manual-form hidden" id="manual-form">
       <div class="manual-form-title">Ajout manuel</div>
       <div class="field-row" style="margin-bottom:12px">
-        <div><label class="field-label">N de vol *</label><input type="text" id="m-flight" placeholder="ex: TNT123"></div>
+        <div><label class="field-label">N de vol *</label><input type="text" id="m-flight" placeholder="ex: TNT123" oninput="var v=this.value.toUpperCase();var row=document.getElementById('abd-choice-row');if(row){if(v.startsWith('ABD'))row.classList.remove('hidden');else row.classList.add('hidden');}"></div>
         <div><label class="field-label">Heure ETA *</label><input type="text" id="m-time" placeholder="ex: 08:30"></div>
       </div>
       <div class="field-row" style="margin-bottom:14px">
         <div><label class="field-label">Registration</label><input type="text" id="m-reg" placeholder="ex: OO-TNA"></div>
         <div><label class="field-label">Stand</label><input type="text" id="m-stand" placeholder="ex: A12"></div>
       </div>
-      <button class="btn btn-primary" onclick="addManualFlight()">Ajouter ce vol</button>
+      <div id="abd-choice-row" class="hidden" style="margin-bottom:14px">
+        <label class="field-label">Vols ABD — Company</label>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:var(--a1)">
+            <input type="radio" name="abd-choice" id="abd-choice" value="ANA" checked style="accent-color:var(--a1)"> ANA
+          </label>
+          <label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:var(--a1)">
+            <input type="radio" name="abd-choice" value="WFS / Magma" style="accent-color:var(--a1)"> WFS / Magma
+          </label>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addManualFlight()" style="margin-top:4px">Ajouter ce vol</button>
     </div>
     <div class="panel" style="margin-top:16px;border-color:rgba(0,212,255,.15)">
       <label class="field-label" style="margin-bottom:8px">&#128221; Informations complémentaires</label>
@@ -283,6 +294,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 </div>
 
 <script>
+
 
 
 
@@ -635,12 +647,15 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       const isSWISS  = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
       const regR     = (f.reg || '').toUpperCase();
       const isSVA    = flt.startsWith('SVA') && hnd.includes('WFS');
-      const isASL737 = (flt.startsWith('TAY') && hnd.includes('FEDEX')) || (regR === 'OEIMD' && hnd.includes('FEDEX'));
+      const ASL_B744 = ['OEIFB','OEIFK','OEIFD','OEILC'];
+      const isASL737 = (
+        (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !['OEIFB','OEIFK','OEIFD','OEILC'].includes(regR)) ||
+        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+        (regR === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
+      );
 
       let pills = '';
-      if (isQTR) {
-        pills += makePill('qtr-catering-'+i, '✦ CATERING', null, 255, 170, 0);
-      }
+
       if (isWFS && !isSVA) {
         pills += makePill('wfs-handling-'+i, '⚙ HANDLING', null, 0, 200, 255);
       }
@@ -733,14 +748,46 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     document.getElementById('manual-form').classList.toggle('hidden');
   }
 
+  // Detect company from flight number
+  function detectCompany(flight, reg) {
+    var flt = (flight || '').toUpperCase();
+    var r   = (reg    || '').toUpperCase();
+    var ASL_B744_REGS_LOCAL = ['OEIFB','OEIFK','OEIFD','OEILC'];
+
+    if (flt.startsWith('TAY')) {
+      if (!ASL_B744_REGS_LOCAL.includes(r)) return { company: 'ASL 737', isASL737: true };
+      return { company: 'ASL', isASL737: false };
+    }
+    if (flt.startsWith('FDX')) return { company: 'ASL 737', isASL737: true };
+    if (flt.startsWith('ICL') || flt.startsWith('CHG') || flt.startsWith('SWN')) return { company: 'CHALLENGE', isASL737: false };
+    if (flt.startsWith('QTR')) return { company: 'QATAR', isASL737: false };
+    if (flt.startsWith('GTI')) return { company: 'Atlas Air', isASL737: false };
+    if (flt.startsWith('ETH')) return { company: 'ETH', isASL737: false };
+    if (flt.startsWith('LHA')) return { company: 'GI', isASL737: false };
+    if (flt.startsWith('SVA')) return { company: 'WFS', isASL737: false };
+    if (flt.startsWith('ABD')) return { company: 'ABD', isASL737: false, isABD: true };
+    if (flt.startsWith('AAE')) return { company: 'Lachs / Fly Meta', isASL737: false };
+    if (flt.startsWith('CAO')) return { company: 'WFS', isASL737: false };
+    return { company: 'MANUEL', isASL737: false };
+  }
+
   function addManualFlight() {
     const flight = document.getElementById('m-flight').value.trim().toUpperCase();
     const time   = document.getElementById('m-time').value.trim();
     const reg    = document.getElementById('m-reg').value.trim().toUpperCase();
     const stand  = document.getElementById('m-stand').value.trim().toUpperCase();
     if (!flight || !time) { alert('N° de vol et heure requis.'); return; }
-    flights.push({ flight, time, reg, stand, handler: 'MANUEL', manual: true });
-    // Re-sort after adding
+    var detected = detectCompany(flight, reg);
+    var handler  = detected.company;
+
+    // For ABD: ask Magma or ANA
+    if (detected.isABD) {
+      var choice = document.getElementById('abd-choice') ? document.getElementById('abd-choice').value : 'ANA';
+      handler = choice;
+    }
+
+    flights.push({ flight, time, reg, stand, handler: handler, manual: true, _manualASL737: detected.isASL737 });
+    // Re-sort
     flights.sort((a, b) => {
       const toMin = t => {
         if (!t || t === '—') return 9999;
@@ -754,7 +801,6 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       };
       return toMin(a.time) - toMin(b.time);
     });
-    // Rebuild selectedFlights to match new order
     const newSelected = new Set();
     flights.forEach((f, i) => { if (f.manual || selectedFlights.has(i)) newSelected.add(i); });
     selectedFlights = newSelected;
@@ -809,7 +855,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
     const rows = chosen.map(f => `
       <tr>
-        <td><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #000;border-radius:2px;vertical-align:middle"></span></td>
+        <td><span style="display:inline-block;width:12px;height:12px;border:1.5px solid #000;border-radius:2px;vertical-align:middle"></span></td>
         <td><b>${f.reg || '—'}</b></td>
         <td>${f.flight}</td>
         <td><b>${f.time}</b></td>
@@ -819,11 +865,17 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       </tr>`).join('');
 
     // ASL 737 section (TAY/FEDEX + OEIMD/FEDEX only, not B744)
+    const ASL_B744_PDF = ['OEIFB','OEIFK','OEIFD','OEILC'];
     const asl737Flights = flights.filter(function(f) {
       var flt = (f.flight||'').toUpperCase();
       var hnd = (f.handler||'').toUpperCase();
       var reg = (f.reg||'').toUpperCase();
-      return (flt.startsWith('TAY') && hnd.includes('FEDEX')) || (reg === 'OEIMD' && hnd.includes('FEDEX'));
+      return (
+        (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_PDF.includes(reg)) ||
+        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+        (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+        f._manualASL737 === true
+      );
     }).filter(function(f, i) {
       // Only include if checkbox is checked in the ASL737 list
       var origIdx = flights.indexOf(f);
@@ -847,7 +899,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
           </thead>
           <tbody>
             ${asl737Flights.map((f,ci) => '<tr style="background:' + (ci%2===0?'#f5f5f5':'#fff') + '">' +
-              '<td style="padding:10pt 7pt"><span style="display:inline-block;width:14px;height:14px;border:1.5px solid #000;border-radius:2px;vertical-align:middle"></span></td>' +
+              '<td style="padding:10pt 7pt"><span style="display:inline-block;width:12px;height:12px;border:1.5px solid #000;border-radius:2px;vertical-align:middle"></span></td>' +
               '<td style="padding:5pt 6pt;font-size:10pt;font-weight:700">' + (f.reg||'—') + '</td>' +
               '<td style="padding:5pt 6pt;font-size:10pt">' + (f.flight||'—') + '</td>' +
               '<td style="padding:5pt 6pt;font-size:10pt;font-weight:700">' + (f.time||'—') + '</td>' +
@@ -859,9 +911,9 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       </div>` : '';
 
     const extraNotesRaw = document.getElementById('extra-notes') ? document.getElementById('extra-notes').value.trim() : '';
-    const extraNotesHtml = extraNotesRaw
-      ? '<div style="font-size:13pt;font-weight:700;color:#000;padding:6pt 2pt 5pt 2pt;line-height:1.7;white-space:pre-wrap;margin-bottom:2pt">' + extraNotesRaw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
-      : '';
+    // Split notes into lines and write each ON a note line
+    const extraNotesLines = extraNotesRaw ? extraNotesRaw.split('\n').filter(function(l){ return l.trim(); }) : [];
+    const extraNotesHtml = '';  // handled inline with note lines below
     const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -913,13 +965,16 @@ ${cateringBlock}
 </table>
 ${asl737Block}
 <div class="notes-title">Notes</div>
-${extraNotesHtml}
-<div class="note-line"></div>
-<div class="note-line"></div>
-<div class="note-line"></div>
-<div class="note-line"></div>
-<div class="note-line"></div>
-<div class="note-line"></div>
+${(function(){
+  var lines = extraNotesLines;
+  var totalLines = 6;
+  var html = '';
+  for(var ni=0; ni<totalLines; ni++){
+    var txt = lines[ni] ? lines[ni].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+    html += '<div style="border-bottom:1pt solid #999;margin-bottom:10pt;font-size:10pt;font-weight:' + (txt?'700':'400') + ';color:#000;padding-bottom:2pt;min-height:14pt">' + txt + '</div>';
+  }
+  return html;
+})()}
 <div class="footer">
   <span>LGG Cleaning Ops · ${new Date().toLocaleString('fr-BE')}</span>
   <span>${chosen.length} avion${chosen.length > 1 ? 's' : ''} à nettoyer</span>
@@ -1205,7 +1260,12 @@ ${extraNotesHtml}
       var isQTR       = flt.startsWith('QTR');
       var isWFS       = hnd.includes('WFS') && !flt.startsWith('SVA');
       var isSWISS     = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
-      var isASL737    = (flt.startsWith('TAY') && hnd.includes('FEDEX')) || (reg2 === 'OEIMD' && hnd.includes('FEDEX'));
+      var ASL_B744_W = ['OEIFB','OEIFK','OEIFD','OEILC'];
+      var isASL737 = (
+        (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_W.includes(reg2)) ||
+        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+        (reg2 === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
+      );
 
       // ── SVA/WFS → Handling worksheet si coché ──
       if (flt.startsWith('SVA') && hnd.includes('WFS')) {
@@ -1233,12 +1293,7 @@ ${extraNotesHtml}
         var cbHdl = document.getElementById('wfs-handling-' + origIdx);
         if (cbHdl && cbHdl.checked) {
           pages += makeSheet(Object.assign({}, f, { _handling: true }));
-          if (isQTR) {
-            var cbCatH = document.getElementById('qtr-catering-' + origIdx);
-            if (cbCatH && cbCatH.checked) {
-              pages += makeSheet(Object.assign({}, f, { _qtrCatering: true }));
-            }
-          }
+
           return;
         }
       }
@@ -1286,16 +1341,12 @@ ${extraNotesHtml}
         return;
       }
 
-      // ── ASL 737 flights → worksheet printed last ──
+      // ── ASL 737 flights → always included, printed last ──
       if (isASL737) {
-        var cbASL = document.getElementById('asl737-' + origIdx);
-        if (cbASL && cbASL.checked) {
-          // Always generate Full Transit worksheet
-          pagesASL737 += makeSheet(Object.assign({}, f, { _asl737: true }));
-          // If handler is AERO → also generate Handling worksheet
-          if (hnd.includes('AERO')) {
-            pagesASL737 += makeSheet(Object.assign({}, f, { _asl737: true, _handling: true }));
-          }
+        // Always generate worksheet (no checkbox needed for main print)
+        pagesASL737 += makeSheet(Object.assign({}, f, { _asl737: true }));
+        if (hnd.includes('AERO')) {
+          pagesASL737 += makeSheet(Object.assign({}, f, { _asl737: true, _handling: true }));
         }
         return;
       }
@@ -1310,12 +1361,7 @@ ${extraNotesHtml}
           pages += makeSheet(Object.assign({}, f, { _lhaCatering: true }));
         }
       }
-      if (isQTR) {
-        var cbCat = document.getElementById('qtr-catering-' + origIdx);
-        if (cbCat && cbCat.checked) {
-          pages += makeSheet(Object.assign({}, f, { _qtrCatering: true }));
-        }
-      }
+
     });
 
     // Catering worksheets - one per selected catering
@@ -1357,11 +1403,16 @@ ${extraNotesHtml}
   // ── Print ASL737 worksheets only ──────────────────────────────
   function generateASL737Only() {
     var date = document.getElementById('shift-date').value;
-    var eligible = flights.filter(function(f, i) {
+    var ASL_B744_ONLY = ['OEIFB','OEIFK','OEIFD','OEILC'];
+    var eligible = flights.filter(function(f) {
       var flt = (f.flight||'').toUpperCase();
       var hnd = (f.handler||'').toUpperCase();
       var reg = (f.reg||'').toUpperCase();
-      return (flt.startsWith('TAY') && hnd.includes('FEDEX')) || (reg === 'OEIMD' && hnd.includes('FEDEX'));
+      return f._manualASL737 === true || (
+        (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_ONLY.includes(reg)) ||
+        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+        (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
+      );
     });
 
     if (eligible.length === 0) { alert('Aucun vol ASL 737 trouvé.'); return; }
@@ -1502,6 +1553,23 @@ document.querySelectorAll('.tdot').forEach(function(b) {
   });
 })();
 
+
+
+document.querySelectorAll('.tdot').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+(function() {
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
+})();
 
 
 document.querySelectorAll('.tdot').forEach(function(b) {
