@@ -640,10 +640,12 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       });
     }
 
-    // Auto-select only flights within the selected shift
+    // Auto-select only flights within the selected shift, exclude ICE flights
     selectedFlights = new Set();
     flights.forEach((f, i) => {
-      if (isInShift(f.time)) selectedFlights.add(i);
+      if (!isInShift(f.time)) return;
+      if ((f.flight||'').toUpperCase().startsWith('ICE')) return; // ICE not done
+      selectedFlights.add(i);
     });
 
     renderFlights();
