@@ -1011,6 +1011,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   </div>
 </div>
 ${cateringBlock}
+<div style="font-size:11pt;font-weight:700;letter-spacing:1pt;text-transform:uppercase;border-bottom:1.5pt solid #000;padding-bottom:4pt;margin-bottom:6pt;margin-top:8pt">🛩 Avions à nettoyer</div>
 <table>
   <thead>
     <tr>
@@ -1485,17 +1486,15 @@ ${(function(){
 
     var pagesOnly = '';
     eligible.forEach(function(f) {
-      var origIdx = flights.indexOf(f);
       var hnd = (f.handler||'').toUpperCase();
-      var cbASL = document.getElementById('asl737-' + origIdx);
-      if (!cbASL || !cbASL.checked) return;
+      // Print ALL eligible ASL737 flights, no checkbox needed
       pagesOnly += makeSheet(Object.assign({}, f, { _asl737: true }));
       if (hnd.includes('AERO')) {
         pagesOnly += makeSheet(Object.assign({}, f, { _asl737: true, _handling: true }));
       }
     });
 
-    if (!pagesOnly) { alert('Aucun vol ASL 737 sélectionné.'); return; }
+    if (!pagesOnly) { alert('Aucun vol ASL 737 trouvé.'); return; }
 
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ASL 737 Worksheets</title>'
       + '<style>@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0}'
