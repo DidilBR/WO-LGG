@@ -463,6 +463,34 @@ document.addEventListener('DOMContentLoaded', function() {
     return true;
   }
 
+  // ── Fenetre d'affichage (plus large que la preselection) ─────────
+  // Marge : -1h30 avant le debut du shift, +1h apres la fin.
+  // Utilisee pour ne LISTER que les vols pertinents (la preselection reste sur isInShift).
+  function isInDisplayWindow(timeStr) {
+    if (!selectedShift) return true; // pas de shift = tout afficher
+    if (!timeStr || timeStr === '—') return true; // heure inconnue : on l'affiche quand meme (a verifier manuellement)
+
+    const toMin = (t) => {
+      const parts = t.split(':');
+      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    };
+    const t = toMin(timeStr);
+
+    if (selectedShift.name === 'EARLY') {
+      // 04:00 - 15:00
+      return t >= toMin('04:00') && t < toMin('15:00');
+    }
+    if (selectedShift.name === 'LATE') {
+      // 12:00 - 23:00
+      return t >= toMin('12:00') && t < toMin('23:00');
+    }
+    if (selectedShift.name === 'NIGHT') {
+      // 20:00 - 07:00 (crosses midnight)
+      return t >= toMin('20:00') || t < toMin('07:00');
+    }
+    return true;
+  }
+
   // ── Parse Caterings ────────────────────────────────────────────
   // Format: DD-MON  COMPANY  REG  FLTNR  HHhMM  HHhMM  CREW
   function parseCaterings() {
@@ -695,6 +723,9 @@ document.addEventListener('DOMContentLoaded', function() {
         newFlights.push({ time, flight, reg, stand, handler, manual: false });
       });
 
+      // Ne garder que les vols dans la fenetre d'affichage du shift choisi
+      newFlights = newFlights.filter(f => isInDisplayWindow(f.time));
+
       // Dedoublonner
       const seen = new Set();
       newFlights = newFlights.filter(f => {
@@ -850,6 +881,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!flight) return;
         flights.push({ time, flight, reg, stand, handler, manual: false });
       });
+      // Ne garder que les vols dans la fenetre d'affichage du shift choisi
+      flights = flights.filter(f => f.missingTime || isInDisplayWindow(f.time));
       // Dédoublonner
       const seen = new Set();
       flights = flights.filter(f => {
