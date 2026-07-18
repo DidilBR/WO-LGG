@@ -236,6 +236,13 @@ body.locked{overflow:hidden}
       <div class="section-desc">Collez les donnees depuis fids.liegeairport.com/spw</div>
     </div>
     <div class="panel">
+      <button class="btn btn-primary" id="btn-load-api" onclick="loadFromFidsAPI()" style="width:100%;margin-bottom:10px">&#128260; Charger automatiquement (API FIDS)</button>
+      <div id="api-status" style="font-size:12px;min-height:16px;margin-bottom:14px"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div style="height:1px;flex:1;background:var(--b2)"></div>
+        <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3)">ou manuellement</div>
+        <div style="height:1px;flex:1;background:var(--b2)"></div>
+      </div>
       <div class="panel-hint">
         <strong>Comment faire :</strong><br>
         1. Ouvrez <strong>fids.liegeairport.com/spw</strong><br>
@@ -573,6 +580,156 @@ document.addEventListener('DOMContentLoaded', function() {
     // VIA peut être vide → on cherche autrement
     // Stratégie : regex sur la ligne originale pour extraire les champs clés
     return null; // on utilise la regex ci-dessous
+  }
+
+  // ── Chargement automatique via API FIDS (arrivals + departures) ──
+  const FIDS_ARRIVALS_URL   = 'https://fids.liegeairport.com/api/flights/spw/arrivals';
+  const FIDS_DEPARTURES_URL = 'https://fids.liegeairport.com/api/flights/spw/departures';
+
+  // Essaie d'abord un fetch direct ; si ça echoue (CORS / reseau), retente via un proxy CORS public
+  async function fetchJsonWithFallback(url) {
+    try {
+      const r = await fetch(url, { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return await r.json();
+    } catch (directErr) {
+      const proxied = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+      const r2 = await fetch(proxied, { cache: 'no-store' });
+      if (!r2.ok) throw new Error('proxy HTTP ' + r2.status + ' (direct: ' + directErr.message + ')');
+      return await r2.json();
+    }
+  }
+
+  function isoToHHMM(iso) {
+    if (!iso) return '';
+    const t = iso.split('T')[1];
+    return t ? t.slice(0, 5) : '';
+  }
+
+  async function loadFromFidsAPI() {
+    const btn = document.getElementById('btn-load-api');
+    const status = document.getElementById('api-status');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Chargement...'; }
+    if (status) { status.style.color = 'var(--t2)'; status.textContent = 'Recuperation des donnees FIDS...'; }
+
+    try {
+      const [arrivals, departures] = await Promise.all([
+        fetchJsonWithFallback(FIDS_ARRIVALS_URL),
+        fetchJsonWithFallback(FIDS_DEPARTURES_URL)
+      ]);
+
+      const shiftDateStr = document.getElementById('shift-date').value || new Date().toISOString().split('T')[0];
+      const nextDateObj = new Date(shiftDateStr + 'T00:00:00');
+      nextDateObj.setDate(nextDateObj.getDate() + 1);
+      const nextDateStr = nextDateObj.toISOString().split('T')[0];
+
+      function inWindow(iso) {
+        if (!iso) return false;
+        const day = iso.split('T')[0];
+        if (day === shiftDateStr) return true;
+        // Night shift crosses midnight: include early hours of the next day
+        if (selectedShift && selectedShift.name === 'NIGHT' && day === nextDateStr) {
+          const hh = parseInt(iso.split('T')[1].split(':')[0], 10);
+          return hh < 10;
+        }
+        // No shift picked yet: be a bit permissive around midnight too
+        if (!selectedShift && day === nextDateStr) {
+          const hh = parseInt(iso.split('T')[1].split(':')[0], 10);
+          return hh < 6;
+        }
+        return false;
+      }
+
+      // Build ETH departures map (reg -> flight number), same logic as manual parsing
+      const ethDepartures = {};
+      departures.forEach(d => {
+        if (!inWindow(d.date)) return;
+        const flt = (d.flightNumber || '').toUpperCase();
+        const hnd = (d.handler || '').toUpperCase();
+        const reg = (d.aircraftRegistration || '').toUpperCase();
+        if (flt.startsWith('ETH') && hnd.includes('AVIAPARTNER') && reg) {
+          ethDepartures[reg] = flt;
+        }
+      });
+
+      const HANDLERS_OK2 = ['CHALLENGE', 'WFS', 'SWISSPORT'];
+      let newFlights = [];
+
+      arrivals.forEach(a => {
+        if (!inWindow(a.date)) return;
+        const flight = a.flightNumber || '';
+        const reg    = a.aircraftRegistration || '';
+        const stand  = a.stand || '';
+        const handler = (a.handler || '').toUpperCase();
+        const time = isoToHHMM(a.aTx) || isoToHHMM(a.eTx) || isoToHHMM(a.sTx) || '—';
+        const flightUp = flight.toUpperCase();
+        const regUp = reg.toUpperCase();
+
+        const isETHFlight = flightUp.startsWith('ETH') && handler.includes('AVIAPARTNER');
+        if (isETHFlight) {
+          if (!ethDepartures[regUp]) return;
+          newFlights.push({ time, flight: ethDepartures[regUp], reg, stand, handler, manual: false, isETH: true });
+          return;
+        }
+
+        const isTAYFedex   = flightUp.startsWith('TAY') && handler.includes('FEDEX');
+        const isOEIMDFedex = regUp === 'OEIMD' && handler.includes('FEDEX');
+        if (!HANDLERS_OK2.some(h => handler.includes(h)) && !isTAYFedex && !isOEIMDFedex) return;
+
+        if (!flight) return;
+        newFlights.push({ time, flight, reg, stand, handler, manual: false });
+      });
+
+      // Dedoublonner
+      const seen = new Set();
+      newFlights = newFlights.filter(f => {
+        if (seen.has(f.flight)) return false;
+        seen.add(f.flight);
+        return true;
+      });
+
+      // Trier (meme gestion night shift que le parsing manuel)
+      newFlights.sort((x, y) => {
+        const toMinutes = t => {
+          if (!t || t === '—') return 9999;
+          const parts = t.split(':');
+          if (parts.length !== 2) return 9999;
+          const h = parseInt(parts[0]), m = parseInt(parts[1]);
+          if (isNaN(h) || isNaN(m)) return 9999;
+          let mins = h * 60 + m;
+          if (selectedShift && selectedShift.name === 'NIGHT' && h < 10) mins += 24 * 60;
+          return mins;
+        };
+        return toMinutes(x.time) - toMinutes(y.time);
+      });
+
+      flights = newFlights;
+
+      // Auto-selection identique a l'analyse manuelle
+      selectedFlights = new Set();
+      flights.forEach((f, i) => {
+        if (!isInShift(f.time)) return;
+        if ((f.flight || '').toUpperCase().startsWith('ICE')) return;
+        if ((f.reg || '').toUpperCase() === 'SERLE') return;
+        selectedFlights.add(i);
+      });
+
+      if (status) {
+        status.style.color = '#00e5a0';
+        status.textContent = '✓ ' + flights.length + ' vol(s) recupere(s) depuis l\'API FIDS.';
+      }
+
+      renderFlights();
+      goToStep(3);
+    } catch (err) {
+      console.error('loadFromFidsAPI error:', err);
+      if (status) {
+        status.style.color = 'var(--red)';
+        status.textContent = '✗ Impossible de charger l\'API (' + err.message + '). Utilisez le collage manuel ci-dessous.';
+      }
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🔄 Charger automatiquement (API FIDS)'; }
+    }
   }
 
   function analyzeFids() {
