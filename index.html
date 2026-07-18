@@ -212,14 +212,14 @@ body.locked{overflow:hidden}
       <div>
         <label class="field-label">Shift</label>
         <div class="shift-grid">
-          <button class="shift-btn" data-shift="EARLY" data-time="06:00-14:00" onclick="selectShift(this)">
-            <span class="shift-name">Early</span><span class="shift-time">06:00 - 14:00</span>
+          <button class="shift-btn" data-shift="EARLY" data-time="05:30-14:00" onclick="selectShift(this)">
+            <span class="shift-name">Early</span><span class="shift-time">05:30 - 14:00</span>
           </button>
-          <button class="shift-btn" data-shift="LATE" data-time="14:00-22:00" onclick="selectShift(this)">
-            <span class="shift-name">Late</span><span class="shift-time">14:00 - 22:00</span>
+          <button class="shift-btn" data-shift="LATE" data-time="13:30-22:00" onclick="selectShift(this)">
+            <span class="shift-name">Late</span><span class="shift-time">13:30 - 22:00</span>
           </button>
-          <button class="shift-btn" data-shift="NIGHT" data-time="22:00-06:00" onclick="selectShift(this)">
-            <span class="shift-name">Night</span><span class="shift-time">22:00 - 06:00</span>
+          <button class="shift-btn" data-shift="NIGHT" data-time="21:30-06:00" onclick="selectShift(this)">
+            <span class="shift-name">Night</span><span class="shift-time">21:30 - 06:00</span>
           </button>
         </div>
       </div>
@@ -449,16 +449,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const t = toMin(timeStr);
 
     if (selectedShift.name === 'EARLY') {
-      // 06:00 - 14:00
-      return t >= toMin('06:00') && t < toMin('14:00');
+      // 05:30 - 14:00
+      return t >= toMin('05:30') && t < toMin('14:00');
     }
     if (selectedShift.name === 'LATE') {
-      // 14:00 - 22:00
-      return t >= toMin('14:00') && t < toMin('22:00');
+      // 13:30 - 22:00
+      return t >= toMin('13:30') && t < toMin('22:00');
     }
     if (selectedShift.name === 'NIGHT') {
-      // 22:00 - 06:00 (crosses midnight)
-      return t >= toMin('22:00') || t < toMin('06:00');
+      // 21:30 - 06:00 (crosses midnight)
+      return t >= toMin('21:30') || t < toMin('06:00');
     }
     return true;
   }
