@@ -719,6 +719,37 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
 
+  // Modern compact tag for Swissport checkboxes
+  function makeTag(id, label, color) {
+    return '<div onclick="event.stopPropagation()" style="display:inline-flex;align-items:center">' +
+      '<label onclick="event.stopPropagation()" style="' +
+        'display:inline-flex;align-items:center;gap:4px;cursor:pointer;' +
+        'padding:3px 9px;border-radius:6px;' +
+        'background:rgba(255,255,255,0.04);' +
+        'border:1.5px solid ' + color + '44;' +
+        'font-size:9px;font-weight:800;letter-spacing:1.2px;' +
+        'color:' + color + ';font-family:var(--mono);' +
+        'transition:all 0.15s ease">' +
+      '<input type="checkbox" id="' + id + '" onclick="event.stopPropagation()" ' +
+        'onchange="' +
+          'var l=this.closest(\'label\');' +
+          'if(this.checked){' +
+            'l.style.background=\'' + color.replace('#','') + '\'.length?\'' + color + '33\':\'rgba(255,255,255,0.1)\';' +
+            'l.style.borderColor=\'' + color + '\';' +
+            'l.style.color=\'#fff\';' +
+            'l.style.boxShadow=\'0 0 8px ' + color + '66\'' +
+          '}else{' +
+            'l.style.background=\'rgba(255,255,255,0.04)\';' +
+            'l.style.borderColor=\'' + color + '44\';' +
+            'l.style.color=\'' + color + '\';' +
+            'l.style.boxShadow=\'none\'' +
+          '}" ' +
+        'style="width:11px;height:11px;cursor:pointer;accent-color:' + color + ';margin:0">' +
+      label +
+      '</label>' +
+    '</div>';
+  }
+
   function makePill(id, label, color, r, g, b) {
     return '<div onclick="event.stopPropagation()" style="display:flex;align-items:center">' +
       '<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;cursor:pointer;' +
@@ -772,11 +803,11 @@ document.addEventListener('DOMContentLoaded', function() {
         pills += makePill('sva-handling-'+i, '⚙ HANDLING', null, 255, 140, 0);
       }
       if (isSWISS) {
-        pills += makePill('swi-ft-'+i,      '◈ FULL TRANSIT', null, 123, 47, 255);
-        pills += makePill('swi-cl-'+i,      '✧ CLEANING',     null, 0,  210, 140);
-        pills += makePill('swi-lav-'+i,     '◉ LAVATORY',     null, 0,  180, 255);
-        pills += makePill('swi-wat-'+i,     '≋ WATER',         null, 50, 150, 255);
-        pills += makePill('swi-hds-'+i,     '⟁ HEADSET',      null, 220, 80, 255);
+        pills += makeTag('swi-ft-'+i,  'FT',      '#a78bfa');
+        pills += makeTag('swi-cl-'+i,  'CLN',     '#34d399');
+        pills += makeTag('swi-lav-'+i, 'LAV',     '#38bdf8');
+        pills += makeTag('swi-wat-'+i, 'WAT',     '#60a5fa');
+        pills += makeTag('swi-hds-'+i, 'HDS',     '#f472b6');
       }
       // LHA → catering pill
       if (flt.startsWith('LHA')) {
@@ -798,7 +829,7 @@ document.addEventListener('DOMContentLoaded', function() {
           '<span class="flight-stand" style="color:#888">' + f.handler + '</span>' +
         '</div>' +
         (f.manual ? '<button onclick="removeFlight(event,' + i + ')" style="background:none;border:none;color:#e05252;cursor:pointer;font-size:16px;padding:0 4px">×</button>' : '') +
-        (pills ? '<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding-right:4px;margin-left:auto">' + pills + '</div>' : '') +
+        (pills ? '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding-right:4px;margin-left:auto;background:rgba(255,255,255,.02);border-radius:8px;padding:3px 6px">' + pills + '</div>' : '') +
       '</div>';
     }).join('');
   }
