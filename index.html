@@ -754,11 +754,11 @@ document.addEventListener('DOMContentLoaded', function() {
       const isSWISS  = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
       const regR     = (f.reg || '').toUpperCase();
       const isSVA    = flt.startsWith('SVA') && hnd.includes('WFS');
-      const ASL_B744 = ['OEIFB','OEIFK','OEIFD','OEILC'];
+      const ASL_B744 = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
       const isASL737 = (
         f._manualASL737 === true ||
-        (flt.startsWith('TAY') && regR.startsWith('OEI') && !['OEIFB','OEIFK','OEIFD','OEILC'].includes(regR)) ||
-        (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !['OEIFB','OEIFK','OEIFD','OEILC'].includes(regR)) ||
+        (flt.startsWith('TAY') && regR.startsWith('OEI') && !['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'].includes(regR)) ||
+        (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'].includes(regR)) ||
         (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
         (regR === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
       );
@@ -825,7 +825,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var asl737Section = document.getElementById('asl737-section');
     var asl737List    = document.getElementById('asl737-list');
     if (asl737Section && asl737List) {
-      var ASL_B744_DISP = ['OEIFB','OEIFK','OEIFD','OEILC'];
+      var ASL_B744_DISP = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
       var asl737Flights = flights.filter(function(f2) {
         var f2lt = (f2.flight||'').toUpperCase();
         var f2nd = (f2.handler||'').toUpperCase();
@@ -868,7 +868,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function detectCompany(flight, reg) {
     var flt = (flight || '').toUpperCase();
     var r   = (reg    || '').toUpperCase();
-    var ASL_B744_REGS_LOCAL = ['OEIFB','OEIFK','OEIFD','OEILC'];
+    var ASL_B744_REGS_LOCAL = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
 
     if (flt.startsWith('TAY')) {
       if (!ASL_B744_REGS_LOCAL.includes(r)) return { company: 'ASL 737', isASL737: true };
@@ -929,7 +929,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const date  = document.getElementById('shift-date').value;
     const agent = document.getElementById('shift-agent').value.trim() || '—';
     const shift = selectedShift ? selectedShift.name + ' · ' + selectedShift.time : '—';
-    const ASL_B744_CHOSEN = ['OEIFB','OEIFK','OEIFD','OEILC'];
+    const ASL_B744_CHOSEN = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
     const chosen = flights.filter((f, i) => {
       if (!selectedFlights.has(i)) return false;
       var flt2 = (f.flight||'').toUpperCase();
@@ -994,7 +994,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </tr>`).join('');
 
     // ASL 737 section (TAY/FEDEX + OEIMD/FEDEX only, not B744)
-    const ASL_B744_PDF = ['OEIFB','OEIFK','OEIFD','OEILC'];
+    const ASL_B744_PDF = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
     const asl737Flights = flights.filter(function(f) {
       var flt = (f.flight||'').toUpperCase();
       var hnd = (f.handler||'').toUpperCase();
@@ -1391,7 +1391,7 @@ ${(function(){
       var isQTR       = flt.startsWith('QTR');
       var isWFS       = hnd.includes('WFS') && !flt.startsWith('SVA');
       var isSWISS     = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
-      var ASL_B744_W = ['OEIFB','OEIFK','OEIFD','OEILC'];
+      var ASL_B744_W = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
       var isASL737 = (
         f._manualASL737 === true ||
         (flt.startsWith('TAY') && reg2.startsWith('OEI') && !ASL_B744_W.includes(reg2)) ||
@@ -1536,7 +1536,7 @@ ${(function(){
   // ── Print ASL737 worksheets only ──────────────────────────────
   function generateASL737Only() {
     var date = document.getElementById('shift-date').value;
-    var ASL_B744_ONLY = ['OEIFB','OEIFK','OEIFD','OEILC'];
+    var ASL_B744_ONLY = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
     var eligible = flights.filter(function(f) {
       var flt = (f.flight||'').toUpperCase();
       var hnd = (f.handler||'').toUpperCase();
