@@ -251,9 +251,9 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     </div>
 
     <!-- Badge discret : nouveaux changements detectes par l'auto-refresh -->
-    <div id="refresh-badge" onclick="applyPendingRefresh()" style="display:none;align-items:center;gap:8px;cursor:pointer;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.35);border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12px;color:#00e5a0;font-weight:600">
+    <div id="refresh-badge" style="display:none;align-items:center;gap:8px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.35);border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12px;color:#00e5a0;font-weight:600">
       <span style="animation:spin 1.5s linear infinite;display:inline-block">&#128260;</span>
-      <span id="refresh-badge-text">Changements detectes — Actualiser</span>
+      <span id="refresh-badge-text">A jour</span>
     </div>
 
     <!-- Recherche / filtre des vols -->
@@ -777,8 +777,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   }
 
   // ── Auto-refresh silencieux (etape 3) ─────────────────────────
+  // Toutes les 1 min : va chercher les dernieres donnees, les applique
+  // automatiquement (sans demander), et affiche une bande verte
+  // recapitulative — a chaque cycle, meme s'il n'y a rien de nouveau.
   let currentStep = 1;
-  let pendingFreshFlights = null;
+  let autoRefreshBadgeTimer = null;
 
   async function checkForFlightUpdates() {
     if (currentStep !== 3) return;
@@ -789,50 +792,80 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         fetchJsonWithFallback(FIDS_DEPARTURES_URL)
       ]);
       const fresh = buildFlightsFromApiData(arrivals, departures);
+
       const key = f => f.flight + '|' + f.time + '|' + (f.stand || '');
-      const oldKeys = new Set(flights.map(key));
+      const oldApiFlights = flights.filter(f => !f.manual);
+      const oldKeys = new Set(oldApiFlights.map(key));
       const newKeys = new Set(fresh.map(key));
       let diff = 0;
       newKeys.forEach(k => { if (!oldKeys.has(k)) diff++; });
       oldKeys.forEach(k => { if (!newKeys.has(k)) diff++; });
-      if (diff > 0) {
-        pendingFreshFlights = fresh;
-        showRefreshBadge(diff);
-      }
+
+      // Garde la selection existante pour les vols deja connus + les vols ajoutes a la main,
+      // n'applique la selection par defaut (regles du shift) qu'aux vols vraiment nouveaux.
+      const oldSelectedFlightNums = new Set();
+      flights.forEach((f, i) => { if (selectedFlights.has(i)) oldSelectedFlightNums.add(f.flight); });
+      const oldFlightNums = new Set(flights.map(f => f.flight));
+
+      const manualFlights = flights.filter(f => f.manual);
+      const merged = fresh.concat(manualFlights.filter(mf => !fresh.some(f => f.flight === mf.flight)));
+
+      const newSelected = new Set();
+      merged.forEach((f, i) => {
+        if (oldFlightNums.has(f.flight)) {
+          if (oldSelectedFlightNums.has(f.flight)) newSelected.add(i);
+        } else {
+          if (f.manual) { newSelected.add(i); return; }
+          if (!isInShift(f.time)) return;
+          if ((f.flight || '').toUpperCase().startsWith('ICE')) return;
+          if ((f.reg || '').toUpperCase() === 'SERLE') return;
+          newSelected.add(i);
+        }
+      });
+
+      flights = merged;
+      selectedFlights = newSelected;
+      renderFlights();
+      showRefreshBadge(diff);
     } catch (e) {
       console.warn('checkForFlightUpdates: echec silencieux', e);
+      showRefreshBadge(null); // null = echec de la tentative de mise a jour
     }
   }
 
   function showRefreshBadge(n) {
     const el = document.getElementById('refresh-badge');
-    if (!el) return;
+    const txt = document.getElementById('refresh-badge-text');
+    if (!el || !txt) return;
+    const now = new Date().toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' });
+    if (n === null) {
+      el.style.borderColor = 'rgba(255,77,109,.35)';
+      el.style.background = 'rgba(255,77,109,.1)';
+      el.style.color = '#ff4d6d';
+      txt.textContent = 'Echec de la mise a jour automatique (' + now + ')';
+    } else if (n > 0) {
+      el.style.borderColor = 'rgba(0,229,160,.35)';
+      el.style.background = 'rgba(0,229,160,.1)';
+      el.style.color = '#00e5a0';
+      txt.textContent = 'Mis a jour automatiquement (' + now + ') — ' + n + ' changement' + (n > 1 ? 's' : '');
+    } else {
+      el.style.borderColor = 'rgba(0,229,160,.35)';
+      el.style.background = 'rgba(0,229,160,.1)';
+      el.style.color = '#00e5a0';
+      txt.textContent = 'A jour (' + now + ') — aucun changement';
+    }
     el.style.display = 'flex';
-    document.getElementById('refresh-badge-text').textContent =
-      n + ' changement' + (n > 1 ? 's' : '') + ' detecte' + (n > 1 ? 's' : '') + ' — Actualiser';
+    if (autoRefreshBadgeTimer) clearTimeout(autoRefreshBadgeTimer);
+    autoRefreshBadgeTimer = setTimeout(() => { el.style.display = 'none'; }, 8000);
   }
 
   function hideRefreshBadge() {
     const el = document.getElementById('refresh-badge');
     if (el) el.style.display = 'none';
-    pendingFreshFlights = null;
+    if (autoRefreshBadgeTimer) { clearTimeout(autoRefreshBadgeTimer); autoRefreshBadgeTimer = null; }
   }
 
-  function applyPendingRefresh() {
-    if (!pendingFreshFlights) return;
-    flights = pendingFreshFlights;
-    selectedFlights = new Set();
-    flights.forEach((f, i) => {
-      if (!isInShift(f.time)) return;
-      if ((f.flight || '').toUpperCase().startsWith('ICE')) return;
-      if ((f.reg || '').toUpperCase() === 'SERLE') return;
-      selectedFlights.add(i);
-    });
-    hideRefreshBadge();
-    renderFlights();
-  }
-
-  setInterval(checkForFlightUpdates, 3 * 60 * 1000); // toutes les 3 min
+  setInterval(checkForFlightUpdates, 60 * 1000); // toutes les 1 min
 
   // ── Recherche / filtre des vols ───────────────────────────────
   let flightSearchTerm = '';
@@ -1442,7 +1475,8 @@ ${(function(){
       w.document.open();
       w.document.write(html);
       w.document.close();
-      setTimeout(() => w.print(), 800);
+      w.focus();
+      w.print();
     } else {
       alert("Autorise les popups pour imprimer. Sur GitHub Pages cela fonctionnera automatiquement.");
     }
@@ -1838,10 +1872,11 @@ ${(function(){
     pages = pages + pagesASL737 + pagesCatering; // caterings printed last
     var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheets LGG</title>'
       + '<style>'
-      + '@page{size:A4 portrait;margin:10mm}'
+      + '@page{size:A4 portrait;margin:8mm}'
       + '*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
+      + 'html,body{height:100%}'
       + 'body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}'
-      + '.page{page-break-after:always}'
+      + '.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}'
       + '.page:last-child{page-break-after:avoid}'
       + '</style></head><body>' + pages + '</body></html>';
 
@@ -1850,7 +1885,8 @@ ${(function(){
       w.document.open();
       w.document.write(html);
       w.document.close();
-      setTimeout(function(){ w.print(); }, 600);
+      w.focus();
+      w.print();
     } else {
       alert('Autorise les popups pour generer les worksheets.');
     }
@@ -1889,13 +1925,14 @@ ${(function(){
     if (!pagesOnly) { alert('Aucun vol ASL 737 trouvé.'); return; }
 
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ASL 737 Worksheets</title>'
-      + '<style>@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0}'
+      + '<style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
+      + 'html,body{height:100%}'
       + 'body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}'
-      + '.page{page-break-after:always}.page:last-child{page-break-after:avoid}</style></head>'
+      + '.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}.page:last-child{page-break-after:avoid}</style></head>'
       + '<body>' + pagesOnly + '</body></html>';
 
     var w = window.open('', '_blank');
-    if (w) { w.document.open(); w.document.write(html); w.document.close(); setTimeout(function(){ w.print(); }, 600); }
+    if (w) { w.document.open(); w.document.write(html); w.document.close(); w.focus(); w.print(); }
     else { alert('Autorise les popups pour générer les worksheets.'); }
   }
 
