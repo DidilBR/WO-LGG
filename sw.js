@@ -1,10 +1,12 @@
 // Service Worker - LGG Cleaning Ops
-// Met en cache l'app elle-meme pour un lancement rapide et un usage
-// hors-ligne partiel. Les appels API (fids.liegeairport.com, val.run,
-// proxys) ne sont JAMAIS mis en cache : on veut toujours des donnees
-// de vols fraiches quand le reseau est disponible.
+// v2 : passage en strategie "reseau d'abord" pour l'HTML de l'app.
+// Avant (v1), l'app etait mise en cache et servie telle quelle indefiniment,
+// meme apres une mise a jour deployee sur GitHub Pages -> bug corrige ici.
+//
+// Les appels API (fids.liegeairport.com, val.run, proxys) ne sont JAMAIS
+// mis en cache : on veut toujours des donnees de vols fraiches.
 
-const CACHE_NAME = 'lgg-ops-v1';
+const CACHE_NAME = 'lgg-ops-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -44,11 +46,31 @@ self.addEventListener('fetch', (event) => {
     return; // laisse passer normalement vers le reseau
   }
 
+  const isAppHTML =
+    event.request.mode === 'navigate' ||
+    url.endsWith('/') ||
+    url.endsWith('index.html');
+
+  if (isAppHTML) {
+    // RESEAU D'ABORD : on va toujours chercher la derniere version en ligne.
+    // Le cache ne sert que de secours si le telephone est hors-ligne.
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then((res) => {
+          const resClone = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Pour le reste (icones, manifest...) : cache d'abord, c'est statique et sans risque.
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((res) => {
-        // met a jour le cache pour la prochaine visite
         const resClone = res.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
         return res;
