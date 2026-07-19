@@ -659,13 +659,19 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       const d = toBrusselsDate(iso);
       if (!d) return false;
       const day = brusselsDayStr(d);
-      if (day === shiftDateStr) return true;
-      if (selectedShift && selectedShift.name === 'NIGHT' && day === nextDateStr) {
-        const hh = parseInt(brusselsHHMM(d).split(':')[0], 10);
-        return hh < 10;
+      const hh = parseInt(brusselsHHMM(d).split(':')[0], 10);
+
+      if (selectedShift && selectedShift.name === 'NIGHT') {
+        // Night shift de la date choisie = soiree de shiftDateStr (a partir de ~20h) + petit matin de nextDateStr.
+        // ATTENTION : le petit matin (00h-06h) de shiftDateStr lui-meme appartient a la nuit PRECEDENTE
+        // (celle qui a commence la veille au soir) et ne doit surtout pas etre inclus ici.
+        if (day === shiftDateStr && hh >= 20) return true;
+        if (day === nextDateStr && hh < 10) return true;
+        return false;
       }
+
+      if (day === shiftDateStr) return true;
       if (!selectedShift && day === nextDateStr) {
-        const hh = parseInt(brusselsHHMM(d).split(':')[0], 10);
         return hh < 6;
       }
       return false;
