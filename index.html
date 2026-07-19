@@ -125,41 +125,6 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 .hidden{display:none!important}
 #pdf-sheet{display:none}
 
-/* PASSWORD */
-#pwd-overlay{
-  position:fixed;inset:0;z-index:9999;
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.6);
-  backdrop-filter:blur(18px);
-}
-#pwd-box{
-  background:var(--bg1);
-  border:1px solid var(--b2);
-  border-radius:16px;
-  padding:36px 32px;
-  width:320px;
-  text-align:center;
-  box-shadow:0 8px 40px rgba(0,0,0,.6);
-}
-#pwd-box .pwd-logo{font-size:32px;margin-bottom:12px}
-#pwd-box .pwd-title{font-size:15px;font-weight:700;color:var(--t1);margin-bottom:6px}
-#pwd-box .pwd-sub{font-size:12px;color:var(--t2);margin-bottom:20px}
-#pwd-box input{
-  width:100%;background:var(--bg2);border:1px solid var(--b2);
-  border-radius:8px;color:var(--t1);font-size:15px;font-family:var(--mono);
-  padding:12px 16px;outline:none;text-align:center;letter-spacing:2px;
-  margin-bottom:14px;
-}
-#pwd-box input:focus{border-color:var(--a1);box-shadow:0 0 0 3px rgba(0,200,255,.1)}
-#pwd-btn{
-  width:100%;padding:12px;border:none;border-radius:8px;cursor:pointer;
-  background:linear-gradient(135deg,var(--a1),var(--a2));
-  color:#fff;font-weight:700;font-size:13px;letter-spacing:1px;
-  text-transform:uppercase;transition:opacity .2s;
-}
-#pwd-btn:hover{opacity:.85}
-#pwd-error{color:#ff4d6d;font-size:12px;margin-top:8px;display:none}
-body.locked{overflow:hidden}
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-track{background:var(--bg0)}
 ::-webkit-scrollbar-thumb{background:var(--b3);border-radius:2px}
@@ -365,35 +330,6 @@ body.locked{overflow:hidden}
     </div>
   </div>
 </div>
-
-<!-- PASSWORD OVERLAY -->
-<div id="pwd-overlay">
-  <div id="pwd-box">
-    <div class="pwd-logo">✈</div>
-    <div class="pwd-title">LGG · Cleaning Ops</div>
-    <div class="pwd-sub">Entrez le mot de passe pour continuer</div>
-    <input type="password" id="pwd-input" placeholder="••••••••••" onkeydown="if(event.key==='Enter')checkPwd()">
-    <button id="pwd-btn" onclick="checkPwd()">Accéder</button>
-    <div id="pwd-error">Mot de passe incorrect. Fermeture...</div>
-  </div>
-</div>
-
-<script>
-function checkPwd() {
-  var val = document.getElementById('pwd-input').value;
-  if (val === 'D1A78A7639') {
-    document.getElementById('pwd-overlay').style.display = 'none';
-    document.body.classList.remove('locked');
-  } else {
-    document.getElementById('pwd-error').style.display = 'block';
-    setTimeout(function() { window.close(); }, 1500);
-  }
-}
-document.body.classList.add('locked');
-document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('pwd-input').focus();
-});
-</script>
 
 <script>
 
@@ -643,10 +579,30 @@ document.addEventListener('DOMContentLoaded', function() {
     throw lastErr;
   }
 
+  // L'API FIDS renvoie des horaires en UTC (sans suffixe de fuseau) : il faut les convertir
+  // en heure locale de Bruxelles (gere automatiquement CET/CEST hiver/ete).
+  function toBrusselsDate(iso) {
+    if (!iso) return null;
+    const hasOffset = /[Zz]$|[+-]\d\d:\d\d$/.test(iso);
+    const d = new Date(hasOffset ? iso : iso + 'Z');
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function brusselsDayStr(d) {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Brussels', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(d);
+    const y = parts.find(p => p.type === 'year').value;
+    const m = parts.find(p => p.type === 'month').value;
+    const da = parts.find(p => p.type === 'day').value;
+    return y + '-' + m + '-' + da;
+  }
+
+  function brusselsHHMM(d) {
+    return d.toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Brussels' });
+  }
+
   function isoToHHMM(iso) {
-    if (!iso) return '';
-    const t = iso.split('T')[1];
-    return t ? t.slice(0, 5) : '';
+    const d = toBrusselsDate(iso);
+    return d ? brusselsHHMM(d) : '';
   }
 
   async function loadFromFidsAPI() {
@@ -667,17 +623,18 @@ document.addEventListener('DOMContentLoaded', function() {
       const nextDateStr = nextDateObj.toISOString().split('T')[0];
 
       function inWindow(iso) {
-        if (!iso) return false;
-        const day = iso.split('T')[0];
+        const d = toBrusselsDate(iso);
+        if (!d) return false;
+        const day = brusselsDayStr(d);
         if (day === shiftDateStr) return true;
         // Night shift crosses midnight: include early hours of the next day
         if (selectedShift && selectedShift.name === 'NIGHT' && day === nextDateStr) {
-          const hh = parseInt(iso.split('T')[1].split(':')[0], 10);
+          const hh = parseInt(brusselsHHMM(d).split(':')[0], 10);
           return hh < 10;
         }
         // No shift picked yet: be a bit permissive around midnight too
         if (!selectedShift && day === nextDateStr) {
-          const hh = parseInt(iso.split('T')[1].split(':')[0], 10);
+          const hh = parseInt(brusselsHHMM(d).split(':')[0], 10);
           return hh < 6;
         }
         return false;
