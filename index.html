@@ -684,7 +684,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
     const ethDepartures = {};
     departures.forEach(d => {
-      if (!inWindow(d.date)) return;
+      if (!inWindow(d.sTx || d.date)) return;
       const flt = (d.flightNumber || '').toUpperCase();
       const hnd = (d.handler || '').toUpperCase();
       const reg = (d.aircraftRegistration || '').toUpperCase();
@@ -697,19 +697,23 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     let newFlights = [];
 
     arrivals.forEach(a => {
-      if (!inWindow(a.date)) return;
+      // Le rattachement au shift se fait sur l'horaire PREVU (sTx), pas sur l'horaire
+      // reel/estime : un vol prevu pendant la nuit reste "de la nuit" meme s'il prend
+      // un gros retard et atterrit finalement le matin.
+      if (!inWindow(a.sTx || a.date)) return;
       const flight = a.flightNumber || '';
       const reg    = a.aircraftRegistration || '';
       const stand  = a.stand || '';
       const handler = (a.handler || '').toUpperCase();
-      const time = isoToHHMM(a.aTx) || isoToHHMM(a.eTx) || isoToHHMM(a.sTx) || '—';
+      const time = isoToHHMM(a.aTx) || isoToHHMM(a.eTx) || isoToHHMM(a.sTx) || '—'; // affichage : heure reelle/estimee
+      const schedTime = isoToHHMM(a.sTx) || time; // rattachement au shift : heure prevue
       const flightUp = flight.toUpperCase();
       const regUp = reg.toUpperCase();
 
       const isETHFlight = flightUp.startsWith('ETH') && handler.includes('AVIAPARTNER');
       if (isETHFlight) {
         if (!ethDepartures[regUp]) return;
-        newFlights.push({ time, flight: ethDepartures[regUp], reg, stand, handler, manual: false, isETH: true });
+        newFlights.push({ time, schedTime, flight: ethDepartures[regUp], reg, stand, handler, manual: false, isETH: true });
         return;
       }
 
@@ -718,10 +722,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       if (!HANDLERS_OK2.some(h => handler.includes(h)) && !isTAYFedex && !isOEIMDFedex) return;
 
       if (!flight) return;
-      newFlights.push({ time, flight, reg, stand, handler, manual: false });
+      newFlights.push({ time, schedTime, flight, reg, stand, handler, manual: false });
     });
 
-    newFlights = newFlights.filter(f => isInDisplayWindow(f.time));
+    // Le filtre "fenetre d'affichage" se base aussi sur l'horaire PREVU, pour la meme raison.
+    newFlights = newFlights.filter(f => isInDisplayWindow(f.schedTime));
 
     const seen = new Set();
     newFlights = newFlights.filter(f => {
@@ -764,7 +769,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       // Auto-selection identique a l'analyse manuelle
       selectedFlights = new Set();
       flights.forEach((f, i) => {
-        if (!isInShift(f.time)) return;
+        if (!isInShift(f.schedTime || f.time)) return;
         if ((f.flight || '').toUpperCase().startsWith('ICE')) return;
         if ((f.reg || '').toUpperCase() === 'SERLE') return;
         selectedFlights.add(i);
@@ -827,7 +832,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
           if (oldSelectedFlightNums.has(f.flight)) newSelected.add(i);
         } else {
           if (f.manual) { newSelected.add(i); return; }
-          if (!isInShift(f.time)) return;
+          if (!isInShift(f.schedTime || f.time)) return;
           if ((f.flight || '').toUpperCase().startsWith('ICE')) return;
           if ((f.reg || '').toUpperCase() === 'SERLE') return;
           newSelected.add(i);
@@ -1031,7 +1036,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     // Auto-select only flights within the selected shift, exclude ICE flights
     selectedFlights = new Set();
     flights.forEach((f, i) => {
-      if (!isInShift(f.time)) return;
+      if (!isInShift(f.schedTime || f.time)) return;
       if ((f.flight||'').toUpperCase().startsWith('ICE')) return; // ICE not done
       if ((f.reg||'').toUpperCase() === 'SERLE') return; // SERLE not done
       selectedFlights.add(i);
