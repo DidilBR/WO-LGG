@@ -262,7 +262,7 @@ body.locked{overflow:hidden}
     </div>
     <div class="actions">
       <button class="btn btn-ghost" onclick="goToStep(1)">&larr; Retour</button>
-      <button class="btn btn-primary" onclick="analyzeFids();parseCaterings();">Analyser &rarr;</button>
+      <button class="btn btn-primary" onclick="handleAnalyzeClick()">Analyser &rarr;</button>
     </div>
   </div>
 
@@ -762,11 +762,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
       if (status) {
         status.style.color = '#00e5a0';
-        status.textContent = '✓ ' + flights.length + ' vol(s) recupere(s) depuis l\'API FIDS.';
+        status.textContent = '✓ ' + flights.length + ' vol(s) recupere(s). Ajoutez les caterings ci-dessous si besoin, puis cliquez sur "Analyser".';
       }
 
       renderFlights();
-      goToStep(3);
     } catch (err) {
       console.error('loadFromFidsAPI error:', err);
       if (status) {
@@ -776,6 +775,17 @@ document.addEventListener('DOMContentLoaded', function() {
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = '🔄 Charger automatiquement (API FIDS)'; }
     }
+  }
+
+  // Si des vols ont deja ete charges via l'API, on ne relance pas analyzeFids()
+  // (qui viderait le tableau flights) : on garde juste les caterings + on avance.
+  function handleAnalyzeClick() {
+    const raw = document.getElementById('fids-text').value.trim();
+    if (raw || flights.length === 0) {
+      analyzeFids();
+    }
+    parseCaterings();
+    goToStep(3);
   }
 
   function analyzeFids() {
