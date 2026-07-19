@@ -599,14 +599,19 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   // Essaie l'appel direct, puis ton worker perso (si configure), puis 2 proxys publics de secours.
   // Les proxys publics gratuits sont parfois satures (erreur 429) : d'ou la chaine de plusieurs options.
   async function fetchJsonWithFallback(url) {
+    // 'cache:no-store' n'empeche que le cache du navigateur — pas un CDN/cache intermediaire
+    // cote serveur (Val Town, proxys...). On ajoute donc un parametre unique a chaque appel
+    // pour que l'URL ne soit JAMAIS identique deux fois de suite, et ne puisse donc jamais
+    // etre servie depuis un cache, ou qu'il soit.
+    const cb = Date.now() + '-' + Math.random().toString(36).slice(2, 8);
     const attempts = [
-      () => fetch(url, { cache: 'no-store' })
+      () => fetch(url + (url.includes('?') ? '&' : '?') + '_cb=' + cb, { cache: 'no-store' })
     ];
     if (CORS_PROXY_WORKER) {
-      attempts.push(() => fetch(CORS_PROXY_WORKER + '?url=' + encodeURIComponent(url), { cache: 'no-store' }));
+      attempts.push(() => fetch(CORS_PROXY_WORKER + '?url=' + encodeURIComponent(url) + '&_cb=' + cb, { cache: 'no-store' }));
     }
-    attempts.push(() => fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url), { cache: 'no-store' }));
-    attempts.push(() => fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url), { cache: 'no-store' }));
+    attempts.push(() => fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url) + '&_cb=' + cb, { cache: 'no-store' }));
+    attempts.push(() => fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url) + '&_cb=' + cb, { cache: 'no-store' }));
 
     let lastErr = new Error('Aucune tentative effectuee');
     for (const attempt of attempts) {
