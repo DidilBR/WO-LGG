@@ -1075,8 +1075,33 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       label + '</label></div>';
   }
 
+  // Les pills Swissport/WFS/SVA/LHA sont de vraies checkboxes DOM dont l'etat
+  // n'est pas stocke dans le tableau `flights` — on le sauvegarde avant de
+  // redessiner la liste (renderFlights) puis on le restaure juste apres,
+  // pour ne pas perdre les cases cochees quand on selectionne un autre vol.
+  function captureCheckboxStates(container) {
+    const map = {};
+    if (!container) return map;
+    container.querySelectorAll('input[type="checkbox"][id]').forEach(cb => {
+      map[cb.id] = cb.checked;
+    });
+    return map;
+  }
+
+  function restoreCheckboxStates(map) {
+    Object.keys(map).forEach(id => {
+      if (!map[id]) return; // seules les cases cochees ont besoin d'etre restaurees
+      const cb = document.getElementById(id);
+      if (cb && !cb.checked) {
+        cb.checked = true;
+        cb.dispatchEvent(new Event('change')); // reapplique le style visuel de la pill
+      }
+    });
+  }
+
   function renderFlights() {
     const list = document.getElementById('flights-list');
+    const savedCheckboxStates = captureCheckboxStates(list);
     document.getElementById('count-total').textContent = flights.length;
     updateSelectedCount();
 
@@ -1158,6 +1183,8 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         (pills ? '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding-right:4px;margin-left:auto;background:rgba(255,255,255,.02);border-radius:8px;padding:3px 6px">' + pills + '</div>' : '') +
       '</div>';
     }).join('');
+
+    restoreCheckboxStates(savedCheckboxStates);
   }
 
   function toggleFlight(i) {
