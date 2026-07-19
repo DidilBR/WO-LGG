@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LGG - Cleaning Ops</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0e18">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LGG Ops">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 
@@ -70,6 +77,7 @@ header{position:sticky;top:0;z-index:200;height:60px;display:flex;align-items:ce
 .section-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--a1);margin-bottom:10px}
 .eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--a1);animation:blink 2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .section-title{font-size:26px;font-weight:800;letter-spacing:-.5px}
 .section-desc{margin-top:8px;font-size:14px;color:var(--t2);line-height:1.6}
 .panel{background:var(--bg1);border:1px solid var(--b2);border-radius:var(--r);padding:22px;margin-bottom:16px;transition:border-color .2s}
@@ -241,6 +249,17 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       <div class="stat-card"><div class="num" id="count-selected">0</div><div class="lbl">Selectionnes</div></div>
       <div class="stat-card"><div class="num" id="count-total">0</div><div class="lbl">Total detectes</div></div>
     </div>
+
+    <!-- Badge discret : nouveaux changements detectes par l'auto-refresh -->
+    <div id="refresh-badge" onclick="applyPendingRefresh()" style="display:none;align-items:center;gap:8px;cursor:pointer;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.35);border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12px;color:#00e5a0;font-weight:600">
+      <span style="animation:spin 1.5s linear infinite;display:inline-block">&#128260;</span>
+      <span id="refresh-badge-text">Changements detectes — Actualiser</span>
+    </div>
+
+    <!-- Recherche / filtre des vols -->
+    <input type="text" id="flight-search" placeholder="&#128269; Rechercher un vol (numero, immat, stand, handler)..." oninput="onFlightSearch(this.value)"
+      style="width:100%;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:13px;padding:11px 14px;outline:none;margin-bottom:8px">
+
     <!-- Avions à nettoyer -->
     <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
       <div style="height:1px;flex:1;background:var(--b2)"></div>
@@ -349,6 +368,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   let selectedCaterings = new Set();
 
   document.getElementById('shift-date').value = new Date().toISOString().split('T')[0];
+  autoDetectShift();
 
   function selectShift(btn) {
     document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
@@ -357,6 +377,8 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   }
 
   function goToStep(n) {
+    currentStep = n;
+    if (n !== 3) hideRefreshBadge();
     [1,2,3].forEach(i => document.getElementById('step-'+i).classList.add('hidden'));
     document.getElementById('step-'+n).classList.remove('hidden');
     document.getElementById('step-indicator').textContent = 'ETAPE ' + n + ' / 3';
@@ -369,6 +391,26 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       if (i < n) el.classList.add('done');
       else if (i === n) el.classList.add('active');
     });
+  }
+
+  // ── Auto-detection du shift en cours a l'ouverture ──────────────
+  function autoDetectShift() {
+    const now = new Date();
+    const curMin = now.getHours() * 60 + now.getMinutes();
+    const candidates = [
+      { name: 'EARLY', start: 5 * 60 + 30 },
+      { name: 'LATE',  start: 13 * 60 + 30 },
+      { name: 'NIGHT', start: 21 * 60 + 30 }
+    ];
+    let best = null, bestDiff = Infinity;
+    candidates.forEach(s => {
+      let diff = curMin - s.start;
+      if (diff < 0) diff += 1440;
+      if (diff < bestDiff) { bestDiff = diff; best = s; }
+    });
+    if (!best) return;
+    const btn = document.querySelector('.shift-btn[data-shift="' + best.name + '"]');
+    if (btn) selectShift(btn);
   }
 
   // ── Shift time filter ─────────────────────────────────────────
@@ -605,6 +647,95 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     return d ? brusselsHHMM(d) : '';
   }
 
+  // Construit la liste de vols filtree/triee a partir des donnees brutes de l'API
+  // (reutilisee par le chargement initial ET par l'auto-refresh silencieux)
+  function buildFlightsFromApiData(arrivals, departures) {
+    const shiftDateStr = document.getElementById('shift-date').value || new Date().toISOString().split('T')[0];
+    const nextDateObj = new Date(shiftDateStr + 'T00:00:00');
+    nextDateObj.setDate(nextDateObj.getDate() + 1);
+    const nextDateStr = nextDateObj.toISOString().split('T')[0];
+
+    function inWindow(iso) {
+      const d = toBrusselsDate(iso);
+      if (!d) return false;
+      const day = brusselsDayStr(d);
+      if (day === shiftDateStr) return true;
+      if (selectedShift && selectedShift.name === 'NIGHT' && day === nextDateStr) {
+        const hh = parseInt(brusselsHHMM(d).split(':')[0], 10);
+        return hh < 10;
+      }
+      if (!selectedShift && day === nextDateStr) {
+        const hh = parseInt(brusselsHHMM(d).split(':')[0], 10);
+        return hh < 6;
+      }
+      return false;
+    }
+
+    const ethDepartures = {};
+    departures.forEach(d => {
+      if (!inWindow(d.date)) return;
+      const flt = (d.flightNumber || '').toUpperCase();
+      const hnd = (d.handler || '').toUpperCase();
+      const reg = (d.aircraftRegistration || '').toUpperCase();
+      if (flt.startsWith('ETH') && hnd.includes('AVIAPARTNER') && reg) {
+        ethDepartures[reg] = flt;
+      }
+    });
+
+    const HANDLERS_OK2 = ['CHALLENGE', 'WFS', 'SWISSPORT'];
+    let newFlights = [];
+
+    arrivals.forEach(a => {
+      if (!inWindow(a.date)) return;
+      const flight = a.flightNumber || '';
+      const reg    = a.aircraftRegistration || '';
+      const stand  = a.stand || '';
+      const handler = (a.handler || '').toUpperCase();
+      const time = isoToHHMM(a.aTx) || isoToHHMM(a.eTx) || isoToHHMM(a.sTx) || '—';
+      const flightUp = flight.toUpperCase();
+      const regUp = reg.toUpperCase();
+
+      const isETHFlight = flightUp.startsWith('ETH') && handler.includes('AVIAPARTNER');
+      if (isETHFlight) {
+        if (!ethDepartures[regUp]) return;
+        newFlights.push({ time, flight: ethDepartures[regUp], reg, stand, handler, manual: false, isETH: true });
+        return;
+      }
+
+      const isTAYFedex   = flightUp.startsWith('TAY') && handler.includes('FEDEX');
+      const isOEIMDFedex = regUp === 'OEIMD' && handler.includes('FEDEX');
+      if (!HANDLERS_OK2.some(h => handler.includes(h)) && !isTAYFedex && !isOEIMDFedex) return;
+
+      if (!flight) return;
+      newFlights.push({ time, flight, reg, stand, handler, manual: false });
+    });
+
+    newFlights = newFlights.filter(f => isInDisplayWindow(f.time));
+
+    const seen = new Set();
+    newFlights = newFlights.filter(f => {
+      if (seen.has(f.flight)) return false;
+      seen.add(f.flight);
+      return true;
+    });
+
+    newFlights.sort((x, y) => {
+      const toMinutes = t => {
+        if (!t || t === '—') return 9999;
+        const parts = t.split(':');
+        if (parts.length !== 2) return 9999;
+        const h = parseInt(parts[0]), m = parseInt(parts[1]);
+        if (isNaN(h) || isNaN(m)) return 9999;
+        let mins = h * 60 + m;
+        if (selectedShift && selectedShift.name === 'NIGHT' && h < 10) mins += 24 * 60;
+        return mins;
+      };
+      return toMinutes(x.time) - toMinutes(y.time);
+    });
+
+    return newFlights;
+  }
+
   async function loadFromFidsAPI() {
     const btn = document.getElementById('btn-load-api');
     const status = document.getElementById('api-status');
@@ -617,96 +748,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         fetchJsonWithFallback(FIDS_DEPARTURES_URL)
       ]);
 
-      const shiftDateStr = document.getElementById('shift-date').value || new Date().toISOString().split('T')[0];
-      const nextDateObj = new Date(shiftDateStr + 'T00:00:00');
-      nextDateObj.setDate(nextDateObj.getDate() + 1);
-      const nextDateStr = nextDateObj.toISOString().split('T')[0];
-
-      function inWindow(iso) {
-        const d = toBrusselsDate(iso);
-        if (!d) return false;
-        const day = brusselsDayStr(d);
-        if (day === shiftDateStr) return true;
-        // Night shift crosses midnight: include early hours of the next day
-        if (selectedShift && selectedShift.name === 'NIGHT' && day === nextDateStr) {
-          const hh = parseInt(brusselsHHMM(d).split(':')[0], 10);
-          return hh < 10;
-        }
-        // No shift picked yet: be a bit permissive around midnight too
-        if (!selectedShift && day === nextDateStr) {
-          const hh = parseInt(brusselsHHMM(d).split(':')[0], 10);
-          return hh < 6;
-        }
-        return false;
-      }
-
-      // Build ETH departures map (reg -> flight number), same logic as manual parsing
-      const ethDepartures = {};
-      departures.forEach(d => {
-        if (!inWindow(d.date)) return;
-        const flt = (d.flightNumber || '').toUpperCase();
-        const hnd = (d.handler || '').toUpperCase();
-        const reg = (d.aircraftRegistration || '').toUpperCase();
-        if (flt.startsWith('ETH') && hnd.includes('AVIAPARTNER') && reg) {
-          ethDepartures[reg] = flt;
-        }
-      });
-
-      const HANDLERS_OK2 = ['CHALLENGE', 'WFS', 'SWISSPORT'];
-      let newFlights = [];
-
-      arrivals.forEach(a => {
-        if (!inWindow(a.date)) return;
-        const flight = a.flightNumber || '';
-        const reg    = a.aircraftRegistration || '';
-        const stand  = a.stand || '';
-        const handler = (a.handler || '').toUpperCase();
-        const time = isoToHHMM(a.aTx) || isoToHHMM(a.eTx) || isoToHHMM(a.sTx) || '—';
-        const flightUp = flight.toUpperCase();
-        const regUp = reg.toUpperCase();
-
-        const isETHFlight = flightUp.startsWith('ETH') && handler.includes('AVIAPARTNER');
-        if (isETHFlight) {
-          if (!ethDepartures[regUp]) return;
-          newFlights.push({ time, flight: ethDepartures[regUp], reg, stand, handler, manual: false, isETH: true });
-          return;
-        }
-
-        const isTAYFedex   = flightUp.startsWith('TAY') && handler.includes('FEDEX');
-        const isOEIMDFedex = regUp === 'OEIMD' && handler.includes('FEDEX');
-        if (!HANDLERS_OK2.some(h => handler.includes(h)) && !isTAYFedex && !isOEIMDFedex) return;
-
-        if (!flight) return;
-        newFlights.push({ time, flight, reg, stand, handler, manual: false });
-      });
-
-      // Ne garder que les vols dans la fenetre d'affichage du shift choisi
-      newFlights = newFlights.filter(f => isInDisplayWindow(f.time));
-
-      // Dedoublonner
-      const seen = new Set();
-      newFlights = newFlights.filter(f => {
-        if (seen.has(f.flight)) return false;
-        seen.add(f.flight);
-        return true;
-      });
-
-      // Trier (meme gestion night shift que le parsing manuel)
-      newFlights.sort((x, y) => {
-        const toMinutes = t => {
-          if (!t || t === '—') return 9999;
-          const parts = t.split(':');
-          if (parts.length !== 2) return 9999;
-          const h = parseInt(parts[0]), m = parseInt(parts[1]);
-          if (isNaN(h) || isNaN(m)) return 9999;
-          let mins = h * 60 + m;
-          if (selectedShift && selectedShift.name === 'NIGHT' && h < 10) mins += 24 * 60;
-          return mins;
-        };
-        return toMinutes(x.time) - toMinutes(y.time);
-      });
-
-      flights = newFlights;
+      flights = buildFlightsFromApiData(arrivals, departures);
 
       // Auto-selection identique a l'analyse manuelle
       selectedFlights = new Set();
@@ -732,6 +774,71 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = '🔄 Charger automatiquement (API FIDS)'; }
     }
+  }
+
+  // ── Auto-refresh silencieux (etape 3) ─────────────────────────
+  let currentStep = 1;
+  let pendingFreshFlights = null;
+
+  async function checkForFlightUpdates() {
+    if (currentStep !== 3) return;
+    if (!flights || flights.length === 0) return;
+    try {
+      const [arrivals, departures] = await Promise.all([
+        fetchJsonWithFallback(FIDS_ARRIVALS_URL),
+        fetchJsonWithFallback(FIDS_DEPARTURES_URL)
+      ]);
+      const fresh = buildFlightsFromApiData(arrivals, departures);
+      const key = f => f.flight + '|' + f.time + '|' + (f.stand || '');
+      const oldKeys = new Set(flights.map(key));
+      const newKeys = new Set(fresh.map(key));
+      let diff = 0;
+      newKeys.forEach(k => { if (!oldKeys.has(k)) diff++; });
+      oldKeys.forEach(k => { if (!newKeys.has(k)) diff++; });
+      if (diff > 0) {
+        pendingFreshFlights = fresh;
+        showRefreshBadge(diff);
+      }
+    } catch (e) {
+      console.warn('checkForFlightUpdates: echec silencieux', e);
+    }
+  }
+
+  function showRefreshBadge(n) {
+    const el = document.getElementById('refresh-badge');
+    if (!el) return;
+    el.style.display = 'flex';
+    document.getElementById('refresh-badge-text').textContent =
+      n + ' changement' + (n > 1 ? 's' : '') + ' detecte' + (n > 1 ? 's' : '') + ' — Actualiser';
+  }
+
+  function hideRefreshBadge() {
+    const el = document.getElementById('refresh-badge');
+    if (el) el.style.display = 'none';
+    pendingFreshFlights = null;
+  }
+
+  function applyPendingRefresh() {
+    if (!pendingFreshFlights) return;
+    flights = pendingFreshFlights;
+    selectedFlights = new Set();
+    flights.forEach((f, i) => {
+      if (!isInShift(f.time)) return;
+      if ((f.flight || '').toUpperCase().startsWith('ICE')) return;
+      if ((f.reg || '').toUpperCase() === 'SERLE') return;
+      selectedFlights.add(i);
+    });
+    hideRefreshBadge();
+    renderFlights();
+  }
+
+  setInterval(checkForFlightUpdates, 3 * 60 * 1000); // toutes les 3 min
+
+  // ── Recherche / filtre des vols ───────────────────────────────
+  let flightSearchTerm = '';
+  function onFlightSearch(val) {
+    flightSearchTerm = (val || '').trim().toUpperCase();
+    renderFlights();
   }
 
   // Si des vols ont deja ete charges via l'API, on ne relance pas analyzeFids()
@@ -949,7 +1056,21 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       return;
     }
 
-    list.innerHTML = flights.map((f, i) => {
+    const term = (flightSearchTerm || '').toUpperCase();
+    const indices = flights.map((f, i) => i).filter(i => {
+      if (!term) return true;
+      const f = flights[i];
+      const hay = [f.flight || '', f.reg || '', f.stand || '', f.handler || ''].join(' ').toUpperCase();
+      return hay.includes(term);
+    });
+
+    if (indices.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>Aucun vol ne correspond à la recherche</p></div>';
+      return;
+    }
+
+    list.innerHTML = indices.map((i) => {
+      const f = flights[i];
       const flt = (f.flight||'').toUpperCase();
       const hnd = (f.handler||'').toUpperCase();
       const isQTR  = flt.startsWith('QTR');
@@ -1791,6 +1912,7 @@ ${(function(){
     document.getElementById('shift-agent').value = '';
     document.getElementById('shift-date').value = new Date().toISOString().split('T')[0];
     document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
+    autoDetectShift();
     goToStep(1);
   }
   // ── Theme switcher ─────────────────────────────────────────────
@@ -1958,6 +2080,15 @@ document.querySelectorAll('.tdot').forEach(function(b) {
   });
 })();
 
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function (err) {
+        console.warn('Service worker non enregistre :', err);
+      });
+    });
+  }
 </script>
 </body>
 </html>
