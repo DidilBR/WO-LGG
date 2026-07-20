@@ -367,7 +367,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   let caterings = [];
   let selectedCaterings = new Set();
 
-  document.getElementById('shift-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('shift-date').value = todayBrusselsDateStr();
   autoDetectShift();
 
   function selectShift(btn) {
@@ -413,25 +413,8 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     if (btn) selectShift(btn);
   }
 
-  // ── Date de reference du shift (celle choisie a l'etape 1) ──────
-  // Un shift Night qui commence le 12/07 au soir se termine le 13/07 au matin :
-  // il faut donc connaitre EXPLICITEMENT quel jour est "ce soir" pour ne pas
-  // confondre un vol d'hier soir (meme heure, jour d'avant) avec un vol de ce soir.
-  function getShiftDateISO() {
-    const el = document.getElementById('shift-date');
-    return (el && el.value) ? el.value : new Date().toISOString().split('T')[0];
-  }
-  function getNextDateISO(dateISO) {
-    const d = new Date(dateISO + 'T00:00:00');
-    d.setDate(d.getDate() + 1);
-    return d.toISOString().split('T')[0];
-  }
-
   // ── Shift time filter ─────────────────────────────────────────
-  // dateISO : jour (YYYY-MM-DD) du vol tel qu'ecrit dans le FIDS. Optionnel pour
-  // compatibilite (vols saisis a la main sans date) : dans ce cas on ne filtre
-  // que sur l'heure, comme avant.
-  function isInShift(timeStr, dateISO) {
+  function isInShift(timeStr) {
     if (!selectedShift) return true; // no shift selected = show all
     if (!timeStr || timeStr === '—') return false;
 
@@ -442,25 +425,6 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     };
 
     const t = toMin(timeStr);
-    const shiftDateStr = getShiftDateISO();
-    const nextDateStr  = getNextDateISO(shiftDateStr);
-
-    if (selectedShift.name === 'NIGHT') {
-      // La nuit "shiftDateStr" = soiree de shiftDateStr (>=21:30) + petit matin de nextDateStr (<06:00).
-      // Un vol du petit matin de shiftDateStr lui-meme appartient a la nuit PRECEDENTE et doit
-      // etre exclu, meme si son heure (ex: 02:15) ressemble a un vol de cette nuit.
-      if (dateISO) {
-        if (dateISO === shiftDateStr) return t >= toMin('21:30');
-        if (dateISO === nextDateStr)  return t < toMin('06:00');
-        return false;
-      }
-      // Pas de date connue (vol ajoute a la main) : on retombe sur le filtre heure seule.
-      return t >= toMin('21:30') || t < toMin('06:00');
-    }
-
-    // EARLY / LATE se deroulent entierement le meme jour civil : on verifie
-    // simplement que le vol est bien du jour du shift (si sa date est connue).
-    if (dateISO && dateISO !== shiftDateStr) return false;
 
     if (selectedShift.name === 'EARLY') {
       // 05:30 - 14:00
@@ -470,13 +434,17 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       // 13:30 - 22:00
       return t >= toMin('13:30') && t < toMin('22:00');
     }
+    if (selectedShift.name === 'NIGHT') {
+      // 21:30 - 06:00 (crosses midnight)
+      return t >= toMin('21:30') || t < toMin('06:00');
+    }
     return true;
   }
 
   // ── Fenetre d'affichage (plus large que la preselection) ─────────
   // Marge : -1h30 avant le debut du shift, +1h apres la fin.
   // Utilisee pour ne LISTER que les vols pertinents (la preselection reste sur isInShift).
-  function isInDisplayWindow(timeStr, dateISO) {
+  function isInDisplayWindow(timeStr) {
     if (!selectedShift) return true; // pas de shift = tout afficher
     if (!timeStr || timeStr === '—') return true; // heure inconnue : on l'affiche quand meme (a verifier manuellement)
 
@@ -485,20 +453,6 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       return parseInt(parts[0]) * 60 + parseInt(parts[1]);
     };
     const t = toMin(timeStr);
-    const shiftDateStr = getShiftDateISO();
-    const nextDateStr  = getNextDateISO(shiftDateStr);
-
-    if (selectedShift.name === 'NIGHT') {
-      if (dateISO) {
-        if (dateISO === shiftDateStr) return t >= toMin('20:00');
-        if (dateISO === nextDateStr)  return t < toMin('10:00');
-        return false;
-      }
-      // 20:00 - 07:00 (crosses midnight)
-      return t >= toMin('20:00') || t < toMin('07:00');
-    }
-
-    if (dateISO && dateISO !== shiftDateStr) return false;
 
     if (selectedShift.name === 'EARLY') {
       // 04:00 - 15:00
@@ -507,6 +461,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     if (selectedShift.name === 'LATE') {
       // 12:00 - 23:00
       return t >= toMin('12:00') && t < toMin('23:00');
+    }
+    if (selectedShift.name === 'NIGHT') {
+      // 20:00 - 07:00 (crosses midnight)
+      return t >= toMin('20:00') || t < toMin('07:00');
     }
     return true;
   }
@@ -685,6 +643,13 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     return y + '-' + m + '-' + da;
   }
 
+  // "Aujourd'hui" en heure locale de Bruxelles — PAS new Date().toISOString() qui
+  // donne la date UTC : entre 00h00 et 02h00 heure locale (ete), on est encore la
+  // veille en UTC, ce qui decalait tout le calcul du shift Night d'un jour en arriere.
+  function todayBrusselsDateStr() {
+    return brusselsDayStr(new Date());
+  }
+
   function brusselsHHMM(d) {
     return d.toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Brussels' });
   }
@@ -697,7 +662,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   // Construit la liste de vols filtree/triee a partir des donnees brutes de l'API
   // (reutilisee par le chargement initial ET par l'auto-refresh silencieux)
   function buildFlightsFromApiData(arrivals, departures) {
-    const shiftDateStr = document.getElementById('shift-date').value || new Date().toISOString().split('T')[0];
+    const shiftDateStr = document.getElementById('shift-date').value || todayBrusselsDateStr();
     const nextDateObj = new Date(shiftDateStr + 'T00:00:00');
     nextDateObj.setDate(nextDateObj.getDate() + 1);
     const nextDateStr = nextDateObj.toISOString().split('T')[0];
@@ -726,7 +691,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
     const ethDepartures = {};
     departures.forEach(d => {
-      if (!inWindow(d.sTx || d.date)) return;
+      if (!inWindow(d.date)) return;
       const flt = (d.flightNumber || '').toUpperCase();
       const hnd = (d.handler || '').toUpperCase();
       const reg = (d.aircraftRegistration || '').toUpperCase();
@@ -739,23 +704,21 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     let newFlights = [];
 
     arrivals.forEach(a => {
-      // Le rattachement au shift se fait sur l'horaire PREVU (sTx), pas sur l'horaire
-      // reel/estime : un vol prevu pendant la nuit reste "de la nuit" meme s'il prend
-      // un gros retard et atterrit finalement le matin.
-      if (!inWindow(a.sTx || a.date)) return;
+      // Ordre purement chronologique : on suit l'heure reelle/estimee du vol (pas encore
+      // atterri = toujours dans la fenetre), du premier avion a 20h jusqu'au dernier a 07h.
+      if (!inWindow(a.date)) return;
       const flight = a.flightNumber || '';
       const reg    = a.aircraftRegistration || '';
       const stand  = a.stand || '';
       const handler = (a.handler || '').toUpperCase();
-      const time = isoToHHMM(a.aTx) || isoToHHMM(a.eTx) || isoToHHMM(a.sTx) || '—'; // affichage : heure reelle/estimee
-      const schedTime = isoToHHMM(a.sTx) || time; // rattachement au shift : heure prevue
+      const time = isoToHHMM(a.aTx) || isoToHHMM(a.eTx) || isoToHHMM(a.sTx) || '—';
       const flightUp = flight.toUpperCase();
       const regUp = reg.toUpperCase();
 
       const isETHFlight = flightUp.startsWith('ETH') && handler.includes('AVIAPARTNER');
       if (isETHFlight) {
         if (!ethDepartures[regUp]) return;
-        newFlights.push({ time, schedTime, flight: ethDepartures[regUp], reg, stand, handler, manual: false, isETH: true });
+        newFlights.push({ time, flight: ethDepartures[regUp], reg, stand, handler, manual: false, isETH: true });
         return;
       }
 
@@ -764,11 +727,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       if (!HANDLERS_OK2.some(h => handler.includes(h)) && !isTAYFedex && !isOEIMDFedex) return;
 
       if (!flight) return;
-      newFlights.push({ time, schedTime, flight, reg, stand, handler, manual: false });
+      newFlights.push({ time, flight, reg, stand, handler, manual: false });
     });
 
-    // Le filtre "fenetre d'affichage" se base aussi sur l'horaire PREVU, pour la meme raison.
-    newFlights = newFlights.filter(f => isInDisplayWindow(f.schedTime));
+    // Ne garder que les vols dans la fenetre d'affichage du shift choisi (heure reelle/estimee)
+    newFlights = newFlights.filter(f => isInDisplayWindow(f.time));
 
     const seen = new Set();
     newFlights = newFlights.filter(f => {
@@ -811,7 +774,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       // Auto-selection identique a l'analyse manuelle
       selectedFlights = new Set();
       flights.forEach((f, i) => {
-        if (!isInShift(f.schedTime || f.time)) return;
+        if (!isInShift(f.time)) return;
         if ((f.flight || '').toUpperCase().startsWith('ICE')) return;
         if ((f.reg || '').toUpperCase() === 'SERLE') return;
         selectedFlights.add(i);
@@ -874,7 +837,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
           if (oldSelectedFlightNums.has(f.flight)) newSelected.add(i);
         } else {
           if (f.manual) { newSelected.add(i); return; }
-          if (!isInShift(f.schedTime || f.time)) return;
+          if (!isInShift(f.time)) return;
           if ((f.flight || '').toUpperCase().startsWith('ICE')) return;
           if ((f.reg || '').toUpperCase() === 'SERLE') return;
           newSelected.add(i);
@@ -951,13 +914,6 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       const lines = raw.split('\n');
       const HANDLERS_OK = ['CHALLENGE', 'WFS', 'SWISSPORT'];
 
-      // Convertit une date FIDS (JJ/MM/AAAA) en YYYY-MM-DD pour comparaison fiable
-      function fidsDateToISO(d) {
-        const m = (d || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-        if (!m) return '';
-        return m[3] + '-' + m[2] + '-' + m[1];
-      }
-
       // First pass: collect ALL ETH departures indexed by registration
       const ethDepartures = {}; // reg -> flight number
       lines.forEach(line => {
@@ -984,7 +940,6 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         if (dirIdx === -1) return;
 
         const after = cols.slice(dirIdx + 1);
-        const dateISO = fidsDateToISO(after[0] || '');
         const flight = after[1] || '';
         const reg    = after[2] || '';
 
@@ -997,16 +952,18 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         if (missingTime) {
           // Include flight but mark time as missing
           if (!flight) return;
+          var hnd2 = (beforeTimes && beforeTimes.length >= 1) ? beforeTimes[beforeTimes.length-1] : '';
+          hnd2 = hnd2.toUpperCase();
+          var HANDLERS_OK_MISSING = ['CHALLENGE', 'WFS', 'SWISSPORT'];
           // For missing time, try to get handler from cols after dirIdx
           var handlerGuess = '';
-          var HANDLERS_OK_MISSING = ['CHALLENGE', 'WFS', 'SWISSPORT'];
           for (var ci = dirIdx+8; ci < cols.length; ci++) {
             var col = (cols[ci]||'').toUpperCase();
             if (HANDLERS_OK_MISSING.some(h => col.includes(h)) || col.includes('AVIAPARTNER') || col.includes('FEDEX')) {
               handlerGuess = col; break;
             }
           }
-          flights.push({ time: '—', dateISO, flight, reg, stand: '', handler: handlerGuess || '', manual: false, missingTime: true });
+          flights.push({ time: '—', flight, reg, stand: '', handler: handlerGuess || '', manual: false, missingTime: true });
           return;
         }
 
@@ -1029,7 +986,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
           const est    = timePattern.test(rawEst2) ? rawEst2 : '';
           const actual = timePattern.test(rawAct2) ? rawAct2 : '';
           const time   = actual || est || sched || '—';
-          flights.push({ time, dateISO, flight: depFlightNum, reg, stand, handler, manual: false, isETH: true });
+          flights.push({ time, flight: depFlightNum, reg, stand, handler, manual: false, isETH: true });
           return;
         }
 
@@ -1050,12 +1007,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         const time   = actual || est || sched || '—';
 
         if (!flight) return;
-        flights.push({ time, dateISO, flight, reg, stand, handler, manual: false });
+        flights.push({ time, flight, reg, stand, handler, manual: false });
       });
       // Ne garder que les vols dans la fenetre d'affichage du shift choisi
-      // (verification a la fois de l'heure ET de la date, pour ne pas confondre
-      // un vol d'hier soir avec un vol de ce soir qui partagent la meme heure)
-      flights = flights.filter(f => f.missingTime || isInDisplayWindow(f.time, f.dateISO));
+      flights = flights.filter(f => f.missingTime || isInDisplayWindow(f.time));
       // Dédoublonner
       const seen = new Set();
       flights = flights.filter(f => {
@@ -1086,7 +1041,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     // Auto-select only flights within the selected shift, exclude ICE flights
     selectedFlights = new Set();
     flights.forEach((f, i) => {
-      if (!isInShift(f.schedTime || f.time, f.dateISO)) return;
+      if (!isInShift(f.time)) return;
       if ((f.flight||'').toUpperCase().startsWith('ICE')) return; // ICE not done
       if ((f.reg||'').toUpperCase() === 'SERLE') return; // SERLE not done
       selectedFlights.add(i);
@@ -2040,7 +1995,7 @@ ${(function(){
     if (document.getElementById('catering-text')) document.getElementById('catering-text').value = '';
     if (document.getElementById('extra-notes')) document.getElementById('extra-notes').value = '';
     document.getElementById('shift-agent').value = '';
-    document.getElementById('shift-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('shift-date').value = todayBrusselsDateStr();
     document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
     autoDetectShift();
     goToStep(1);
@@ -2086,6 +2041,129 @@ document.querySelectorAll('.tdot').forEach(b => {
   document.querySelectorAll('.tdot').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
 })();
 
+
+// Update progress bar when changing steps
+const _orig_gts2 = goToStep;
+
+document.querySelectorAll('.tdot').forEach(b => {
+  b.addEventListener('click', function(){
+    document.querySelectorAll('.tdot').forEach(x => x.classList.remove('active'));
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+
+(function(){
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
+})();
+
+
+// Theme switcher
+document.querySelectorAll('.tdot').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+(function() {
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
+})();
+
+
+// Theme switcher
+document.querySelectorAll('.tdot').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+(function() {
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
+})();
+
+
+
+document.querySelectorAll('.tdot').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+(function() {
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
+})();
+
+
+document.querySelectorAll('.tdot').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+(function() {
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
+})();
+
+
+document.querySelectorAll('.tdot').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+(function() {
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
+})();
+
+
+document.querySelectorAll('.tdot').forEach(function(b) {
+  b.addEventListener('click', function() {
+    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
+    this.classList.add('active');
+    applyTheme(this.dataset.theme);
+    localStorage.setItem('lgg-theme', this.dataset.theme);
+  });
+});
+(function() {
+  var t = localStorage.getItem('lgg-theme') || 'cyber';
+  applyTheme(t);
+  document.querySelectorAll('.tdot').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.theme === t);
+  });
+})();
 
 </script>
 <script>
