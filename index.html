@@ -179,7 +179,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     </div>
     <div class="panel">
       <div class="field-row" style="margin-bottom:18px">
-        <div><label class="field-label">Date</label><input type="date" id="shift-date"></div>
+        <div><label class="field-label">Date</label><input type="date" id="shift-date" autocomplete="off"></div>
         <div><label class="field-label">Agent / Equipe</label><input type="text" id="shift-agent" placeholder="Nom ou equipe"></div>
       </div>
       <div>
@@ -310,17 +310,20 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         <div><label class="field-label">Heure ETA *</label><input type="text" id="m-time" placeholder="ex: 08:30"></div>
       </div>
       <div class="field-row" style="margin-bottom:14px">
-        <div><label class="field-label">Registration</label><input type="text" id="m-reg" placeholder="ex: OO-TNA"></div>
+        <div><label class="field-label">Registration</label><input type="text" id="m-reg" placeholder="ex: OO-TNA" oninput="var v=this.value.toUpperCase();var opt=document.getElementById('abd-lachs-magma-opt');if(opt){if(['TFAMN','TFAMP','TFAKD'].includes(v))opt.classList.remove('hidden');else opt.classList.add('hidden');}"></div>
         <div><label class="field-label">Stand</label><input type="text" id="m-stand" placeholder="ex: A12"></div>
       </div>
       <div id="abd-choice-row" class="hidden" style="margin-bottom:14px">
         <label class="field-label">Vols ABD — Company</label>
-        <div style="display:flex;gap:8px;margin-top:6px">
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
           <label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:var(--a1)">
             <input type="radio" name="abd-choice" id="abd-choice" value="ANA" checked style="accent-color:var(--a1)"> ANA
           </label>
           <label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:var(--a1)">
             <input type="radio" name="abd-choice" value="WFS / Magma" style="accent-color:var(--a1)"> WFS / Magma
+          </label>
+          <label id="abd-lachs-magma-opt" onclick="event.stopPropagation()" class="hidden" style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:var(--a1)">
+            <input type="radio" name="abd-choice" value="Lachs / Magma" style="accent-color:var(--a1)"> Lachs / Magma
           </label>
         </div>
       </div>
@@ -369,6 +372,19 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
   document.getElementById('shift-date').value = todayBrusselsDateStr();
   autoDetectShift();
+
+  // Safari (et d'autres navigateurs) restaurent parfois une ANCIENNE valeur de champ
+  // de formulaire (comme ce champ date) lors d'un retour sur la page depuis le cache
+  // de navigation (bfcache), APRES que notre script ait deja mis la bonne date.
+  // On force donc la reinitialisation a chaque fois que la page redevient visible.
+  window.addEventListener('pageshow', function () {
+    const dateInput = document.getElementById('shift-date');
+    const today = todayBrusselsDateStr();
+    if (dateInput.value && dateInput.value < today) {
+      dateInput.value = today;
+      autoDetectShift();
+    }
+  });
 
   function selectShift(btn) {
     document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
@@ -1189,7 +1205,9 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       const missingHighlight = f.missingTime ? 'box-shadow:0 0 0 2px #ffff00,0 0 12px #ffff00;' : '';
       // ASL737 flights only appear in the ASL737 section, not the main list
       if (isASL737) return '';
-      return '<div class="flight-card ' + (selectedFlights.has(i) ? 'selected' : '') + '" onclick="toggleFlight(' + i + ')" style="' + missingHighlight + '">' +
+      const regMissing = !f.reg;
+      return '<div>' +
+        '<div class="flight-card ' + (selectedFlights.has(i) ? 'selected' : '') + '" onclick="toggleFlight(' + i + ')" style="' + missingHighlight + '">' +
         '<div class="check">' + (selectedFlights.has(i) ? '✓' : '') + '</div>' +
         '<div class="flight-info">' +
           '<span class="flight-reg">' + (f.reg || '—') + '</span>' +
@@ -1202,6 +1220,13 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         '</div>' +
         (f.manual ? '<button onclick="removeFlight(event,' + i + ')" style="background:none;border:none;color:#e05252;cursor:pointer;font-size:16px;padding:0 4px">×</button>' : '') +
         (pills ? '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding-right:4px;margin-left:auto;background:rgba(255,255,255,.02);border-radius:8px;padding:3px 6px">' + pills + '</div>' : '') +
+        '</div>' +
+        '<div onclick="event.stopPropagation()" style="display:flex;gap:6px;padding:4px 14px 10px;align-items:center">' +
+          (regMissing
+            ? '<input type="text" placeholder="Immat. manquante" value="" oninput="flights[' + i + '].reg=this.value.toUpperCase()" style="width:112px;flex-shrink:0;background:var(--bg2);border:1px solid #ffb400;border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none">'
+            : '') +
+          '<input type="text" placeholder="Remarques..." value="' + (f.remarks ? f.remarks.replace(/"/g,'&quot;') : '') + '" oninput="flights[' + i + '].remarks=this.value" style="flex:1;background:var(--bg2);border:1px solid var(--b2);border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none">' +
+        '</div>' +
       '</div>';
     }).join('');
 
@@ -1254,7 +1279,8 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
               '<span class="flight-time">ETA ' + f2.time + '</span>' +
               (f2.stand ? '<span class="flight-stand">Stand ' + f2.stand + '</span>' : '') +
             '</div>' +
-            '<div onclick="event.stopPropagation()" style="margin-left:auto">' +
+            '<div onclick="event.stopPropagation()" style="margin-left:auto;display:flex;gap:6px;align-items:center">' +
+              makePill('asl737-handling-'+origIdx2, '⚙ HANDLING', null, 255, 180, 0) +
               makePill('asl737-'+origIdx2, '✈ Worksheet', null, 255, 180, 0) +
             '</div>' +
           '</div>';
@@ -1395,7 +1421,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         <td><b>${f.time}</b></td>
         <td>${f.stand || '—'}</td>
         <td>${f.handler || '—'}</td>
-        <td></td>
+        <td>${f.remarks || ''}</td>
       </tr>`).join('');
 
     // ASL 737 section (TAY/FEDEX + OEIMD/FEDEX only, not B744)
@@ -1884,7 +1910,8 @@ ${(function(){
       if (isASL737) {
         // Always generate worksheet (no checkbox needed for main print)
         pagesASL737 += makeSheet(Object.assign({}, f, { _asl737: true }));
-        if (hnd.includes('AERO')) {
+        var cbAslHandling = document.getElementById('asl737-handling-' + origIdx);
+        if (hnd.includes('AERO') || (cbAslHandling && cbAslHandling.checked)) {
           pagesASL737 += makeSheet(Object.assign({}, f, { _asl737: true, _handling: true }));
         }
         return;
@@ -1963,9 +1990,11 @@ ${(function(){
     var pagesOnly = '';
     eligible.forEach(function(f) {
       var hnd = (f.handler||'').toUpperCase();
+      var origIdx = flights.indexOf(f);
+      var cbAslHandling = document.getElementById('asl737-handling-' + origIdx);
       // Print ALL eligible ASL737 flights, no checkbox needed
       pagesOnly += makeSheet(Object.assign({}, f, { _asl737: true }));
-      if (hnd.includes('AERO')) {
+      if (hnd.includes('AERO') || (cbAslHandling && cbAslHandling.checked)) {
         pagesOnly += makeSheet(Object.assign({}, f, { _asl737: true, _handling: true }));
       }
     });
