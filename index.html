@@ -53,7 +53,8 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);background:var(--bg0);color:var(--t1);min-height:100vh;transition:background .4s,color .4s}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 15% 10%,rgba(139,92,246,.08),transparent 60%),radial-gradient(ellipse 50% 40% at 85% 85%,rgba(0,212,255,.06),transparent 60%);pointer-events:none;z-index:0}
-header{position:sticky;top:0;z-index:200;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(5,5,15,.8);backdrop-filter:blur(30px);border-bottom:1px solid var(--b1)}
+header{position:sticky;top:0;z-index:200;background:rgba(5,5,15,.8);backdrop-filter:blur(30px);border-bottom:1px solid var(--b1)}
+.header-inner{max-width:680px;margin:0 auto;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
 .logo-wrap{display:flex;align-items:center;gap:12px}
 .logo-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(0,200,255,.3);flex-shrink:0}
 .logo-text{font-size:13px;font-weight:700;background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -144,7 +145,9 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 <body>
 
 <header>
+<div class="header-inner">
   <div class="logo-wrap">
+    <button onclick="openHistoryModal()" title="Menu / Historique des avions" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t1);font-size:16px;cursor:pointer;padding:7px 10px;line-height:1;margin-right:2px">&#9776;</button>
     <div class="logo-icon">&#9992;</div>
     <div>
       <div class="logo-text">LGG &middot; Cleaning Ops</div>
@@ -162,6 +165,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     <div class="step-pill" id="step-indicator">ETAPE 1 / 3</div>
     <button onclick="openShiftSettings()" title="Regler les horaires de shift" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:15px;cursor:pointer;padding:6px 9px;line-height:1">&#9881;</button>
   </div>
+</div>
 </header>
 
 <div id="settings-modal-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -209,6 +213,21 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     <div style="display:flex;gap:10px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeFleetModal()">Annuler</button>
       <button class="btn btn-primary" style="flex:1" onclick="saveFleetModal()">Memoriser</button>
+    </div>
+  </div>
+</div>
+
+<div id="history-modal-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--bg1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:100%;max-width:460px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="font-size:16px;font-weight:800;color:var(--a1)">&#9776; Historique des avions</div>
+      <button onclick="closeHistoryModal()" style="background:none;border:none;color:var(--t2);font-size:20px;cursor:pointer;line-height:1;padding:2px 6px">&times;</button>
+    </div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:14px">Avions memorises et notes enregistrees de votre cote.</div>
+    <input type="text" id="history-search" placeholder="Rechercher une immatriculation ou une note..." oninput="renderHistoryList()" style="margin-bottom:14px">
+    <div id="history-list" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeHistoryModal()">Fermer</button>
     </div>
   </div>
 </div>
@@ -1412,6 +1431,56 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     renderFlights();
   }
 
+  // ── Menu / historique des avions memorises ──────────────────────
+  function openHistoryModal() {
+    document.getElementById('history-search').value = '';
+    renderHistoryList();
+    document.getElementById('history-modal-overlay').classList.remove('hidden');
+  }
+  function closeHistoryModal() {
+    document.getElementById('history-modal-overlay').classList.add('hidden');
+  }
+  function renderHistoryList() {
+    const list = document.getElementById('history-list');
+    const q = (document.getElementById('history-search').value || '').trim().toUpperCase();
+    let regs = Object.keys(knownRegs).sort();
+    if (q) {
+      regs = regs.filter(r => r.toUpperCase().includes(q) || (fleetNotes[r] || '').toUpperCase().includes(q));
+    }
+    if (regs.length === 0) {
+      list.innerHTML = '<div class="empty-state" style="padding:30px 10px"><div class="icon">&#9992;</div><p>Aucun avion memorise' + (q ? ' pour cette recherche' : ' pour le moment') + '</p></div>';
+      return;
+    }
+    list.innerHTML = regs.map(function(r) {
+      const note = fleetNotes[r] || '';
+      return '<div style="background:var(--bg2);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px">' +
+        '<div style="flex:1">' +
+          '<div style="font:600 13px/1 var(--mono);color:var(--a1);margin-bottom:4px">' + r + '</div>' +
+          (note ? '<div style="font-size:12px;color:var(--t1);line-height:1.5">' + note.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
+                : '<div style="font-size:12px;color:var(--t3);font-style:italic">Aucune note</div>') +
+        '</div>' +
+        '<button onclick="editHistoryEntry(\'' + r.replace(/'/g,"\\'") + '\')" title="Modifier" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--t2);font-size:12px;cursor:pointer;padding:5px 8px;flex-shrink:0">&#9998;</button>' +
+        '<button onclick="deleteHistoryEntry(\'' + r.replace(/'/g,"\\'") + '\')" title="Oublier cet avion" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--red);font-size:12px;cursor:pointer;padding:5px 8px;flex-shrink:0">&#128465;</button>' +
+      '</div>';
+    }).join('');
+  }
+  function editHistoryEntry(reg) {
+    fleetModalReg = reg;
+    document.getElementById('fleet-modal-reg').value = reg;
+    document.getElementById('fleet-modal-note').value = fleetNotes[reg] || '';
+    closeHistoryModal();
+    document.getElementById('fleet-modal-overlay').classList.remove('hidden');
+  }
+  function deleteHistoryEntry(reg) {
+    if (!confirm('Oublier ' + reg + ' ? Le badge "Nouvel avion" reapparaitra la prochaine fois.')) return;
+    delete knownRegs[reg];
+    delete fleetNotes[reg];
+    localStorage.setItem('lgg_known_regs', JSON.stringify(knownRegs));
+    localStorage.setItem('lgg_fleet_notes', JSON.stringify(fleetNotes));
+    renderHistoryList();
+    renderFlights();
+  }
+
   function updateSelectedCount() {
     document.getElementById('count-selected').textContent = selectedFlights.size;
 
@@ -2293,129 +2362,6 @@ document.querySelectorAll('.tdot').forEach(b => {
   document.querySelectorAll('.tdot').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
 })();
 
-
-// Update progress bar when changing steps
-const _orig_gts2 = goToStep;
-
-document.querySelectorAll('.tdot').forEach(b => {
-  b.addEventListener('click', function(){
-    document.querySelectorAll('.tdot').forEach(x => x.classList.remove('active'));
-    this.classList.add('active');
-    applyTheme(this.dataset.theme);
-    localStorage.setItem('lgg-theme', this.dataset.theme);
-  });
-});
-
-(function(){
-  var t = localStorage.getItem('lgg-theme') || 'cyber';
-  applyTheme(t);
-  document.querySelectorAll('.tdot').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
-})();
-
-
-// Theme switcher
-document.querySelectorAll('.tdot').forEach(function(b) {
-  b.addEventListener('click', function() {
-    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
-    this.classList.add('active');
-    applyTheme(this.dataset.theme);
-    localStorage.setItem('lgg-theme', this.dataset.theme);
-  });
-});
-(function() {
-  var t = localStorage.getItem('lgg-theme') || 'cyber';
-  applyTheme(t);
-  document.querySelectorAll('.tdot').forEach(function(b) {
-    b.classList.toggle('active', b.dataset.theme === t);
-  });
-})();
-
-
-// Theme switcher
-document.querySelectorAll('.tdot').forEach(function(b) {
-  b.addEventListener('click', function() {
-    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
-    this.classList.add('active');
-    applyTheme(this.dataset.theme);
-    localStorage.setItem('lgg-theme', this.dataset.theme);
-  });
-});
-(function() {
-  var t = localStorage.getItem('lgg-theme') || 'cyber';
-  applyTheme(t);
-  document.querySelectorAll('.tdot').forEach(function(b) {
-    b.classList.toggle('active', b.dataset.theme === t);
-  });
-})();
-
-
-
-document.querySelectorAll('.tdot').forEach(function(b) {
-  b.addEventListener('click', function() {
-    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
-    this.classList.add('active');
-    applyTheme(this.dataset.theme);
-    localStorage.setItem('lgg-theme', this.dataset.theme);
-  });
-});
-(function() {
-  var t = localStorage.getItem('lgg-theme') || 'cyber';
-  applyTheme(t);
-  document.querySelectorAll('.tdot').forEach(function(b) {
-    b.classList.toggle('active', b.dataset.theme === t);
-  });
-})();
-
-
-document.querySelectorAll('.tdot').forEach(function(b) {
-  b.addEventListener('click', function() {
-    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
-    this.classList.add('active');
-    applyTheme(this.dataset.theme);
-    localStorage.setItem('lgg-theme', this.dataset.theme);
-  });
-});
-(function() {
-  var t = localStorage.getItem('lgg-theme') || 'cyber';
-  applyTheme(t);
-  document.querySelectorAll('.tdot').forEach(function(b) {
-    b.classList.toggle('active', b.dataset.theme === t);
-  });
-})();
-
-
-document.querySelectorAll('.tdot').forEach(function(b) {
-  b.addEventListener('click', function() {
-    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
-    this.classList.add('active');
-    applyTheme(this.dataset.theme);
-    localStorage.setItem('lgg-theme', this.dataset.theme);
-  });
-});
-(function() {
-  var t = localStorage.getItem('lgg-theme') || 'cyber';
-  applyTheme(t);
-  document.querySelectorAll('.tdot').forEach(function(b) {
-    b.classList.toggle('active', b.dataset.theme === t);
-  });
-})();
-
-
-document.querySelectorAll('.tdot').forEach(function(b) {
-  b.addEventListener('click', function() {
-    document.querySelectorAll('.tdot').forEach(function(x) { x.classList.remove('active'); });
-    this.classList.add('active');
-    applyTheme(this.dataset.theme);
-    localStorage.setItem('lgg-theme', this.dataset.theme);
-  });
-});
-(function() {
-  var t = localStorage.getItem('lgg-theme') || 'cyber';
-  applyTheme(t);
-  document.querySelectorAll('.tdot').forEach(function(b) {
-    b.classList.toggle('active', b.dataset.theme === t);
-  });
-})();
 
 </script>
 <script>
