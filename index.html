@@ -78,6 +78,7 @@ header{position:sticky;top:0;z-index:200;height:60px;display:flex;align-items:ce
 .eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--a1);animation:blink 2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes pulseRed{0%{box-shadow:0 0 0 0 rgba(255,0,85,.6)}70%{box-shadow:0 0 0 8px rgba(255,0,85,0)}100%{box-shadow:0 0 0 0 rgba(255,0,85,0)}}
 .section-title{font-size:26px;font-weight:800;letter-spacing:-.5px}
 .section-desc{margin-top:8px;font-size:14px;color:var(--t2);line-height:1.6}
 .panel{background:var(--bg1);border:1px solid var(--b2);border-radius:var(--r);padding:22px;margin-bottom:16px;transition:border-color .2s}
@@ -159,10 +160,59 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       <button class="tdot"        data-theme="sunset"  title="🌅 Sunset"  style="background:linear-gradient(135deg,#ff9900,#ff5500)"></button>
     </div>
     <div class="step-pill" id="step-indicator">ETAPE 1 / 3</div>
+    <button onclick="openShiftSettings()" title="Regler les horaires de shift" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:15px;cursor:pointer;padding:6px 9px;line-height:1">&#9881;</button>
   </div>
 </header>
 
-<div class="app-wrap">
+<div id="settings-modal-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--bg1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:100%;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+    <div style="font-size:16px;font-weight:800;color:var(--a1);margin-bottom:4px">&#9881; Horaires des shifts</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:18px">Modifie le debut/fin de chaque shift. La fenetre d'affichage (-1h30/+1h) s'ajuste automatiquement.</div>
+
+    <div style="margin-bottom:14px">
+      <label class="field-label">Early</label>
+      <div class="field-row">
+        <input type="time" id="cfg-early-start">
+        <input type="time" id="cfg-early-end">
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="field-label">Late</label>
+      <div class="field-row">
+        <input type="time" id="cfg-late-start">
+        <input type="time" id="cfg-late-end">
+      </div>
+    </div>
+    <div style="margin-bottom:20px">
+      <label class="field-label">Night</label>
+      <div class="field-row">
+        <input type="time" id="cfg-night-start">
+        <input type="time" id="cfg-night-end">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeShiftSettings()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveShiftSettings()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="fleet-modal-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--bg1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:100%;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+    <div style="font-size:16px;font-weight:800;color:var(--a1);margin-bottom:4px">&#10024; Ajouter a la flotte connue</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:18px">Cet avion sera memorise : il n'affichera plus ce badge la prochaine fois.</div>
+    <label class="field-label">Immatriculation</label>
+    <input type="text" id="fleet-modal-reg" readonly style="margin-bottom:14px;opacity:.7">
+    <label class="field-label">Note / compagnie (optionnel)</label>
+    <input type="text" id="fleet-modal-note" placeholder="ex: toujours Full Transit + Handling" style="margin-bottom:20px">
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeFleetModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveFleetModal()">Memoriser</button>
+    </div>
+  </div>
+</div>
+
   <div class="progress-bar">
     <div class="prog-step active" id="prog-1"><div class="prog-num">1</div><span class="prog-label">Shift</span></div>
     <div class="prog-line"></div>
@@ -185,14 +235,14 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       <div>
         <label class="field-label">Shift</label>
         <div class="shift-grid">
-          <button class="shift-btn" data-shift="EARLY" data-time="05:30-14:00" onclick="selectShift(this)">
-            <span class="shift-name">Early</span><span class="shift-time">05:30 - 14:00</span>
+          <button class="shift-btn" id="btn-shift-early" data-shift="EARLY" data-time="05:30-14:00" onclick="selectShift(this)">
+            <span class="shift-name">Early</span><span class="shift-time" id="lbl-time-early">05:30 - 14:00</span>
           </button>
-          <button class="shift-btn" data-shift="LATE" data-time="13:30-22:00" onclick="selectShift(this)">
-            <span class="shift-name">Late</span><span class="shift-time">13:30 - 22:00</span>
+          <button class="shift-btn" id="btn-shift-late" data-shift="LATE" data-time="13:30-22:00" onclick="selectShift(this)">
+            <span class="shift-name">Late</span><span class="shift-time" id="lbl-time-late">13:30 - 22:00</span>
           </button>
-          <button class="shift-btn" data-shift="NIGHT" data-time="21:30-06:00" onclick="selectShift(this)">
-            <span class="shift-name">Night</span><span class="shift-time">21:30 - 06:00</span>
+          <button class="shift-btn" id="btn-shift-night" data-shift="NIGHT" data-time="21:30-06:00" onclick="selectShift(this)">
+            <span class="shift-name">Night</span><span class="shift-time" id="lbl-time-night">21:30 - 06:00</span>
           </button>
         </div>
       </div>
@@ -310,8 +360,14 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         <div><label class="field-label">Heure ETA *</label><input type="text" id="m-time" placeholder="ex: 08:30"></div>
       </div>
       <div class="field-row" style="margin-bottom:14px">
-        <div><label class="field-label">Registration</label><input type="text" id="m-reg" placeholder="ex: OO-TNA" oninput="var v=this.value.toUpperCase();var opt=document.getElementById('abd-lachs-magma-opt');if(opt){if(['TFAMN','TFAMP','TFAKD'].includes(v))opt.classList.remove('hidden');else opt.classList.add('hidden');}"></div>
+        <div><label class="field-label">Registration</label><input type="text" id="m-reg" placeholder="ex: OO-TNA" oninput="handleRegInput(this.value)"></div>
         <div><label class="field-label">Stand</label><input type="text" id="m-stand" placeholder="ex: A12"></div>
+      </div>
+      <div id="known-aircraft-hint" class="hidden" style="font-size:11px;color:#00e5a0;margin:-6px 0 12px;font-family:var(--mono)"></div>
+      <div style="margin-bottom:14px">
+        <label onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:rgba(255,180,0,.08);border:1px solid rgba(255,180,0,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:#ffb400">
+          <input type="checkbox" id="m-handling" style="accent-color:#ffb400"> ⚙ Handling
+        </label>
       </div>
       <div id="abd-choice-row" class="hidden" style="margin-bottom:14px">
         <label class="field-label">Vols ABD — Company</label>
@@ -369,8 +425,16 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   let selectedFlights = new Set();
   let caterings = [];
   let selectedCaterings = new Set();
+  let shiftConfig = JSON.parse(localStorage.getItem('lgg_shift_config') || 'null') || {
+    EARLY: { start: '05:30', end: '14:00' },
+    LATE:  { start: '13:30', end: '22:00' },
+    NIGHT: { start: '21:30', end: '06:00' }
+  };
+  let knownRegs = JSON.parse(localStorage.getItem('lgg_known_regs') || 'null') || {};
+  let fleetNotes = JSON.parse(localStorage.getItem('lgg_fleet_notes') || 'null') || {};
 
   document.getElementById('shift-date').value = todayBrusselsDateStr();
+  updateShiftButtonLabels();
   autoDetectShift();
 
   // Safari (et d'autres navigateurs) restaurent parfois une ANCIENNE valeur de champ
@@ -414,9 +478,9 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     const now = new Date();
     const curMin = now.getHours() * 60 + now.getMinutes();
     const candidates = [
-      { name: 'EARLY', start: 5 * 60 + 30 },
-      { name: 'LATE',  start: 13 * 60 + 30 },
-      { name: 'NIGHT', start: 21 * 60 + 30 }
+      { name: 'EARLY', start: cfgToMin(shiftConfig.EARLY.start) },
+      { name: 'LATE',  start: cfgToMin(shiftConfig.LATE.start) },
+      { name: 'NIGHT', start: cfgToMin(shiftConfig.NIGHT.start) }
     ];
     let best = null, bestDiff = Infinity;
     candidates.forEach(s => {
@@ -430,59 +494,81 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   }
 
   // ── Shift time filter ─────────────────────────────────────────
+  // ── Horaires de shift configurables (reglages, persistes en localStorage) ──
+  function cfgToMin(t) {
+    const p = t.split(':');
+    return parseInt(p[0]) * 60 + parseInt(p[1]);
+  }
+  function cfgAddMin(hhmm, delta) {
+    let m = ((cfgToMin(hhmm) + delta) % 1440 + 1440) % 1440;
+    const h = Math.floor(m / 60), mm = m % 60;
+    return String(h).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+  }
+  function isTimeInRangeWrap(timeStr, startStr, endStr) {
+    if (!timeStr || timeStr === '—') return false;
+    const t = cfgToMin(timeStr), s = cfgToMin(startStr), e = cfgToMin(endStr);
+    return s <= e ? (t >= s && t < e) : (t >= s || t < e);
+  }
+
+  function updateShiftButtonLabels() {
+    ['EARLY', 'LATE', 'NIGHT'].forEach(name => {
+      const cfg = shiftConfig[name];
+      const lower = name.toLowerCase();
+      const btn = document.getElementById('btn-shift-' + lower);
+      const lbl = document.getElementById('lbl-time-' + lower);
+      if (btn) btn.dataset.time = cfg.start + '-' + cfg.end;
+      if (lbl) lbl.textContent = cfg.start + ' - ' + cfg.end;
+    });
+  }
+
+  function openShiftSettings() {
+    document.getElementById('cfg-early-start').value = shiftConfig.EARLY.start;
+    document.getElementById('cfg-early-end').value   = shiftConfig.EARLY.end;
+    document.getElementById('cfg-late-start').value  = shiftConfig.LATE.start;
+    document.getElementById('cfg-late-end').value    = shiftConfig.LATE.end;
+    document.getElementById('cfg-night-start').value = shiftConfig.NIGHT.start;
+    document.getElementById('cfg-night-end').value   = shiftConfig.NIGHT.end;
+    document.getElementById('settings-modal-overlay').classList.remove('hidden');
+  }
+  function closeShiftSettings() {
+    document.getElementById('settings-modal-overlay').classList.add('hidden');
+  }
+  function saveShiftSettings() {
+    shiftConfig = {
+      EARLY: { start: document.getElementById('cfg-early-start').value || '05:30', end: document.getElementById('cfg-early-end').value || '14:00' },
+      LATE:  { start: document.getElementById('cfg-late-start').value  || '13:30', end: document.getElementById('cfg-late-end').value  || '22:00' },
+      NIGHT: { start: document.getElementById('cfg-night-start').value || '21:30', end: document.getElementById('cfg-night-end').value || '06:00' }
+    };
+    localStorage.setItem('lgg_shift_config', JSON.stringify(shiftConfig));
+    updateShiftButtonLabels();
+    // Si un shift etait deja selectionne, on garde le meme nom (juste les horaires ont change)
+    if (selectedShift) {
+      const btn = document.getElementById('btn-shift-' + selectedShift.name.toLowerCase());
+      if (btn) selectShift(btn);
+    }
+    closeShiftSettings();
+  }
+
   function isInShift(timeStr) {
     if (!selectedShift) return true; // no shift selected = show all
     if (!timeStr || timeStr === '—') return false;
-
-    // Convert HH:MM to minutes since midnight
-    const toMin = (t) => {
-      const parts = t.split(':');
-      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-    };
-
-    const t = toMin(timeStr);
-
-    if (selectedShift.name === 'EARLY') {
-      // 05:30 - 14:00
-      return t >= toMin('05:30') && t < toMin('14:00');
-    }
-    if (selectedShift.name === 'LATE') {
-      // 13:30 - 22:00
-      return t >= toMin('13:30') && t < toMin('22:00');
-    }
-    if (selectedShift.name === 'NIGHT') {
-      // 21:30 - 06:00 (crosses midnight)
-      return t >= toMin('21:30') || t < toMin('06:00');
-    }
-    return true;
+    const cfg = shiftConfig[selectedShift.name];
+    if (!cfg) return true;
+    return isTimeInRangeWrap(timeStr, cfg.start, cfg.end);
   }
 
   // ── Fenetre d'affichage (plus large que la preselection) ─────────
-  // Marge : -1h30 avant le debut du shift, +1h apres la fin.
+  // Marge : -1h30 avant le debut du shift, +1h apres la fin (calculee a partir
+  // des horaires configurables, pas de valeurs figees).
   // Utilisee pour ne LISTER que les vols pertinents (la preselection reste sur isInShift).
   function isInDisplayWindow(timeStr) {
     if (!selectedShift) return true; // pas de shift = tout afficher
     if (!timeStr || timeStr === '—') return true; // heure inconnue : on l'affiche quand meme (a verifier manuellement)
-
-    const toMin = (t) => {
-      const parts = t.split(':');
-      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-    };
-    const t = toMin(timeStr);
-
-    if (selectedShift.name === 'EARLY') {
-      // 04:00 - 15:00
-      return t >= toMin('04:00') && t < toMin('15:00');
-    }
-    if (selectedShift.name === 'LATE') {
-      // 12:00 - 23:00
-      return t >= toMin('12:00') && t < toMin('23:00');
-    }
-    if (selectedShift.name === 'NIGHT') {
-      // 20:00 - 07:00 (crosses midnight)
-      return t >= toMin('20:00') || t < toMin('07:00');
-    }
-    return true;
+    const cfg = shiftConfig[selectedShift.name];
+    if (!cfg) return true;
+    const dispStart = cfgAddMin(cfg.start, -90);
+    const dispEnd   = cfgAddMin(cfg.end, 60);
+    return isTimeInRangeWrap(timeStr, dispStart, dispEnd);
   }
 
   // ── Parse Caterings ────────────────────────────────────────────
@@ -1206,7 +1292,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       // ASL737 flights only appear in the ASL737 section, not the main list
       if (isASL737) return '';
       const regMissing = !f.reg;
-      return '<div>' +
+      const isNewAircraft = !!f.reg && !f.manual && !knownRegs[f.reg];
+      const fleetBadge = isNewAircraft
+        ? '<button onclick="promptAddFleet(event,' + i + ')" style="margin-left:auto;font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#000;background:linear-gradient(135deg,#ff0055,#ff4d8f);border:none;border-radius:20px;padding:5px 10px;cursor:pointer;white-space:nowrap;animation:pulseRed 1.6s infinite">&#10024; Nouvel avion</button>'
+        : (fleetNotes[f.reg] ? '<span title="' + fleetNotes[f.reg].replace(/"/g,'&quot;') + '" style="margin-left:auto;font-size:10px;color:#00e5a0;font-family:var(--mono)">&#9989; connu</span>' : '');
+      return '<div data-idx="' + i + '">' +
         '<div class="flight-card ' + (selectedFlights.has(i) ? 'selected' : '') + '" onclick="toggleFlight(' + i + ')" style="' + missingHighlight + '">' +
         '<div class="check">' + (selectedFlights.has(i) ? '✓' : '') + '</div>' +
         '<div class="flight-info">' +
@@ -1218,9 +1308,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
           (f.stand ? '<span class="flight-stand">Stand ' + f.stand + '</span>' : '') +
           '<span class="flight-stand" style="color:#888">' + f.handler + '</span>' +
         '</div>' +
-        (f.manual ? '<button onclick="removeFlight(event,' + i + ')" style="background:none;border:none;color:#e05252;cursor:pointer;font-size:16px;padding:0 4px">×</button>' : '') +
+        (f.manual ? '<button onclick="removeFlight(event,' + i + ')" title="Supprimer" style="background:none;border:none;color:#e05252;cursor:pointer;font-size:16px;padding:0 4px">×</button>' : '') +
         (pills ? '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding-right:4px;margin-left:auto;background:rgba(255,255,255,.02);border-radius:8px;padding:3px 6px">' + pills + '</div>' : '') +
+        (fleetBadge && !pills ? fleetBadge : '') +
         '</div>' +
+        (fleetBadge && pills ? '<div onclick="event.stopPropagation()" style="padding:0 14px 4px;display:flex">' + fleetBadge + '</div>' : '') +
         '<div onclick="event.stopPropagation()" style="display:flex;gap:6px;padding:4px 14px 10px;align-items:center">' +
           (regMissing
             ? '<input type="text" placeholder="Immat. manquante" value="" oninput="flights[' + i + '].reg=this.value.toUpperCase()" style="width:112px;flex-shrink:0;background:var(--bg2);border:1px solid #ffb400;border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none">'
@@ -1231,6 +1323,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     }).join('');
 
     restoreCheckboxStates(savedCheckboxStates);
+    attachSwipeHandlers(list);
   }
 
   function toggleFlight(i) {
@@ -1239,12 +1332,83 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     renderFlights();
   }
 
-  function removeFlight(e, i) {
-    e.stopPropagation();
+  function removeFlightAtIndex(i) {
     flights.splice(i, 1);
     const ns = new Set();
     selectedFlights.forEach(idx => { if (idx < i) ns.add(idx); else if (idx > i) ns.add(idx-1); });
     selectedFlights = ns;
+    renderFlights();
+  }
+
+  function removeFlight(e, i) {
+    e.stopPropagation();
+    removeFlightAtIndex(i);
+  }
+
+  // ── Glisser vers la gauche pour supprimer un vol (complement de la croix ×,
+  // plus pratique au doigt ; la croix reste utile a la souris/ordinateur) ──
+  function attachSwipeHandlers(container) {
+    container.querySelectorAll('[data-idx]').forEach(wrap => {
+      const idx = parseInt(wrap.getAttribute('data-idx'), 10);
+      const card = wrap.querySelector('.flight-card');
+      if (!card || isNaN(idx)) return;
+      let startX = 0, curX = 0, swiping = false;
+      card.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+        curX = startX;
+        swiping = true;
+        wrap.style.transition = 'none';
+      }, { passive: true });
+      card.addEventListener('touchmove', e => {
+        if (!swiping) return;
+        curX = e.touches[0].clientX;
+        const diff = curX - startX;
+        if (diff < 0) {
+          wrap.style.transform = 'translateX(' + diff + 'px)';
+          wrap.style.opacity = String(Math.max(0, 1 + diff / 250));
+        }
+      }, { passive: true });
+      card.addEventListener('touchend', () => {
+        if (!swiping) return;
+        swiping = false;
+        wrap.style.transition = 'transform .25s ease-out, opacity .25s ease-out';
+        if (curX - startX < -100) {
+          wrap.style.transform = 'translateX(-100%)';
+          wrap.style.opacity = '0';
+          if (navigator.vibrate) navigator.vibrate(40);
+          setTimeout(() => removeFlightAtIndex(idx), 220);
+        } else {
+          wrap.style.transform = 'translateX(0)';
+          wrap.style.opacity = '1';
+        }
+      });
+    });
+  }
+
+  // ── Flotte connue : marque les avions deja rencontres pour ne plus
+  // afficher le badge "Nouvel avion" la prochaine fois ──
+  let fleetModalReg = null;
+  function promptAddFleet(e, i) {
+    e.stopPropagation();
+    const f = flights[i];
+    if (!f || !f.reg) return;
+    fleetModalReg = f.reg;
+    document.getElementById('fleet-modal-reg').value = f.reg;
+    document.getElementById('fleet-modal-note').value = fleetNotes[f.reg] || '';
+    document.getElementById('fleet-modal-overlay').classList.remove('hidden');
+  }
+  function closeFleetModal() {
+    document.getElementById('fleet-modal-overlay').classList.add('hidden');
+    fleetModalReg = null;
+  }
+  function saveFleetModal() {
+    if (!fleetModalReg) return;
+    knownRegs[fleetModalReg] = true;
+    const note = document.getElementById('fleet-modal-note').value.trim();
+    if (note) fleetNotes[fleetModalReg] = note; else delete fleetNotes[fleetModalReg];
+    localStorage.setItem('lgg_known_regs', JSON.stringify(knownRegs));
+    localStorage.setItem('lgg_fleet_notes', JSON.stringify(fleetNotes));
+    closeFleetModal();
     renderFlights();
   }
 
@@ -1291,6 +1455,51 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     }
   }
 
+  // ── Memoire des avions deja rencontres (immat -> traitement habituel) ──
+  // Permet de pre-cocher automatiquement "Handling" (et le choix ABD) la
+  // prochaine fois qu'on ajoute un vol avec la meme immatriculation.
+  function loadAircraftMemory() {
+    try {
+      return JSON.parse(localStorage.getItem('lgg_aircraft_memory') || '{}');
+    } catch (e) { return {}; }
+  }
+  function saveAircraftMemoryEntry(reg, data) {
+    if (!reg) return;
+    try {
+      var mem = loadAircraftMemory();
+      mem[reg] = data;
+      localStorage.setItem('lgg_aircraft_memory', JSON.stringify(mem));
+    } catch (e) { /* stockage indisponible, tant pis */ }
+  }
+
+  function handleRegInput(val) {
+    var v = (val || '').toUpperCase();
+    var opt = document.getElementById('abd-lachs-magma-opt');
+    if (opt) {
+      if (['TFAMN','TFAMP','TFAKD'].includes(v)) opt.classList.remove('hidden');
+      else opt.classList.add('hidden');
+    }
+    var hint = document.getElementById('known-aircraft-hint');
+    var handlingCb = document.getElementById('m-handling');
+    var mem = loadAircraftMemory();
+    if (v && mem[v]) {
+      var entry = mem[v];
+      if (handlingCb) handlingCb.checked = !!entry.handling;
+      if (entry.abdChoice) {
+        var radios = document.getElementsByName('abd-choice');
+        for (var ri = 0; ri < radios.length; ri++) {
+          radios[ri].checked = (radios[ri].value === entry.abdChoice);
+        }
+      }
+      if (hint) {
+        hint.textContent = '✓ Avion deja connu — Full Transit' + (entry.handling ? ' + Handling' : '') + ' pre-rempli';
+        hint.classList.remove('hidden');
+      }
+    } else if (hint) {
+      hint.classList.add('hidden');
+    }
+  }
+
   function toggleManualForm() {
     document.getElementById('manual-form').classList.toggle('hidden');
   }
@@ -1323,17 +1532,26 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     const time   = document.getElementById('m-time').value.trim();
     const reg    = document.getElementById('m-reg').value.trim().toUpperCase();
     const stand  = document.getElementById('m-stand').value.trim().toUpperCase();
+    const handlingChecked = document.getElementById('m-handling') ? document.getElementById('m-handling').checked : false;
     if (!flight || !time) { alert('N° de vol et heure requis.'); return; }
     var detected = detectCompany(flight, reg);
     var handler  = detected.company;
 
-    // For ABD: ask Magma or ANA
+    var abdChoiceValue = null;
+    // For ABD: ask Magma / ANA / Lachs-Magma
     if (detected.isABD) {
-      var choice = document.getElementById('abd-choice') ? document.getElementById('abd-choice').value : 'ANA';
-      handler = choice;
+      var checkedRadio = document.querySelector('input[name="abd-choice"]:checked');
+      abdChoiceValue = checkedRadio ? checkedRadio.value : 'ANA';
+      handler = abdChoiceValue;
     }
 
-    flights.push({ flight, time, reg, stand, handler: handler, manual: true, _manualASL737: detected.isASL737 });
+    flights.push({ flight, time, reg, stand, handler: handler, manual: true, _manualASL737: detected.isASL737, _handling: handlingChecked });
+
+    // Se souvenir de cet avion pour la prochaine fois
+    if (reg) {
+      saveAircraftMemoryEntry(reg, { handling: handlingChecked, abdChoice: abdChoiceValue });
+    }
+
     // Re-sort
     flights.sort((a, b) => {
       const toMin = t => {
@@ -1352,6 +1570,9 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     flights.forEach((f, i) => { if (f.manual || selectedFlights.has(i)) newSelected.add(i); });
     selectedFlights = newSelected;
     ['m-flight','m-time','m-reg','m-stand'].forEach(id => document.getElementById(id).value = '');
+    if (document.getElementById('m-handling')) document.getElementById('m-handling').checked = false;
+    var hintEl = document.getElementById('known-aircraft-hint');
+    if (hintEl) hintEl.classList.add('hidden');
     renderFlights();
   }
 
@@ -1563,6 +1784,7 @@ ${(function(){
 
   // Worksheet rules
   function needsFullTransit(f) {
+    if (f.manual === true) return true; // un vol ajoute a la main doit toujours pouvoir etre imprime
     var flight  = (f.flight  || '').toUpperCase();
     var handler = (f.handler || '').toUpperCase();
     var reg     = (f.reg     || '').toUpperCase();
@@ -1580,21 +1802,16 @@ ${(function(){
     return false;
   }
 
-  function generateWorksheets() {
-    var date = document.getElementById('shift-date').value;
-    var eligible = flights.filter(function(f, i) { return selectedFlights.has(i) && needsFullTransit(f); });
-    if (eligible.length === 0) { alert('Aucun vol eligible trouve.'); return; }
-
-    var dateStr = date
-      ? new Date(date + 'T12:00:00').toLocaleDateString('fr-BE', { day:'2-digit', month:'2-digit', year:'2-digit' })
-      : '';
-
     function td(style, content, extra) {
       extra = extra || '';
       return '<td style="border:1.5pt solid #000;' + style + '"' + extra + '>' + (content || '&nbsp;') + '</td>';
     }
 
     function makeSheet(f) {
+      var __dateInput = document.getElementById('shift-date').value;
+      var dateStr = __dateInput
+        ? new Date(__dateInput + 'T12:00:00').toLocaleDateString('fr-BE', { day:'2-digit', month:'2-digit', year:'2-digit' })
+        : '';
       var flight = (f.flight || '').toUpperCase();
       var flt    = flight;
       var hnd    = (f.handler || '').toUpperCase();
@@ -1789,6 +2006,12 @@ ${(function(){
       html += '</table></div>';
       return html;
     }
+
+  function generateWorksheets() {
+    var date = document.getElementById('shift-date').value;
+    var eligible = flights.filter(function(f, i) { return selectedFlights.has(i) && needsFullTransit(f); });
+    if (eligible.length === 0) { alert('Aucun vol eligible trouve.'); return; }
+
 
     // Collect Swissport departures by registration (for HEADSET worksheets)
     var swissportDepartures = {};
