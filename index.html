@@ -50,6 +50,98 @@
   --a1:#ff9900;--a2:#ff5500;
   --t1:#ffffff;--t2:#ffcc88;--t3:#996633;
 }
+
+/* ══════════════════════════════════════════════════════════════
+   INTERFACE "NEO" — presentation alternative, futuriste et animee.
+   S'active via [data-layout="neo"] sur <html>, independamment du
+   theme de couleur choisi (data-theme reste separe). L'interface
+   "classic" (par defaut, sans attribut) n'est jamais modifiee par
+   ce qui suit : chaque regle ci-dessous est explicitement prefixee.
+   ══════════════════════════════════════════════════════════════ */
+@keyframes neoDrift{0%{transform:translate(0,0)}50%{transform:translate(-2%,1.5%)}100%{transform:translate(0,0)}}
+@keyframes neoScan{0%{background-position:0 0}100%{background-position:0 48px}}
+@keyframes neoRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes neoPulseRing{0%{box-shadow:0 0 0 0 rgba(0,212,255,.5)}70%{box-shadow:0 0 0 10px rgba(0,212,255,0)}100%{box-shadow:0 0 0 0 rgba(0,212,255,0)}}
+@keyframes neoGradientSpin{to{--neo-angle:360deg}}
+@property --neo-angle{syntax:'<angle>';initial-value:0deg;inherits:false}
+
+[data-layout="neo"] body::before{
+  background:
+    radial-gradient(ellipse 90% 60% at 20% 0%,rgba(139,92,246,.14),transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 100%,rgba(0,212,255,.12),transparent 55%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0px,rgba(255,255,255,.025) 1px,transparent 1px,transparent 48px);
+  animation:neoDrift 18s ease-in-out infinite, neoScan 6s linear infinite;
+}
+[data-layout="neo"] header{
+  background:rgba(6,8,20,.55);
+  border-bottom:1px solid transparent;
+  background-image:linear-gradient(rgba(6,8,20,.7),rgba(6,8,20,.7)),linear-gradient(90deg,var(--a1),var(--a2),var(--a1));
+  background-origin:border-box;
+  background-clip:padding-box,border-box;
+  border-bottom:1px solid transparent;
+}
+[data-layout="neo"] .logo-icon{
+  animation:neoPulseRing 2.4s infinite;
+  box-shadow:0 4px 20px rgba(0,200,255,.5);
+}
+[data-layout="neo"] .app-wrap > *{animation:neoRise .5s cubic-bezier(.2,.8,.2,1) both}
+[data-layout="neo"] .panel,
+[data-layout="neo"] .stat-card,
+[data-layout="neo"] .flight-card{
+  position:relative;
+  background:rgba(255,255,255,.03);
+  backdrop-filter:blur(18px) saturate(140%);
+  border:1px solid transparent;
+  background-image:linear-gradient(var(--bg1),var(--bg1)),conic-gradient(from var(--neo-angle,0deg),var(--a1),transparent 30%,transparent 70%,var(--a2));
+  background-origin:border-box;
+  background-clip:padding-box,border-box;
+  animation:neoGradientSpin 6s linear infinite;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;
+}
+[data-layout="neo"] .panel:hover,
+[data-layout="neo"] .flight-card:hover{
+  transform:translateY(-2px) scale(1.005);
+  box-shadow:0 12px 30px rgba(0,0,0,.35);
+}
+[data-layout="neo"] .flight-card.selected{
+  box-shadow:0 0 0 1px var(--a1),0 0 24px rgba(0,212,255,.25);
+}
+[data-layout="neo"] .btn-primary{
+  background:linear-gradient(120deg,var(--a1),var(--a2),var(--a1));
+  background-size:220% 100%;
+  animation:neoBtnShift 3.5s ease-in-out infinite;
+  box-shadow:0 4px 24px rgba(0,212,255,.35);
+}
+@keyframes neoBtnShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+[data-layout="neo"] .btn:active{transform:scale(.96)}
+[data-layout="neo"] .prog-num{transition:all .4s cubic-bezier(.2,.8,.2,1)}
+[data-layout="neo"] .prog-step.active .prog-num{animation:neoPulseRing 1.8s infinite}
+[data-layout="neo"] .section-title{
+  background:linear-gradient(90deg,var(--t1),var(--a1),var(--t1));
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:neoBtnShift 5s ease-in-out infinite;
+}
+[data-layout="neo"] .eyebrow-dot{box-shadow:0 0 8px var(--a1)}
+[data-layout="neo"] input[type=text],
+[data-layout="neo"] input[type=date],
+[data-layout="neo"] textarea{
+  background:rgba(255,255,255,.02);
+  border:1px solid var(--b2);
+  transition:box-shadow .25s,border-color .25s;
+}
+[data-layout="neo"] input[type=text]:focus,
+[data-layout="neo"] input[type=date]:focus,
+[data-layout="neo"] textarea:focus{
+  box-shadow:0 0 0 3px rgba(0,212,255,.15),0 0 20px rgba(0,212,255,.1);
+}
+[data-layout="neo"] .check.selected,
+[data-layout="neo"] .flight-card.selected .check{
+  box-shadow:0 0 10px var(--a1);
+}
+@media (prefers-reduced-motion: reduce){
+  [data-layout="neo"] *{animation-duration:.001ms!important;animation-iteration-count:1!important}
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);background:var(--bg0);color:var(--t1);min-height:100vh;transition:background .4s,color .4s}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 15% 10%,rgba(139,92,246,.08),transparent 60%),radial-gradient(ellipse 50% 40% at 85% 85%,rgba(0,212,255,.06),transparent 60%);pointer-events:none;z-index:0}
@@ -163,6 +255,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       <button class="tdot"        data-theme="sunset"  title="🌅 Sunset"  style="background:linear-gradient(135deg,#ff9900,#ff5500)"></button>
     </div>
     <div class="step-pill" id="step-indicator">ETAPE 1 / 3</div>
+    <button onclick="openLayoutSettings()" title="Changer l'interface" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:14px;cursor:pointer;padding:6px 9px;line-height:1">&#10024;</button>
     <button onclick="openShiftSettings()" title="Regler les horaires de shift" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:15px;cursor:pointer;padding:6px 9px;line-height:1">&#9881;</button>
     <button id="refresh-toggle-btn" onclick="openRefreshSettings()" title="Reglages de l'actualisation automatique" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:14px;cursor:pointer;padding:6px 9px;line-height:1">&#128260;</button>
   </div>
@@ -215,7 +308,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       </div>
       <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
         <input type="checkbox" id="refresh-enabled-toggle" onchange="onRefreshToggleChange()" style="opacity:0;width:0;height:0">
-        <span id="refresh-toggle-track" style="position:absolute;inset:0;background:var(--b2);border-radius:24px;transition:background .2s;cursor:pointer" onclick="document.getElementById('refresh-enabled-toggle').click()"></span>
+        <span id="refresh-toggle-track" style="position:absolute;inset:0;background:var(--b2);border-radius:24px;transition:background .2s;cursor:pointer"></span>
         <span id="refresh-toggle-knob" style="position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none"></span>
       </label>
     </div>
@@ -230,6 +323,33 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     <div style="display:flex;gap:10px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeRefreshSettings()">Fermer</button>
       <button class="btn btn-primary" style="flex:1" onclick="saveRefreshSettings()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="layout-settings-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--bg1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:100%;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+    <div style="font-size:16px;font-weight:800;color:var(--a1);margin-bottom:4px">&#10024; Interface</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:18px">Choisis la presentation de l'appli. Les couleurs (theme) restent independantes de ce choix.</div>
+
+    <div id="layout-opt-classic" onclick="selectLayoutOption('classic')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:12px;transition:border-color .2s,background .2s">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">Classic</div>
+        <div id="layout-check-classic" style="font-size:14px;color:var(--a1)">&#10003;</div>
+      </div>
+      <div style="font-size:11px;color:var(--t2);margin-top:4px">L'interface actuelle : sobre, rapide, sans animation superflue.</div>
+    </div>
+
+    <div id="layout-opt-neo" onclick="selectLayoutOption('neo')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:20px;transition:border-color .2s,background .2s">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">Neo &#8212; futuriste</div>
+        <div id="layout-check-neo" style="font-size:14px;color:var(--a1);visibility:hidden">&#10003;</div>
+      </div>
+      <div style="font-size:11px;color:var(--t2);margin-top:4px">Contours animes, verre depoli, degrades mouvants, transitions fluides.</div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeLayoutSettings()">Fermer</button>
     </div>
   </div>
 </div>
@@ -846,7 +966,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
     const ethDepartures = {};
     departures.forEach(d => {
-      if (!inWindow(d.date)) return;
+      // Meme correctif que pour les arrivees plus bas : on evalue la fenetre sur l'horaire
+      // reel (UTC), pas sur le champ "date" separe qui ne reflete pas forcement le bon
+      // jour civil une fois converti en heure locale (voir commentaire detaille ci-dessous).
+      if (!inWindow(d.aTx || d.eTx || d.sTx || d.date)) return;
       const flt = (d.flightNumber || '').toUpperCase();
       const hnd = (d.handler || '').toUpperCase();
       const reg = (d.aircraftRegistration || '').toUpperCase();
@@ -861,7 +984,17 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     arrivals.forEach(a => {
       // Ordre purement chronologique : on suit l'heure reelle/estimee du vol (pas encore
       // atterri = toujours dans la fenetre), du premier avion a 20h jusqu'au dernier a 07h.
-      if (!inWindow(a.date)) return;
+      //
+      // IMPORTANT : le champ "date" fourni par l'API FIDS est exprime en UTC et ne
+      // correspond PAS forcement au jour civil local une fois l'heure convertie.
+      // Exemple concret : un vol a 23h00 UTC le 21/07 devient 01h00 heure locale — mais
+      // cette heure locale (01h00) appartient reellement au 22/07, pas au 21/07 comme
+      // l'indique le champ "date" brut. Utiliser a.date directement decalait donc tout
+      // le classement du shift Night d'un jour en arriere pour les vols juste apres minuit.
+      // On evalue desormais la fenetre sur le VRAI horaire du vol (aTx/eTx/sTx, converti
+      // en heure locale de Bruxelles par inWindow), exactement comme "time" est calcule
+      // juste en dessous — jamais sur le champ date separe.
+      if (!inWindow(a.aTx || a.eTx || a.sTx || a.date)) return;
       const flight = a.flightNumber || '';
       const reg    = a.aircraftRegistration || '';
       const stand  = a.stand || '';
@@ -1096,6 +1229,33 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   function initAutoRefreshUI() {
     updateRefreshToggleButtonIcon();
     startAutoRefresh();
+  }
+
+  // ── Interface (mise en page) : Classic ou Neo, independant du theme couleur ──
+  function applyLayoutMode(mode) {
+    document.documentElement.setAttribute('data-layout', mode === 'neo' ? 'neo' : 'classic');
+  }
+  function openLayoutSettings() {
+    const current = localStorage.getItem('lgg_layout_mode') || 'classic';
+    reflectLayoutOptionUI(current);
+    document.getElementById('layout-settings-overlay').classList.remove('hidden');
+  }
+  function closeLayoutSettings() {
+    document.getElementById('layout-settings-overlay').classList.add('hidden');
+  }
+  function reflectLayoutOptionUI(mode) {
+    const isNeo = mode === 'neo';
+    document.getElementById('layout-opt-classic').style.borderColor = isNeo ? 'var(--b2)' : 'var(--a1)';
+    document.getElementById('layout-opt-classic').style.background  = isNeo ? 'transparent' : 'var(--bg2)';
+    document.getElementById('layout-opt-neo').style.borderColor      = isNeo ? 'var(--a1)' : 'var(--b2)';
+    document.getElementById('layout-opt-neo').style.background      = isNeo ? 'var(--bg2)' : 'transparent';
+    document.getElementById('layout-check-classic').style.visibility = isNeo ? 'hidden' : 'visible';
+    document.getElementById('layout-check-neo').style.visibility     = isNeo ? 'visible' : 'hidden';
+  }
+  function selectLayoutOption(mode) {
+    localStorage.setItem('lgg_layout_mode', mode);
+    applyLayoutMode(mode);
+    reflectLayoutOptionUI(mode);
   }
 
   // ── Recherche / filtre des vols ───────────────────────────────
@@ -1953,7 +2113,8 @@ ${(function(){
     if (flight.startsWith('TAY'))      return true;
     if (flight.startsWith('CHG'))      return true;
     if (flight.startsWith('SWN'))      return true;
-    if (f.isETH)                       return true;
+    // Les vols ETH ne sont PLUS eligibles ici : leur worksheet catering ne doit
+    // s'imprimer que via la section dediee "Caterings" (donnees collees a part).
     if (handler.includes('CHALLENGE')) return true;
     if (handler.includes('WFS'))       return true; // SVA/WFS aussi inclus maintenant
     if (handler.includes('SWISSPORT')) return true;
@@ -2442,6 +2603,7 @@ ${(function(){
     }
 
     initAutoRefreshUI();
+    applyLayoutMode(localStorage.getItem('lgg_layout_mode') || 'classic');
   })();
 
 </script>
