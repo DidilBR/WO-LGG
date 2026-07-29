@@ -1072,7 +1072,17 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         fetchJsonWithFallback(FIDS_DEPARTURES_URL)
       ]);
 
+      const oldDataByFlight = {};
+      flights.forEach(f => { oldDataByFlight[f.flight] = { reg: f.reg, remarks: f.remarks }; });
+
       flights = buildFlightsFromApiData(arrivals, departures);
+
+      flights.forEach(f => {
+        const old = oldDataByFlight[f.flight];
+        if (!old) return;
+        if (!f.reg && old.reg) f.reg = old.reg;
+        if (old.remarks) f.remarks = old.remarks;
+      });
 
       // Auto-selection identique a l'analyse manuelle
       selectedFlights = new Set();
@@ -1116,6 +1126,17 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         fetchJsonWithFallback(FIDS_DEPARTURES_URL)
       ]);
       const fresh = buildFlightsFromApiData(arrivals, departures);
+
+      // Ne jamais perdre une immat saisie a la main (si l'API n'en fournit toujours pas)
+      // ni les remarques (qui ne viennent jamais de l'API) lors du rafraichissement auto.
+      const oldDataByFlight = {};
+      flights.forEach(f => { oldDataByFlight[f.flight] = { reg: f.reg, remarks: f.remarks }; });
+      fresh.forEach(f => {
+        const old = oldDataByFlight[f.flight];
+        if (!old) return;
+        if (!f.reg && old.reg) f.reg = old.reg;
+        if (old.remarks) f.remarks = old.remarks;
+      });
 
       const key = f => f.flight + '|' + f.time + '|' + (f.stand || '');
       const oldApiFlights = flights.filter(f => !f.manual);
@@ -2557,15 +2578,14 @@ ${(function(){
     var TD  = 'border:1pt solid #000;padding:5pt 7pt;font-size:9pt';
     var TDH = TD + ';font-weight:800;background:#f0f0f0;text-align:center';
 
-    // ── Table principale : un vol par ligne, ARR pre-rempli depuis le FIDS ──
+    // ── Table principale : 6 colonnes exactement comme le papier ──
+    // Registration | ARR | Pick up | Flight Number | Crew | Stand
     var mainRows = '';
     eligible.forEach(function(f) {
       mainRows += '<tr>'
         + '<td style="' + TD + '">' + (f.reg || '') + '</td>'
-        + '<td style="' + TD + ';font-weight:700;text-align:center">ARR</td>'
-        + '<td style="' + TD + '">' + (f.time || '') + '</td>'
-        + '<td style="' + TD + ';font-weight:700;text-align:center">Pick up</td>'
-        + '<td style="' + TD + '"></td>'
+        + '<td style="' + TD + '"><b>ARR</b>&nbsp;&nbsp;' + (f.time || '') + '</td>'
+        + '<td style="' + TD + '"><b>Pick up</b></td>'
         + '<td style="' + TD + '">' + (f.flight || '') + '</td>'
         + '<td style="' + TD + '"></td>'
         + '<td style="' + TD + '">' + (f.stand || '') + '</td>'
@@ -2575,10 +2595,8 @@ ${(function(){
     for (var e1 = 0; e1 < 3; e1++) {
       mainRows += '<tr>'
         + '<td style="' + TD + '">&nbsp;</td>'
-        + '<td style="' + TD + ';font-weight:700;text-align:center">ARR</td>'
-        + '<td style="' + TD + '">&nbsp;</td>'
-        + '<td style="' + TD + ';font-weight:700;text-align:center">Pick up</td>'
-        + '<td style="' + TD + '">&nbsp;</td>'
+        + '<td style="' + TD + '"><b>ARR</b></td>'
+        + '<td style="' + TD + '"><b>Pick up</b></td>'
         + '<td style="' + TD + '">&nbsp;</td>'
         + '<td style="' + TD + '">&nbsp;</td>'
         + '<td style="' + TD + '">&nbsp;</td>'
@@ -2631,11 +2649,11 @@ ${(function(){
       + '<table>'
       + '<tr>'
         + '<td style="' + TD + ';font-weight:800;font-size:11pt" colspan="2">Crew bus service</td>'
-        + '<td style="' + TD + ';text-align:center;font-weight:700;font-size:10pt" colspan="6">' + shiftLabel('EARLY') + ' &nbsp;//&nbsp; ' + shiftLabel('LATE') + ' &nbsp;//&nbsp; ' + shiftLabel('NIGHT') + '</td>'
+        + '<td style="' + TD + ';text-align:center;font-weight:700;font-size:10pt" colspan="4">' + shiftLabel('EARLY') + ' &nbsp;//&nbsp; ' + shiftLabel('LATE') + ' &nbsp;//&nbsp; ' + shiftLabel('NIGHT') + '</td>'
       + '</tr>'
       + '<tr>'
         + '<td style="' + TDH + '">Registration</td>'
-        + '<td style="' + TDH + '" colspan="4">Time (Local)</td>'
+        + '<td style="' + TDH + '" colspan="2">Time (Local)</td>'
         + '<td style="' + TDH + '">Flight Number</td>'
         + '<td style="' + TDH + '">Crew</td>'
         + '<td style="' + TDH + '">Stand</td>'
