@@ -2105,6 +2105,13 @@ ${(function(){
 
   // Worksheet rules
   function needsFullTransit(f) {
+    // Exclusion prioritaire et absolue : un vol ETH ne doit JAMAIS obtenir de
+    // worksheet ici, meme si son numero de vol affiche (celui du DEPART, pas
+    // l'ETH lui-meme — voir buildFlightsFromApiData/analyzeFids) correspond par
+    // coincidence a un prefixe ou un handler couvert par les regles ci-dessous
+    // (TAY, CHALLENGE, WFS, SWISSPORT...). Seule la section "Caterings" dediee
+    // peut generer une worksheet pour ces vols.
+    if (f.isETH === true) return false;
     if (f.manual === true) return true; // un vol ajoute a la main doit toujours pouvoir etre imprime
     var flight  = (f.flight  || '').toUpperCase();
     var handler = (f.handler || '').toUpperCase();
@@ -2113,8 +2120,6 @@ ${(function(){
     if (flight.startsWith('TAY'))      return true;
     if (flight.startsWith('CHG'))      return true;
     if (flight.startsWith('SWN'))      return true;
-    // Les vols ETH ne sont PLUS eligibles ici : leur worksheet catering ne doit
-    // s'imprimer que via la section dediee "Caterings" (donnees collees a part).
     if (handler.includes('CHALLENGE')) return true;
     if (handler.includes('WFS'))       return true; // SVA/WFS aussi inclus maintenant
     if (handler.includes('SWISSPORT')) return true;
@@ -2518,6 +2523,7 @@ ${(function(){
     var date = document.getElementById('shift-date').value;
     var ASL_B744_ONLY = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
     var eligible = flights.filter(function(f) {
+      if (f.isETH === true) return false; // jamais dans ce circuit, uniquement via "Caterings"
       var flt = (f.flight||'').toUpperCase();
       var hnd = (f.handler||'').toUpperCase();
       var reg = (f.reg||'').toUpperCase();
