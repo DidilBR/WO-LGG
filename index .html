@@ -1,0 +1,2790 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="cyber">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LGG - Cleaning Ops</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0e18">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LGG Ops">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg0:#05050f;--bg1:#0a0a1a;--bg2:#0f0f22;--bg3:#15152c;
+  --b1:rgba(255,255,255,.05);--b2:rgba(255,255,255,.10);--b3:rgba(255,255,255,.18);
+  --a1:#00d4ff;--a2:#8b5cf6;
+  --t1:#f0f2ff;--t2:#8892b8;--t3:#3d4570;
+  --red:#ff4d6d;--r:12px;--r2:8px;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+}
+/* AURORA - violet/rose néon - VISIBLE */
+[data-theme="aurora"]{
+  --bg0:#0a0015;--bg1:#130025;--bg2:#1c0035;--bg3:#250045;
+  --b1:rgba(255,255,255,.07);--b2:rgba(220,100,255,.25);--b3:rgba(220,100,255,.4);
+  --a1:#dd55ff;--a2:#ff4488;
+  --t1:#ffffff;--t2:#cc99ee;--t3:#885599;
+}
+/* OCEAN - bleu profond clair */
+[data-theme="ocean"]{
+  --bg0:#001830;--bg1:#002444;--bg2:#003058;--bg3:#003c6c;
+  --b1:rgba(255,255,255,.07);--b2:rgba(0,180,255,.25);--b3:rgba(0,180,255,.4);
+  --a1:#00c8ff;--a2:#0088cc;
+  --t1:#ffffff;--t2:#88ccee;--t3:#336688;
+}
+/* FOREST - vert profond clair */
+[data-theme="forest"]{
+  --bg0:#001a08;--bg1:#002810;--bg2:#003618;--bg3:#004420;
+  --b1:rgba(255,255,255,.07);--b2:rgba(0,220,100,.25);--b3:rgba(0,220,100,.4);
+  --a1:#00ee66;--a2:#00aa44;
+  --t1:#ffffff;--t2:#88ddaa;--t3:#336644;
+}
+/* SUNSET - orange/rouge chaleureux */
+[data-theme="sunset"]{
+  --bg0:#1a0a00;--bg1:#2a1200;--bg2:#381a00;--bg3:#462200;
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,140,0,.25);--b3:rgba(255,140,0,.4);
+  --a1:#ff9900;--a2:#ff5500;
+  --t1:#ffffff;--t2:#ffcc88;--t3:#996633;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   INTERFACE "NEO" — presentation alternative, futuriste et animee.
+   S'active via [data-layout="neo"] sur <html>, independamment du
+   theme de couleur choisi (data-theme reste separe). L'interface
+   "classic" (par defaut, sans attribut) n'est jamais modifiee par
+   ce qui suit : chaque regle ci-dessous est explicitement prefixee.
+
+   Version allegee : les effets couteux (flou + degrade de bordure
+   anime EN CONTINU sur potentiellement 10-20 cartes de vol a la
+   fois) ont ete remplaces par des equivalents statiques ou actifs
+   uniquement au survol, pour rester fluide meme avec une longue
+   liste de vols et pendant l'actualisation automatique du FIDS.
+   ══════════════════════════════════════════════════════════════ */
+@keyframes neoDrift{0%{background-position:0% 0%}50%{background-position:100% 100%}100%{background-position:0% 0%}}
+@keyframes neoRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes neoPulseRing{0%{box-shadow:0 0 0 0 rgba(0,212,255,.5)}70%{box-shadow:0 0 0 8px rgba(0,212,255,0)}100%{box-shadow:0 0 0 0 rgba(0,212,255,0)}}
+@keyframes neoBtnShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+[data-layout="neo"] body::before{
+  background:
+    radial-gradient(ellipse 90% 60% at 20% 0%,rgba(139,92,246,.12),transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 100%,rgba(0,212,255,.10),transparent 55%);
+  background-size:160% 160%;
+  animation:neoDrift 24s ease-in-out infinite;
+}
+[data-layout="neo"] header{
+  background:rgba(6,8,20,.7);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid transparent;
+  background-image:linear-gradient(rgba(6,8,20,.7),rgba(6,8,20,.7)),linear-gradient(90deg,var(--a1),var(--a2),var(--a1));
+  background-origin:border-box;
+  background-clip:padding-box,border-box;
+}
+[data-layout="neo"] .logo-icon{
+  animation:neoPulseRing 2.8s infinite;
+  box-shadow:0 4px 20px rgba(0,200,255,.5);
+}
+/* L'entree en fondu ne joue que sur les grandes sections d'etape (peu nombreuses),
+   jamais sur chaque carte de vol individuelle recreee a chaque actualisation. */
+[data-layout="neo"] #step-1, [data-layout="neo"] #step-2, [data-layout="neo"] #step-3{
+  animation:neoRise .4s cubic-bezier(.2,.8,.2,1) both;
+}
+[data-layout="neo"] .panel,
+[data-layout="neo"] .stat-card{
+  position:relative;
+  background:var(--bg1);
+  border:1px solid transparent;
+  background-image:linear-gradient(var(--bg1),var(--bg1)),linear-gradient(135deg,var(--a1),var(--b2) 40%,var(--a2));
+  background-origin:border-box;
+  background-clip:padding-box,border-box;
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+[data-layout="neo"] .panel:hover{
+  transform:translateY(-1px);
+  box-shadow:0 8px 22px rgba(0,0,0,.3);
+}
+/* Cartes de vol : effet plus leger (pas de flou, pas de degrade anime en continu)
+   puisqu'il peut y en avoir beaucoup a l'ecran en meme temps. */
+[data-layout="neo"] .flight-card{
+  border:1px solid var(--b2);
+  transition:border-color .15s ease,transform .15s ease,box-shadow .15s ease;
+}
+[data-layout="neo"] .flight-card:hover{
+  border-color:var(--a1);
+  transform:translateX(2px);
+}
+[data-layout="neo"] .flight-card.selected{
+  border-color:var(--a1);
+  box-shadow:0 0 16px rgba(0,212,255,.18);
+}
+[data-layout="neo"] .btn-primary{
+  background:linear-gradient(120deg,var(--a1),var(--a2),var(--a1));
+  background-size:220% 100%;
+  animation:neoBtnShift 4s ease-in-out infinite;
+  box-shadow:0 4px 20px rgba(0,212,255,.3);
+}
+[data-layout="neo"] .btn:active{transform:scale(.96)}
+[data-layout="neo"] .prog-num{transition:all .4s cubic-bezier(.2,.8,.2,1)}
+[data-layout="neo"] .prog-step.active .prog-num{animation:neoPulseRing 1.8s infinite}
+[data-layout="neo"] .section-title{
+  background:linear-gradient(90deg,var(--t1),var(--a1),var(--t1));
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:neoBtnShift 5s ease-in-out infinite;
+}
+[data-layout="neo"] .eyebrow-dot{box-shadow:0 0 8px var(--a1)}
+[data-layout="neo"] input[type=text],
+[data-layout="neo"] input[type=date],
+[data-layout="neo"] textarea{
+  background:rgba(255,255,255,.02);
+  border:1px solid var(--b2);
+  transition:box-shadow .25s,border-color .25s;
+}
+[data-layout="neo"] input[type=text]:focus,
+[data-layout="neo"] input[type=date]:focus,
+[data-layout="neo"] textarea:focus{
+  box-shadow:0 0 0 3px rgba(0,212,255,.15),0 0 20px rgba(0,212,255,.1);
+}
+[data-layout="neo"] .check.selected,
+[data-layout="neo"] .flight-card.selected .check{
+  box-shadow:0 0 10px var(--a1);
+}
+@media (prefers-reduced-motion: reduce){
+  [data-layout="neo"] *{animation-duration:.001ms!important;animation-iteration-count:1!important}
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg0);color:var(--t1);min-height:100vh;transition:background .4s,color .4s}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 15% 10%,rgba(139,92,246,.08),transparent 60%),radial-gradient(ellipse 50% 40% at 85% 85%,rgba(0,212,255,.06),transparent 60%);pointer-events:none;z-index:0}
+header{position:sticky;top:0;z-index:200;background:rgba(5,5,15,.8);backdrop-filter:blur(30px);border-bottom:1px solid var(--b1)}
+.header-inner{max-width:680px;margin:0 auto;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+.logo-wrap{display:flex;align-items:center;gap:12px}
+.logo-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(0,200,255,.3);flex-shrink:0}
+.logo-text{font-size:13px;font-weight:700;background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-sub{font-size:10px;color:var(--t3);letter-spacing:2px;text-transform:uppercase;font-family:var(--mono)}
+.header-right{display:flex;align-items:center;gap:18px}
+.step-pill{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;background:var(--bg2);border:1px solid var(--b2);border-radius:20px;padding:5px 14px;color:var(--t2)}
+.theme-dots{display:flex;gap:6px;align-items:center}
+.tdot{width:14px;height:14px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;padding:0}
+.tdot:hover{transform:scale(1.35)}
+.tdot.active{border-color:rgba(255,255,255,.9);box-shadow:0 0 0 3px rgba(255,255,255,.12);transform:scale(1.25)}
+.app-wrap{position:relative;z-index:1;max-width:680px;margin:0 auto;padding:44px 24px 100px}
+.progress-bar{display:flex;gap:8px;align-items:center;margin-bottom:44px}
+.prog-step{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--t3);font-family:var(--mono);transition:color .3s}
+.prog-step.active{color:var(--a1)}.prog-step.done{color:var(--t2)}
+.prog-num{width:24px;height:24px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;transition:all .3s;flex-shrink:0}
+.prog-step.active .prog-num{box-shadow:0 0 12px rgba(0,212,255,.35)}
+.prog-step.done .prog-num{background:linear-gradient(135deg,var(--a1),var(--a2));border-color:transparent;color:#fff}
+.prog-line{flex:1;height:1px;background:var(--b2)}
+.prog-label{display:none}@media(min-width:400px){.prog-label{display:block}}
+.section-hd{margin-bottom:28px}
+.section-eyebrow{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--a1);margin-bottom:10px}
+.eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--a1);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes pulseRed{0%{box-shadow:0 0 0 0 rgba(255,0,85,.6)}70%{box-shadow:0 0 0 8px rgba(255,0,85,0)}100%{box-shadow:0 0 0 0 rgba(255,0,85,0)}}
+.section-title{font-size:26px;font-weight:800;letter-spacing:-.5px}
+.section-desc{margin-top:8px;font-size:14px;color:var(--t2);line-height:1.6}
+.panel{background:var(--bg1);border:1px solid var(--b2);border-radius:var(--r);padding:22px;margin-bottom:16px;transition:border-color .2s}
+.panel:hover{border-color:var(--b3)}
+.panel-hint{background:var(--bg2);border:1px solid var(--b1);border-left:3px solid var(--a1);border-radius:var(--r2);padding:14px 16px;margin-bottom:14px;font-size:13px;color:var(--t2);line-height:1.75}
+.panel-hint strong{color:var(--t1)}
+.field{margin-bottom:16px}
+.field-label{display:block;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--t2);margin-bottom:8px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+input[type=text],input[type=date],textarea,select{width:100%;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font:500 14px/1 var(--sans);padding:13px 16px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none}
+input:focus,textarea:focus{border-color:var(--a1);box-shadow:0 0 0 3px rgba(0,212,255,.08)}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
+.shift-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+.shift-btn{background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r);padding:16px 8px;cursor:pointer;text-align:center;transition:all .2s}
+.shift-btn:hover{border-color:var(--b3);transform:translateY(-1px)}
+.shift-btn.active{border-color:var(--a1);box-shadow:0 0 0 1px rgba(0,212,255,.2),0 8px 24px rgba(0,212,255,.1);transform:translateY(-2px);background:rgba(0,212,255,.04)}
+.shift-name{display:block;font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--t1);margin-bottom:4px}
+.shift-btn.active .shift-name{background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.shift-time{display:block;font-size:10px;font-family:var(--mono);color:var(--t2)}
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-card{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:16px}
+.stat-card .num{font:700 26px/1 var(--mono);background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-card .lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:1px;margin-top:5px}
+.flights-list{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.flight-card{background:var(--bg1);border:1px solid var(--b1);border-radius:var(--r2);padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s;user-select:none}
+.flight-card:hover{border-color:var(--b2);background:var(--bg2)}
+.flight-card.selected{background:rgba(0,212,255,.03);border-color:rgba(0,212,255,.28);box-shadow:0 0 0 1px rgba(0,212,255,.08)}
+.check{width:20px;height:20px;flex-shrink:0;border:1.5px solid var(--b3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;transition:all .15s}
+.flight-card.selected .check{background:linear-gradient(135deg,var(--a1),var(--a2));border-color:transparent;color:#fff;box-shadow:0 2px 8px rgba(0,212,255,.3)}
+.flight-info{flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.flight-reg{font:600 12px/1 var(--mono);background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;min-width:72px}
+.flight-num{font-size:13px;font-weight:600;min-width:64px}
+.flight-time{font:400 11px/1 var(--mono);color:var(--t2)}
+.flight-stand{font-size:10px;color:var(--t3);background:var(--bg3);border:1px solid var(--b1);padding:3px 8px;border-radius:20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border-radius:var(--r2);font:700 11px/1 var(--sans);letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;box-shadow:0 4px 20px rgba(0,212,255,.2)}
+.btn-primary:hover{opacity:.85;transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,212,255,.3)}
+.btn-primary:active{transform:translateY(0)}
+.btn-ghost{background:transparent;color:var(--t2);border:1px solid var(--b2)}
+.btn-ghost:hover{color:var(--t1);border-color:var(--b3);background:var(--bg2)}
+.btn-danger{background:transparent;color:var(--red);border:1px solid transparent}
+.btn-danger:hover{border-color:var(--red);background:rgba(255,77,109,.05)}
+.btn-amber{background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-weight:800;box-shadow:0 4px 16px rgba(245,158,11,.2)}
+.btn-amber:hover{opacity:.88;transform:translateY(-2px)}
+.actions{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+.add-manual-toggle{width:100%;padding:13px;background:none;color:var(--a1);border:1px dashed rgba(0,212,255,.2);border-radius:var(--r2);cursor:pointer;font:700 10px/1 var(--sans);letter-spacing:1.5px;text-transform:uppercase;transition:all .2s}
+.add-manual-toggle:hover{background:rgba(0,212,255,.04);border-color:rgba(0,212,255,.4)}
+.manual-form{background:var(--bg2);border:1px solid var(--b1);border-radius:var(--r2);padding:18px;margin-top:10px}
+.manual-form-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t2);margin-bottom:14px;font-weight:700}
+.empty-state{text-align:center;padding:52px 20px;color:var(--t3)}
+.empty-state .icon{font-size:40px;margin-bottom:12px;opacity:.3}
+.empty-state p{font-size:13px}
+.hidden{display:none!important}
+#pdf-sheet{display:none}
+
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--bg0)}
+::-webkit-scrollbar-thumb{background:var(--b3);border-radius:2px}
+@media print{body>*:not(#print-overlay){display:none!important}#print-overlay{display:block!important;position:static!important;background:white!important;padding:0!important}#print-overlay>div{box-shadow:none!important;padding:0!important}.no-print{display:none!important}}
+
+</style>
+</head>
+<body>
+
+<header>
+<div class="header-inner">
+  <div class="logo-wrap">
+    <button onclick="openHistoryModal()" title="Menu / Historique des avions" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t1);font-size:16px;cursor:pointer;padding:7px 10px;line-height:1;margin-right:2px">&#9776;</button>
+    <div class="logo-icon">&#9992;</div>
+    <div>
+      <div class="logo-text">LGG &middot; Cleaning Ops</div>
+      <div class="logo-sub">Liege Airport</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="theme-dots">
+      <button class="tdot active" data-theme="cyber"   title="🌌 Cyber"   style="background:linear-gradient(135deg,#00d4ff,#8b5cf6)"></button>
+      <button class="tdot"        data-theme="aurora"  title="💜 Aurora"  style="background:linear-gradient(135deg,#dd55ff,#ff4488)"></button>
+      <button class="tdot"        data-theme="ocean"   title="🌊 Ocean"   style="background:linear-gradient(135deg,#00c8ff,#0088cc)"></button>
+      <button class="tdot"        data-theme="forest"  title="🌿 Forest"  style="background:linear-gradient(135deg,#00ee66,#00aa44)"></button>
+      <button class="tdot"        data-theme="sunset"  title="🌅 Sunset"  style="background:linear-gradient(135deg,#ff9900,#ff5500)"></button>
+    </div>
+    <div class="step-pill" id="step-indicator">ETAPE 1 / 3</div>
+    <button onclick="openLayoutSettings()" title="Changer l'interface" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:14px;cursor:pointer;padding:6px 9px;line-height:1">&#10024;</button>
+    <button onclick="openShiftSettings()" title="Regler les horaires de shift" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:15px;cursor:pointer;padding:6px 9px;line-height:1">&#9881;</button>
+    <button id="refresh-toggle-btn" onclick="openRefreshSettings()" title="Reglages de l'actualisation automatique" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:14px;cursor:pointer;padding:6px 9px;line-height:1">&#128260;</button>
+  </div>
+</div>
+</header>
+
+<div id="settings-modal-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--bg1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:100%;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+    <div style="font-size:16px;font-weight:800;color:var(--a1);margin-bottom:4px">&#9881; Horaires des shifts</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:18px">Modifie le debut/fin de chaque shift. La fenetre d'affichage (-1h30/+1h) s'ajuste automatiquement.</div>
+
+    <div style="margin-bottom:14px">
+      <label class="field-label">Early</label>
+      <div class="field-row">
+        <input type="time" id="cfg-early-start">
+        <input type="time" id="cfg-early-end">
+      </div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="field-label">Late</label>
+      <div class="field-row">
+        <input type="time" id="cfg-late-start">
+        <input type="time" id="cfg-late-end">
+      </div>
+    </div>
+    <div style="margin-bottom:20px">
+      <label class="field-label">Night</label>
+      <div class="field-row">
+        <input type="time" id="cfg-night-start">
+        <input type="time" id="cfg-night-end">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeShiftSettings()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveShiftSettings()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="refresh-settings-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--bg1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:100%;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+    <div style="font-size:16px;font-weight:800;color:var(--a1);margin-bottom:4px">&#128260; Actualisation automatique</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:20px">Recupere automatiquement les derniers vols depuis le FIDS pendant que tu es a l'etape 3.</div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--b2);border-radius:10px;padding:12px 14px;margin-bottom:20px">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">Activer l'actualisation</div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px" id="refresh-status-text">Active</div>
+      </div>
+      <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0">
+        <input type="checkbox" id="refresh-enabled-toggle" onchange="onRefreshToggleChange()" style="opacity:0;width:0;height:0">
+        <span id="refresh-toggle-track" style="position:absolute;inset:0;background:var(--b2);border-radius:24px;transition:background .2s;cursor:pointer"></span>
+        <span id="refresh-toggle-knob" style="position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none"></span>
+      </label>
+    </div>
+
+    <label class="field-label">Frequence de mise a jour</label>
+    <div style="display:flex;align-items:center;gap:12px;margin:10px 0 6px">
+      <input type="range" id="refresh-interval-slider" min="1" max="30" step="1" value="1" oninput="onRefreshSliderInput()" style="flex:1;accent-color:var(--a1)">
+      <div id="refresh-interval-label" style="font:700 13px/1 var(--mono);color:var(--a1);min-width:52px;text-align:right">1 min</div>
+    </div>
+    <div style="font-size:11px;color:var(--t2);margin-bottom:20px">De 1 minute a 30 minutes.</div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeRefreshSettings()">Fermer</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveRefreshSettings()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="layout-settings-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--bg1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:100%;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+    <div style="font-size:16px;font-weight:800;color:var(--a1);margin-bottom:4px">&#10024; Interface</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:18px">Choisis la presentation de l'appli. Les couleurs (theme) restent independantes de ce choix.</div>
+
+    <div id="layout-opt-classic" onclick="selectLayoutOption('classic')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:12px;transition:border-color .2s,background .2s">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">Classic</div>
+        <div id="layout-check-classic" style="font-size:14px;color:var(--a1)">&#10003;</div>
+      </div>
+      <div style="font-size:11px;color:var(--t2);margin-top:4px">L'interface actuelle : sobre, rapide, sans animation superflue.</div>
+    </div>
+
+    <div id="layout-opt-neo" onclick="selectLayoutOption('neo')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:20px;transition:border-color .2s,background .2s">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">Neo &#8212; futuriste</div>
+        <div id="layout-check-neo" style="font-size:14px;color:var(--a1);visibility:hidden">&#10003;</div>
+      </div>
+      <div style="font-size:11px;color:var(--t2);margin-top:4px">Contours animes, verre depoli, degrades mouvants, transitions fluides.</div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeLayoutSettings()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div id="fleet-modal-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--bg1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:100%;max-width:380px;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+    <div style="font-size:16px;font-weight:800;color:var(--a1);margin-bottom:4px">&#10024; Ajouter a la flotte connue</div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:18px">Cet avion sera memorise : il n'affichera plus ce badge la prochaine fois.</div>
+    <label class="field-label">Immatriculation</label>
+    <input type="text" id="fleet-modal-reg" readonly style="margin-bottom:14px;opacity:.7">
+    <label class="field-label">Note / compagnie (optionnel)</label>
+    <input type="text" id="fleet-modal-note" placeholder="ex: toujours Full Transit + Handling" style="margin-bottom:20px">
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeFleetModal()">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveFleetModal()">Memoriser</button>
+    </div>
+  </div>
+</div>
+
+<div id="history-modal-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="background:var(--bg1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:100%;max-width:460px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.5)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="font-size:16px;font-weight:800;color:var(--a1)">&#9776; Historique des avions</div>
+      <button onclick="closeHistoryModal()" style="background:none;border:none;color:var(--t2);font-size:20px;cursor:pointer;line-height:1;padding:2px 6px">&times;</button>
+    </div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:14px">Avions memorises et notes enregistrees de votre cote.</div>
+    <input type="text" id="history-search" placeholder="Rechercher une immatriculation ou une note..." oninput="renderHistoryList()" style="margin-bottom:14px">
+    <div id="history-list" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:8px"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-ghost" style="flex:1" onclick="closeHistoryModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="app-wrap">
+
+  <div class="progress-bar">
+    <div class="prog-step active" id="prog-1"><div class="prog-num">1</div><span class="prog-label">Shift</span></div>
+    <div class="prog-line"></div>
+    <div class="prog-step" id="prog-2"><div class="prog-num">2</div><span class="prog-label">FIDS</span></div>
+    <div class="prog-line"></div>
+    <div class="prog-step" id="prog-3"><div class="prog-num">3</div><span class="prog-label">Vols</span></div>
+  </div>
+
+  <div id="step-1">
+    <div class="section-hd">
+      <div class="section-eyebrow"><span class="eyebrow-dot"></span>Etape 1 sur 3</div>
+      <div class="section-title">Date &amp; Shift</div>
+      <div class="section-desc">Selectionnez la date et votre shift</div>
+    </div>
+    <div class="panel">
+      <div class="field-row" style="margin-bottom:18px">
+        <div><label class="field-label">Date</label><input type="date" id="shift-date" autocomplete="off"></div>
+        <div><label class="field-label">Agent / Equipe</label><input type="text" id="shift-agent" placeholder="Nom ou equipe"></div>
+      </div>
+      <div>
+        <label class="field-label">Shift</label>
+        <div class="shift-grid">
+          <button class="shift-btn" id="btn-shift-early" data-shift="EARLY" data-time="05:30-14:00" onclick="selectShift(this)">
+            <span class="shift-name">Early</span><span class="shift-time" id="lbl-time-early">05:30 - 14:00</span>
+          </button>
+          <button class="shift-btn" id="btn-shift-late" data-shift="LATE" data-time="13:30-22:00" onclick="selectShift(this)">
+            <span class="shift-name">Late</span><span class="shift-time" id="lbl-time-late">13:30 - 22:00</span>
+          </button>
+          <button class="shift-btn" id="btn-shift-night" data-shift="NIGHT" data-time="21:30-06:00" onclick="selectShift(this)">
+            <span class="shift-name">Night</span><span class="shift-time" id="lbl-time-night">21:30 - 06:00</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="goToStep(2)">Continuer &rarr;</button>
+    </div>
+  </div>
+
+  <div id="step-2" class="hidden">
+    <div class="section-hd">
+      <div class="section-eyebrow"><span class="eyebrow-dot"></span>Etape 2 sur 3</div>
+      <div class="section-title">Import FIDS</div>
+      <div class="section-desc">Collez les donnees depuis fids.liegeairport.com/spw</div>
+    </div>
+    <div class="panel">
+      <button class="btn btn-primary" id="btn-load-api" onclick="loadFromFidsAPI()" style="width:100%;margin-bottom:10px">&#128260; Charger automatiquement (API FIDS)</button>
+      <div id="api-status" style="font-size:12px;min-height:16px;margin-bottom:14px"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div style="height:1px;flex:1;background:var(--b2)"></div>
+        <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3)">ou manuellement</div>
+        <div style="height:1px;flex:1;background:var(--b2)"></div>
+      </div>
+      <div class="panel-hint">
+        <strong>Comment faire :</strong><br>
+        1. Ouvrez <strong>fids.liegeairport.com/spw</strong><br>
+        2. Attendez que tous les vols chargent<br>
+        3. Selectionnez tout &rarr; Copier<br>
+        4. Collez ci-dessous
+      </div>
+      <textarea id="fids-text" placeholder="Collez le texte du FIDS ici..." style="width:100%;min-height:130px;resize:vertical;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:11px;line-height:1.6;padding:13px 16px;outline:none"></textarea>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-hint" style="border-left-color:#00e5a0">
+        <strong>Caterings (optionnel) :</strong><br>
+        Collez ici les lignes de catering depuis votre système.<br>
+        Format : <span style="font-family:var(--mono);font-size:11px;color:var(--t1)">11-JUIL  QTR  A7BFO  QR8169  22H45  23H45  4</span>
+      </div>
+      <textarea id="catering-text" placeholder="Collez les caterings ici (optionnel)..." style="width:100%;min-height:90px;resize:vertical;background:var(--bg2);border:1px solid rgba(0,229,160,.2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:11px;line-height:1.6;padding:13px 16px;outline:none"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goToStep(1)">&larr; Retour</button>
+      <button class="btn btn-primary" onclick="handleAnalyzeClick()">Analyser &rarr;</button>
+    </div>
+  </div>
+
+  <div id="step-3" class="hidden">
+    <div class="section-hd">
+      <div class="section-eyebrow"><span class="eyebrow-dot"></span>Etape 3 sur 3</div>
+      <div class="section-title">Vols detectes</div>
+      <div class="section-desc">Verifiez et ajustez avant de generer</div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="num" id="count-selected">0</div><div class="lbl">Selectionnes</div></div>
+      <div class="stat-card"><div class="num" id="count-total">0</div><div class="lbl">Total detectes</div></div>
+    </div>
+
+    <!-- Badge discret : nouveaux changements detectes par l'auto-refresh -->
+    <div id="refresh-badge" style="display:none;align-items:center;gap:8px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.35);border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12px;color:#00e5a0;font-weight:600">
+      <span style="animation:spin 1.5s linear infinite;display:inline-block">&#128260;</span>
+      <span id="refresh-badge-text">A jour</span>
+    </div>
+
+    <!-- Recherche / filtre des vols -->
+    <input type="text" id="flight-search" placeholder="&#128269; Rechercher un vol (numero, immat, stand, handler)..." oninput="onFlightSearch(this.value)"
+      style="width:100%;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:13px;padding:11px 14px;outline:none;margin-bottom:8px">
+
+    <!-- Avions à nettoyer -->
+    <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
+      <div style="height:1px;flex:1;background:var(--b2)"></div>
+      <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--a1);padding:5px 14px;border:1px solid rgba(0,212,255,.3);border-radius:20px;background:rgba(0,212,255,.06)">🛩 Avions à nettoyer</div>
+      <div style="height:1px;flex:1;background:var(--b2)"></div>
+    </div>
+    <div class="flights-list" id="flights-list">
+      <div class="empty-state"><div class="icon">&#9992;</div><p>Aucun vol detecte</p></div>
+    </div>
+    <!-- Caterings section -->
+    <div id="catering-section" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
+        <div style="height:1px;flex:1;background:rgba(0,229,160,.2)"></div>
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#00e5a0;padding:5px 14px;border:1px solid rgba(0,229,160,.3);border-radius:20px;background:rgba(0,229,160,.06)">🍽 Caterings</div>
+        <div style="height:1px;flex:1;background:rgba(0,229,160,.2)"></div>
+      </div>
+      <div class="stats-row" style="margin-bottom:10px">
+        <div class="stat-card" style="border-color:rgba(0,229,160,.15)">
+          <div class="num" id="catering-selected-count" style="background:linear-gradient(90deg,#00e5a0,#00b37a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">0</div>
+          <div class="lbl">Caterings sél.</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(0,229,160,.15)">
+          <div class="num" id="catering-count" style="background:linear-gradient(90deg,#00e5a0,#00b37a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">0</div>
+          <div class="lbl">Total détectés</div>
+        </div>
+      </div>
+      <div id="catering-list">
+        <div class="empty-state"><div class="icon">🍽</div><p>Aucun catering — collez-les à l'étape 2</p></div>
+      </div>
+    </div>
+
+    <div id="asl737-section" class="hidden" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
+        <div style="height:1px;flex:1;background:rgba(255,180,0,.2)"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ffb400;padding:5px 14px;border:1px solid rgba(255,180,0,.3);border-radius:20px;background:rgba(255,180,0,.06)">&#9992; ASL 737</div>
+          <button onclick="generateASL737Only()" style="font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#000;background:linear-gradient(135deg,#ffb400,#ff8c00);border:none;border-radius:20px;padding:5px 12px;cursor:pointer;box-shadow:0 2px 8px rgba(255,180,0,.3)">&#128203; Imprimer ASL 737</button>
+        </div>
+        <div style="height:1px;flex:1;background:rgba(255,180,0,.2)"></div>
+      </div>
+      <div class="flights-list" id="asl737-list"></div>
+    </div>
+    <button class="add-manual-toggle" onclick="toggleManualForm()">+ Ajouter un vol manuellement</button>
+    <div class="manual-form hidden" id="manual-form">
+      <div class="manual-form-title">Ajout manuel</div>
+      <div class="field-row" style="margin-bottom:12px">
+        <div><label class="field-label">N de vol *</label><input type="text" id="m-flight" placeholder="ex: TNT123" oninput="var v=this.value.toUpperCase();var row=document.getElementById('abd-choice-row');if(row){if(v.startsWith('ABD'))row.classList.remove('hidden');else row.classList.add('hidden');}"></div>
+        <div><label class="field-label">Heure ETA *</label><input type="text" id="m-time" placeholder="ex: 08:30"></div>
+      </div>
+      <div class="field-row" style="margin-bottom:14px">
+        <div><label class="field-label">Registration</label><input type="text" id="m-reg" placeholder="ex: OO-TNA" oninput="handleRegInput(this.value)"></div>
+        <div><label class="field-label">Stand</label><input type="text" id="m-stand" placeholder="ex: A12"></div>
+      </div>
+      <div id="known-aircraft-hint" class="hidden" style="font-size:11px;color:#00e5a0;margin:-6px 0 12px;font-family:var(--mono)"></div>
+      <div style="margin-bottom:14px">
+        <label onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:rgba(255,180,0,.08);border:1px solid rgba(255,180,0,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:#ffb400">
+          <input type="checkbox" id="m-handling" style="accent-color:#ffb400"> ⚙ Handling
+        </label>
+      </div>
+      <div id="abd-choice-row" class="hidden" style="margin-bottom:14px">
+        <label class="field-label">Vols ABD — Company</label>
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+          <label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:var(--a1)">
+            <input type="radio" name="abd-choice" id="abd-choice" value="ANA" checked style="accent-color:var(--a1)"> ANA
+          </label>
+          <label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:var(--a1)">
+            <input type="radio" name="abd-choice" value="WFS / Magma" style="accent-color:var(--a1)"> WFS / Magma
+          </label>
+          <label id="abd-lachs-magma-opt" onclick="event.stopPropagation()" class="hidden" style="display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:var(--a1)">
+            <input type="radio" name="abd-choice" value="Lachs / Magma" style="accent-color:var(--a1)"> Lachs / Magma
+          </label>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addManualFlight()" style="margin-top:4px">Ajouter ce vol</button>
+    </div>
+    <div class="panel" style="margin-top:16px;border-color:rgba(0,212,255,.15)">
+      <label class="field-label" style="margin-bottom:8px">&#128221; Informations complémentaires</label>
+      <textarea id="extra-notes" placeholder="Ajoutez vos notes ici... (elles apparaîtront dans la section Notes de la feuille)" style="width:100%;min-height:80px;resize:vertical;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--sans);font-size:13px;line-height:1.6;padding:13px 16px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--a1)'" onblur="this.style.borderColor='var(--b2)'" oninput="localStorage.setItem('lgg_extra_notes', this.value)"></textarea>
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="goToStep(2)">&larr; Retour</button>
+      <button class="btn btn-primary" onclick="generatePDF()">&#128424; Feuille nettoyage</button>
+      <button class="btn btn-amber" onclick="generateWorksheets()">&#128203; Worksheets</button>
+      <button class="btn" style="background:linear-gradient(135deg,#22c1c3,#0d8ab0);color:#000;font-weight:800" onclick="generateCrewBusSheet()">&#128652; Crew Bus</button>
+      <button class="btn btn-danger" onclick="resetAll()">Recommencer</button>
+    </div>
+  </div>
+</div>
+
+<div id="pdf-sheet"></div>
+<div id="print-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:999;flex-direction:column;align-items:center;overflow-y:auto;padding:24px">
+  <div style="background:#fff;max-width:820px;width:100%;border-radius:12px;padding:28px">
+    <div id="print-content"></div>
+    <div style="display:flex;gap:12px;margin-top:24px;justify-content:center" class="no-print">
+      <button onclick="printSheet()" style="background:#111;color:#fff;border:none;padding:13px 28px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Imprimer / PDF</button>
+      <button onclick="closePrintOverlay()" style="background:transparent;color:#888;border:1px solid #ccc;padding:13px 22px;border-radius:8px;font-size:13px;cursor:pointer">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+
+
+
+
+
+
+
+
+
+  let selectedShift = null;
+  let flights = [];
+  let selectedFlights = new Set();
+  let caterings = [];
+  let selectedCaterings = new Set();
+  let shiftConfig = JSON.parse(localStorage.getItem('lgg_shift_config') || 'null') || {
+    EARLY: { start: '05:30', end: '14:00' },
+    LATE:  { start: '13:30', end: '22:00' },
+    NIGHT: { start: '21:30', end: '06:00' }
+  };
+  let knownRegs = JSON.parse(localStorage.getItem('lgg_known_regs') || 'null') || {};
+  let fleetNotes = JSON.parse(localStorage.getItem('lgg_fleet_notes') || 'null') || {};
+
+  document.getElementById('shift-date').value = todayBrusselsDateStr();
+  updateShiftButtonLabels();
+  autoDetectShift();
+
+  // Safari (et d'autres navigateurs) restaurent parfois une ANCIENNE valeur de champ
+  // de formulaire (comme ce champ date) lors d'un retour sur la page depuis le cache
+  // de navigation (bfcache), APRES que notre script ait deja mis la bonne date.
+  // On force donc la reinitialisation a chaque fois que la page redevient visible.
+  window.addEventListener('pageshow', function () {
+    const dateInput = document.getElementById('shift-date');
+    const today = todayBrusselsDateStr();
+    if (dateInput.value && dateInput.value < today) {
+      dateInput.value = today;
+      autoDetectShift();
+    }
+  });
+
+  function selectShift(btn) {
+    document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedShift = { name: btn.dataset.shift, time: btn.dataset.time };
+  }
+
+  function goToStep(n) {
+    currentStep = n;
+    if (n !== 3) hideRefreshBadge();
+    [1,2,3].forEach(i => document.getElementById('step-'+i).classList.add('hidden'));
+    document.getElementById('step-'+n).classList.remove('hidden');
+    document.getElementById('step-indicator').textContent = 'ETAPE ' + n + ' / 3';
+    window.scrollTo(0,0);
+    // Update progress bar
+    [1,2,3].forEach(i => {
+      var el = document.getElementById('prog-'+i);
+      if (!el) return;
+      el.classList.remove('active','done');
+      if (i < n) el.classList.add('done');
+      else if (i === n) el.classList.add('active');
+    });
+  }
+
+  // ── Auto-detection du shift en cours a l'ouverture ──────────────
+  function autoDetectShift() {
+    const now = new Date();
+    const curMin = now.getHours() * 60 + now.getMinutes();
+    const candidates = [
+      { name: 'EARLY', start: cfgToMin(shiftConfig.EARLY.start) },
+      { name: 'LATE',  start: cfgToMin(shiftConfig.LATE.start) },
+      { name: 'NIGHT', start: cfgToMin(shiftConfig.NIGHT.start) }
+    ];
+    let best = null, bestDiff = Infinity;
+    candidates.forEach(s => {
+      let diff = curMin - s.start;
+      if (diff < 0) diff += 1440;
+      if (diff < bestDiff) { bestDiff = diff; best = s; }
+    });
+    if (!best) return;
+    const btn = document.querySelector('.shift-btn[data-shift="' + best.name + '"]');
+    if (btn) selectShift(btn);
+  }
+
+  // ── Shift time filter ─────────────────────────────────────────
+  // ── Horaires de shift configurables (reglages, persistes en localStorage) ──
+  function cfgToMin(t) {
+    const p = t.split(':');
+    return parseInt(p[0]) * 60 + parseInt(p[1]);
+  }
+  function cfgAddMin(hhmm, delta) {
+    let m = ((cfgToMin(hhmm) + delta) % 1440 + 1440) % 1440;
+    const h = Math.floor(m / 60), mm = m % 60;
+    return String(h).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+  }
+  function isTimeInRangeWrap(timeStr, startStr, endStr) {
+    if (!timeStr || timeStr === '—') return false;
+    const t = cfgToMin(timeStr), s = cfgToMin(startStr), e = cfgToMin(endStr);
+    return s <= e ? (t >= s && t < e) : (t >= s || t < e);
+  }
+
+  function updateShiftButtonLabels() {
+    ['EARLY', 'LATE', 'NIGHT'].forEach(name => {
+      const cfg = shiftConfig[name];
+      const lower = name.toLowerCase();
+      const btn = document.getElementById('btn-shift-' + lower);
+      const lbl = document.getElementById('lbl-time-' + lower);
+      if (btn) btn.dataset.time = cfg.start + '-' + cfg.end;
+      if (lbl) lbl.textContent = cfg.start + ' - ' + cfg.end;
+    });
+  }
+
+  function openShiftSettings() {
+    document.getElementById('cfg-early-start').value = shiftConfig.EARLY.start;
+    document.getElementById('cfg-early-end').value   = shiftConfig.EARLY.end;
+    document.getElementById('cfg-late-start').value  = shiftConfig.LATE.start;
+    document.getElementById('cfg-late-end').value    = shiftConfig.LATE.end;
+    document.getElementById('cfg-night-start').value = shiftConfig.NIGHT.start;
+    document.getElementById('cfg-night-end').value   = shiftConfig.NIGHT.end;
+    document.getElementById('settings-modal-overlay').classList.remove('hidden');
+  }
+  function closeShiftSettings() {
+    document.getElementById('settings-modal-overlay').classList.add('hidden');
+  }
+  function saveShiftSettings() {
+    shiftConfig = {
+      EARLY: { start: document.getElementById('cfg-early-start').value || '05:30', end: document.getElementById('cfg-early-end').value || '14:00' },
+      LATE:  { start: document.getElementById('cfg-late-start').value  || '13:30', end: document.getElementById('cfg-late-end').value  || '22:00' },
+      NIGHT: { start: document.getElementById('cfg-night-start').value || '21:30', end: document.getElementById('cfg-night-end').value || '06:00' }
+    };
+    localStorage.setItem('lgg_shift_config', JSON.stringify(shiftConfig));
+    updateShiftButtonLabels();
+    // Si un shift etait deja selectionne, on garde le meme nom (juste les horaires ont change)
+    if (selectedShift) {
+      const btn = document.getElementById('btn-shift-' + selectedShift.name.toLowerCase());
+      if (btn) selectShift(btn);
+    }
+    closeShiftSettings();
+  }
+
+  function isInShift(timeStr) {
+    if (!selectedShift) return true; // no shift selected = show all
+    if (!timeStr || timeStr === '—') return false;
+    const cfg = shiftConfig[selectedShift.name];
+    if (!cfg) return true;
+    return isTimeInRangeWrap(timeStr, cfg.start, cfg.end);
+  }
+
+  // ── Fenetre d'affichage (plus large que la preselection) ─────────
+  // Marge : -1h30 avant le debut du shift, +1h apres la fin (calculee a partir
+  // des horaires configurables, pas de valeurs figees).
+  // Utilisee pour ne LISTER que les vols pertinents (la preselection reste sur isInShift).
+  function isInDisplayWindow(timeStr) {
+    if (!selectedShift) return true; // pas de shift = tout afficher
+    if (!timeStr || timeStr === '—') return true; // heure inconnue : on l'affiche quand meme (a verifier manuellement)
+    const cfg = shiftConfig[selectedShift.name];
+    if (!cfg) return true;
+    const dispStart = cfgAddMin(cfg.start, -90);
+    const dispEnd   = cfgAddMin(cfg.end, 60);
+    return isTimeInRangeWrap(timeStr, dispStart, dispEnd);
+  }
+
+  // ── Parse Caterings ────────────────────────────────────────────
+  // Format: DD-MON  COMPANY  REG  FLTNR  HHhMM  HHhMM  CREW
+  function parseCaterings() {
+    const raw = document.getElementById('catering-text').value.trim();
+    caterings = [];
+    if (!raw) { renderCaterings(); return; }
+
+    const lines = raw.split('\n');
+    lines.forEach(line => {
+      const parts = line.trim().replace(/\t/g, ' ').replace(/ +/g, ' ').split(' ').filter(Boolean);
+      if (parts.length < 4) return;
+
+      // Try to detect: date, company, reg, flight, delivery, departure, crew
+      // Pattern: DD-MON  COMPANY  REG  FLTNR  HHhMM  HHhMM  CREW
+      // Times look like 22H45 or 22:45
+      const timePattern = /^\d{1,2}[Hh:]\d{2}$/;
+      const datePattern = /^\d{1,2}-[A-Z]{3,4}$/i;
+
+      let date='', company='', reg='', flight='', delivery='', departure='', crew='';
+
+      // Find times first
+      const timeIdxs = parts.map((p,i) => timePattern.test(p) ? i : -1).filter(i => i>=0);
+
+      if (timeIdxs.length >= 2) {
+        delivery  = parts[timeIdxs[0]].replace('H',':').replace('h',':');
+        departure = parts[timeIdxs[1]].replace('H',':').replace('h',':');
+        crew      = parts[timeIdxs[1]+1] || '';
+        // Before first time: date?, company, reg, flight
+        const before = parts.slice(0, timeIdxs[0]);
+        let idx = 0;
+        if (before[0] && datePattern.test(before[0])) { date = before[0]; idx = 1; }
+        company = before[idx]   || '';
+        reg     = before[idx+1] || '';
+        flight  = before[idx+2] || '';
+      } else if (parts.length >= 4) {
+        // Fallback: just grab what we can
+        let idx = 0;
+        if (datePattern.test(parts[0])) { date = parts[0]; idx = 1; }
+        company  = parts[idx]   || '';
+        reg      = parts[idx+1] || '';
+        flight   = parts[idx+2] || '';
+        delivery = parts[idx+3] || '';
+        departure= parts[idx+4] || '';
+        crew     = parts[idx+5] || '';
+      }
+
+      if (!company && !flight) return;
+      caterings.push({ date, company, reg, flight, delivery, departure, crew });
+    });
+
+    selectedCaterings = new Set(caterings.map((_,i) => i));
+    renderCaterings();
+    updateCateringCount();
+  }
+
+  function renderCaterings() {
+    const list = document.getElementById('catering-list');
+    if (!list) return;
+    document.getElementById('catering-count').textContent = caterings.length;
+    updateCateringCount();
+
+    if (caterings.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">🍽</div><p>Aucun catering détecté</p></div>';
+      return;
+    }
+
+    list.innerHTML = caterings.map((ct, i) => {
+      const sel = selectedCaterings.has(i);
+      return '<div class="flight-card ' + (sel ? 'selected' : '') + '" onclick="toggleCatering(' + i + ')" style="border-color:' + (sel ? 'rgba(0,229,160,.3)' : '') + '">' +
+        '<div class="check" style="' + (sel ? 'background:linear-gradient(135deg,#00e5a0,#00b37a);border-color:transparent;color:#fff' : '') + '">' + (sel ? '✓' : '') + '</div>' +
+        '<div class="flight-info">' +
+          '<span class="flight-reg" style="background:linear-gradient(90deg,#00e5a0,#00b37a);-webkit-background-clip:text;-webkit-text-fill-color:transparent">' + (ct.reg || '—') + '</span>' +
+          '<span class="flight-num">' + (ct.flight || '—') + '</span>' +
+          '<span style="font-size:11px;color:#888;font-family:var(--mono)">' + (ct.company || '') + '</span>' +
+          (ct.delivery ? '<span class="flight-time">📦 ' + ct.delivery + '</span>' : '') +
+          (ct.departure ? '<span class="flight-time">✈ ' + ct.departure + '</span>' : '') +
+          (ct.crew ? '<span class="flight-stand">' + ct.crew + ' crew</span>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function toggleCatering(i) {
+    if (selectedCaterings.has(i)) selectedCaterings.delete(i);
+    else selectedCaterings.add(i);
+    renderCaterings();
+  }
+
+  function updateCateringCount() {
+    const el = document.getElementById('catering-selected-count');
+    if (el) el.textContent = selectedCaterings.size;
+  }
+
+  // ── Parse FIDS ─────────────────────────────────────────────────
+  // Le FIDS copié a ce format par ligne (séparé par espaces multiples ou tabs) :
+  // [espaces] Arrivals/Departures [espaces] DATE [espaces] FLIGHT [espaces] REG [espaces] TYPE [espaces] ORIGIN [espaces] DEST [espaces] VIA [espaces] STAND [espaces] HANDLER [espaces] SCHED [espaces] EST [espaces] ACTUAL ...
+  function parseLine(line) {
+    // Normaliser : remplacer tabs et espaces multiples par un seul séparateur
+    const clean = line.trim().replace(/[ \t]+/g, ' ');
+    const parts = clean.split(' ');
+
+    // Trouver l'index de "Arrivals" ou "Departures"
+    let dirIdx = -1;
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i] === 'Arrivals' || parts[i] === 'Departures') {
+        dirIdx = i;
+        break;
+      }
+    }
+    if (dirIdx === -1) return null;
+    if (parts[dirIdx] !== 'Arrivals') return null;
+
+    // Format après direction : DATE FLIGHT REG TYPE ORIGIN DEST VIA STAND HANDLER SCHED EST ACTUAL BLOCKTIME RUNWAY
+    // DATE est format DD/MM/YYYY → 1 token
+    // VIA peut être vide → on cherche autrement
+    // Stratégie : regex sur la ligne originale pour extraire les champs clés
+    return null; // on utilise la regex ci-dessous
+  }
+
+  // ── Chargement automatique via API FIDS (arrivals + departures) ──
+  const FIDS_ARRIVALS_URL   = 'https://fids.liegeairport.com/api/flights/spw/arrivals';
+  const FIDS_DEPARTURES_URL = 'https://fids.liegeairport.com/api/flights/spw/departures';
+
+  // Si tu deploies ton propre proxy Cloudflare Worker (recommande, voir instructions),
+  // colle son URL ici. Ex: 'https://lgg-fids-proxy.tonpseudo.workers.dev'
+  const CORS_PROXY_WORKER = 'https://didilbr--e15d7b8682d511f1a4ec1607ee4eb77e.web.val.run';
+
+  // Essaie l'appel direct, puis ton worker perso (si configure), puis 2 proxys publics de secours.
+  // Les proxys publics gratuits sont parfois satures (erreur 429) : d'ou la chaine de plusieurs options.
+  async function fetchJsonWithFallback(url) {
+    // 'cache:no-store' n'empeche que le cache du navigateur — pas un CDN/cache intermediaire
+    // cote serveur (Val Town, proxys...). On ajoute donc un parametre unique a chaque appel
+    // pour que l'URL ne soit JAMAIS identique deux fois de suite, et ne puisse donc jamais
+    // etre servie depuis un cache, ou qu'il soit.
+    const cb = Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+    const attempts = [
+      () => fetch(url + (url.includes('?') ? '&' : '?') + '_cb=' + cb, { cache: 'no-store' })
+    ];
+    if (CORS_PROXY_WORKER) {
+      attempts.push(() => fetch(CORS_PROXY_WORKER + '?url=' + encodeURIComponent(url) + '&_cb=' + cb, { cache: 'no-store' }));
+    }
+    attempts.push(() => fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url) + '&_cb=' + cb, { cache: 'no-store' }));
+    attempts.push(() => fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(url) + '&_cb=' + cb, { cache: 'no-store' }));
+
+    let lastErr = new Error('Aucune tentative effectuee');
+    for (const attempt of attempts) {
+      try {
+        const r = await attempt();
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return await r.json();
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr;
+  }
+
+  // L'API FIDS renvoie des horaires en UTC (sans suffixe de fuseau) : il faut les convertir
+  // en heure locale de Bruxelles (gere automatiquement CET/CEST hiver/ete).
+  function toBrusselsDate(iso) {
+    if (!iso) return null;
+    const hasOffset = /[Zz]$|[+-]\d\d:\d\d$/.test(iso);
+    const d = new Date(hasOffset ? iso : iso + 'Z');
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function brusselsDayStr(d) {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Brussels', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(d);
+    const y = parts.find(p => p.type === 'year').value;
+    const m = parts.find(p => p.type === 'month').value;
+    const da = parts.find(p => p.type === 'day').value;
+    return y + '-' + m + '-' + da;
+  }
+
+  // "Aujourd'hui" en heure locale de Bruxelles — PAS new Date().toISOString() qui
+  // donne la date UTC : entre 00h00 et 02h00 heure locale (ete), on est encore la
+  // veille en UTC, ce qui decalait tout le calcul du shift Night d'un jour en arriere.
+  function todayBrusselsDateStr() {
+    return brusselsDayStr(new Date());
+  }
+
+  function brusselsHHMM(d) {
+    return d.toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Brussels' });
+  }
+
+  function isoToHHMM(iso) {
+    const d = toBrusselsDate(iso);
+    return d ? brusselsHHMM(d) : '';
+  }
+
+  // Construit la liste de vols filtree/triee a partir des donnees brutes de l'API
+  // (reutilisee par le chargement initial ET par l'auto-refresh silencieux)
+  function buildFlightsFromApiData(arrivals, departures) {
+    const shiftDateStr = document.getElementById('shift-date').value || todayBrusselsDateStr();
+    const nextDateObj = new Date(shiftDateStr + 'T00:00:00');
+    nextDateObj.setDate(nextDateObj.getDate() + 1);
+    const nextDateStr = nextDateObj.toISOString().split('T')[0];
+
+    function inWindow(iso) {
+      const d = toBrusselsDate(iso);
+      if (!d) return false;
+      const day = brusselsDayStr(d);
+      const hh = parseInt(brusselsHHMM(d).split(':')[0], 10);
+
+      if (selectedShift && selectedShift.name === 'NIGHT') {
+        // Night shift de la date choisie = soiree de shiftDateStr (a partir de ~20h) + petit matin de nextDateStr.
+        // ATTENTION : le petit matin (00h-06h) de shiftDateStr lui-meme appartient a la nuit PRECEDENTE
+        // (celle qui a commence la veille au soir) et ne doit surtout pas etre inclus ici.
+        if (day === shiftDateStr && hh >= 20) return true;
+        if (day === nextDateStr && hh < 10) return true;
+        return false;
+      }
+
+      if (day === shiftDateStr) return true;
+      if (!selectedShift && day === nextDateStr) {
+        return hh < 6;
+      }
+      return false;
+    }
+
+    const ethDepartures = {};
+    departures.forEach(d => {
+      // Meme correctif que pour les arrivees plus bas : on evalue la fenetre sur l'horaire
+      // reel (UTC), pas sur le champ "date" separe qui ne reflete pas forcement le bon
+      // jour civil une fois converti en heure locale (voir commentaire detaille ci-dessous).
+      if (!inWindow(d.aTx || d.eTx || d.sTx || d.date)) return;
+      const flt = (d.flightNumber || '').toUpperCase();
+      const hnd = (d.handler || '').toUpperCase();
+      const reg = (d.aircraftRegistration || '').toUpperCase();
+      if (flt.startsWith('ETH') && hnd.includes('AVIAPARTNER') && reg) {
+        ethDepartures[reg] = flt;
+      }
+    });
+
+    const HANDLERS_OK2 = ['CHALLENGE', 'WFS', 'SWISSPORT'];
+    let newFlights = [];
+
+    arrivals.forEach(a => {
+      // Ordre purement chronologique : on suit l'heure reelle/estimee du vol (pas encore
+      // atterri = toujours dans la fenetre), du premier avion a 20h jusqu'au dernier a 07h.
+      //
+      // IMPORTANT : le champ "date" fourni par l'API FIDS est exprime en UTC et ne
+      // correspond PAS forcement au jour civil local une fois l'heure convertie.
+      // Exemple concret : un vol a 23h00 UTC le 21/07 devient 01h00 heure locale — mais
+      // cette heure locale (01h00) appartient reellement au 22/07, pas au 21/07 comme
+      // l'indique le champ "date" brut. Utiliser a.date directement decalait donc tout
+      // le classement du shift Night d'un jour en arriere pour les vols juste apres minuit.
+      // On evalue desormais la fenetre sur le VRAI horaire du vol (aTx/eTx/sTx, converti
+      // en heure locale de Bruxelles par inWindow), exactement comme "time" est calcule
+      // juste en dessous — jamais sur le champ date separe.
+      if (!inWindow(a.aTx || a.eTx || a.sTx || a.date)) return;
+      const flight = a.flightNumber || '';
+      const reg    = a.aircraftRegistration || '';
+      const stand  = a.stand || '';
+      const handler = (a.handler || '').toUpperCase();
+      const time = isoToHHMM(a.aTx) || isoToHHMM(a.eTx) || isoToHHMM(a.sTx) || '—';
+      const flightUp = flight.toUpperCase();
+      const regUp = reg.toUpperCase();
+
+      const isETHFlight = flightUp.startsWith('ETH') && handler.includes('AVIAPARTNER');
+      if (isETHFlight) {
+        if (!ethDepartures[regUp]) return;
+        newFlights.push({ time, flight: ethDepartures[regUp], reg, stand, handler, manual: false, isETH: true });
+        return;
+      }
+
+      const isTAYFedex   = flightUp.startsWith('TAY') && handler.includes('FEDEX');
+      const isOEIMDFedex = regUp === 'OEIMD' && handler.includes('FEDEX');
+      if (!HANDLERS_OK2.some(h => handler.includes(h)) && !isTAYFedex && !isOEIMDFedex) return;
+
+      if (!flight) return;
+      newFlights.push({ time, flight, reg, stand, handler, manual: false });
+    });
+
+    // Ne garder que les vols dans la fenetre d'affichage du shift choisi (heure reelle/estimee)
+    newFlights = newFlights.filter(f => isInDisplayWindow(f.time));
+
+    const seen = new Set();
+    newFlights = newFlights.filter(f => {
+      if (seen.has(f.flight)) return false;
+      seen.add(f.flight);
+      return true;
+    });
+
+    newFlights.sort((x, y) => {
+      const toMinutes = t => {
+        if (!t || t === '—') return 9999;
+        const parts = t.split(':');
+        if (parts.length !== 2) return 9999;
+        const h = parseInt(parts[0]), m = parseInt(parts[1]);
+        if (isNaN(h) || isNaN(m)) return 9999;
+        let mins = h * 60 + m;
+        if (selectedShift && selectedShift.name === 'NIGHT' && h < 10) mins += 24 * 60;
+        return mins;
+      };
+      return toMinutes(x.time) - toMinutes(y.time);
+    });
+
+    return newFlights;
+  }
+
+  async function loadFromFidsAPI() {
+    const btn = document.getElementById('btn-load-api');
+    const status = document.getElementById('api-status');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Chargement...'; }
+    if (status) { status.style.color = 'var(--t2)'; status.textContent = 'Recuperation des donnees FIDS...'; }
+
+    try {
+      const [arrivals, departures] = await Promise.all([
+        fetchJsonWithFallback(FIDS_ARRIVALS_URL),
+        fetchJsonWithFallback(FIDS_DEPARTURES_URL)
+      ]);
+
+      const oldDataByFlight = {};
+      flights.forEach(f => { oldDataByFlight[f.flight] = { reg: f.reg, remarks: f.remarks }; });
+
+      flights = buildFlightsFromApiData(arrivals, departures);
+
+      flights.forEach(f => {
+        const old = oldDataByFlight[f.flight];
+        if (!old) return;
+        if (!f.reg && old.reg) f.reg = old.reg;
+        if (old.remarks) f.remarks = old.remarks;
+      });
+
+      // Auto-selection identique a l'analyse manuelle
+      selectedFlights = new Set();
+      flights.forEach((f, i) => {
+        if (!isInShift(f.time)) return;
+        if ((f.flight || '').toUpperCase().startsWith('ICE')) return;
+        if ((f.reg || '').toUpperCase() === 'SERLE') return;
+        selectedFlights.add(i);
+      });
+
+      if (status) {
+        status.style.color = '#00e5a0';
+        status.textContent = '✓ ' + flights.length + ' vol(s) recupere(s). Ajoutez les caterings ci-dessous si besoin, puis cliquez sur "Analyser".';
+      }
+
+      renderFlights();
+    } catch (err) {
+      console.error('loadFromFidsAPI error:', err);
+      if (status) {
+        status.style.color = 'var(--red)';
+        status.textContent = '✗ Impossible de charger l\'API (' + err.message + '). Utilisez le collage manuel ci-dessous.';
+      }
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🔄 Charger automatiquement (API FIDS)'; }
+    }
+  }
+
+  // ── Auto-refresh silencieux (etape 3) ─────────────────────────
+  // Toutes les 1 min : va chercher les dernieres donnees, les applique
+  // automatiquement (sans demander), et affiche une bande verte
+  // recapitulative — a chaque cycle, meme s'il n'y a rien de nouveau.
+  let currentStep = 1;
+  let autoRefreshBadgeTimer = null;
+
+  async function checkForFlightUpdates() {
+    if (currentStep !== 3) return;
+    if (!flights || flights.length === 0) return;
+    try {
+      const [arrivals, departures] = await Promise.all([
+        fetchJsonWithFallback(FIDS_ARRIVALS_URL),
+        fetchJsonWithFallback(FIDS_DEPARTURES_URL)
+      ]);
+      const fresh = buildFlightsFromApiData(arrivals, departures);
+
+      // Ne jamais perdre une immat saisie a la main (si l'API n'en fournit toujours pas)
+      // ni les remarques (qui ne viennent jamais de l'API) lors du rafraichissement auto.
+      const oldDataByFlight = {};
+      flights.forEach(f => { oldDataByFlight[f.flight] = { reg: f.reg, remarks: f.remarks }; });
+      fresh.forEach(f => {
+        const old = oldDataByFlight[f.flight];
+        if (!old) return;
+        if (!f.reg && old.reg) f.reg = old.reg;
+        if (old.remarks) f.remarks = old.remarks;
+      });
+
+      const key = f => f.flight + '|' + f.time + '|' + (f.stand || '');
+      const oldApiFlights = flights.filter(f => !f.manual);
+      const oldKeys = new Set(oldApiFlights.map(key));
+      const newKeys = new Set(fresh.map(key));
+      let diff = 0;
+      newKeys.forEach(k => { if (!oldKeys.has(k)) diff++; });
+      oldKeys.forEach(k => { if (!newKeys.has(k)) diff++; });
+
+      // Garde la selection existante pour les vols deja connus + les vols ajoutes a la main,
+      // n'applique la selection par defaut (regles du shift) qu'aux vols vraiment nouveaux.
+      const oldSelectedFlightNums = new Set();
+      flights.forEach((f, i) => { if (selectedFlights.has(i)) oldSelectedFlightNums.add(f.flight); });
+      const oldFlightNums = new Set(flights.map(f => f.flight));
+
+      const manualFlights = flights.filter(f => f.manual);
+      const merged = fresh.concat(manualFlights.filter(mf => !fresh.some(f => f.flight === mf.flight)));
+
+      const newSelected = new Set();
+      merged.forEach((f, i) => {
+        if (oldFlightNums.has(f.flight)) {
+          if (oldSelectedFlightNums.has(f.flight)) newSelected.add(i);
+        } else {
+          if (f.manual) { newSelected.add(i); return; }
+          if (!isInShift(f.time)) return;
+          if ((f.flight || '').toUpperCase().startsWith('ICE')) return;
+          if ((f.reg || '').toUpperCase() === 'SERLE') return;
+          newSelected.add(i);
+        }
+      });
+
+      flights = merged;
+      selectedFlights = newSelected;
+      renderFlights();
+      showRefreshBadge(diff);
+    } catch (e) {
+      console.warn('checkForFlightUpdates: echec silencieux', e);
+      showRefreshBadge(null); // null = echec de la tentative de mise a jour
+    }
+  }
+
+  function showRefreshBadge(n) {
+    const el = document.getElementById('refresh-badge');
+    const txt = document.getElementById('refresh-badge-text');
+    if (!el || !txt) return;
+    const now = new Date().toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' });
+    if (n === null) {
+      el.style.borderColor = 'rgba(255,77,109,.35)';
+      el.style.background = 'rgba(255,77,109,.1)';
+      el.style.color = '#ff4d6d';
+      txt.textContent = 'Echec de la mise a jour automatique (' + now + ')';
+    } else if (n > 0) {
+      el.style.borderColor = 'rgba(0,229,160,.35)';
+      el.style.background = 'rgba(0,229,160,.1)';
+      el.style.color = '#00e5a0';
+      txt.textContent = 'Mis a jour automatiquement (' + now + ') — ' + n + ' changement' + (n > 1 ? 's' : '');
+    } else {
+      el.style.borderColor = 'rgba(0,229,160,.35)';
+      el.style.background = 'rgba(0,229,160,.1)';
+      el.style.color = '#00e5a0';
+      txt.textContent = 'A jour (' + now + ') — aucun changement';
+    }
+    el.style.display = 'flex';
+    if (autoRefreshBadgeTimer) clearTimeout(autoRefreshBadgeTimer);
+    autoRefreshBadgeTimer = setTimeout(() => { el.style.display = 'none'; }, 8000);
+  }
+
+  function hideRefreshBadge() {
+    const el = document.getElementById('refresh-badge');
+    if (el) el.style.display = 'none';
+    if (autoRefreshBadgeTimer) { clearTimeout(autoRefreshBadgeTimer); autoRefreshBadgeTimer = null; }
+  }
+
+  // ── Reglages de l'actualisation automatique (on/off + frequence) ──
+  let autoRefreshTimer = null;
+  let autoRefreshEnabled = (localStorage.getItem('lgg_refresh_enabled') !== 'false'); // active par defaut
+  let autoRefreshMinutes = parseInt(localStorage.getItem('lgg_refresh_minutes') || '1', 10);
+  if (isNaN(autoRefreshMinutes) || autoRefreshMinutes < 1 || autoRefreshMinutes > 30) autoRefreshMinutes = 1;
+
+  function startAutoRefresh() {
+    if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    if (!autoRefreshEnabled) return;
+    autoRefreshTimer = setInterval(checkForFlightUpdates, autoRefreshMinutes * 60 * 1000);
+  }
+
+  function updateRefreshToggleButtonIcon() {
+    const btn = document.getElementById('refresh-toggle-btn');
+    if (!btn) return;
+    btn.style.color = autoRefreshEnabled ? 'var(--a1)' : 'var(--t2)';
+    btn.style.borderColor = autoRefreshEnabled ? 'var(--a1)' : 'var(--b2)';
+  }
+
+  function openRefreshSettings() {
+    document.getElementById('refresh-enabled-toggle').checked = autoRefreshEnabled;
+    document.getElementById('refresh-interval-slider').value = autoRefreshMinutes;
+    reflectRefreshToggleUI();
+    reflectRefreshSliderUI();
+    document.getElementById('refresh-settings-overlay').classList.remove('hidden');
+  }
+  function closeRefreshSettings() {
+    document.getElementById('refresh-settings-overlay').classList.add('hidden');
+  }
+  function reflectRefreshToggleUI() {
+    const on = document.getElementById('refresh-enabled-toggle').checked;
+    document.getElementById('refresh-toggle-track').style.background = on ? 'var(--a1)' : 'var(--b2)';
+    document.getElementById('refresh-toggle-knob').style.transform = on ? 'translateX(20px)' : 'translateX(0)';
+    document.getElementById('refresh-status-text').textContent = on ? 'Active' : 'Desactivee';
+  }
+  function reflectRefreshSliderUI() {
+    const v = document.getElementById('refresh-interval-slider').value;
+    document.getElementById('refresh-interval-label').textContent = v + (v === '1' ? ' min' : ' min');
+  }
+  function onRefreshToggleChange() { reflectRefreshToggleUI(); }
+  function onRefreshSliderInput() { reflectRefreshSliderUI(); }
+
+  function saveRefreshSettings() {
+    autoRefreshEnabled = document.getElementById('refresh-enabled-toggle').checked;
+    autoRefreshMinutes = parseInt(document.getElementById('refresh-interval-slider').value, 10) || 1;
+    localStorage.setItem('lgg_refresh_enabled', String(autoRefreshEnabled));
+    localStorage.setItem('lgg_refresh_minutes', String(autoRefreshMinutes));
+    updateRefreshToggleButtonIcon();
+    startAutoRefresh();
+    closeRefreshSettings();
+  }
+
+  function initAutoRefreshUI() {
+    updateRefreshToggleButtonIcon();
+    startAutoRefresh();
+  }
+
+  // ── Interface (mise en page) : Classic ou Neo, independant du theme couleur ──
+  function applyLayoutMode(mode) {
+    document.documentElement.setAttribute('data-layout', mode === 'neo' ? 'neo' : 'classic');
+  }
+  function openLayoutSettings() {
+    const current = localStorage.getItem('lgg_layout_mode') || 'classic';
+    reflectLayoutOptionUI(current);
+    document.getElementById('layout-settings-overlay').classList.remove('hidden');
+  }
+  function closeLayoutSettings() {
+    document.getElementById('layout-settings-overlay').classList.add('hidden');
+  }
+  function reflectLayoutOptionUI(mode) {
+    const isNeo = mode === 'neo';
+    document.getElementById('layout-opt-classic').style.borderColor = isNeo ? 'var(--b2)' : 'var(--a1)';
+    document.getElementById('layout-opt-classic').style.background  = isNeo ? 'transparent' : 'var(--bg2)';
+    document.getElementById('layout-opt-neo').style.borderColor      = isNeo ? 'var(--a1)' : 'var(--b2)';
+    document.getElementById('layout-opt-neo').style.background      = isNeo ? 'var(--bg2)' : 'transparent';
+    document.getElementById('layout-check-classic').style.visibility = isNeo ? 'hidden' : 'visible';
+    document.getElementById('layout-check-neo').style.visibility     = isNeo ? 'visible' : 'hidden';
+  }
+  function selectLayoutOption(mode) {
+    localStorage.setItem('lgg_layout_mode', mode);
+    applyLayoutMode(mode);
+    reflectLayoutOptionUI(mode);
+  }
+
+  // ── Recherche / filtre des vols ───────────────────────────────
+  let flightSearchTerm = '';
+  function onFlightSearch(val) {
+    flightSearchTerm = (val || '').trim().toUpperCase();
+    renderFlights();
+  }
+
+  // Si des vols ont deja ete charges via l'API, on ne relance pas analyzeFids()
+  // (qui viderait le tableau flights) : on garde juste les caterings + on avance.
+  function handleAnalyzeClick() {
+    const raw = document.getElementById('fids-text').value.trim();
+    if (raw || flights.length === 0) {
+      analyzeFids();
+    }
+    parseCaterings();
+    goToStep(3);
+  }
+
+  function analyzeFids() {
+    const raw = document.getElementById('fids-text').value.trim();
+    flights = [];
+
+    if (raw) {
+      const lines = raw.split('\n');
+      const HANDLERS_OK = ['CHALLENGE', 'WFS', 'SWISSPORT'];
+
+      // First pass: collect ALL ETH departures indexed by registration
+      const ethDepartures = {}; // reg -> flight number
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed.includes('Departures')) return;
+        const cols = trimmed.replace(/\t/g, '  ').split(/  +/).map(c => c.trim()).filter(c => c);
+        const dirIdx = cols.findIndex(c => c === 'Departures');
+        if (dirIdx === -1) return;
+        const flt = (cols[dirIdx + 2] || '').toUpperCase();
+        const reg = (cols[dirIdx + 3] || '').toUpperCase();
+        const hnd = (cols[dirIdx + 9] || '').toUpperCase();
+        if (flt.startsWith('ETH') && hnd.includes('AVIAPARTNER') && reg) {
+          ethDepartures[reg] = flt; // store departure flight number by reg
+        }
+      });
+
+      // Second pass: process arrivals + ETH arrivals that have a matching departure
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed.includes('Arrivals')) return;
+
+        const cols = trimmed.replace(/\t/g, '  ').split(/  +/).map(c => c.trim()).filter(c => c);
+        let dirIdx = cols.findIndex(c => c === 'Arrivals');
+        if (dirIdx === -1) return;
+
+        const after = cols.slice(dirIdx + 1);
+        const flight = after[1] || '';
+        const reg    = after[2] || '';
+
+        const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+        let firstTimeIdx = -1;
+        for (let i = 6; i < after.length; i++) {
+          if (timePattern.test(after[i])) { firstTimeIdx = i; break; }
+        }
+        const missingTime = firstTimeIdx === -1;
+        if (missingTime) {
+          // Include flight but mark time as missing
+          if (!flight) return;
+          var hnd2 = (beforeTimes && beforeTimes.length >= 1) ? beforeTimes[beforeTimes.length-1] : '';
+          hnd2 = hnd2.toUpperCase();
+          var HANDLERS_OK_MISSING = ['CHALLENGE', 'WFS', 'SWISSPORT'];
+          // For missing time, try to get handler from cols after dirIdx
+          var handlerGuess = '';
+          for (var ci = dirIdx+8; ci < cols.length; ci++) {
+            var col = (cols[ci]||'').toUpperCase();
+            if (HANDLERS_OK_MISSING.some(h => col.includes(h)) || col.includes('AVIAPARTNER') || col.includes('FEDEX')) {
+              handlerGuess = col; break;
+            }
+          }
+          flights.push({ time: '—', flight, reg, stand: '', handler: handlerGuess || '', manual: false, missingTime: true });
+          return;
+        }
+
+        const beforeTimes = after.slice(6, firstTimeIdx);
+        const stand   = beforeTimes.length >= 2 ? beforeTimes[beforeTimes.length - 2] : (beforeTimes[0] || '');
+        const handler = (beforeTimes.length >= 1 ? beforeTimes[beforeTimes.length - 1] : '').toUpperCase();
+
+        const flightUp    = (flight || '').toUpperCase();
+        const isETHFlight = flightUp.startsWith('ETH') && handler.includes('AVIAPARTNER');
+
+        // For ETH: only include if there's a matching departure for this registration
+        if (isETHFlight) {
+          const regUp = reg.toUpperCase();
+          if (!ethDepartures[regUp]) return; // no departure found, skip
+          // Use the departure flight number for the worksheet
+          const depFlightNum = ethDepartures[regUp];
+          const sched    = after[firstTimeIdx]     || '';
+          const rawEst2  = after[firstTimeIdx + 1] || '';
+          const rawAct2  = after[firstTimeIdx + 2] || '';
+          const est    = timePattern.test(rawEst2) ? rawEst2 : '';
+          const actual = timePattern.test(rawAct2) ? rawAct2 : '';
+          const time   = actual || est || sched || '—';
+          flights.push({ time, flight: depFlightNum, reg, stand, handler, manual: false, isETH: true });
+          return;
+        }
+
+        // Normal handlers filter
+        const HANDLERS_OK2 = ['CHALLENGE', 'WFS', 'SWISSPORT'];
+        const flightUp2   = (flight || '').toUpperCase();
+        const regUp3      = (reg    || '').toUpperCase();
+        const isTAYFedex  = flightUp2.startsWith('TAY') && handler.includes('FEDEX');
+        const isOEIMDFedex = regUp3 === 'OEIMD' && handler.includes('FEDEX');
+        if (!HANDLERS_OK2.some(h => handler.includes(h)) && !isTAYFedex && !isOEIMDFedex) return;
+
+        const sched  = after[firstTimeIdx]     || '';
+        const rawEst    = after[firstTimeIdx + 1] || '';
+        const rawActual = after[firstTimeIdx + 2] || '';
+        // Validate: only use est/actual if they match the time pattern (reject runway like 04R, 22L)
+        const est    = timePattern.test(rawEst)    ? rawEst    : '';
+        const actual = timePattern.test(rawActual) ? rawActual : '';
+        const time   = actual || est || sched || '—';
+
+        if (!flight) return;
+        flights.push({ time, flight, reg, stand, handler, manual: false });
+      });
+      // Ne garder que les vols dans la fenetre d'affichage du shift choisi
+      flights = flights.filter(f => f.missingTime || isInDisplayWindow(f.time));
+      // Dédoublonner
+      const seen = new Set();
+      flights = flights.filter(f => {
+        if (seen.has(f.flight)) return false;
+        seen.add(f.flight);
+        return true;
+      });
+
+      // Trier par heure avec gestion correcte du night shift (22h→23h→00h→01h→...)
+      flights.sort((a, b) => {
+        const toMinutes = t => {
+          if (!t || t === '—') return 9999;
+          const parts = t.split(':');
+          if (parts.length !== 2) return 9999;
+          const h = parseInt(parts[0]), m = parseInt(parts[1]);
+          if (isNaN(h) || isNaN(m)) return 9999;
+          let mins = h * 60 + m;
+          // Night shift correction: treat 00h-09h as coming AFTER 22h-23h
+          if (selectedShift && selectedShift.name === 'NIGHT') {
+            if (h < 10) mins += 24 * 60; // push early morning after midnight
+          }
+          return mins;
+        };
+        return toMinutes(a.time) - toMinutes(b.time);
+      });
+    }
+
+    // Auto-select only flights within the selected shift, exclude ICE flights
+    selectedFlights = new Set();
+    flights.forEach((f, i) => {
+      if (!isInShift(f.time)) return;
+      if ((f.flight||'').toUpperCase().startsWith('ICE')) return; // ICE not done
+      if ((f.reg||'').toUpperCase() === 'SERLE') return; // SERLE not done
+      selectedFlights.add(i);
+    });
+
+    renderFlights();
+    goToStep(3);
+  }
+
+
+  // Modern compact tag for Swissport checkboxes
+  function makeTag(id, label, color) {
+    return '<div onclick="event.stopPropagation()" style="display:inline-flex;align-items:center">' +
+      '<label onclick="event.stopPropagation()" style="' +
+        'display:inline-flex;align-items:center;gap:4px;cursor:pointer;' +
+        'padding:3px 9px;border-radius:6px;' +
+        'background:rgba(255,255,255,0.04);' +
+        'border:1.5px solid ' + color + '44;' +
+        'font-size:9px;font-weight:800;letter-spacing:1.2px;' +
+        'color:' + color + ';font-family:var(--mono);' +
+        'transition:all 0.15s ease">' +
+      '<input type="checkbox" id="' + id + '" onclick="event.stopPropagation()" ' +
+        'onchange="' +
+          'var l=this.closest(\'label\');' +
+          'if(this.checked){' +
+            'l.style.background=\'' + color.replace('#','') + '\'.length?\'' + color + '33\':\'rgba(255,255,255,0.1)\';' +
+            'l.style.borderColor=\'' + color + '\';' +
+            'l.style.color=\'#fff\';' +
+            'l.style.boxShadow=\'0 0 8px ' + color + '66\'' +
+          '}else{' +
+            'l.style.background=\'rgba(255,255,255,0.04)\';' +
+            'l.style.borderColor=\'' + color + '44\';' +
+            'l.style.color=\'' + color + '\';' +
+            'l.style.boxShadow=\'none\'' +
+          '}" ' +
+        'style="width:11px;height:11px;cursor:pointer;accent-color:' + color + ';margin:0">' +
+      label +
+      '</label>' +
+    '</div>';
+  }
+
+  function makePill(id, label, color, r, g, b) {
+    return '<div onclick="event.stopPropagation()" style="display:flex;align-items:center">' +
+      '<label onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;cursor:pointer;' +
+      'background:linear-gradient(135deg,rgba('+r+','+g+','+b+',0.1),rgba('+r+','+g+','+b+',0.05));' +
+      'border:1px solid rgba('+r+','+g+','+b+',0.35);border-radius:30px;padding:4px 10px;' +
+      'font-size:9.5px;font-weight:700;color:rgb('+r+','+g+','+b+');letter-spacing:0.8px;text-transform:uppercase;' +
+      'box-shadow:0 0 6px rgba('+r+','+g+','+b+',0.12);transition:all 0.2s ease">' +
+      '<input type="checkbox" id="'+id+'" onclick="event.stopPropagation()" ' +
+      'onchange="var l=this.closest(\'label\');if(this.checked){l.style.background=\'linear-gradient(135deg,rgba('+r+','+g+','+b+',0.28),rgba('+r+','+g+','+b+',0.15))\';l.style.borderColor=\'rgb('+r+','+g+','+b+')\';l.style.boxShadow=\'0 0 12px rgba('+r+','+g+','+b+',0.4)\';}else{l.style.background=\'linear-gradient(135deg,rgba('+r+','+g+','+b+',0.1),rgba('+r+','+g+','+b+',0.05))\';l.style.borderColor=\'rgba('+r+','+g+','+b+',0.35)\';l.style.boxShadow=\'0 0 6px rgba('+r+','+g+','+b+',0.12)\';}" ' +
+      'style="width:12px;height:12px;cursor:pointer;accent-color:rgb('+r+','+g+','+b+')">' +
+      label + '</label></div>';
+  }
+
+  // Les pills Swissport/WFS/SVA/LHA sont de vraies checkboxes DOM dont l'etat
+  // n'est pas stocke dans le tableau `flights` — on le sauvegarde avant de
+  // redessiner la liste (renderFlights) puis on le restaure juste apres,
+  // pour ne pas perdre les cases cochees quand on selectionne un autre vol.
+  function captureCheckboxStates(container) {
+    const map = {};
+    if (!container) return map;
+    container.querySelectorAll('input[type="checkbox"][id]').forEach(cb => {
+      map[cb.id] = cb.checked;
+    });
+    return map;
+  }
+
+  function restoreCheckboxStates(map) {
+    Object.keys(map).forEach(id => {
+      if (!map[id]) return; // seules les cases cochees ont besoin d'etre restaurees
+      const cb = document.getElementById(id);
+      if (cb && !cb.checked) {
+        cb.checked = true;
+        cb.dispatchEvent(new Event('change')); // reapplique le style visuel de la pill
+      }
+    });
+  }
+
+  function renderFlights() {
+    const list = document.getElementById('flights-list');
+    const savedCheckboxStates = captureCheckboxStates(list);
+    document.getElementById('count-total').textContent = flights.length;
+    updateSelectedCount();
+
+    if (flights.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">✈</div>
+          <p>Aucun vol détecté — ajoute-les manuellement ci-dessous</p>
+        </div>`;
+      return;
+    }
+
+    const term = (flightSearchTerm || '').toUpperCase();
+    const indices = flights.map((f, i) => i).filter(i => {
+      if (!term) return true;
+      const f = flights[i];
+      const hay = [f.flight || '', f.reg || '', f.stand || '', f.handler || ''].join(' ').toUpperCase();
+      return hay.includes(term);
+    });
+
+    if (indices.length === 0) {
+      list.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>Aucun vol ne correspond à la recherche</p></div>';
+      return;
+    }
+
+    list.innerHTML = indices.map((i) => {
+      const f = flights[i];
+      const flt = (f.flight||'').toUpperCase();
+      const hnd = (f.handler||'').toUpperCase();
+      const isQTR  = flt.startsWith('QTR');
+      const isWFS  = hnd.includes('WFS') && !flt.startsWith('SVA');
+      const isSWISS  = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
+      const regR     = (f.reg || '').toUpperCase();
+      const isSVA    = flt.startsWith('SVA') && hnd.includes('WFS');
+      const ASL_B744 = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
+      const isASL737 = (
+        f._manualASL737 === true ||
+        (flt.startsWith('TAY') && regR.startsWith('OEI') && !['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'].includes(regR)) ||
+        (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'].includes(regR)) ||
+        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+        (regR === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
+      );
+
+      let pills = '';
+
+      if (isWFS && !isSVA) {
+        pills += makePill('wfs-handling-'+i, '⚙ HANDLING', null, 0, 200, 255);
+      }
+      if (isSVA) {
+        pills += makePill('sva-handling-'+i, '⚙ HANDLING', null, 255, 140, 0);
+      }
+      if (isSWISS) {
+        pills += makeTag('swi-ft-'+i,  'FT',      '#a78bfa');
+        pills += makeTag('swi-cl-'+i,  'CLN',     '#34d399');
+        pills += makeTag('swi-lav-'+i, 'LAV',     '#38bdf8');
+        pills += makeTag('swi-wat-'+i, 'WAT',     '#60a5fa');
+        pills += makeTag('swi-hds-'+i, 'HDS',     '#f472b6');
+      }
+      // LHA → catering pill
+      if (flt.startsWith('LHA')) {
+        pills += makePill('lha-catering-'+i, '🍽 CATERING', null, 0, 210, 180);
+      }
+
+      const missingHighlight = f.missingTime ? 'box-shadow:0 0 0 2px #ffff00,0 0 12px #ffff00;' : '';
+      // ASL737 flights only appear in the ASL737 section, not the main list
+      if (isASL737) return '';
+      // Les vols ETH ne s'affichent plus dans la liste "avions a nettoyer" (charges via l'API) :
+      // ils gardent quand meme leur worksheet Catering si selectionnes.
+      if (f.isETH === true) return '';
+      const regMissing = !f.reg;
+      const isNewAircraft = !!f.reg && !f.manual && !knownRegs[f.reg];
+      const fleetBadge = isNewAircraft
+        ? '<button onclick="promptAddFleet(event,' + i + ')" style="margin-left:auto;font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#000;background:linear-gradient(135deg,#ff0055,#ff4d8f);border:none;border-radius:20px;padding:5px 10px;cursor:pointer;white-space:nowrap;animation:pulseRed 1.6s infinite">&#10024; Nouvel avion</button>'
+        : (fleetNotes[f.reg] ? '<span title="' + fleetNotes[f.reg].replace(/"/g,'&quot;') + '" style="margin-left:auto;font-size:10px;color:#00e5a0;font-family:var(--mono)">&#9989; connu</span>' : '');
+      return '<div data-idx="' + i + '">' +
+        '<div class="flight-card ' + (selectedFlights.has(i) ? 'selected' : '') + '" onclick="toggleFlight(' + i + ')" style="' + missingHighlight + '">' +
+        '<div class="check">' + (selectedFlights.has(i) ? '✓' : '') + '</div>' +
+        '<div class="flight-info">' +
+          '<span class="flight-reg">' + (f.reg || '—') + '</span>' +
+          '<span class="flight-num">' + f.flight + '</span>' +
+          (f.missingTime
+            ? '<span style="font-size:10px;font-weight:700;color:#000;background:#ffff00;padding:2px 8px;border-radius:20px;font-family:var(--mono)">⚠ HEURE MANQUANTE</span>'
+            : '<span class="flight-time">ETA ' + f.time + '</span>') +
+          (f.stand ? '<span class="flight-stand">Stand ' + f.stand + '</span>' : '') +
+          '<span class="flight-stand" style="color:#888">' + f.handler + '</span>' +
+        '</div>' +
+        (f.manual ? '<button onclick="removeFlight(event,' + i + ')" title="Supprimer" style="background:none;border:none;color:#e05252;cursor:pointer;font-size:16px;padding:0 4px">×</button>' : '') +
+        (pills ? '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding-right:4px;margin-left:auto;background:rgba(255,255,255,.02);border-radius:8px;padding:3px 6px">' + pills + '</div>' : '') +
+        (fleetBadge && !pills ? fleetBadge : '') +
+        '</div>' +
+        (fleetBadge && pills ? '<div onclick="event.stopPropagation()" style="padding:0 14px 4px;display:flex">' + fleetBadge + '</div>' : '') +
+        '<div onclick="event.stopPropagation()" style="display:flex;gap:6px;padding:4px 14px 10px;align-items:center">' +
+          (regMissing
+            ? '<input type="text" placeholder="Immat. manquante" value="" oninput="flights[' + i + '].reg=this.value.toUpperCase()" style="width:112px;flex-shrink:0;background:var(--bg2);border:1px solid #ffb400;border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none">'
+            : '') +
+          '<input type="text" placeholder="Remarques..." value="' + (f.remarks ? f.remarks.replace(/"/g,'&quot;') : '') + '" oninput="flights[' + i + '].remarks=this.value" style="flex:1;background:var(--bg2);border:1px solid var(--b2);border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none">' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    restoreCheckboxStates(savedCheckboxStates);
+    attachSwipeHandlers(list);
+  }
+
+  function toggleFlight(i) {
+    if (selectedFlights.has(i)) selectedFlights.delete(i);
+    else selectedFlights.add(i);
+    renderFlights();
+  }
+
+  function removeFlightAtIndex(i) {
+    flights.splice(i, 1);
+    const ns = new Set();
+    selectedFlights.forEach(idx => { if (idx < i) ns.add(idx); else if (idx > i) ns.add(idx-1); });
+    selectedFlights = ns;
+    renderFlights();
+  }
+
+  function removeFlight(e, i) {
+    e.stopPropagation();
+    removeFlightAtIndex(i);
+  }
+
+  // ── Glisser vers la gauche pour supprimer un vol (complement de la croix ×,
+  // plus pratique au doigt ; la croix reste utile a la souris/ordinateur) ──
+  function attachSwipeHandlers(container) {
+    container.querySelectorAll('[data-idx]').forEach(wrap => {
+      const idx = parseInt(wrap.getAttribute('data-idx'), 10);
+      const card = wrap.querySelector('.flight-card');
+      if (!card || isNaN(idx)) return;
+      let startX = 0, curX = 0, swiping = false;
+      card.addEventListener('touchstart', e => {
+        startX = e.touches[0].clientX;
+        curX = startX;
+        swiping = true;
+        wrap.style.transition = 'none';
+      }, { passive: true });
+      card.addEventListener('touchmove', e => {
+        if (!swiping) return;
+        curX = e.touches[0].clientX;
+        const diff = curX - startX;
+        if (diff < 0) {
+          wrap.style.transform = 'translateX(' + diff + 'px)';
+          wrap.style.opacity = String(Math.max(0, 1 + diff / 250));
+        }
+      }, { passive: true });
+      card.addEventListener('touchend', () => {
+        if (!swiping) return;
+        swiping = false;
+        wrap.style.transition = 'transform .25s ease-out, opacity .25s ease-out';
+        if (curX - startX < -100) {
+          wrap.style.transform = 'translateX(-100%)';
+          wrap.style.opacity = '0';
+          if (navigator.vibrate) navigator.vibrate(40);
+          setTimeout(() => removeFlightAtIndex(idx), 220);
+        } else {
+          wrap.style.transform = 'translateX(0)';
+          wrap.style.opacity = '1';
+        }
+      });
+    });
+  }
+
+  // ── Flotte connue : marque les avions deja rencontres pour ne plus
+  // afficher le badge "Nouvel avion" la prochaine fois ──
+  let fleetModalReg = null;
+  function promptAddFleet(e, i) {
+    e.stopPropagation();
+    const f = flights[i];
+    if (!f || !f.reg) return;
+    fleetModalReg = f.reg;
+    document.getElementById('fleet-modal-reg').value = f.reg;
+    document.getElementById('fleet-modal-note').value = fleetNotes[f.reg] || '';
+    document.getElementById('fleet-modal-overlay').classList.remove('hidden');
+  }
+  function closeFleetModal() {
+    document.getElementById('fleet-modal-overlay').classList.add('hidden');
+    fleetModalReg = null;
+  }
+  function saveFleetModal() {
+    if (!fleetModalReg) return;
+    knownRegs[fleetModalReg] = true;
+    const note = document.getElementById('fleet-modal-note').value.trim();
+    if (note) fleetNotes[fleetModalReg] = note; else delete fleetNotes[fleetModalReg];
+    localStorage.setItem('lgg_known_regs', JSON.stringify(knownRegs));
+    localStorage.setItem('lgg_fleet_notes', JSON.stringify(fleetNotes));
+    closeFleetModal();
+    renderFlights();
+  }
+
+  // ── Menu / historique des avions memorises ──────────────────────
+  function openHistoryModal() {
+    document.getElementById('history-search').value = '';
+    renderHistoryList();
+    document.getElementById('history-modal-overlay').classList.remove('hidden');
+  }
+  function closeHistoryModal() {
+    document.getElementById('history-modal-overlay').classList.add('hidden');
+  }
+  function renderHistoryList() {
+    const list = document.getElementById('history-list');
+    const q = (document.getElementById('history-search').value || '').trim().toUpperCase();
+    let regs = Object.keys(knownRegs).sort();
+    if (q) {
+      regs = regs.filter(r => r.toUpperCase().includes(q) || (fleetNotes[r] || '').toUpperCase().includes(q));
+    }
+    if (regs.length === 0) {
+      list.innerHTML = '<div class="empty-state" style="padding:30px 10px"><div class="icon">&#9992;</div><p>Aucun avion memorise' + (q ? ' pour cette recherche' : ' pour le moment') + '</p></div>';
+      return;
+    }
+    list.innerHTML = regs.map(function(r) {
+      const note = fleetNotes[r] || '';
+      return '<div style="background:var(--bg2);border:1px solid var(--b1);border-radius:10px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px">' +
+        '<div style="flex:1">' +
+          '<div style="font:600 13px/1 var(--mono);color:var(--a1);margin-bottom:4px">' + r + '</div>' +
+          (note ? '<div style="font-size:12px;color:var(--t1);line-height:1.5">' + note.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>'
+                : '<div style="font-size:12px;color:var(--t3);font-style:italic">Aucune note</div>') +
+        '</div>' +
+        '<button onclick="editHistoryEntry(\'' + r.replace(/'/g,"\\'") + '\')" title="Modifier" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--t2);font-size:12px;cursor:pointer;padding:5px 8px;flex-shrink:0">&#9998;</button>' +
+        '<button onclick="deleteHistoryEntry(\'' + r.replace(/'/g,"\\'") + '\')" title="Oublier cet avion" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--red);font-size:12px;cursor:pointer;padding:5px 8px;flex-shrink:0">&#128465;</button>' +
+      '</div>';
+    }).join('');
+  }
+  function editHistoryEntry(reg) {
+    fleetModalReg = reg;
+    document.getElementById('fleet-modal-reg').value = reg;
+    document.getElementById('fleet-modal-note').value = fleetNotes[reg] || '';
+    closeHistoryModal();
+    document.getElementById('fleet-modal-overlay').classList.remove('hidden');
+  }
+  function deleteHistoryEntry(reg) {
+    if (!confirm('Oublier ' + reg + ' ? Le badge "Nouvel avion" reapparaitra la prochaine fois.')) return;
+    delete knownRegs[reg];
+    delete fleetNotes[reg];
+    localStorage.setItem('lgg_known_regs', JSON.stringify(knownRegs));
+    localStorage.setItem('lgg_fleet_notes', JSON.stringify(fleetNotes));
+    renderHistoryList();
+    renderFlights();
+  }
+
+  function updateSelectedCount() {
+    document.getElementById('count-selected').textContent = selectedFlights.size;
+
+    // ── Populate ASL 737 column ──
+    var asl737Section = document.getElementById('asl737-section');
+    var asl737List    = document.getElementById('asl737-list');
+    if (asl737Section && asl737List) {
+      var ASL_B744_DISP = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
+      var asl737Flights = flights.filter(function(f2) {
+        var f2lt = (f2.flight||'').toUpperCase();
+        var f2nd = (f2.handler||'').toUpperCase();
+        var f2eg = (f2.reg||'').toUpperCase();
+        return (
+          f2._manualASL737 === true ||
+          (f2lt.startsWith('TAY') && f2eg.startsWith('OEI') && !ASL_B744_DISP.includes(f2eg)) ||
+          (f2lt.startsWith('TAY') && (f2nd.includes('FEDEX') || f2nd.includes('AERO')) && !ASL_B744_DISP.includes(f2eg)) ||
+          (f2lt.startsWith('FDX') && (f2nd.includes('FEDEX') || f2nd.includes('AERO'))) ||
+          (f2eg === 'OEIMD' && (f2nd.includes('FEDEX') || f2nd.includes('AERO')))
+        );
+      });
+      if (asl737Flights.length > 0) {
+        asl737Section.classList.remove('hidden');
+        asl737List.innerHTML = asl737Flights.map(function(f2) {
+          var origIdx2 = flights.indexOf(f2);
+          return '<div class="flight-card" style="border-color:rgba(255,180,0,.15);cursor:default">' +
+            '<div class="flight-info">' +
+              '<span class="flight-reg" style="background:linear-gradient(90deg,#ffb400,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent">' + (f2.reg||'—') + '</span>' +
+              '<span class="flight-num">' + f2.flight + '</span>' +
+              '<span class="flight-time">ETA ' + f2.time + '</span>' +
+              (f2.stand ? '<span class="flight-stand">Stand ' + f2.stand + '</span>' : '') +
+            '</div>' +
+            '<div onclick="event.stopPropagation()" style="margin-left:auto;display:flex;gap:6px;align-items:center">' +
+              makePill('asl737-handling-'+origIdx2, '⚙ HANDLING', null, 255, 180, 0) +
+              makePill('asl737-'+origIdx2, '✈ Worksheet', null, 255, 180, 0) +
+            '</div>' +
+          '</div>';
+        }).join('');
+      } else {
+        asl737Section.classList.add('hidden');
+      }
+    }
+  }
+
+  // ── Memoire des avions deja rencontres (immat -> traitement habituel) ──
+  // Permet de pre-cocher automatiquement "Handling" (et le choix ABD) la
+  // prochaine fois qu'on ajoute un vol avec la meme immatriculation.
+  function loadAircraftMemory() {
+    try {
+      return JSON.parse(localStorage.getItem('lgg_aircraft_memory') || '{}');
+    } catch (e) { return {}; }
+  }
+  function saveAircraftMemoryEntry(reg, data) {
+    if (!reg) return;
+    try {
+      var mem = loadAircraftMemory();
+      mem[reg] = data;
+      localStorage.setItem('lgg_aircraft_memory', JSON.stringify(mem));
+    } catch (e) { /* stockage indisponible, tant pis */ }
+  }
+
+  function handleRegInput(val) {
+    var v = (val || '').toUpperCase();
+    var opt = document.getElementById('abd-lachs-magma-opt');
+    if (opt) {
+      if (['TFAMN','TFAMP','TFAKD'].includes(v)) opt.classList.remove('hidden');
+      else opt.classList.add('hidden');
+    }
+    var hint = document.getElementById('known-aircraft-hint');
+    var handlingCb = document.getElementById('m-handling');
+    var mem = loadAircraftMemory();
+    if (v && mem[v]) {
+      var entry = mem[v];
+      if (handlingCb) handlingCb.checked = !!entry.handling;
+      if (entry.abdChoice) {
+        var radios = document.getElementsByName('abd-choice');
+        for (var ri = 0; ri < radios.length; ri++) {
+          radios[ri].checked = (radios[ri].value === entry.abdChoice);
+        }
+      }
+      if (hint) {
+        hint.textContent = '✓ Avion deja connu — Full Transit' + (entry.handling ? ' + Handling' : '') + ' pre-rempli';
+        hint.classList.remove('hidden');
+      }
+    } else if (hint) {
+      hint.classList.add('hidden');
+    }
+  }
+
+  function toggleManualForm() {
+    document.getElementById('manual-form').classList.toggle('hidden');
+  }
+
+  // Detect company from flight number
+  function detectCompany(flight, reg) {
+    var flt = (flight || '').toUpperCase();
+    var r   = (reg    || '').toUpperCase();
+    var ASL_B744_REGS_LOCAL = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
+
+    if (flt.startsWith('TAY')) {
+      if (!ASL_B744_REGS_LOCAL.includes(r)) return { company: 'ASL 737', isASL737: true };
+      return { company: 'ASL', isASL737: false };
+    }
+    if (flt.startsWith('FDX')) return { company: 'ASL 737', isASL737: true };
+    if (flt.startsWith('ICL') || flt.startsWith('CHG') || flt.startsWith('SWN')) return { company: 'CHALLENGE', isASL737: false };
+    if (flt.startsWith('QTR')) return { company: 'QATAR', isASL737: false };
+    if (flt.startsWith('GTI')) return { company: 'Atlas Air', isASL737: false };
+    if (flt.startsWith('ETH')) return { company: 'ETH', isASL737: false };
+    if (flt.startsWith('LHA')) return { company: 'GI', isASL737: false };
+    if (flt.startsWith('SVA')) return { company: 'WFS', isASL737: false };
+    if (flt.startsWith('ABD')) return { company: 'ABD', isASL737: false, isABD: true };
+    if (flt.startsWith('AAE')) return { company: 'Lachs / Fly Meta', isASL737: false };
+    if (flt.startsWith('CAO')) return { company: 'WFS', isASL737: false };
+    return { company: 'MANUEL', isASL737: false };
+  }
+
+  function addManualFlight() {
+    const flight = document.getElementById('m-flight').value.trim().toUpperCase();
+    const time   = document.getElementById('m-time').value.trim();
+    const reg    = document.getElementById('m-reg').value.trim().toUpperCase();
+    const stand  = document.getElementById('m-stand').value.trim().toUpperCase();
+    const handlingChecked = document.getElementById('m-handling') ? document.getElementById('m-handling').checked : false;
+    if (!flight || !time) { alert('N° de vol et heure requis.'); return; }
+    var detected = detectCompany(flight, reg);
+    var handler  = detected.company;
+
+    var abdChoiceValue = null;
+    // For ABD: ask Magma / ANA / Lachs-Magma
+    if (detected.isABD) {
+      var checkedRadio = document.querySelector('input[name="abd-choice"]:checked');
+      abdChoiceValue = checkedRadio ? checkedRadio.value : 'ANA';
+      handler = abdChoiceValue;
+    }
+
+    flights.push({ flight, time, reg, stand, handler: handler, manual: true, _manualASL737: detected.isASL737, _handling: handlingChecked });
+
+    // Se souvenir de cet avion pour la prochaine fois
+    if (reg) {
+      saveAircraftMemoryEntry(reg, { handling: handlingChecked, abdChoice: abdChoiceValue });
+    }
+
+    // Re-sort
+    flights.sort((a, b) => {
+      const toMin = t => {
+        if (!t || t === '—') return 9999;
+        const p = t.split(':');
+        if (p.length !== 2) return 9999;
+        const h = parseInt(p[0]), m = parseInt(p[1]);
+        if (isNaN(h) || isNaN(m)) return 9999;
+        let mins = h * 60 + m;
+        if (selectedShift && selectedShift.name === 'NIGHT' && h < 10) mins += 24*60;
+        return mins;
+      };
+      return toMin(a.time) - toMin(b.time);
+    });
+    const newSelected = new Set();
+    flights.forEach((f, i) => { if (f.manual || selectedFlights.has(i)) newSelected.add(i); });
+    selectedFlights = newSelected;
+    ['m-flight','m-time','m-reg','m-stand'].forEach(id => document.getElementById(id).value = '');
+    if (document.getElementById('m-handling')) document.getElementById('m-handling').checked = false;
+    var hintEl = document.getElementById('known-aircraft-hint');
+    if (hintEl) hintEl.classList.add('hidden');
+    renderFlights();
+  }
+
+  // ── Generate PDF ───────────────────────────────────────────────
+  function generatePDF() {
+    const date  = document.getElementById('shift-date').value;
+    const agent = document.getElementById('shift-agent').value.trim() || '—';
+    const shift = selectedShift ? selectedShift.name + ' · ' + selectedShift.time : '—';
+    const ASL_B744_CHOSEN = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
+    const chosen = flights.filter((f, i) => {
+      if (!selectedFlights.has(i)) return false;
+      // Les vols ETH ne doivent jamais apparaitre dans "Avions a nettoyer" —
+      // uniquement via la section dediee "Caterings". On verifie a la fois le
+      // flag isETH (chemin normal) ET le prefixe du numero de vol affiche
+      // (filet de securite si le vol a ete charge sans ce flag).
+      if (f.isETH === true) return false;
+      if ((f.flight || '').toUpperCase().startsWith('ETH')) return false;
+      var flt2 = (f.flight||'').toUpperCase();
+      var hnd2 = (f.handler||'').toUpperCase();
+      var reg2c = (f.reg||'').toUpperCase();
+      // Exclude ASL737 from main list
+      var isA737 = f._manualASL737 === true ||
+        (flt2.startsWith('TAY') && reg2c.startsWith('OEI') && !ASL_B744_CHOSEN.includes(reg2c)) ||
+        (flt2.startsWith('TAY') && (hnd2.includes('FEDEX') || hnd2.includes('AERO')) && !ASL_B744_CHOSEN.includes(reg2c)) ||
+        (flt2.startsWith('FDX') && (hnd2.includes('FEDEX') || hnd2.includes('AERO'))) ||
+        (reg2c === 'OEIMD' && (hnd2.includes('FEDEX') || hnd2.includes('AERO')));
+      return !isA737;
+    });
+    if (chosen.length === 0) { alert('Sélectionne au moins un vol.'); return; }
+
+    const fmt = date
+      ? new Date(date + 'T12:00:00').toLocaleDateString('fr-BE', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
+      : '—';
+
+    const chosenCaterings = caterings.filter((_,i) => selectedCaterings.has(i));
+
+    const cateringBlock = chosenCaterings.length > 0 ? `
+      <div style="margin-bottom:8pt">
+        <div style="font-size:13pt;font-weight:700;letter-spacing:1pt;text-transform:uppercase;border-bottom:2pt solid #000;padding-bottom:5pt;margin-bottom:8pt">
+          Catering(s) à livrer
+        </div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Date</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Company</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Reg.</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Vol</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Livraison</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Départ</th>
+              <th style="background:#111;color:#fff;padding:4pt 6pt;font-size:9pt;text-transform:uppercase;text-align:left">Crew</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${chosenCaterings.map((ct,ci) => `<tr style="background:${ci%2===0?'#f5f5f5':'#fff'}">
+              <td style="padding:5pt 6pt;font-size:10pt;font-weight:600">${ct.date||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt;font-weight:700">${ct.company||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt">${ct.reg||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt;font-weight:600">${ct.flight||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt">${ct.delivery||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt">${ct.departure||'—'}</td>
+              <td style="padding:5pt 6pt;font-size:10pt">${ct.crew||'—'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : '';
+
+    const rows = chosen.map(f => `
+      <tr>
+        <td><span style="display:inline-block;width:12px;height:12px;border:1.5px solid #000;border-radius:2px;vertical-align:middle"></span></td>
+        <td><b>${f.reg || '—'}</b></td>
+        <td>${f.flight}</td>
+        <td><b>${f.time}</b></td>
+        <td>${f.stand || '—'}</td>
+        <td>${f.handler || '—'}</td>
+        <td>${f.remarks || ''}</td>
+      </tr>`).join('');
+
+    // ASL 737 section (TAY/FEDEX + OEIMD/FEDEX only, not B744)
+    const ASL_B744_PDF = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
+    const asl737Flights = flights.filter(function(f) {
+      var flt = (f.flight||'').toUpperCase();
+      var hnd = (f.handler||'').toUpperCase();
+      var reg = (f.reg||'').toUpperCase();
+      return (
+        f._manualASL737 === true ||
+        (flt.startsWith('TAY') && reg.startsWith('OEI') && !ASL_B744_PDF.includes(reg)) ||
+        (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_PDF.includes(reg)) ||
+        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+        (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
+      );
+    }).filter(function(f, i) {
+      // Only include if checkbox is checked in the ASL737 list
+      var origIdx = flights.indexOf(f);
+      var cb = document.getElementById('asl737-' + origIdx);
+      return cb && cb.checked;
+    });
+
+    const asl737Block = asl737Flights.length > 0 ? `
+      <div style="border-top:2pt solid #000;margin-top:6pt;padding-top:5pt">
+        <div style="font-size:11pt;font-weight:700;letter-spacing:1pt;text-transform:uppercase;border-bottom:1.5pt solid #000;padding-bottom:4pt;margin-bottom:4pt">&#9992; ASL 737</div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr>
+              <th style="background:#111;color:#fff;padding:5pt 7pt;font-size:10pt;text-align:left;width:28pt">&#10003;</th>
+              <th style="background:#111;color:#fff;padding:5pt 7pt;font-size:10pt;text-align:left">Registration</th>
+              <th style="background:#111;color:#fff;padding:5pt 7pt;font-size:10pt;text-align:left">N&#176; de vol</th>
+              <th style="background:#111;color:#fff;padding:5pt 7pt;font-size:10pt;text-align:left">ETA</th>
+              <th style="background:#111;color:#fff;padding:5pt 7pt;font-size:10pt;text-align:left">Stand</th>
+              <th style="background:#111;color:#fff;padding:5pt 7pt;font-size:10pt;text-align:left">Remarques</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${asl737Flights.map((f,ci) => '<tr style="background:' + (ci%2===0?'#f5f5f5':'#fff') + '">' +
+              '<td style="padding:10pt 7pt"><span style="display:inline-block;width:12px;height:12px;border:1.5px solid #000;border-radius:2px;vertical-align:middle"></span></td>' +
+              '<td style="padding:5pt 6pt;font-size:10pt;font-weight:700">' + (f.reg||'—') + '</td>' +
+              '<td style="padding:5pt 6pt;font-size:10pt">' + (f.flight||'—') + '</td>' +
+              '<td style="padding:5pt 6pt;font-size:10pt;font-weight:700">' + (f.time||'—') + '</td>' +
+              '<td style="padding:5pt 6pt;font-size:10pt">' + (f.stand||'—') + '</td>' +
+              '<td style="padding:5pt 6pt;font-size:10pt"></td>' +
+            '</tr>').join('')}
+          </tbody>
+        </table>
+      </div>` : '';
+
+    const extraNotesRaw = document.getElementById('extra-notes') ? document.getElementById('extra-notes').value.trim() : '';
+    // Split notes into lines and write each ON a note line
+    const extraNotesLines = extraNotesRaw ? extraNotesRaw.split('\n').filter(function(l){ return l.trim(); }) : [];
+    const extraNotesHtml = '';  // handled inline with note lines below
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Cleaning OPS LGG ${date}</title>
+<style>
+  @page { size: A4 portrait; margin: 12mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; background: #fff; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2pt solid #000; padding-bottom: 5pt; margin-bottom: 6pt; }
+  .title { font-size: 14pt; font-weight: 700; }
+  .subtitle { font-size: 10pt; color: #333; margin-top: 2pt; }
+  .meta { text-align: right; font-size: 10pt; line-height: 1.4; color: #000; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #000; color: #fff; padding: 4pt 6pt; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5pt; text-align: left; }
+  td { padding: 6pt 6pt; border-bottom: 1pt solid #bbb; font-size: 10pt; color: #000; vertical-align: middle; }
+  tr:nth-child(even) td { background: #f0f0f0; }
+  .notes-title { font-size: 8pt; text-transform: uppercase; letter-spacing: 1pt; color: #333; margin-bottom: 6pt; margin-top: 8pt; }
+  .note-line { border-bottom: 1pt solid #999; margin-bottom: 10pt; }
+  .footer { margin-top: 6pt; border-top: 1pt solid #aaa; padding-top: 5pt; font-size: 7pt; color: #333; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="title">CLEANING OPS — LGG</div>
+    <div class="subtitle">Liège Airport · Feuille de nettoyage</div>
+  </div>
+  <div class="meta">
+    <div>${fmt}</div>
+    <div>Shift : <b>${shift}</b></div>
+    <div>Agent(s) : <b>${agent}</b></div>
+  </div>
+</div>
+${cateringBlock}
+<div style="font-size:11pt;font-weight:700;letter-spacing:1pt;text-transform:uppercase;border-bottom:1.5pt solid #000;padding-bottom:4pt;margin-bottom:6pt;margin-top:8pt">🛩 Avions à nettoyer</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width:22pt">✓</th>
+      <th style="width:65pt">Registration</th>
+      <th style="width:60pt">N° de vol</th>
+      <th style="width:38pt">ETA</th>
+      <th style="width:38pt">Stand</th>
+      <th style="width:65pt">Handler</th>
+      <th>Remarques</th>
+    </tr>
+  </thead>
+  <tbody>${rows}</tbody>
+</table>
+${asl737Block}
+<div class="notes-title">Notes</div>
+${(function(){
+  var lines = extraNotesLines;
+  var totalLines = 6;
+  var html = '';
+  for(var ni=0; ni<totalLines; ni++){
+    var txt = lines[ni] ? lines[ni].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+    html += '<div style="border-bottom:1pt solid #999;margin-bottom:10pt;font-size:10pt;font-weight:' + (txt?'700':'400') + ';color:#000;padding-bottom:2pt;min-height:14pt">' + txt + '</div>';
+  }
+  return html;
+})()}
+<div class="footer">
+  <span>LGG Cleaning Ops · ${new Date().toLocaleString('fr-BE')}</span>
+  <span>${chosen.length} avion${chosen.length > 1 ? 's' : ''} à nettoyer</span>
+</div>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+      w.print();
+    } else {
+      alert("Autorise les popups pour imprimer. Sur GitHub Pages cela fonctionnera automatiquement.");
+    }
+  }
+
+  function closePrintOverlay() {
+    document.getElementById('print-overlay').style.display = 'none';
+  }
+  function printSheet() { window.print(); }
+
+  // Worksheet rules
+  function needsFullTransit(f) {
+    // Exclusion prioritaire et absolue : un vol ETH ne doit JAMAIS obtenir de
+    // worksheet ici, meme si son numero de vol affiche (celui du DEPART, pas
+    // l'ETH lui-meme — voir buildFlightsFromApiData/analyzeFids) correspond par
+    // coincidence a un prefixe ou un handler couvert par les regles ci-dessous
+    // (TAY, CHALLENGE, WFS, SWISSPORT...). Seule la section "Caterings" dediee
+    // peut generer une worksheet pour ces vols.
+    if (f.isETH === true) return false;
+    if (f.manual === true) return true; // un vol ajoute a la main doit toujours pouvoir etre imprime
+    var flight  = (f.flight  || '').toUpperCase();
+    var handler = (f.handler || '').toUpperCase();
+    var reg     = (f.reg     || '').toUpperCase();
+    if (flight.startsWith('ICL'))      return true;
+    if (flight.startsWith('TAY'))      return true;
+    if (flight.startsWith('CHG'))      return true;
+    if (flight.startsWith('SWN'))      return true;
+    if (handler.includes('CHALLENGE')) return true;
+    if (handler.includes('WFS'))       return true; // SVA/WFS aussi inclus maintenant
+    if (handler.includes('SWISSPORT')) return true;
+    if (flight.startsWith('TAY') && handler.includes('FEDEX')) return true;
+    if (reg === 'OEIMD' && handler.includes('FEDEX'))          return true;
+    if (flight.startsWith('LHA'))                                return true;
+    return false;
+  }
+
+    function td(style, content, extra) {
+      extra = extra || '';
+      return '<td style="border:1.5pt solid #000;' + style + '"' + extra + '>' + (content || '&nbsp;') + '</td>';
+    }
+
+    function makeSheet(f) {
+      var __dateInput = document.getElementById('shift-date').value;
+      var dateStr = __dateInput
+        ? new Date(__dateInput + 'T12:00:00').toLocaleDateString('fr-BE', { day:'2-digit', month:'2-digit', year:'2-digit' })
+        : '';
+      var flight = (f.flight || '').toUpperCase();
+      var flt    = flight;
+      var hnd    = (f.handler || '').toUpperCase();
+      var reg    = (f.reg    || '').toUpperCase();
+      var isABD  = flight.startsWith('ABD') || flight.startsWith('AAE');
+      var HL     = 'background:#FFE500 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;';
+      var C      = 'padding:3pt 4pt;font-weight:700;text-align:center;';
+      var H      = 'padding:5pt 8pt;font-weight:700;';
+      var P      = 'padding:5pt 8pt;';
+
+      var html = '';
+      html += '<div class="page">';
+
+      // HEADER
+      html += '<div style="display:flex;align-items:flex-start;margin-bottom:10pt">';
+      html += '<div style="min-width:90pt">';
+      html += '<div style="border:2pt solid #000;width:80pt;padding:5pt 8pt">';
+      html += '<div style="font-size:22pt;font-weight:900;font-style:italic;line-height:1;font-family:Arial Black,Arial,sans-serif">AS</div>';
+      html += '<div style="font-size:10pt;font-weight:900;font-family:Arial Black,Arial,sans-serif">AERO</div>';
+      html += '<div style="font-size:10pt;font-weight:900;font-family:Arial Black,Arial,sans-serif">SERVICES</div>';
+      html += '</div></div>';
+      html += '<div style="flex:1;display:flex;align-items:center;justify-content:center;padding-top:6pt">';
+      html += '<div style="border:1.5pt solid #000;padding:8pt 50pt;font-size:11pt;font-weight:700;letter-spacing:1pt">WORK PERFORMED</div>';
+      html += '</div></div>';
+
+      // INFO TABLE
+      html += '<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:8.5pt">';
+
+      html += '<tr>';
+      html += td(H + 'width:18%', 'AEROSERVICES');
+      html += td(P + 'width:12%', 'BRU');
+      html += td(P + 'font-size:20pt;font-weight:900;text-decoration:underline;text-align:center;width:14%;font-family:Arial Black,Arial,sans-serif', 'LGG');
+      html += '<td style="border:1.5pt solid #000;padding:3pt 6pt;font-size:11pt;font-weight:700;text-align:right;width:28%" colspan="3">' + dateStr + '</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(H, 'AS TEAM :');
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="5">&nbsp;</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(H, 'COMPANY :');
+      var company = (f.handler || '');
+      var isQTRCatering = f._qtrCatering === true;
+      if (isQTRCatering) {
+        company = 'QATAR';
+      } else if (flight.startsWith('AAE')) {
+        company = 'Lachs / Fly Meta';
+      } else if (flight.startsWith('ABD')) {
+        var h = (f.handler || '').toUpperCase();
+        if (h.includes('CHALLENGE')) company = 'ANA';
+        else if (h.includes('WFS'))  company = 'WFS / Magma';
+      } else if (f.isETH === true) {
+        company = 'ETH';
+      } else if (flt.startsWith('TAY') && hnd.includes('SWISSPORT')) {
+        company = 'ASL';
+      } else if (flt.startsWith('GTI') && hnd.includes('SWISSPORT')) {
+        company = 'Atlas Air';
+      } else if (f._asl737 === true || (flt.startsWith('TAY') && hnd.includes('FEDEX')) || (reg === 'OEIMD' && hnd.includes('FEDEX'))) {
+        company = 'ASL 737';
+      } else if (flt.startsWith('SVA') && hnd.includes('WFS')) {
+        company = 'WFS';
+      } else if (f._lhaCatering === true) {
+        company = 'GI';
+      }
+      var isETHorCatering = (f.isETH === true) || isQTRCatering || (f._lhaCatering === true) || (f._catering === true);
+      var showFullTransit  = !isQTRCatering && !(f.isETH === true) && !(f._handling) && !(f._catering) &&
+                             !(f._swissCl) && !(f._swissLav) && !(f._swissWat) && !(f._swissHds) &&
+                             (f._swissFT !== false);
+      if (f._gtiSwiss === true) {
+        showFullTransit = true;
+      } else if (f._swissFT === true || f._swissCl || f._swissLav || f._swissWat || f._swissHds) {
+        showFullTransit = f._swissFT === true;
+      }
+      var showHandling   = f._handling  === true;
+      var showCleaning   = f._swissCl   === true;
+      var showLavatory   = f._swissLav  === true;
+      var showWater      = f._swissWat  === true;
+      var showHeadset    = f._swissHds  === true;
+      var showGTILaundry = f._gtiSwiss  === true;
+      html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + company + '</td>';
+      html += td(H, 'AIRCRAFT TYPE :');
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2">&nbsp;</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(H, 'REGISTRATION :');
+      html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + (f.reg || '') + '</td>';
+      html += td(H, 'FLIGHT NUMBER :');
+      html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + (f.flight || '') + '</td>';
+      html += '</tr>';
+
+      // SERVICE GRID
+      html += '<tr>';
+      html += td(C, 'A WASH');
+      html += td(C, 'WET WHEELS');
+      html += td(C, 'BELLY WASH');
+      html += td(C, 'GEAR WASH TECH');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">GEAR WASH COMM</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(C, 'FULL WET WASH');
+      html += td(C, 'HORSE STALL');
+      html += td(C, 'HORSE STALL BUILD');
+      html += td(C, 'HORSE STALL');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">OFFICE CLEANING</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(C, 'APU WASH');
+      html += td(C, 'FLAPS WASH');
+      html += td(C, 'WINDSHIELD WASH');
+      html += td(C, 'CARGO DECK CL');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">CARGO HOLDS CL</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(C, 'INTERIOR DEEP');
+      html += td(C + (showFullTransit ? HL : ''), 'FULL TRANSIT SERVICE');
+      html += td(C + (showCleaning ? HL : ''), 'TRANSIT SERVICE');
+      html += td(C + (showWater ? HL : ''), 'WATER SERVICE');
+      html += '<td style="border:1.5pt solid #000;' + C + (showLavatory ? HL : '') + '" colspan="2">LAVATORY SERVICE</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(C + (isABD ? HL : ''), 'DISINFECTION');
+      html += td(C + ((isABD || showGTILaundry) ? HL : ''), 'LAUNDRY');
+      html += td(C + (isETHorCatering ? HL : ''), 'CATERING');
+      html += td(C, 'PRODUCT DELIVERY');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">PMR</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(C + (showHandling ? HL : ''), 'HANDLING');
+      html += td(C, 'PUSH BACK');
+      html += td(C + (showHeadset ? HL : ''), 'HEADSET');
+      html += td(C, 'TOWING');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">RENTING</td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += td(C, 'MAN HOUR');
+      html += td(C, 'CREW BUS');
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">SPECIAL REQUEST</td>';
+      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">VIDANGE TOILETTE</td>';
+      html += '</tr>';
+
+      // WORK TIME
+      html += '<tr>';
+      html += '<td style="border:1.5pt solid #000;padding:4pt 6pt;font-weight:700;font-size:7.5pt;width:18%">WORK START TIME</td>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt 12pt;font-size:14pt;font-weight:900;text-align:center;width:22%">H</td>';
+      html += '<td style="border:1.5pt solid #000;padding:4pt 6pt;font-weight:700;font-size:7.5pt;text-align:center;width:16%">WORK END TIME</td>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt 12pt;font-size:14pt;font-weight:900;text-align:center" colspan="3">H</td>';
+      html += '</tr>';
+
+      // SPACER
+      html += '<tr><td colspan="6" style="border:none;padding:5pt 0"></td></tr>';
+
+      // COMMENT
+      html += '<tr>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;font-weight:700;vertical-align:middle;height:55pt" colspan="2">COMMENT / EXPLANATION</td>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;height:55pt" colspan="4"></td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;font-weight:700;vertical-align:middle;height:55pt" colspan="2">SPECIAL REQUEST / COMMENT</td>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;height:55pt" colspan="4"></td>';
+      html += '</tr>';
+
+      html += '<tr>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;font-weight:700;vertical-align:middle;height:48pt" colspan="2">TEAM LEADER&#39;S SIGNATURE</td>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;height:48pt" colspan="4"></td>';
+      html += '</tr>';
+
+      // ACCEPTED BY
+      html += '<tr>';
+      html += '<td style="border:1.5pt solid #000;' + H + 'text-align:center;vertical-align:middle" rowspan="3">ACCEPTED BY</td>';
+      html += td(H + 'text-align:center', 'NAME');
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2"></td>';
+      html += '<td style="border:1.5pt solid #000;' + H + 'text-align:center;vertical-align:middle" rowspan="3" colspan="2">REMARKS</td>';
+      html += '</tr>';
+      html += '<tr>';
+      html += td(H + 'text-align:center', 'SIGNATURE');
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2"></td>';
+      html += '</tr>';
+      html += '<tr>';
+      html += td(H + 'text-align:center', 'TIME');
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2"></td>';
+      html += '</tr>';
+
+      html += '</table></div>';
+      return html;
+    }
+
+  // Reconstitue le numero de vol DEPART Swissport pour une immat donnee
+  // (utilise pour les worksheets Headset ET pour la feuille Crew Bus).
+  function getSwissportDepartures() {
+    var swissportDepartures = {};
+    var rawFids = document.getElementById('fids-text').value;
+    if (rawFids) {
+      rawFids.split('\n').forEach(function(line) {
+        var trimmed = line.trim();
+        if (!trimmed.includes('Departures')) return;
+        var cols = trimmed.replace(/\t/g, '  ').split(/  +/).map(function(c){return c.trim();}).filter(Boolean);
+        var dIdx = cols.findIndex(function(c){return c==='Departures';});
+        if (dIdx === -1) return;
+        var flt = (cols[dIdx+2]||'').toUpperCase();
+        var reg = (cols[dIdx+3]||'').toUpperCase();
+        var hnd = (cols[dIdx+9]||'').toUpperCase();
+        if (hnd.includes('SWISSPORT') && reg) {
+          swissportDepartures[reg] = flt;
+        }
+      });
+    }
+    return swissportDepartures;
+  }
+
+  function generateWorksheets() {
+    var date = document.getElementById('shift-date').value;
+    var eligible = flights.filter(function(f, i) { return selectedFlights.has(i) && needsFullTransit(f); });
+    if (eligible.length === 0) { alert('Aucun vol eligible trouve.'); return; }
+
+    var swissportDepartures = getSwissportDepartures();
+
+    var pages = '';
+    var pagesASL737 = ''; // printed last
+    eligible.forEach(function(f) {
+      var origIdx = flights.indexOf(f);
+      var flt = (f.flight || '').toUpperCase();
+      var hnd = (f.handler || '').toUpperCase();
+      var reg2        = (f.reg || '').toUpperCase();
+      var isQTR       = flt.startsWith('QTR');
+      var isWFS       = hnd.includes('WFS') && !flt.startsWith('SVA');
+      var isSWISS     = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
+      var ASL_B744_W = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
+      var isASL737 = (
+        f._manualASL737 === true ||
+        (flt.startsWith('TAY') && reg2.startsWith('OEI') && !ASL_B744_W.includes(reg2)) ||
+        (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_W.includes(reg2)) ||
+        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+        (reg2 === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
+      );
+
+      // ── SVA/WFS → Handling worksheet si coché ──
+      if (flt.startsWith('SVA') && hnd.includes('WFS')) {
+        // Try both origIdx and loop through all possible checkbox IDs
+        var svaChecked = false;
+        for (var si = 0; si < flights.length; si++) {
+          var cbSvaX = document.getElementById('sva-handling-' + si);
+          if (cbSvaX && cbSvaX.checked) {
+            // Make sure this checkbox belongs to THIS flight
+            if (flights[si] === f) { svaChecked = true; break; }
+          }
+        }
+        // Also try origIdx directly
+        var cbSvaDirect = document.getElementById('sva-handling-' + origIdx);
+        if (cbSvaDirect && cbSvaDirect.checked) svaChecked = true;
+
+        if (svaChecked) {
+          pages += makeSheet(Object.assign({}, f, { _handling: true, handler: 'WFS' }));
+        }
+        return;
+      }
+
+      // ── WFS Handling checkbox ──
+      if (isWFS) {
+        var cbHdl = document.getElementById('wfs-handling-' + origIdx);
+        if (cbHdl && cbHdl.checked) {
+          pages += makeSheet(Object.assign({}, f, { _handling: true }));
+
+          return;
+        }
+      }
+
+      // ── GTI/SWISSPORT : auto worksheet, no checkbox needed ──
+      if (hnd.includes('SWISSPORT') && flt.startsWith('GTI')) {
+        pages += makeSheet(Object.assign({}, f, { _gtiSwiss: true }));
+        return;
+      }
+
+      // ── SWISSPORT multi-checkbox ──
+      if (isSWISS) {
+        var cbFT  = document.getElementById('swi-ft-'  + origIdx);
+        var cbCl  = document.getElementById('swi-cl-'  + origIdx);
+        var cbLav = document.getElementById('swi-lav-' + origIdx);
+        var cbWat = document.getElementById('swi-wat-' + origIdx);
+        var cbHds = document.getElementById('swi-hds-' + origIdx);
+
+        var ftChecked  = cbFT  && cbFT.checked;
+        var clChecked  = cbCl  && cbCl.checked;
+        var lavChecked = cbLav && cbLav.checked;
+        var watChecked = cbWat && cbWat.checked;
+        var hdsChecked = cbHds && cbHds.checked;
+
+        var anyChecked = ftChecked || clChecked || lavChecked || watChecked || hdsChecked;
+
+        if (anyChecked) {
+          // Main worksheet (all except headset combined)
+          if (ftChecked || clChecked || lavChecked || watChecked) {
+            pages += makeSheet(Object.assign({}, f, {
+              _swissFT:  ftChecked,
+              _swissCl:  clChecked,
+              _swissLav: lavChecked,
+              _swissWat: watChecked,
+            }));
+          }
+          // Headset: separate worksheet with departure flight number
+          if (hdsChecked) {
+            var depFlt = swissportDepartures[((f.reg||'').toUpperCase())] || f.flight;
+            pages += makeSheet(Object.assign({}, f, { flight: depFlt, _swissHds: true }));
+          }
+          return;
+        }
+        // No checkbox checked for Swissport: skip (don't make worksheet)
+        return;
+      }
+
+      // ── ASL 737 flights → always included, printed last ──
+      if (isASL737) {
+        // Always generate worksheet (no checkbox needed for main print)
+        pagesASL737 += makeSheet(Object.assign({}, f, { _asl737: true }));
+        var cbAslHandling = document.getElementById('asl737-handling-' + origIdx);
+        if (hnd.includes('AERO') || (cbAslHandling && cbAslHandling.checked)) {
+          pagesASL737 += makeSheet(Object.assign({}, f, { _asl737: true, _handling: true }));
+        }
+        return;
+      }
+
+      // ── LHA catering extra worksheet (en plus du Full Transit normal) ──
+
+      // ── QTR catering extra worksheet ──
+      pages += makeSheet(f);
+      if (flt.startsWith('LHA')) {
+        var cbLha = document.getElementById('lha-catering-' + origIdx);
+        if (cbLha && cbLha.checked) {
+          pages += makeSheet(Object.assign({}, f, { _lhaCatering: true }));
+        }
+      }
+
+    });
+
+    // Catering worksheets - one per selected catering
+    var pagesCatering = '';
+    caterings.forEach(function(ct, i) {
+      if (!selectedCaterings.has(i)) return;
+      pagesCatering += makeSheet({
+        flight:  ct.flight  || '',
+        reg:     ct.reg     || '',
+        handler: ct.company || '',
+        time:    ct.delivery|| '',
+        stand:   '',
+        _catering: true
+      });
+    });
+
+    pages = pages + pagesASL737 + pagesCatering; // caterings printed last
+    var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheets LGG</title>'
+      + '<style>'
+      + '@page{size:A4 portrait;margin:8mm}'
+      + '*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
+      + 'html,body{height:100%}'
+      + 'body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}'
+      + '.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}'
+      + '.page:last-child{page-break-after:avoid}'
+      + '</style></head><body>' + pages + '</body></html>';
+
+    var w = window.open('', '_blank');
+    if (w) {
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      w.focus();
+      w.print();
+    } else {
+      alert('Autorise les popups pour generer les worksheets.');
+    }
+  }
+
+
+  // ── Print ASL737 worksheets only ──────────────────────────────
+  // ── Feuille Crew Bus (reproduit le formulaire papier) ────────────────
+  function generateCrewBusSheet() {
+    var eligible = flights.filter(function(f, i) { return selectedFlights.has(i); });
+    if (eligible.length === 0) { alert('Aucun vol selectionne.'); return; }
+
+    var swissportDepartures = getSwissportDepartures();
+    var shiftName = selectedShift ? selectedShift.name : null;
+
+    function shiftLabel(name) {
+      var active = shiftName === name;
+      return '<span style="' + (active ? 'text-decoration:underline;background:#ffe680' : '') + '">' + name + '</span>';
+    }
+
+    var TD  = 'border:1pt solid #000;padding:5pt 7pt;font-size:9pt';
+    var TDH = TD + ';font-weight:800;background:#f0f0f0;text-align:center';
+
+    // ── Table principale : 6 colonnes exactement comme le papier ──
+    // Registration | ARR | Pick up | Flight Number | Crew | Stand
+    var mainRows = '';
+    eligible.forEach(function(f) {
+      mainRows += '<tr>'
+        + '<td style="' + TD + '">' + (f.reg || '') + '</td>'
+        + '<td style="' + TD + '"><b>ARR</b>&nbsp;&nbsp;' + (f.time || '') + '</td>'
+        + '<td style="' + TD + '"><b>Pick up</b></td>'
+        + '<td style="' + TD + '">' + (f.flight || '') + '</td>'
+        + '<td style="' + TD + '"></td>'
+        + '<td style="' + TD + '">' + (f.stand || '') + '</td>'
+        + '</tr>';
+    });
+    // Quelques lignes vides en plus pour ajouts a la main
+    for (var e1 = 0; e1 < 3; e1++) {
+      mainRows += '<tr>'
+        + '<td style="' + TD + '">&nbsp;</td>'
+        + '<td style="' + TD + '"><b>ARR</b></td>'
+        + '<td style="' + TD + '"><b>Pick up</b></td>'
+        + '<td style="' + TD + '">&nbsp;</td>'
+        + '<td style="' + TD + '">&nbsp;</td>'
+        + '<td style="' + TD + '">&nbsp;</td>'
+        + '</tr>';
+    }
+
+    // ── Headset (Swissport, case HDS cochee) + Handling (toute case Handling cochee) ──
+    var headsetRows = [];
+    var handlingRows = [];
+    eligible.forEach(function(f) {
+      var origIdx = flights.indexOf(f);
+      var hnd = (f.handler || '').toUpperCase();
+      var reg = (f.reg || '').toUpperCase();
+
+      var cbHds = document.getElementById('swi-hds-' + origIdx);
+      if (cbHds && cbHds.checked) {
+        var depFlt = swissportDepartures[reg] || f.flight;
+        headsetRows.push({ reg: f.reg, flt: depFlt, depart: '' });
+      }
+
+      var handlingChecked = f._handling === true
+        || (document.getElementById('wfs-handling-'   + origIdx) && document.getElementById('wfs-handling-'   + origIdx).checked)
+        || (document.getElementById('sva-handling-'    + origIdx) && document.getElementById('sva-handling-'    + origIdx).checked)
+        || (document.getElementById('asl737-handling-' + origIdx) && document.getElementById('asl737-handling-' + origIdx).checked);
+      if (handlingChecked) {
+        handlingRows.push({ reg: f.reg, flt: f.flight, depArr: 'ARR', hwfs: hnd.includes('WFS') ? 'WFS' : '' });
+      }
+    });
+
+    var subRowsCount = Math.max(headsetRows.length, handlingRows.length, 3);
+    var subRows = '';
+    for (var e2 = 0; e2 < subRowsCount; e2++) {
+      var hs = headsetRows[e2] || { reg: '', flt: '', depart: '' };
+      var hd = handlingRows[e2] || { reg: '', flt: '', depArr: '', hwfs: '' };
+      subRows += '<tr>'
+        + '<td style="' + TD + '">' + (hs.reg || '&nbsp;') + '</td>'
+        + '<td style="' + TD + '">' + (hs.flt || '&nbsp;') + '</td>'
+        + '<td style="' + TD + '">' + (hs.depart || '&nbsp;') + '</td>'
+        + '<td style="' + TD + '">' + (hd.reg || '&nbsp;') + '</td>'
+        + '<td style="' + TD + '">' + (hd.flt || '&nbsp;') + '</td>'
+        + '<td style="' + TD + '">' + (hd.depArr || '&nbsp;') + '</td>'
+        + '<td style="' + TD + '">' + (hd.hwfs || '&nbsp;') + '</td>'
+        + '</tr>';
+    }
+
+    var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Crew Bus - LGG</title>'
+      + '<style>@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
+      + 'body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff}'
+      + 'table{width:100%;border-collapse:collapse;margin-bottom:14pt}</style></head><body>'
+      + '<table>'
+      + '<tr>'
+        + '<td style="' + TD + ';font-weight:800;font-size:11pt" colspan="2">Crew bus service</td>'
+        + '<td style="' + TD + ';text-align:center;font-weight:700;font-size:10pt" colspan="4">' + shiftLabel('EARLY') + ' &nbsp;//&nbsp; ' + shiftLabel('LATE') + ' &nbsp;//&nbsp; ' + shiftLabel('NIGHT') + '</td>'
+      + '</tr>'
+      + '<tr>'
+        + '<td style="' + TDH + '">Registration</td>'
+        + '<td style="' + TDH + '" colspan="2">Time (Local)</td>'
+        + '<td style="' + TDH + '">Flight Number</td>'
+        + '<td style="' + TDH + '">Crew</td>'
+        + '<td style="' + TDH + '">Stand</td>'
+      + '</tr>'
+      + mainRows
+      + '</table>'
+      + '<table>'
+      + '<tr>'
+        + '<td style="' + TDH + '" colspan="3">Headset</td>'
+        + '<td style="' + TDH + '" colspan="4">Handling</td>'
+      + '</tr>'
+      + '<tr>'
+        + '<td style="' + TDH + '">Registration</td>'
+        + '<td style="' + TDH + '">Flt #</td>'
+        + '<td style="' + TDH + '">Depart</td>'
+        + '<td style="' + TDH + '">Registration</td>'
+        + '<td style="' + TDH + '">Flt #</td>'
+        + '<td style="' + TDH + '">Dep // Arr</td>'
+        + '<td style="' + TDH + '">Handling WFS</td>'
+      + '</tr>'
+      + subRows
+      + '</table>'
+      + '</body></html>';
+
+    var w = window.open('', '_blank');
+    if (w) { w.document.open(); w.document.write(html); w.document.close(); w.focus(); w.print(); }
+    else { alert('Autorise les popups pour imprimer la feuille Crew Bus.'); }
+  }
+
+  function generateASL737Only() {
+    var date = document.getElementById('shift-date').value;
+    var ASL_B744_ONLY = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
+    var eligible = flights.filter(function(f) {
+      if (f.isETH === true) return false; // jamais dans ce circuit, uniquement via "Caterings"
+      var flt = (f.flight||'').toUpperCase();
+      var hnd = (f.handler||'').toUpperCase();
+      var reg = (f.reg||'').toUpperCase();
+      return (
+        f._manualASL737 === true ||
+        (flt.startsWith('TAY') && reg.startsWith('OEI') && !ASL_B744_ONLY.includes(reg)) ||
+        (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_ONLY.includes(reg)) ||
+        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+        (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
+      );
+    });
+
+    if (eligible.length === 0) { alert('Aucun vol ASL 737 trouvé.'); return; }
+
+    var pagesOnly = '';
+    eligible.forEach(function(f) {
+      var hnd = (f.handler||'').toUpperCase();
+      var origIdx = flights.indexOf(f);
+      var cbAslHandling = document.getElementById('asl737-handling-' + origIdx);
+      // Print ALL eligible ASL737 flights, no checkbox needed
+      pagesOnly += makeSheet(Object.assign({}, f, { _asl737: true }));
+      if (hnd.includes('AERO') || (cbAslHandling && cbAslHandling.checked)) {
+        pagesOnly += makeSheet(Object.assign({}, f, { _asl737: true, _handling: true }));
+      }
+    });
+
+    if (!pagesOnly) { alert('Aucun vol ASL 737 trouvé.'); return; }
+
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ASL 737 Worksheets</title>'
+      + '<style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
+      + 'html,body{height:100%}'
+      + 'body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}'
+      + '.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}.page:last-child{page-break-after:avoid}</style></head>'
+      + '<body>' + pagesOnly + '</body></html>';
+
+    var w = window.open('', '_blank');
+    if (w) { w.document.open(); w.document.write(html); w.document.close(); w.focus(); w.print(); }
+    else { alert('Autorise les popups pour générer les worksheets.'); }
+  }
+
+  function resetAll() {
+    if (!confirm('Recommencer depuis le début ?')) return;
+    flights = [];
+    selectedFlights = new Set();
+    caterings = [];
+    selectedCaterings = new Set();
+    selectedShift = null;
+    document.getElementById('fids-text').value = '';
+    if (document.getElementById('catering-text')) document.getElementById('catering-text').value = '';
+    if (document.getElementById('extra-notes')) document.getElementById('extra-notes').value = '';
+    localStorage.removeItem('lgg_extra_notes');
+    document.getElementById('shift-agent').value = '';
+    document.getElementById('shift-date').value = todayBrusselsDateStr();
+    document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
+    autoDetectShift();
+    goToStep(1);
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.querySelectorAll('.tdot').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.theme === theme);
+    });
+  }
+
+  // ── Init au chargement : theme, notes persistantes, auto-refresh ──
+  document.querySelectorAll('.tdot').forEach(b => {
+    b.addEventListener('click', function(){
+      applyTheme(this.dataset.theme);
+      localStorage.setItem('lgg-theme', this.dataset.theme);
+    });
+  });
+
+  (function(){
+    var t = localStorage.getItem('lgg-theme') || 'cyber';
+    applyTheme(t);
+
+    // Restaure les notes complementaires ecrites precedemment (survit a
+    // l'actualisation automatique des vols ET a un rechargement de page).
+    var savedNotes = localStorage.getItem('lgg_extra_notes');
+    if (savedNotes && document.getElementById('extra-notes')) {
+      document.getElementById('extra-notes').value = savedNotes;
+    }
+
+    initAutoRefreshUI();
+    applyLayoutMode(localStorage.getItem('lgg_layout_mode') || 'classic');
+  })();
+
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function (err) {
+        console.warn('Service worker non enregistre :', err);
+      });
+    });
+  }
+</script>
+</body>
+</html>
