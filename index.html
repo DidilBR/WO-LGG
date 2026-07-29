@@ -580,6 +580,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       <button class="btn btn-ghost" onclick="goToStep(2)">&larr; Retour</button>
       <button class="btn btn-primary" onclick="generatePDF()">&#128424; Feuille nettoyage</button>
       <button class="btn btn-amber" onclick="generateWorksheets()">&#128203; Worksheets</button>
+      <button class="btn" style="background:linear-gradient(135deg,#22c1c3,#0d8ab0);color:#000;font-weight:800" onclick="generateCrewBusSheet()">&#128652; Crew Bus</button>
       <button class="btn btn-danger" onclick="resetAll()">Recommencer</button>
     </div>
   </div>
@@ -2354,18 +2355,10 @@ ${(function(){
       return html;
     }
 
-  function generateWorksheets() {
-    var date = document.getElementById('shift-date').value;
-    var eligible = flights.filter(function(f, i) { return selectedFlights.has(i) && needsFullTransit(f); });
-    if (eligible.length === 0) { alert('Aucun vol eligible trouve.'); return; }
-
-
-    // Collect Swissport departures by registration (for HEADSET worksheets)
+  // Reconstitue le numero de vol DEPART Swissport pour une immat donnee
+  // (utilise pour les worksheets Headset ET pour la feuille Crew Bus).
+  function getSwissportDepartures() {
     var swissportDepartures = {};
-    flights.forEach(function(f2) {
-      // We stored departure info during parsing for ETH; for Swissport we need to re-scan
-    });
-    // Re-scan raw FIDS for Swissport departure flight numbers
     var rawFids = document.getElementById('fids-text').value;
     if (rawFids) {
       rawFids.split('\n').forEach(function(line) {
@@ -2382,6 +2375,15 @@ ${(function(){
         }
       });
     }
+    return swissportDepartures;
+  }
+
+  function generateWorksheets() {
+    var date = document.getElementById('shift-date').value;
+    var eligible = flights.filter(function(f, i) { return selectedFlights.has(i) && needsFullTransit(f); });
+    if (eligible.length === 0) { alert('Aucun vol eligible trouve.'); return; }
+
+    var swissportDepartures = getSwissportDepartures();
 
     var pages = '';
     var pagesASL737 = ''; // printed last
@@ -2539,6 +2541,130 @@ ${(function(){
 
 
   // ── Print ASL737 worksheets only ──────────────────────────────
+  // ── Feuille Crew Bus (reproduit le formulaire papier) ────────────────
+  function generateCrewBusSheet() {
+    var eligible = flights.filter(function(f, i) { return selectedFlights.has(i); });
+    if (eligible.length === 0) { alert('Aucun vol selectionne.'); return; }
+
+    var swissportDepartures = getSwissportDepartures();
+    var shiftName = selectedShift ? selectedShift.name : null;
+
+    function shiftLabel(name) {
+      var active = shiftName === name;
+      return '<span style="' + (active ? 'text-decoration:underline;background:#ffe680' : '') + '">' + name + '</span>';
+    }
+
+    var TD  = 'border:1pt solid #000;padding:5pt 7pt;font-size:9pt';
+    var TDH = TD + ';font-weight:800;background:#f0f0f0;text-align:center';
+
+    // ── Table principale : un vol par ligne, ARR pre-rempli depuis le FIDS ──
+    var mainRows = '';
+    eligible.forEach(function(f) {
+      mainRows += '<tr>'
+        + '<td style="' + TD + '">' + (f.reg || '') + '</td>'
+        + '<td style="' + TD + ';font-weight:700;text-align:center">ARR</td>'
+        + '<td style="' + TD + '">' + (f.time || '') + '</td>'
+        + '<td style="' + TD + ';font-weight:700;text-align:center">Pick up</td>'
+        + '<td style="' + TD + '"></td>'
+        + '<td style="' + TD + '">' + (f.flight || '') + '</td>'
+        + '<td style="' + TD + '"></td>'
+        + '<td style="' + TD + '">' + (f.stand || '') + '</td>'
+        + '</tr>';
+    });
+    // Quelques lignes vides en plus pour ajouts a la main
+    for (var e1 = 0; e1 < 3; e1++) {
+      mainRows += '<tr>'
+        + '<td style="' + TD + '">&nbsp;</td>'
+        + '<td style="' + TD + ';font-weight:700;text-align:center">ARR</td>'
+        + '<td style="' + TD + '">&nbsp;</td>'
+        + '<td style="' + TD + ';font-weight:700;text-align:center">Pick up</td>'
+        + '<td style="' + TD + '">&nbsp;</td>'
+        + '<td style="' + TD + '">&nbsp;</td>'
+        + '<td style="' + TD + '">&nbsp;</td>'
+        + '<td style="' + TD + '">&nbsp;</td>'
+        + '</tr>';
+    }
+
+    // ── Headset (Swissport, case HDS cochee) + Handling (toute case Handling cochee) ──
+    var headsetRows = [];
+    var handlingRows = [];
+    eligible.forEach(function(f) {
+      var origIdx = flights.indexOf(f);
+      var hnd = (f.handler || '').toUpperCase();
+      var reg = (f.reg || '').toUpperCase();
+
+      var cbHds = document.getElementById('swi-hds-' + origIdx);
+      if (cbHds && cbHds.checked) {
+        var depFlt = swissportDepartures[reg] || f.flight;
+        headsetRows.push({ reg: f.reg, flt: depFlt, depart: '' });
+      }
+
+      var handlingChecked = f._handling === true
+        || (document.getElementById('wfs-handling-'   + origIdx) && document.getElementById('wfs-handling-'   + origIdx).checked)
+        || (document.getElementById('sva-handling-'    + origIdx) && document.getElementById('sva-handling-'    + origIdx).checked)
+        || (document.getElementById('asl737-handling-' + origIdx) && document.getElementById('asl737-handling-' + origIdx).checked);
+      if (handlingChecked) {
+        handlingRows.push({ reg: f.reg, flt: f.flight, depArr: 'ARR', hwfs: hnd.includes('WFS') ? 'WFS' : '' });
+      }
+    });
+
+    var subRowsCount = Math.max(headsetRows.length, handlingRows.length, 3);
+    var subRows = '';
+    for (var e2 = 0; e2 < subRowsCount; e2++) {
+      var hs = headsetRows[e2] || { reg: '', flt: '', depart: '' };
+      var hd = handlingRows[e2] || { reg: '', flt: '', depArr: '', hwfs: '' };
+      subRows += '<tr>'
+        + '<td style="' + TD + '">' + (hs.reg || '&nbsp;') + '</td>'
+        + '<td style="' + TD + '">' + (hs.flt || '&nbsp;') + '</td>'
+        + '<td style="' + TD + '">' + (hs.depart || '&nbsp;') + '</td>'
+        + '<td style="' + TD + '">' + (hd.reg || '&nbsp;') + '</td>'
+        + '<td style="' + TD + '">' + (hd.flt || '&nbsp;') + '</td>'
+        + '<td style="' + TD + '">' + (hd.depArr || '&nbsp;') + '</td>'
+        + '<td style="' + TD + '">' + (hd.hwfs || '&nbsp;') + '</td>'
+        + '</tr>';
+    }
+
+    var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Crew Bus - LGG</title>'
+      + '<style>@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
+      + 'body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff}'
+      + 'table{width:100%;border-collapse:collapse;margin-bottom:14pt}</style></head><body>'
+      + '<table>'
+      + '<tr>'
+        + '<td style="' + TD + ';font-weight:800;font-size:11pt" colspan="2">Crew bus service</td>'
+        + '<td style="' + TD + ';text-align:center;font-weight:700;font-size:10pt" colspan="6">' + shiftLabel('EARLY') + ' &nbsp;//&nbsp; ' + shiftLabel('LATE') + ' &nbsp;//&nbsp; ' + shiftLabel('NIGHT') + '</td>'
+      + '</tr>'
+      + '<tr>'
+        + '<td style="' + TDH + '">Registration</td>'
+        + '<td style="' + TDH + '" colspan="4">Time (Local)</td>'
+        + '<td style="' + TDH + '">Flight Number</td>'
+        + '<td style="' + TDH + '">Crew</td>'
+        + '<td style="' + TDH + '">Stand</td>'
+      + '</tr>'
+      + mainRows
+      + '</table>'
+      + '<table>'
+      + '<tr>'
+        + '<td style="' + TDH + '" colspan="3">Headset</td>'
+        + '<td style="' + TDH + '" colspan="4">Handling</td>'
+      + '</tr>'
+      + '<tr>'
+        + '<td style="' + TDH + '">Registration</td>'
+        + '<td style="' + TDH + '">Flt #</td>'
+        + '<td style="' + TDH + '">Depart</td>'
+        + '<td style="' + TDH + '">Registration</td>'
+        + '<td style="' + TDH + '">Flt #</td>'
+        + '<td style="' + TDH + '">Dep // Arr</td>'
+        + '<td style="' + TDH + '">Handling WFS</td>'
+      + '</tr>'
+      + subRows
+      + '</table>'
+      + '</body></html>';
+
+    var w = window.open('', '_blank');
+    if (w) { w.document.open(); w.document.write(html); w.document.close(); w.focus(); w.print(); }
+    else { alert('Autorise les popups pour imprimer la feuille Crew Bus.'); }
+  }
+
   function generateASL737Only() {
     var date = document.getElementById('shift-date').value;
     var ASL_B744_ONLY = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
