@@ -613,6 +613,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   let selectedFlights = new Set();
   let caterings = [];
   let selectedCaterings = new Set();
+  let lastDepartures = []; // derniere liste de departs recuperee (utilisee par la feuille Crew Bus)
   let shiftConfig = JSON.parse(localStorage.getItem('lgg_shift_config') || 'null') || {
     EARLY: { start: '05:30', end: '14:00' },
     LATE:  { start: '13:30', end: '22:00' },
@@ -951,32 +952,41 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
   // Construit la liste de vols filtree/triee a partir des donnees brutes de l'API
   // (reutilisee par le chargement initial ET par l'auto-refresh silencieux)
+  // Fenetre de shift = un vrai intervalle [debut, fin) en objets Date, bien plus fiable
+  // qu'une comparaison "jour/heure" en texte (c'etait la source de la plupart de nos bugs
+  // Night Shift : minuit, changement de mois, etc. sont geres nativement par Date).
+  // Hypothese (comme partout ailleurs dans l'app) : l'appareil est regle sur l'heure de Bruxelles.
+  function shiftDateWindow(dateStr, shiftName) {
+    const cfg = shiftName && shiftConfig[shiftName];
+    if (!cfg || !dateStr) return null;
+    const parts = dateStr.split('-').map(Number);
+    const y = parts[0], mo = parts[1], d = parts[2];
+    const sParts = cfg.start.split(':').map(Number);
+    const eParts = cfg.end.split(':').map(Number);
+    const start = new Date(y, mo - 1, d, sParts[0], sParts[1], 0);
+    let end = new Date(y, mo - 1, d, eParts[0], eParts[1], 0);
+    if (end <= start) end = new Date(y, mo - 1, d + 1, eParts[0], eParts[1], 0); // traverse minuit (ex: Night)
+    return { start: start, end: end };
+  }
+  function inDateWindow(dt, win) {
+    return !!(dt && win && dt >= win.start && dt < win.end);
+  }
+
   function buildFlightsFromApiData(arrivals, departures) {
     const shiftDateStr = document.getElementById('shift-date').value || todayBrusselsDateStr();
-    const nextDateObj = new Date(shiftDateStr + 'T00:00:00');
-    nextDateObj.setDate(nextDateObj.getDate() + 1);
-    const nextDateStr = nextDateObj.toISOString().split('T')[0];
+    const shiftName = selectedShift ? selectedShift.name : null;
+    const win = shiftDateWindow(shiftDateStr, shiftName);
+    // Aucun shift choisi : fenetre large par defaut (toute la date + debut de matinee du lendemain)
+    const fallbackParts = shiftDateStr.split('-').map(Number);
+    const fallbackWin = {
+      start: new Date(fallbackParts[0], fallbackParts[1] - 1, fallbackParts[2], 0, 0, 0),
+      end:   new Date(fallbackParts[0], fallbackParts[1] - 1, fallbackParts[2] + 1, 6, 0, 0)
+    };
 
     function inWindow(iso) {
-      const d = toBrusselsDate(iso);
-      if (!d) return false;
-      const day = brusselsDayStr(d);
-      const hh = parseInt(brusselsHHMM(d).split(':')[0], 10);
-
-      if (selectedShift && selectedShift.name === 'NIGHT') {
-        // Night shift de la date choisie = soiree de shiftDateStr (a partir de ~20h) + petit matin de nextDateStr.
-        // ATTENTION : le petit matin (00h-06h) de shiftDateStr lui-meme appartient a la nuit PRECEDENTE
-        // (celle qui a commence la veille au soir) et ne doit surtout pas etre inclus ici.
-        if (day === shiftDateStr && hh >= 20) return true;
-        if (day === nextDateStr && hh < 10) return true;
-        return false;
-      }
-
-      if (day === shiftDateStr) return true;
-      if (!selectedShift && day === nextDateStr) {
-        return hh < 6;
-      }
-      return false;
+      const dt = toBrusselsDate(iso);
+      if (!dt) return false;
+      return inDateWindow(dt, win || fallbackWin);
     }
 
     const ethDepartures = {};
@@ -1071,6 +1081,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         fetchJsonWithFallback(FIDS_ARRIVALS_URL),
         fetchJsonWithFallback(FIDS_DEPARTURES_URL)
       ]);
+      lastDepartures = departures;
 
       const oldDataByFlight = {};
       flights.forEach(f => { oldDataByFlight[f.flight] = { reg: f.reg, remarks: f.remarks }; });
@@ -1125,6 +1136,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         fetchJsonWithFallback(FIDS_ARRIVALS_URL),
         fetchJsonWithFallback(FIDS_DEPARTURES_URL)
       ]);
+      lastDepartures = departures;
       const fresh = buildFlightsFromApiData(arrivals, departures);
 
       // Ne jamais perdre une immat saisie a la main (si l'API n'en fournit toujours pas)
@@ -2563,51 +2575,110 @@ ${(function(){
 
   // ── Print ASL737 worksheets only ──────────────────────────────
   // ── Feuille Crew Bus (reproduit le formulaire papier) ────────────────
+  // Meme regle de handler que le reste de l'app (HANDLERS_OK2 + exceptions TAY/OEIMD FedEx),
+  // reutilisee ici pour filtrer les DEPARTS pertinents pour le Crew Bus.
+  function isRelevantHandlerForOps(flight, handler, reg) {
+    var HANDLERS_OK2 = ['CHALLENGE', 'WFS', 'SWISSPORT'];
+    var isTAYFedex   = flight.startsWith('TAY') && handler.includes('FEDEX');
+    var isOEIMDFedex = reg === 'OEIMD' && handler.includes('FEDEX');
+    return HANDLERS_OK2.some(function(h) { return handler.includes(h); }) || isTAYFedex || isOEIMDFedex;
+  }
+
   function generateCrewBusSheet() {
-    var eligible = flights.filter(function(f, i) { return selectedFlights.has(i); });
-    if (eligible.length === 0) { alert('Aucun vol selectionne.'); return; }
+    if (!selectedShift) { alert('Selectionne un shift (Early/Late/Night) avant de generer la feuille Crew Bus.'); return; }
+    var dateStr = document.getElementById('shift-date').value;
+    var win = shiftDateWindow(dateStr, selectedShift.name);
 
-    var swissportDepartures = getSwissportDepartures();
-    var shiftName = selectedShift ? selectedShift.name : null;
+    // ── Arrivees : les vols deja selectionnes dans la liste ──
+    var arrRows = flights
+      .filter(function(f, i) { return selectedFlights.has(i); })
+      .map(function(f) { return { reg: f.reg || '', flight: f.flight, time: f.time || '', stand: f.stand || '', note: f.remarks || '' }; });
 
-    function shiftLabel(name) {
-      var active = shiftName === name;
-      return '<span style="' + (active ? 'text-decoration:underline;background:#ffe680' : '') + '">' + name + '</span>';
-    }
-
-    var TD  = 'border:1pt solid #000;padding:5pt 7pt;font-size:9pt';
-    var TDH = TD + ';font-weight:800;background:#f0f0f0;text-align:center';
-
-    // ── Table principale : 6 colonnes exactement comme le papier ──
-    // Registration | ARR | Pick up | Flight Number | Crew | Stand
-    var mainRows = '';
-    eligible.forEach(function(f) {
-      mainRows += '<tr>'
-        + '<td style="' + TD + '">' + (f.reg || '') + '</td>'
-        + '<td style="' + TD + '"><b>ARR</b>&nbsp;&nbsp;' + (f.time || '') + '</td>'
-        + '<td style="' + TD + '"><b>Pick up</b></td>'
-        + '<td style="' + TD + '">' + (f.flight || '') + '</td>'
-        + '<td style="' + TD + '"></td>'
-        + '<td style="' + TD + '">' + (f.stand || '') + '</td>'
-        + '</tr>';
+    // ── Departs : recalcules depuis la derniere recuperation FIDS, avec l'heure de
+    // pickup = heure de depart - 1h15 (le crew doit etre pris en charge avant l'ETD),
+    // et le meme filtre de handler que partout ailleurs dans l'app ──
+    var depRows = [];
+    (lastDepartures || []).forEach(function(d) {
+      var iso = d.eTx || d.sTx;
+      var etd = toBrusselsDate(iso);
+      if (!etd) return;
+      var pickup = new Date(etd.getTime() - 75 * 60000);
+      if (win && !inDateWindow(pickup, win)) return;
+      var handler = (d.handler || '').toUpperCase();
+      var flight  = (d.flightNumber || '').toUpperCase();
+      var reg     = (d.aircraftRegistration || '').toUpperCase();
+      if (!flight) return;
+      if (!isRelevantHandlerForOps(flight, handler, reg)) return;
+      depRows.push({ reg: reg, flight: flight, time: brusselsHHMM(pickup), stand: d.stand || '', note: '' });
     });
-    // Quelques lignes vides en plus pour ajouts a la main
-    for (var e1 = 0; e1 < 3; e1++) {
-      mainRows += '<tr>'
+
+    if (arrRows.length === 0 && depRows.length === 0) { alert('Aucun vol (arrivee ou depart) trouve pour ce shift.'); return; }
+
+    // Tri chronologique (avec le meme decalage +24h pour les heures du petit matin en Night, deja utilise ailleurs)
+    function chronoKey(hhmm) {
+      if (!hhmm || !/^\d{1,2}:\d{2}$/.test(hhmm)) return 0;
+      var p = hhmm.split(':'); var mins = parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+      if (selectedShift.name === 'NIGHT' && parseInt(p[0], 10) < 12) mins += 1440;
+      return mins;
+    }
+    arrRows.sort(function(a, b) { return chronoKey(a.time) - chronoKey(b.time); });
+    depRows.sort(function(a, b) { return chronoKey(a.time) - chronoKey(b.time); });
+
+    var TD  = 'border:1pt solid #000;padding:4pt 6pt;font-size:9pt';
+    var TDH = TD + ';font-weight:800;background:#f0f0f0;text-align:center';
+    var BADGE_ARR = '<span style="display:inline-block;border:1.5pt solid #2d7a2d;border-radius:3pt;padding:1pt 5pt;font-size:8pt;font-weight:800;background:#d4edda;color:#1a5c1a">ARR</span>';
+    var BADGE_PUP = '<span style="display:inline-block;border:1.5pt solid #c0392b;border-radius:3pt;padding:1pt 5pt;font-size:8pt;font-style:italic;font-weight:700;background:#fde8e8;color:#7b1010;white-space:nowrap">Pick up</span>';
+
+    function row(r, isDep) {
+      return '<tr>'
+        + '<td style="' + TD + ';font-weight:700">' + (r.reg || '') + '</td>'
+        + '<td style="' + TD + ';font-weight:700">' + (r.flight || '') + '</td>'
+        + '<td style="' + TD + ';text-align:center">' + (isDep ? 'ARR' : BADGE_ARR) + '</td>'
+        + '<td style="' + TD + ';text-align:center">' + (isDep ? BADGE_PUP : 'Pick up') + '</td>'
+        + '<td style="' + TD + ';font-size:14pt;text-align:center;letter-spacing:.5pt">' + (r.time || '') + '</td>'
+        + '<td style="' + TD + '">' + (r.note || '') + '</td>'
+        + '<td style="' + TD + ';text-align:center">' + (r.stand || '') + '</td>'
+        + '</tr>';
+    }
+    function separatorRow() {
+      return '<tr>'
+        + '<td style="' + TD + '"></td>'
+        + '<td style="' + TD + '"></td>'
+        + '<td style="' + TD + ';text-align:center;font-size:8pt;font-weight:700">ARR</td>'
+        + '<td style="' + TD + ';text-align:center;font-size:8pt;font-weight:700">Pick up</td>'
+        + '<td style="' + TD + '"></td>'
+        + '<td style="' + TD + '"></td>'
+        + '<td style="' + TD + '"></td>'
+        + '</tr>';
+    }
+    function emptyRow() {
+      return '<tr>'
         + '<td style="' + TD + '">&nbsp;</td>'
-        + '<td style="' + TD + '"><b>ARR</b></td>'
-        + '<td style="' + TD + '"><b>Pick up</b></td>'
+        + '<td style="' + TD + '">&nbsp;</td>'
+        + '<td style="' + TD + ';text-align:center;font-size:8pt;font-weight:700">ARR</td>'
+        + '<td style="' + TD + ';text-align:center;font-size:8pt;font-weight:700">Pick up</td>'
         + '<td style="' + TD + '">&nbsp;</td>'
         + '<td style="' + TD + '">&nbsp;</td>'
         + '<td style="' + TD + '">&nbsp;</td>'
         + '</tr>';
     }
+
+    var mainRows = '';
+    arrRows.forEach(function(r) { mainRows += row(r, false); });
+    var hasSep = arrRows.length > 0 && depRows.length > 0;
+    if (hasSep) mainRows += separatorRow();
+    depRows.forEach(function(r) { mainRows += row(r, true); });
+
+    var dataRowCount = arrRows.length + depRows.length + (hasSep ? 1 : 0);
+    var minRows = 19; // meme minimum que la feuille papier d'origine
+    for (var e1 = dataRowCount; e1 < minRows; e1++) mainRows += emptyRow();
 
     // ── Headset (Swissport, case HDS cochee) + Handling (toute case Handling cochee) ──
+    var swissportDepartures = getSwissportDepartures();
     var headsetRows = [];
     var handlingRows = [];
-    eligible.forEach(function(f) {
-      var origIdx = flights.indexOf(f);
+    flights.forEach(function(f, origIdx) {
+      if (!selectedFlights.has(origIdx)) return;
       var hnd = (f.handler || '').toUpperCase();
       var reg = (f.reg || '').toUpperCase();
 
@@ -2642,20 +2713,21 @@ ${(function(){
         + '</tr>';
     }
 
+    var dl = dateStr ? dateStr.split('-').reverse().join('/') : '—';
+
     var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Crew Bus - LGG</title>'
       + '<style>@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
       + 'body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff}'
       + 'table{width:100%;border-collapse:collapse;margin-bottom:14pt}</style></head><body>'
       + '<table>'
-      + '<tr>'
-        + '<td style="' + TD + ';font-weight:800;font-size:11pt" colspan="2">Crew bus service</td>'
-        + '<td style="' + TD + ';text-align:center;font-weight:700;font-size:10pt" colspan="4">' + shiftLabel('EARLY') + ' &nbsp;//&nbsp; ' + shiftLabel('LATE') + ' &nbsp;//&nbsp; ' + shiftLabel('NIGHT') + '</td>'
-      + '</tr>'
+      + '<tr><td style="' + TD + ';font-weight:800;font-size:12pt" colspan="7">Crew bus service &nbsp;&nbsp; ' + dl + ' &nbsp;&nbsp; ' + selectedShift.name + '</td></tr>'
       + '<tr>'
         + '<td style="' + TDH + '">Registration</td>'
-        + '<td style="' + TDH + '" colspan="2">Time (Local)</td>'
-        + '<td style="' + TDH + '">Flight Number</td>'
-        + '<td style="' + TDH + '">Crew</td>'
+        + '<td style="' + TDH + '">Flight</td>'
+        + '<td style="' + TDH + '">ARR</td>'
+        + '<td style="' + TDH + '">Pick up</td>'
+        + '<td style="' + TDH + '">Time</td>'
+        + '<td style="' + TDH + '">Note</td>'
         + '<td style="' + TDH + '">Stand</td>'
       + '</tr>'
       + mainRows
