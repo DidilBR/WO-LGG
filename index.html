@@ -156,6 +156,91 @@
 @media (prefers-reduced-motion: reduce){
   [data-layout="neo"] *{animation-duration:.001ms!important;animation-iteration-count:1!important}
 }
+
+/* ══════════════════════════════════════════════════════════════
+   INTERFACE "PURETÉ" — presentation alternative complete, comme "Neo" :
+   S'active via [data-layout="purete"] sur <html>. A la difference de
+   Neo (qui reste independant des couleurs), Pureté impose SA propre
+   palette blanche/bleue quel que soit le theme couleur choisi, car
+   c'est son identite visuelle : blanc, epure, tres calme, mais avec
+   beaucoup de mouvement doux et continu.
+   ══════════════════════════════════════════════════════════════ */
+[data-layout="purete"]{
+  --bg0:#ffffff;--bg1:#f6f9fd;--bg2:#eef3fa;--bg3:#e3ebf7;
+  --b1:rgba(20,70,160,.07);--b2:rgba(20,110,220,.16);--b3:rgba(20,110,220,.3);
+  --a1:#0091ff;--a2:#00c2ff;
+  --t1:#0c1a30;--t2:#5c6d8c;--t3:#a9b6cf;
+}
+@keyframes pureteDrift{
+  0%  {background-position:0% 0%, 100% 0%, 40% 100%}
+  50% {background-position:8% 6%, 92% 10%, 52% 92%}
+  100%{background-position:2% 10%, 96% 2%,  46% 100%}
+}
+@keyframes pureteFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes pureteShimmer{0%{background-position:0% 50%}100%{background-position:220% 50%}}
+@keyframes pureteGlow{
+  0%,100%{box-shadow:0 0 0 1px rgba(0,145,255,.22),0 0 16px rgba(0,145,255,.1)}
+  50%{box-shadow:0 0 0 1px rgba(0,145,255,.4),0 0 26px rgba(0,145,255,.22)}
+}
+@keyframes pureteDotPulse{
+  0%{box-shadow:0 0 0 0 rgba(0,145,255,.45)}
+  70%{box-shadow:0 0 0 9px rgba(0,145,255,0)}
+  100%{box-shadow:0 0 0 0 rgba(0,145,255,0)}
+}
+[data-layout="purete"] body::before{
+  background:
+    radial-gradient(ellipse 60% 45% at 12% 8%,  rgba(0,145,255,.08), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 88% 18%, rgba(0,194,255,.06), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 45% 100%,rgba(0,145,255,.06), transparent 60%);
+  background-size:140% 140%;
+  animation:pureteDrift 24s ease-in-out infinite alternate;
+}
+[data-layout="purete"] header{
+  background:rgba(255,255,255,.72);
+  border-bottom:1px solid rgba(20,110,220,.1);
+  box-shadow:0 1px 24px rgba(20,90,200,.06);
+}
+[data-layout="purete"] .logo-icon{
+  box-shadow:0 4px 20px rgba(0,145,255,.3);
+  animation:pureteFloat 4.5s ease-in-out infinite;
+}
+[data-layout="purete"] .logo-text,
+[data-layout="purete"] .stat-card .num,
+[data-layout="purete"] .shift-btn.active .shift-name,
+[data-layout="purete"] .flight-reg{
+  background-size:220% auto;
+  animation:pureteShimmer 5s linear infinite;
+}
+[data-layout="purete"] .panel,
+[data-layout="purete"] .flight-card,
+[data-layout="purete"] .stat-card{
+  box-shadow:0 2px 16px rgba(20,60,140,.05);
+  transition:box-shadow .35s,transform .35s;
+}
+[data-layout="purete"] .flight-card:hover,
+[data-layout="purete"] .panel:hover{
+  box-shadow:0 6px 22px rgba(0,120,255,.09);
+  transform:translateY(-1px);
+}
+[data-layout="purete"] .shift-btn.active{
+  animation:pureteGlow 2.6s ease-in-out infinite;
+}
+[data-layout="purete"] .btn-primary{
+  background:linear-gradient(120deg,var(--a1),var(--a2),var(--a1));
+  background-size:220% auto;
+  animation:pureteShimmer 6s linear infinite;
+}
+[data-layout="purete"] .eyebrow-dot{
+  animation:blink 2s infinite,pureteDotPulse 2.2s infinite;
+}
+[data-layout="purete"] input[type=date]::-webkit-calendar-picker-indicator,
+[data-layout="purete"] input[type=time]::-webkit-calendar-picker-indicator{
+  filter:none;opacity:.55;
+}
+@media (prefers-reduced-motion: reduce){
+  [data-layout="purete"] *{animation-duration:.001ms!important;animation-iteration-count:1!important}
+}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);background:var(--bg0);color:var(--t1);min-height:100vh;transition:background .4s,color .4s}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 15% 10%,rgba(139,92,246,.08),transparent 60%),radial-gradient(ellipse 50% 40% at 85% 85%,rgba(0,212,255,.06),transparent 60%);pointer-events:none;z-index:0}
@@ -368,12 +453,20 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       <div style="font-size:11px;color:var(--t2);margin-top:4px">L'interface actuelle : sobre, rapide, sans animation superflue.</div>
     </div>
 
-    <div id="layout-opt-neo" onclick="selectLayoutOption('neo')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:20px;transition:border-color .2s,background .2s">
+    <div id="layout-opt-neo" onclick="selectLayoutOption('neo')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:12px;transition:border-color .2s,background .2s">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div style="font-size:13px;font-weight:700;color:var(--t1)">Neo &#8212; futuriste</div>
         <div id="layout-check-neo" style="font-size:14px;color:var(--a1);visibility:hidden">&#10003;</div>
       </div>
       <div style="font-size:11px;color:var(--t2);margin-top:4px">Contours animes, verre depoli, degrades mouvants, transitions fluides.</div>
+    </div>
+
+    <div id="layout-opt-purete" onclick="selectLayoutOption('purete')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:20px;transition:border-color .2s,background .2s">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">Pureté &#8212; blanc &amp; bleu</div>
+        <div id="layout-check-purete" style="font-size:14px;color:var(--a1);visibility:hidden">&#10003;</div>
+      </div>
+      <div style="font-size:11px;color:var(--t2);margin-top:4px">Fond blanc epure, formes bleutees qui derivent lentement, animations douces et continues. Impose sa propre palette blanc/bleu.</div>
     </div>
 
     <div style="display:flex;gap:10px">
@@ -1295,7 +1388,8 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 
   // ── Interface (mise en page) : Classic ou Neo, independant du theme couleur ──
   function applyLayoutMode(mode) {
-    document.documentElement.setAttribute('data-layout', mode === 'neo' ? 'neo' : 'classic');
+    const valid = ['classic', 'neo', 'purete'];
+    document.documentElement.setAttribute('data-layout', valid.includes(mode) ? mode : 'classic');
   }
   function openLayoutSettings() {
     const current = localStorage.getItem('lgg_layout_mode') || 'classic';
@@ -1306,13 +1400,12 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     document.getElementById('layout-settings-overlay').classList.add('hidden');
   }
   function reflectLayoutOptionUI(mode) {
-    const isNeo = mode === 'neo';
-    document.getElementById('layout-opt-classic').style.borderColor = isNeo ? 'var(--b2)' : 'var(--a1)';
-    document.getElementById('layout-opt-classic').style.background  = isNeo ? 'transparent' : 'var(--bg2)';
-    document.getElementById('layout-opt-neo').style.borderColor      = isNeo ? 'var(--a1)' : 'var(--b2)';
-    document.getElementById('layout-opt-neo').style.background      = isNeo ? 'var(--bg2)' : 'transparent';
-    document.getElementById('layout-check-classic').style.visibility = isNeo ? 'hidden' : 'visible';
-    document.getElementById('layout-check-neo').style.visibility     = isNeo ? 'visible' : 'hidden';
+    ['classic', 'neo', 'purete'].forEach(m => {
+      const active = m === mode;
+      document.getElementById('layout-opt-' + m).style.borderColor = active ? 'var(--a1)' : 'var(--b2)';
+      document.getElementById('layout-opt-' + m).style.background  = active ? 'var(--bg2)' : 'transparent';
+      document.getElementById('layout-check-' + m).style.visibility = active ? 'visible' : 'hidden';
+    });
   }
   function selectLayoutOption(mode) {
     localStorage.setItem('lgg_layout_mode', mode);
