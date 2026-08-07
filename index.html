@@ -156,91 +156,6 @@
 @media (prefers-reduced-motion: reduce){
   [data-layout="neo"] *{animation-duration:.001ms!important;animation-iteration-count:1!important}
 }
-
-/* ══════════════════════════════════════════════════════════════
-   INTERFACE "PURETÉ" — presentation alternative complete, comme "Neo" :
-   S'active via [data-layout="purete"] sur <html>. A la difference de
-   Neo (qui reste independant des couleurs), Pureté impose SA propre
-   palette blanche/bleue quel que soit le theme couleur choisi, car
-   c'est son identite visuelle : blanc, epure, tres calme, mais avec
-   beaucoup de mouvement doux et continu.
-   ══════════════════════════════════════════════════════════════ */
-[data-layout="purete"]{
-  --bg0:#ffffff;--bg1:#f6f9fd;--bg2:#eef3fa;--bg3:#e3ebf7;
-  --b1:rgba(20,70,160,.07);--b2:rgba(20,110,220,.16);--b3:rgba(20,110,220,.3);
-  --a1:#0091ff;--a2:#00c2ff;
-  --t1:#0c1a30;--t2:#5c6d8c;--t3:#a9b6cf;
-}
-@keyframes pureteDrift{
-  0%  {background-position:0% 0%, 100% 0%, 40% 100%}
-  50% {background-position:8% 6%, 92% 10%, 52% 92%}
-  100%{background-position:2% 10%, 96% 2%,  46% 100%}
-}
-@keyframes pureteFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-@keyframes pureteShimmer{0%{background-position:0% 50%}100%{background-position:220% 50%}}
-@keyframes pureteGlow{
-  0%,100%{box-shadow:0 0 0 1px rgba(0,145,255,.22),0 0 16px rgba(0,145,255,.1)}
-  50%{box-shadow:0 0 0 1px rgba(0,145,255,.4),0 0 26px rgba(0,145,255,.22)}
-}
-@keyframes pureteDotPulse{
-  0%{box-shadow:0 0 0 0 rgba(0,145,255,.45)}
-  70%{box-shadow:0 0 0 9px rgba(0,145,255,0)}
-  100%{box-shadow:0 0 0 0 rgba(0,145,255,0)}
-}
-[data-layout="purete"] body::before{
-  background:
-    radial-gradient(ellipse 60% 45% at 12% 8%,  rgba(0,145,255,.08), transparent 60%),
-    radial-gradient(ellipse 50% 40% at 88% 18%, rgba(0,194,255,.06), transparent 60%),
-    radial-gradient(ellipse 55% 45% at 45% 100%,rgba(0,145,255,.06), transparent 60%);
-  background-size:140% 140%;
-  animation:pureteDrift 24s ease-in-out infinite alternate;
-}
-[data-layout="purete"] header{
-  background:rgba(255,255,255,.72);
-  border-bottom:1px solid rgba(20,110,220,.1);
-  box-shadow:0 1px 24px rgba(20,90,200,.06);
-}
-[data-layout="purete"] .logo-icon{
-  box-shadow:0 4px 20px rgba(0,145,255,.3);
-  animation:pureteFloat 4.5s ease-in-out infinite;
-}
-[data-layout="purete"] .logo-text,
-[data-layout="purete"] .stat-card .num,
-[data-layout="purete"] .shift-btn.active .shift-name,
-[data-layout="purete"] .flight-reg{
-  background-size:220% auto;
-  animation:pureteShimmer 5s linear infinite;
-}
-[data-layout="purete"] .panel,
-[data-layout="purete"] .flight-card,
-[data-layout="purete"] .stat-card{
-  box-shadow:0 2px 16px rgba(20,60,140,.05);
-  transition:box-shadow .35s,transform .35s;
-}
-[data-layout="purete"] .flight-card:hover,
-[data-layout="purete"] .panel:hover{
-  box-shadow:0 6px 22px rgba(0,120,255,.09);
-  transform:translateY(-1px);
-}
-[data-layout="purete"] .shift-btn.active{
-  animation:pureteGlow 2.6s ease-in-out infinite;
-}
-[data-layout="purete"] .btn-primary{
-  background:linear-gradient(120deg,var(--a1),var(--a2),var(--a1));
-  background-size:220% auto;
-  animation:pureteShimmer 6s linear infinite;
-}
-[data-layout="purete"] .eyebrow-dot{
-  animation:blink 2s infinite,pureteDotPulse 2.2s infinite;
-}
-[data-layout="purete"] input[type=date]::-webkit-calendar-picker-indicator,
-[data-layout="purete"] input[type=time]::-webkit-calendar-picker-indicator{
-  filter:none;opacity:.55;
-}
-@media (prefers-reduced-motion: reduce){
-  [data-layout="purete"] *{animation-duration:.001ms!important;animation-iteration-count:1!important}
-}
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);background:var(--bg0);color:var(--t1);min-height:100vh;transition:background .4s,color .4s}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 15% 10%,rgba(139,92,246,.08),transparent 60%),radial-gradient(ellipse 50% 40% at 85% 85%,rgba(0,212,255,.06),transparent 60%);pointer-events:none;z-index:0}
@@ -357,6 +272,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     <button onclick="openLayoutSettings()" title="Changer l'interface" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:14px;cursor:pointer;padding:6px 9px;line-height:1">&#10024;</button>
     <button onclick="openShiftSettings()" title="Regler les horaires de shift" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:15px;cursor:pointer;padding:6px 9px;line-height:1">&#9881;</button>
     <button id="refresh-toggle-btn" onclick="openRefreshSettings()" title="Reglages de l'actualisation automatique" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:14px;cursor:pointer;padding:6px 9px;line-height:1">&#128260;</button>
+    <button id="edit-mode-toggle-btn" onclick="toggleEditMode()" title="Edit Mode : modifier manuellement n'importe quel vol" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:14px;cursor:pointer;padding:6px 9px;line-height:1;font-weight:700">&#9998;</button>
   </div>
 </div>
 </header>
@@ -440,6 +356,27 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   </div>
 </div>
 
+<div id="edit-flight-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--bg1);border:1px solid #ff9500;border-radius:14px;padding:22px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 10px 50px rgba(0,0,0,.6)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div style="font-size:16px;font-weight:800;color:#ffb400">&#9998; Edit Mode &#8212; <span id="edit-flight-title"></span></div>
+      <button onclick="closeEditFlightModal()" style="background:none;border:none;color:var(--t2);font-size:20px;cursor:pointer;line-height:1;padding:0 4px">&times;</button>
+    </div>
+    <div style="font-size:11px;color:var(--t2);margin-bottom:16px">Ces modifications restent actives tant que le site reste ouvert (survivent aux actualisations FIDS automatiques), et sont perdues a un vrai rechargement de page ou via "Recommencer".</div>
+
+    <div id="edit-flight-fields" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px"></div>
+
+    <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:8px;margin-top:6px">Grille de la worksheet — coche = surlignage jaune a l'impression</div>
+    <div id="edit-flight-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:18px"></div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="resetEditFlightOverride()">Reinitialiser ce vol</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeEditFlightModal()">Fermer sans sauver</button>
+      <button class="btn btn-primary" style="flex:1" onclick="saveEditFlightOverride()">&#128190; Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
 <div id="layout-settings-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
   <div style="background:var(--bg1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:100%;max-width:400px;box-shadow:0 10px 40px rgba(0,0,0,.5)">
     <div style="font-size:16px;font-weight:800;color:var(--a1);margin-bottom:4px">&#10024; Interface</div>
@@ -453,20 +390,12 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       <div style="font-size:11px;color:var(--t2);margin-top:4px">L'interface actuelle : sobre, rapide, sans animation superflue.</div>
     </div>
 
-    <div id="layout-opt-neo" onclick="selectLayoutOption('neo')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:12px;transition:border-color .2s,background .2s">
+    <div id="layout-opt-neo" onclick="selectLayoutOption('neo')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:20px;transition:border-color .2s,background .2s">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div style="font-size:13px;font-weight:700;color:var(--t1)">Neo &#8212; futuriste</div>
         <div id="layout-check-neo" style="font-size:14px;color:var(--a1);visibility:hidden">&#10003;</div>
       </div>
       <div style="font-size:11px;color:var(--t2);margin-top:4px">Contours animes, verre depoli, degrades mouvants, transitions fluides.</div>
-    </div>
-
-    <div id="layout-opt-purete" onclick="selectLayoutOption('purete')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:20px;transition:border-color .2s,background .2s">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:13px;font-weight:700;color:var(--t1)">Pureté &#8212; blanc &amp; bleu</div>
-        <div id="layout-check-purete" style="font-size:14px;color:var(--a1);visibility:hidden">&#10003;</div>
-      </div>
-      <div style="font-size:11px;color:var(--t2);margin-top:4px">Fond blanc epure, formes bleutees qui derivent lentement, animations douces et continues. Impose sa propre palette blanc/bleu.</div>
     </div>
 
     <div style="display:flex;gap:10px">
@@ -721,6 +650,30 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   let caterings = [];
   let selectedCaterings = new Set();
   let lastDepartures = []; // derniere liste de departs recuperee (utilisee par la feuille Crew Bus)
+
+  // ── Edit Mode : modifications manuelles completes par vol ──────────
+  // Stockage en memoire uniquement (jamais localStorage) : les changements
+  // survivent aux rafraichissements FIDS automatiques (identifies par numero
+  // de vol, jamais par index de tableau qui change a chaque re-render), mais
+  // sont perdus a un vrai rechargement de page ou via "Recommencer" — exactement
+  // comme demande. flightOverrides[flightNumber] = { field: value, ... , grid: {CELL_NAME: true} }
+  let editModeEnabled = false;
+  let flightOverrides = {};
+
+  // Les 28 cases de la grille de service, dans l'ordre exact de la fiche papier.
+  // { key: identifiant interne stable (Edit Mode + makeSheet), label: texte imprime }.
+  // Note : "HORSE STALL" apparait deux fois sur la vraie fiche (deux cases distinctes,
+  // meme texte) — d'ou des cles internes differentes (horseStall1/horseStall2).
+  const WORKSHEET_GRID_CELLS = [
+    { key:'aWash',        label:'A WASH' },            { key:'wetWheels',     label:'WET WHEELS' },        { key:'bellyWash',    label:'BELLY WASH' },        { key:'gearWashTech', label:'GEAR WASH TECH' }, { key:'gearWashComm',  label:'GEAR WASH COMM' },
+    { key:'fullWetWash',  label:'FULL WET WASH' },     { key:'horseStall1',   label:'HORSE STALL' },       { key:'horseStallBuild', label:'HORSE STALL BUILD' }, { key:'horseStall2',   label:'HORSE STALL' },    { key:'officeCleaning', label:'OFFICE CLEANING' },
+    { key:'apuWash',      label:'APU WASH' },          { key:'flapsWash',     label:'FLAPS WASH' },        { key:'windshieldWash', label:'WINDSHIELD WASH' },  { key:'cargoDeckCl',   label:'CARGO DECK CL' },  { key:'cargoHoldsCl',  label:'CARGO HOLDS CL' },
+    { key:'interiorDeep', label:'INTERIOR DEEP' },     { key:'fullTransit',   label:'FULL TRANSIT SERVICE' }, { key:'transitService', label:'TRANSIT SERVICE' }, { key:'waterService',  label:'WATER SERVICE' },  { key:'lavatoryService', label:'LAVATORY SERVICE' },
+    { key:'disinfection', label:'DISINFECTION' },      { key:'laundry',       label:'LAUNDRY' },           { key:'catering',      label:'CATERING' },          { key:'productDelivery', label:'PRODUCT DELIVERY' }, { key:'pmr', label:'PMR' },
+    { key:'handling',     label:'HANDLING' },          { key:'pushBack',      label:'PUSH BACK' },         { key:'headset',       label:'HEADSET' },           { key:'towing',        label:'TOWING' },        { key:'renting',       label:'RENTING' },
+    { key:'manHour',      label:'MAN HOUR' },          { key:'crewBus',       label:'CREW BUS' },          { key:'specialRequest', label:'SPECIAL REQUEST' },  { key:'vidangeToilette', label:'VIDANGE TOILETTE' }
+  ];
+
   let shiftConfig = JSON.parse(localStorage.getItem('lgg_shift_config') || 'null') || {
     EARLY: { start: '05:30', end: '14:00' },
     LATE:  { start: '13:30', end: '22:00' },
@@ -1238,6 +1191,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   async function checkForFlightUpdates() {
     if (currentStep !== 3) return;
     if (!flights || flights.length === 0) return;
+    // Ne jamais interrompre une saisie en cours dans un champ Remarques : on
+    // reessaiera simplement au prochain cycle d'actualisation automatique.
+    const active = document.activeElement;
+    if (active && active.tagName === 'INPUT' && active.classList.contains('remarks-input')) return;
     try {
       const [arrivals, departures] = await Promise.all([
         fetchJsonWithFallback(FIDS_ARRIVALS_URL),
@@ -1386,10 +1343,93 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     startAutoRefresh();
   }
 
+  // ── Edit Mode : bascule + reflet visuel du bouton dans le header ──────
+  function toggleEditMode() {
+    editModeEnabled = !editModeEnabled;
+    const btn = document.getElementById('edit-mode-toggle-btn');
+    if (btn) {
+      btn.style.color = editModeEnabled ? '#000' : 'var(--t2)';
+      btn.style.background = editModeEnabled ? 'linear-gradient(135deg,#ffb400,#ff7a00)' : 'none';
+      btn.style.borderColor = editModeEnabled ? '#ff9500' : 'var(--b2)';
+    }
+    if (currentStep === 3) renderFlights();
+  }
+
+  // ── Modale d'edition complete d'un vol ──────────────────────────────
+  let __editFlightKey = null; // numero de vol ORIGINAL en cours d'edition (cle stable de flightOverrides)
+
+  function openEditFlightModal(flightKey) {
+    __editFlightKey = flightKey;
+    const f = flights.find(fl => (fl.flight || '') === flightKey) || {};
+    const ov = flightOverrides[flightKey.toUpperCase()] || {};
+
+    document.getElementById('edit-flight-title').textContent = flightKey;
+
+    const fieldDefs = [
+      { key:'flight',  label:'N° de vol',   base:f.flight },
+      { key:'reg',     label:'Immat.',      base:f.reg },
+      { key:'time',    label:'Heure ETA',   base:f.time },
+      { key:'stand',   label:'Stand',       base:f.stand },
+      { key:'handler', label:'Handler',     base:f.handler },
+      { key:'company', label:'Company (worksheet)', base:'' }
+    ];
+    document.getElementById('edit-flight-fields').innerHTML = fieldDefs.map(function(fd) {
+      const val = ov[fd.key] !== undefined ? ov[fd.key] : '';
+      const ph = fd.base ? ('actuel : ' + fd.base) : '';
+      return '<div>' +
+        '<label class="field-label">' + fd.label + '</label>' +
+        '<input type="text" id="edit-field-' + fd.key + '" placeholder="' + (ph||'').replace(/"/g,'&quot;') + '" value="' + (val||'').replace(/"/g,'&quot;') + '">' +
+      '</div>';
+    }).join('');
+
+    document.getElementById('edit-flight-grid').innerHTML = WORKSHEET_GRID_CELLS.map(function(cell) {
+      const checked = ov.grid && ov.grid[cell.key] === true;
+      return '<label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--t1);background:var(--bg2);border:1px solid var(--b2);border-radius:6px;padding:6px 8px;cursor:pointer">' +
+        '<input type="checkbox" id="edit-grid-' + cell.key + '" ' + (checked ? 'checked' : '') + ' style="accent-color:#ffb400;flex-shrink:0">' +
+        '<span style="line-height:1.2">' + cell.label + '</span>' +
+      '</label>';
+    }).join('');
+
+    document.getElementById('edit-flight-overlay').classList.remove('hidden');
+  }
+
+  function closeEditFlightModal() {
+    document.getElementById('edit-flight-overlay').classList.add('hidden');
+    __editFlightKey = null;
+  }
+
+  function saveEditFlightOverride() {
+    if (!__editFlightKey) return;
+    const fieldKeys = ['flight','reg','time','stand','handler','company'];
+    const override = {};
+    fieldKeys.forEach(function(k) {
+      const el = document.getElementById('edit-field-' + k);
+      if (el && el.value.trim() !== '') override[k] = el.value.trim();
+    });
+    const grid = {};
+    let hasGridOverride = false;
+    WORKSHEET_GRID_CELLS.forEach(function(cell) {
+      const el = document.getElementById('edit-grid-' + cell.key);
+      if (el) { grid[cell.key] = el.checked; hasGridOverride = true; }
+    });
+    if (hasGridOverride) override.grid = grid;
+
+    flightOverrides[__editFlightKey.toUpperCase()] = override;
+    closeEditFlightModal();
+    if (currentStep === 3) renderFlights();
+  }
+
+  function resetEditFlightOverride() {
+    if (!__editFlightKey) return;
+    if (!confirm('Effacer toutes les modifications manuelles de ce vol ?')) return;
+    delete flightOverrides[__editFlightKey.toUpperCase()];
+    closeEditFlightModal();
+    if (currentStep === 3) renderFlights();
+  }
+
   // ── Interface (mise en page) : Classic ou Neo, independant du theme couleur ──
   function applyLayoutMode(mode) {
-    const valid = ['classic', 'neo', 'purete'];
-    document.documentElement.setAttribute('data-layout', valid.includes(mode) ? mode : 'classic');
+    document.documentElement.setAttribute('data-layout', mode === 'neo' ? 'neo' : 'classic');
   }
   function openLayoutSettings() {
     const current = localStorage.getItem('lgg_layout_mode') || 'classic';
@@ -1400,12 +1440,13 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     document.getElementById('layout-settings-overlay').classList.add('hidden');
   }
   function reflectLayoutOptionUI(mode) {
-    ['classic', 'neo', 'purete'].forEach(m => {
-      const active = m === mode;
-      document.getElementById('layout-opt-' + m).style.borderColor = active ? 'var(--a1)' : 'var(--b2)';
-      document.getElementById('layout-opt-' + m).style.background  = active ? 'var(--bg2)' : 'transparent';
-      document.getElementById('layout-check-' + m).style.visibility = active ? 'visible' : 'hidden';
-    });
+    const isNeo = mode === 'neo';
+    document.getElementById('layout-opt-classic').style.borderColor = isNeo ? 'var(--b2)' : 'var(--a1)';
+    document.getElementById('layout-opt-classic').style.background  = isNeo ? 'transparent' : 'var(--bg2)';
+    document.getElementById('layout-opt-neo').style.borderColor      = isNeo ? 'var(--a1)' : 'var(--b2)';
+    document.getElementById('layout-opt-neo').style.background      = isNeo ? 'var(--bg2)' : 'transparent';
+    document.getElementById('layout-check-classic').style.visibility = isNeo ? 'hidden' : 'visible';
+    document.getElementById('layout-check-neo').style.visibility     = isNeo ? 'visible' : 'hidden';
   }
   function selectLayoutOption(mode) {
     localStorage.setItem('lgg_layout_mode', mode);
@@ -1645,9 +1686,31 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     });
   }
 
+  // ── Preservation du focus sur le champ "Remarques" en cours de frappe ──
+  // Bug corrige : renderFlights() reecrit tout le innerHTML de la liste a
+  // chaque appel (checkbox cochee, recherche, ou actualisation FIDS auto en
+  // arriere-plan). Sans ceci, taper dans une remarque au moment ou un
+  // re-render se declenche coupe instantanement le focus : le champ semble
+  // "bloque" car chaque nouvelle frappe atterrit dans le vide.
+  function captureActiveRemarksField(container) {
+    if (!container) return null;
+    const active = document.activeElement;
+    if (!active || active.tagName !== 'INPUT' || !active.classList.contains('remarks-input')) return null;
+    if (!container.contains(active)) return null;
+    return { flightKey: active.dataset.flightKey, selStart: active.selectionStart, selEnd: active.selectionEnd };
+  }
+  function restoreActiveRemarksField(saved) {
+    if (!saved) return;
+    const el = document.querySelector('.remarks-input[data-flight-key="' + CSS.escape(saved.flightKey) + '"]');
+    if (!el) return;
+    el.focus();
+    try { el.setSelectionRange(saved.selStart, saved.selEnd); } catch (e) {}
+  }
+
   function renderFlights() {
     const list = document.getElementById('flights-list');
     const savedCheckboxStates = captureCheckboxStates(list);
+    const savedRemarksFocus = captureActiveRemarksField(list);
     document.getElementById('count-total').textContent = flights.length;
     updateSelectedCount();
 
@@ -1743,12 +1806,16 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
           (regMissing
             ? '<input type="text" placeholder="Immat. manquante" value="" oninput="flights[' + i + '].reg=this.value.toUpperCase()" style="width:112px;flex-shrink:0;background:var(--bg2);border:1px solid #ffb400;border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none">'
             : '') +
-          '<input type="text" placeholder="Remarques..." value="' + (f.remarks ? f.remarks.replace(/"/g,'&quot;') : '') + '" oninput="flights[' + i + '].remarks=this.value" style="flex:1;background:var(--bg2);border:1px solid var(--b2);border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none">' +
+          '<input type="text" class="remarks-input" data-flight-key="' + (f.flight || '').replace(/"/g,'&quot;') + '" placeholder="Remarques..." value="' + (f.remarks ? f.remarks.replace(/"/g,'&quot;') : '') + '" oninput="flights[' + i + '].remarks=this.value" style="flex:1;background:var(--bg2);border:1px solid var(--b2);border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none">' +
+          (editModeEnabled
+            ? '<button onclick="openEditFlightModal(&quot;' + (f.flight || '').replace(/"/g,'&amp;quot;') + '&quot;)" title="Tout modifier (Edit Mode)" style="flex-shrink:0;background:linear-gradient(135deg,#ffb400,#ff7a00);border:none;border-radius:6px;color:#000;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;white-space:nowrap">&#9998; Editer</button>'
+            : '') +
         '</div>' +
       '</div>';
     }).join('');
 
     restoreCheckboxStates(savedCheckboxStates);
+    restoreActiveRemarksField(savedRemarksFocus);
     attachSwipeHandlers(list);
   }
 
@@ -2266,12 +2333,18 @@ ${(function(){
 
   // Worksheet rules
   function needsFullTransit(f) {
+    // Edit Mode : un vol explicitement edite manuellement doit toujours pouvoir
+    // generer sa worksheet, meme si son numero de vol change (l'override peut
+    // aussi porter sur un vol ETH normalement exclu — voir plus bas — c'est un
+    // choix delibere de l'utilisateur en editant le vol).
+    var __ovKey = (f.flight || '').toUpperCase();
+    if (flightOverrides[__ovKey]) return true;
     // Exclusion prioritaire et absolue : un vol ETH ne doit JAMAIS obtenir de
     // worksheet ici, meme si son numero de vol affiche (celui du DEPART, pas
     // l'ETH lui-meme — voir buildFlightsFromApiData/analyzeFids) correspond par
     // coincidence a un prefixe ou un handler couvert par les regles ci-dessous
     // (TAY, CHALLENGE, WFS, SWISSPORT...). Seule la section "Caterings" dediee
-    // peut generer une worksheet pour ces vols.
+    // peut generer une worksheet pour ces vols (sauf override explicite ci-dessus).
     if (f.isETH === true) return false;
     if (f.manual === true) return true; // un vol ajoute a la main doit toujours pouvoir etre imprime
     var flight  = (f.flight  || '').toUpperCase();
@@ -2296,6 +2369,30 @@ ${(function(){
     }
 
     function makeSheet(f) {
+      // ── Edit Mode : applique les surcharges manuelles enregistrees pour ce
+      // vol (identifie par son numero de vol original, avant tout remplacement
+      // de f.flight plus bas dans la fonction — ETH/Crew Bus changent parfois
+      // f.flight en cours de route, donc on capture la cle AVANT toute autre chose).
+      var __overrideKey = (f.flight || '').toUpperCase();
+      var __ov = flightOverrides[__overrideKey] || null;
+      if (__ov) {
+        f = Object.assign({}, f); // ne jamais modifier l'objet vol original en memoire
+        if (__ov.flight !== undefined && __ov.flight !== '') f.flight = __ov.flight;
+        if (__ov.reg !== undefined)     f.reg     = __ov.reg;
+        if (__ov.time !== undefined)    f.time    = __ov.time;
+        if (__ov.stand !== undefined)   f.stand   = __ov.stand;
+        if (__ov.handler !== undefined) f.handler = __ov.handler;
+      }
+      // hl(cellKey, autoCondition) : surlignage jaune. Priorite absolue a l'Edit
+      // Mode s'il a ete explicitement coche/decoche pour cette case ; sinon on
+      // garde exactement le calcul automatique existant (aucune regression pour
+      // les vols non edites).
+      function hl(cellKey, autoCondition) {
+        if (__ov && __ov.grid && Object.prototype.hasOwnProperty.call(__ov.grid, cellKey)) {
+          return __ov.grid[cellKey] ? HL : '';
+        }
+        return autoCondition ? HL : '';
+      }
       var __dateInput = document.getElementById('shift-date').value;
       var dateStr = __dateInput
         ? new Date(__dateInput + 'T12:00:00').toLocaleDateString('fr-BE', { day:'2-digit', month:'2-digit', year:'2-digit' })
@@ -2365,6 +2462,8 @@ ${(function(){
       } else if (f._lhaCatering === true) {
         company = 'GI';
       }
+      // Edit Mode : une company saisie manuellement a toujours priorite absolue.
+      if (__ov && __ov.company !== undefined && __ov.company !== '') company = __ov.company;
       var isETHorCatering = (f.isETH === true) || isQTRCatering || (f._lhaCatering === true) || (f._catering === true);
       var showFullTransit  = !isQTRCatering && !(f.isETH === true) && !(f._handling) && !(f._catering) &&
                              !(f._swissCl) && !(f._swissLav) && !(f._swissWat) && !(f._swissHds) &&
@@ -2394,58 +2493,58 @@ ${(function(){
 
       // SERVICE GRID
       html += '<tr>';
-      html += td(C, 'A WASH');
-      html += td(C, 'WET WHEELS');
-      html += td(C, 'BELLY WASH');
-      html += td(C, 'GEAR WASH TECH');
-      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">GEAR WASH COMM</td>';
+      html += td(C + hl('aWash', false), 'A WASH');
+      html += td(C + hl('wetWheels', false), 'WET WHEELS');
+      html += td(C + hl('bellyWash', false), 'BELLY WASH');
+      html += td(C + hl('gearWashTech', false), 'GEAR WASH TECH');
+      html += '<td style="border:1.5pt solid #000;' + C + hl('gearWashComm', false) + '" colspan="2">GEAR WASH COMM</td>';
       html += '</tr>';
 
       html += '<tr>';
-      html += td(C, 'FULL WET WASH');
-      html += td(C, 'HORSE STALL');
-      html += td(C, 'HORSE STALL BUILD');
-      html += td(C, 'HORSE STALL');
-      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">OFFICE CLEANING</td>';
+      html += td(C + hl('fullWetWash', false), 'FULL WET WASH');
+      html += td(C + hl('horseStall1', false), 'HORSE STALL');
+      html += td(C + hl('horseStallBuild', false), 'HORSE STALL BUILD');
+      html += td(C + hl('horseStall2', false), 'HORSE STALL');
+      html += '<td style="border:1.5pt solid #000;' + C + hl('officeCleaning', false) + '" colspan="2">OFFICE CLEANING</td>';
       html += '</tr>';
 
       html += '<tr>';
-      html += td(C, 'APU WASH');
-      html += td(C, 'FLAPS WASH');
-      html += td(C, 'WINDSHIELD WASH');
-      html += td(C, 'CARGO DECK CL');
-      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">CARGO HOLDS CL</td>';
+      html += td(C + hl('apuWash', false), 'APU WASH');
+      html += td(C + hl('flapsWash', false), 'FLAPS WASH');
+      html += td(C + hl('windshieldWash', false), 'WINDSHIELD WASH');
+      html += td(C + hl('cargoDeckCl', false), 'CARGO DECK CL');
+      html += '<td style="border:1.5pt solid #000;' + C + hl('cargoHoldsCl', false) + '" colspan="2">CARGO HOLDS CL</td>';
       html += '</tr>';
 
       html += '<tr>';
-      html += td(C, 'INTERIOR DEEP');
-      html += td(C + (showFullTransit ? HL : ''), 'FULL TRANSIT SERVICE');
-      html += td(C + (showCleaning ? HL : ''), 'TRANSIT SERVICE');
-      html += td(C + (showWater ? HL : ''), 'WATER SERVICE');
-      html += '<td style="border:1.5pt solid #000;' + C + (showLavatory ? HL : '') + '" colspan="2">LAVATORY SERVICE</td>';
+      html += td(C + hl('interiorDeep', false), 'INTERIOR DEEP');
+      html += td(C + hl('fullTransit', showFullTransit), 'FULL TRANSIT SERVICE');
+      html += td(C + hl('transitService', showCleaning), 'TRANSIT SERVICE');
+      html += td(C + hl('waterService', showWater), 'WATER SERVICE');
+      html += '<td style="border:1.5pt solid #000;' + C + hl('lavatoryService', showLavatory) + '" colspan="2">LAVATORY SERVICE</td>';
       html += '</tr>';
 
       html += '<tr>';
-      html += td(C + (isABD ? HL : ''), 'DISINFECTION');
-      html += td(C + ((isABD || showGTILaundry) ? HL : ''), 'LAUNDRY');
-      html += td(C + (isETHorCatering ? HL : ''), 'CATERING');
-      html += td(C, 'PRODUCT DELIVERY');
-      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">PMR</td>';
+      html += td(C + hl('disinfection', isABD), 'DISINFECTION');
+      html += td(C + hl('laundry', isABD || showGTILaundry), 'LAUNDRY');
+      html += td(C + hl('catering', isETHorCatering), 'CATERING');
+      html += td(C + hl('productDelivery', false), 'PRODUCT DELIVERY');
+      html += '<td style="border:1.5pt solid #000;' + C + hl('pmr', false) + '" colspan="2">PMR</td>';
       html += '</tr>';
 
       html += '<tr>';
-      html += td(C + (showHandling ? HL : ''), 'HANDLING');
-      html += td(C, 'PUSH BACK');
-      html += td(C + (showHeadset ? HL : ''), 'HEADSET');
-      html += td(C, 'TOWING');
-      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">RENTING</td>';
+      html += td(C + hl('handling', showHandling), 'HANDLING');
+      html += td(C + hl('pushBack', false), 'PUSH BACK');
+      html += td(C + hl('headset', showHeadset), 'HEADSET');
+      html += td(C + hl('towing', false), 'TOWING');
+      html += '<td style="border:1.5pt solid #000;' + C + hl('renting', false) + '" colspan="2">RENTING</td>';
       html += '</tr>';
 
       html += '<tr>';
-      html += td(C, 'MAN HOUR');
-      html += td(C, 'CREW BUS');
-      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">SPECIAL REQUEST</td>';
-      html += '<td style="border:1.5pt solid #000;' + C + '" colspan="2">VIDANGE TOILETTE</td>';
+      html += td(C + hl('manHour', false), 'MAN HOUR');
+      html += td(C + hl('crewBus', false), 'CREW BUS');
+      html += '<td style="border:1.5pt solid #000;' + C + hl('specialRequest', false) + '" colspan="2">SPECIAL REQUEST</td>';
+      html += '<td style="border:1.5pt solid #000;' + C + hl('vidangeToilette', false) + '" colspan="2">VIDANGE TOILETTE</td>';
       html += '</tr>';
 
       // WORK TIME
@@ -2939,6 +3038,7 @@ ${(function(){
     caterings = [];
     selectedCaterings = new Set();
     selectedShift = null;
+    flightOverrides = {}; // Edit Mode : les modifications manuelles ne survivent pas a "Recommencer"
     document.getElementById('fids-text').value = '';
     if (document.getElementById('catering-text')) document.getElementById('catering-text').value = '';
     if (document.getElementById('extra-notes')) document.getElementById('extra-notes').value = '';
