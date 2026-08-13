@@ -374,6 +374,9 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       <button class="btn btn-ghost" style="flex:1" onclick="closeEditFlightModal()">Fermer sans sauver</button>
       <button class="btn btn-primary" style="flex:1" onclick="saveEditFlightOverride()">&#128190; Sauvegarder</button>
     </div>
+    <div style="border-top:1px solid var(--b2);margin-top:16px;padding-top:12px">
+      <button class="btn" style="width:100%;background:transparent;border:1px solid var(--red);color:var(--red)" onclick="resetAllEditOverrides()">&#9888; Annuler TOUTES les modifications (tous les vols)</button>
+    </div>
   </div>
 </div>
 
@@ -575,6 +578,18 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       </div>
       <div class="flights-list" id="asl737-list"></div>
     </div>
+
+    <!-- Worksheets vierges (Edit Mode) -->
+    <div id="blank-worksheets-section" class="hidden" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
+        <div style="height:1px;flex:1;background:rgba(255,180,0,.2)"></div>
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ffb400;padding:5px 14px;border:1px solid rgba(255,180,0,.3);border-radius:20px;background:rgba(255,180,0,.06)">&#9998; Worksheets vierges</div>
+        <div style="height:1px;flex:1;background:rgba(255,180,0,.2)"></div>
+      </div>
+      <div style="font-size:11px;color:var(--t2);margin-bottom:10px">Generees a la main, jamais incluses dans la feuille de nettoyage — uniquement imprimees via le bouton "Worksheets".</div>
+      <div class="flights-list" id="blank-worksheets-list"></div>
+    </div>
+    <button id="create-blank-worksheet-btn" class="hidden" onclick="createBlankWorksheet()" style="width:100%;padding:11px;background:linear-gradient(135deg,#ffb400,#ff7a00);border:none;border-radius:var(--r2);color:#000;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-bottom:10px">&#9998; + Creer une worksheet vierge</button>
     <button class="add-manual-toggle" onclick="toggleManualForm()">+ Ajouter un vol manuellement</button>
     <div class="manual-form hidden" id="manual-form">
       <div class="manual-form-title">Ajout manuel</div>
@@ -659,6 +674,12 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   // comme demande. flightOverrides[flightNumber] = { field: value, ... , grid: {CELL_NAME: true} }
   let editModeEnabled = false;
   let flightOverrides = {};
+  // Worksheets vierges creees a la main en Edit Mode : liste totalement separee
+  // de flights[] pour qu'elles n'apparaissent JAMAIS sur la feuille de nettoyage
+  // (generatePDF ne lit que flights[]/selectedFlights), mais generent bien leur
+  // propre worksheet via le bouton "Worksheets" existant.
+  let blankWorksheets = []; // { key: 'BLANK-1', ... }
+  let blankWorksheetCounter = 0;
 
   // Les 28 cases de la grille de service, dans l'ordre exact de la fiche papier.
   // { key: identifiant interne stable (Edit Mode + makeSheet), label: texte imprime }.
@@ -1352,7 +1373,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       btn.style.background = editModeEnabled ? 'linear-gradient(135deg,#ffb400,#ff7a00)' : 'none';
       btn.style.borderColor = editModeEnabled ? '#ff9500' : 'var(--b2)';
     }
+    const blankBtn = document.getElementById('create-blank-worksheet-btn');
+    if (blankBtn) blankBtn.classList.toggle('hidden', !editModeEnabled);
     if (currentStep === 3) renderFlights();
+    renderBlankWorksheetsList();
   }
 
   // ── Modale d'edition complete d'un vol ──────────────────────────────
@@ -1425,6 +1449,65 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     delete flightOverrides[__editFlightKey.toUpperCase()];
     closeEditFlightModal();
     if (currentStep === 3) renderFlights();
+    renderBlankWorksheetsList();
+  }
+
+  // ── Worksheets vierges (Edit Mode uniquement) ───────────────────────
+  function createBlankWorksheet() {
+    blankWorksheetCounter++;
+    const key = 'BLANK-' + blankWorksheetCounter;
+    blankWorksheets.push({ key: key });
+    // Override vide mais present : suffit pour que needsFullTransit()/makeSheet()
+    // reconnaissent ce "vol" et generent sa worksheet des qu'il est imprime,
+    // meme sans qu'aucun champ n'ait encore ete rempli.
+    flightOverrides[key] = { flight: key, grid: {} };
+    renderBlankWorksheetsList();
+    openEditFlightModal(key);
+  }
+
+  function deleteBlankWorksheet(key) {
+    if (!confirm('Supprimer cette worksheet vierge (' + key + ') ?')) return;
+    blankWorksheets = blankWorksheets.filter(function(b) { return b.key !== key; });
+    delete flightOverrides[key.toUpperCase()];
+    renderBlankWorksheetsList();
+  }
+
+  function renderBlankWorksheetsList() {
+    const section = document.getElementById('blank-worksheets-section');
+    const list = document.getElementById('blank-worksheets-list');
+    if (!section || !list) return;
+    if (!editModeEnabled || blankWorksheets.length === 0) {
+      section.classList.add('hidden');
+      return;
+    }
+    section.classList.remove('hidden');
+    list.innerHTML = blankWorksheets.map(function(b) {
+      const ov = flightOverrides[b.key.toUpperCase()] || {};
+      const displayFlight = (ov.flight && ov.flight !== b.key) ? ov.flight : b.key;
+      const displayReg = ov.reg || '—';
+      return '<div class="flight-card" style="border-color:rgba(255,180,0,.3)">' +
+        '<div class="flight-info">' +
+          '<span class="flight-reg" style="background:linear-gradient(90deg,#ffb400,#ff7a00);-webkit-background-clip:text;-webkit-text-fill-color:transparent">' + displayReg + '</span>' +
+          '<span class="flight-num">' + displayFlight + '</span>' +
+          '<span class="flight-stand">vierge</span>' +
+        '</div>' +
+        '<button onclick="openEditFlightModal(&quot;' + b.key + '&quot;)" title="Modifier" style="flex-shrink:0;background:linear-gradient(135deg,#ffb400,#ff7a00);border:none;border-radius:6px;color:#000;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;margin-right:6px">&#9998; Editer</button>' +
+        '<button onclick="deleteBlankWorksheet(&quot;' + b.key + '&quot;)" title="Supprimer" style="flex-shrink:0;background:none;border:1px solid var(--red);border-radius:6px;color:var(--red);font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer">&#128465;</button>' +
+      '</div>';
+    }).join('');
+  }
+
+  // Annule TOUTES les modifications manuelles (Edit Mode), sur TOUS les vols
+  // en une fois — y compris la suppression complete des worksheets vierges.
+  function resetAllEditOverrides() {
+    const count = Object.keys(flightOverrides).length;
+    if (count === 0) { alert('Aucune modification a annuler.'); return; }
+    if (!confirm('Annuler TOUTES les modifications manuelles sur tous les vols (' + count + ' vol(s) modifie(s)) ? Les worksheets vierges seront aussi supprimees. Cette action est irreversible.')) return;
+    flightOverrides = {};
+    blankWorksheets = [];
+    closeEditFlightModal();
+    if (currentStep === 3) renderFlights();
+    renderBlankWorksheetsList();
   }
 
   // ── Interface (mise en page) : Classic ou Neo, independant du theme couleur ──
@@ -2755,7 +2838,15 @@ ${(function(){
       });
     });
 
-    pages = pages + pagesASL737 + pagesCatering; // caterings printed last
+    // Worksheets vierges (Edit Mode) : chaque entree a deja son override complet
+    // dans flightOverrides (voir createBlankWorksheet) — makeSheet() l'applique
+    // integralement, aucune detection automatique par prefixe/handler ici.
+    var pagesBlank = '';
+    blankWorksheets.forEach(function(b) {
+      pagesBlank += makeSheet({ flight: b.key, reg: '', handler: '', time: '', stand: '' });
+    });
+
+    pages = pages + pagesASL737 + pagesCatering + pagesBlank; // vierges imprimees en tout dernier
     var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheets LGG</title>'
       + '<style>'
       + '@page{size:A4 portrait;margin:8mm}'
@@ -3039,6 +3130,8 @@ ${(function(){
     selectedCaterings = new Set();
     selectedShift = null;
     flightOverrides = {}; // Edit Mode : les modifications manuelles ne survivent pas a "Recommencer"
+    blankWorksheets = [];
+    blankWorksheetCounter = 0;
     document.getElementById('fids-text').value = '';
     if (document.getElementById('catering-text')) document.getElementById('catering-text').value = '';
     if (document.getElementById('extra-notes')) document.getElementById('extra-notes').value = '';
