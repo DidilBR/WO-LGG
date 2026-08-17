@@ -2517,15 +2517,7 @@ ${(function(){
 
       html += '<tr>';
       html += td(H, 'AS TEAM :');
-      html += td(P, '&nbsp;');
-      html += td(P, '&nbsp;');
-      html += td(P, '&nbsp;');
-      html += td(P, '&nbsp;');
-      html += td(P, '&nbsp;');
-      html += td(P, '&nbsp;');
-      html += td(P, '&nbsp;');
-      html += td(P, '&nbsp;');
-      html += td(P, '&nbsp;');
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="5">&nbsp;</td>';
       html += '</tr>';
 
       html += '<tr>';
@@ -2647,7 +2639,7 @@ ${(function(){
       html += '</tr>';
 
       // SPACER
-      html += '<tr><td colspan="6" style="border:1.5pt solid #000;height:20pt;padding:0"></td></tr>';
+      html += '<tr><td colspan="6" style="border:none;padding:5pt 0"></td></tr>';
 
       // COMMENT
       html += '<tr>';
