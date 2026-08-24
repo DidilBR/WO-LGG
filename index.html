@@ -1679,8 +1679,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     const b = blankWorksheets.find(function(x) { return x.key === key; });
     if (!b) return;
     const ov = flightOverrides[key.toUpperCase()] || {};
+    // IMPORTANT: keep the BLANK-X key as the internal flight identifier.
+    // makeSheet() uses this key to retrieve the Edit Mode override/grid.
+    // The override itself then replaces the visible flight number.
     const f = {
-      flight: ov.flight && ov.flight !== key ? ov.flight : '',
+      flight: key,
       reg: ov.reg || '', time: ov.time || '', stand: ov.stand || '',
       handler: ov.handler || '', company: ov.company || '', grid: ov.grid || {}
     };
