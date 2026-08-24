@@ -2322,10 +2322,10 @@ function restoreActiveTextField(saved) {
         );
       });
       if (asl737Flights.length > 0) {
-        asl737Flights.forEach(function(f2) {
-          var idx = flights.indexOf(f2);
-          if (!selectedASL737.has(idx)) selectedASL737.add(idx);
-        });
+        // Do NOT auto-check ASL 737 entries during every render.
+        // renderASL737() is called after a checkbox click; auto-adding here
+        // would immediately undo an uncheck. Selection is initialized only
+        // when the ASL list is first populated elsewhere.
         selectedASL737.forEach(function(idx) {
           if (!asl737Flights.includes(flights[idx])) selectedASL737.delete(idx);
         });
@@ -2357,9 +2357,13 @@ function restoreActiveTextField(saved) {
   }
 
   function toggleASL737(origIdx) {
-    if (selectedASL737.has(origIdx)) selectedASL737.delete(origIdx);
-    else selectedASL737.add(origIdx);
+    if (selectedASL737.has(origIdx)) {
+      selectedASL737.delete(origIdx);
+    } else {
+      selectedASL737.add(origIdx);
+    }
     updateSelectedCount();
+    renderASL737();
   }
 
   // ── Memoire des avions deja rencontres (immat -> traitement habituel) ──
