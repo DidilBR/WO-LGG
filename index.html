@@ -299,90 +299,53 @@
 [data-layout="aero"] input:focus,[data-layout="aero"] textarea:focus{border-color:#ffb000;box-shadow:0 0 0 3px rgba(255,176,0,.10)}
 [data-layout="aero"] .check{border-radius:4px}
 [data-layout="aero"] .flight-stand{border-radius:4px;background:#20262e}
+.asl737-check{
+  appearance:none!important;-webkit-appearance:none!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:24px!important;height:24px!important;min-width:24px!important;
+  flex:0 0 24px!important;margin:0!important;padding:0!important;
+  cursor:pointer!important;pointer-events:auto!important;
+  border:1.5px solid var(--b2)!important;border-radius:6px!important;
+  background:transparent!important;color:#fff!important;
+  font:700 13px/1 var(--sans)!important;
+}
+.asl737-check[aria-checked="true"]{
+  background:linear-gradient(135deg,#ffb400,#ff8c00)!important;
+  border-color:transparent!important;color:#000!important;
+  box-shadow:0 0 12px rgba(255,176,0,.18);
+}
+.asl737-check:focus-visible{outline:2px solid #ffb400;outline-offset:2px}
 
-/* ── Aero Operations: animated operational console ── */
-@keyframes aeroGridDrift{
-  0%{background-position:0 0,0 0}
-  50%{background-position:16px 10px,-12px 8px}
-  100%{background-position:32px 20px,-24px 16px}
+
+/* ── Aero Operations: restrained operational motion ── */
+@keyframes aeroSoftGlow{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,176,0,0)}
+  50%{box-shadow:0 0 14px rgba(255,176,0,.10)}
 }
-@keyframes aeroScanline{
-  0%{transform:translateY(-120%)}
-  100%{transform:translateY(120vh)}
-}
-@keyframes aeroPulse{
-  0%,100%{box-shadow:0 0 0 0 rgba(255,176,0,0),inset 0 1px 0 rgba(255,255,255,.025)}
-  50%{box-shadow:0 0 22px rgba(255,176,0,.12),inset 0 1px 0 rgba(255,255,255,.05)}
-}
-@keyframes aeroBorder{
-  0%,100%{border-color:rgba(255,176,0,.22)}
-  50%{border-color:rgba(255,107,0,.65)}
-}
-@keyframes aeroBeacon{
-  0%,100%{opacity:.45;transform:scale(.85)}
-  50%{opacity:1;transform:scale(1.15);box-shadow:0 0 16px rgba(255,176,0,.75)}
-}
-@keyframes aeroSweep{
-  0%{background-position:-220% 0}
-  100%{background-position:220% 0}
-}
-@keyframes aeroFloat{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-2px)}
-}
-[data-layout="aero"] body{
-  background-size:32px 32px;
-  animation:aeroGridDrift 18s linear infinite;
-}
-[data-layout="aero"] body::after{
-  content:'';
-  position:fixed;inset:-15% 0 auto 0;height:35%;
-  pointer-events:none;z-index:1;
-  background:linear-gradient(to bottom,transparent 0%,rgba(255,176,0,.035) 48%,rgba(255,176,0,.10) 50%,rgba(255,176,0,.035) 52%,transparent 100%);
-  animation:aeroScanline 9s linear infinite;
-}
-[data-layout="aero"] header{
-  position:sticky;
-  animation:aeroBorder 3.2s ease-in-out infinite;
-  box-shadow:0 5px 30px rgba(255,176,0,.08);
+@keyframes aeroDot{
+  0%,100%{opacity:.65}
+  50%{opacity:1}
 }
 [data-layout="aero"] .logo-icon{
-  animation:aeroBeacon 2.4s ease-in-out infinite;
+  animation:aeroSoftGlow 3.8s ease-in-out infinite;
 }
-[data-layout="aero"] .panel,
-[data-layout="aero"] .stat-card{
-  animation:aeroPulse 5s ease-in-out infinite;
+[data-layout="aero"] .eyebrow-dot{
+  animation:aeroDot 2.8s ease-in-out infinite;
 }
 [data-layout="aero"] .flight-card{
   transition:transform .22s ease,background .22s ease,border-color .22s ease,box-shadow .22s ease;
 }
-[data-layout="aero"] .flight-card:nth-child(3n+1){animation:aeroFloat 6s ease-in-out infinite}
-[data-layout="aero"] .flight-card:nth-child(3n+2){animation:aeroFloat 7.5s ease-in-out .4s infinite}
-[data-layout="aero"] .flight-card:nth-child(3n){animation:aeroFloat 8.5s ease-in-out .8s infinite}
 [data-layout="aero"] .flight-card:hover{
-  transform:translateX(5px) scale(1.008);
-  box-shadow:0 0 24px rgba(255,176,0,.12);
+  transform:translateX(3px);
+  box-shadow:0 0 16px rgba(255,176,0,.08);
 }
-[data-layout="aero"] .flight-card.selected{
-  animation:aeroBorder 2.2s ease-in-out infinite;
-}
-[data-layout="aero"] .btn-primary,
-[data-layout="aero"] .btn-amber{
-  background-size:220% 100%;
-  animation:aeroSweep 4s linear infinite;
-}
-[data-layout="aero"] .eyebrow-dot{
-  animation:aeroBeacon 1.8s ease-in-out infinite;
-}
-[data-layout="aero"] .section-title{
-  text-shadow:0 0 18px rgba(255,176,0,.16);
+[data-layout="aero"] .btn-primary:hover,
+[data-layout="aero"] .btn-amber:hover{
+  box-shadow:0 6px 20px rgba(255,176,0,.18);
 }
 @media (prefers-reduced-motion: reduce){
   [data-layout="aero"] *{animation:none!important;scroll-behavior:auto!important}
-  [data-layout="aero"] body::after{display:none}
 }
-
-@media (prefers-reduced-motion: reduce){[data-layout="aero"] *{scroll-behavior:auto!important}}
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--sans);background:var(--bg0);color:var(--t1);min-height:100vh;transition:background .4s,color .4s}
@@ -2372,7 +2335,7 @@ function restoreActiveTextField(saved) {
           const aslSelected = selectedASL737.has(origIdx2);
           const aslMissingHighlight = f2.missingTime ? 'box-shadow:0 0 0 2px #ffff00,0 0 12px #ffff00;' : '';
           return '<div class="flight-card ' + (aslSelected ? 'selected' : '') + '" data-idx="' + origIdx2 + '" style="' + aslMissingHighlight + 'border-color:' + (aslSelected ? 'rgba(255,176,0,.35)' : 'rgba(255,180,0,.15)') + '">' +
-            '<div class="check" role="checkbox" aria-checked="' + aslSelected + '" tabindex="0" onclick="event.stopPropagation();toggleASL737(' + origIdx2 + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleASL737(' + origIdx2 + ')}">' + (aslSelected ? '✓' : '') + '</div>' +
+            '<button type="button" class="check asl737-check" role="checkbox" aria-checked="' + aslSelected + '" tabindex="0" onclick="event.preventDefault();event.stopPropagation();toggleASL737(' + origIdx2 + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();event.stopPropagation();toggleASL737(' + origIdx2 + ')}">' + (aslSelected ? '✓' : '') + '</button>' +
             '<div class="flight-info" onclick="event.stopPropagation()">' +
               '<span class="flight-reg" style="background:linear-gradient(90deg,#ffb400,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent">' + (f2.reg||'—') + '</span>' +
               '<span class="flight-num">' + f2.flight + '</span>' +
