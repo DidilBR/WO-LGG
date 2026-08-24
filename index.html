@@ -875,6 +875,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   let caterings = [];
   let selectedCaterings = new Set();
   let selectedASL737 = new Set();
+  let selectedASL737Initialized = new Set();
   let lastDepartures = []; // derniere liste de departs recuperee (utilisee par la feuille Crew Bus)
 
   // ── Edit Mode : modifications manuelles completes par vol ──────────
@@ -2322,10 +2323,19 @@ function restoreActiveTextField(saved) {
         );
       });
       if (asl737Flights.length > 0) {
-        // Do NOT auto-check ASL 737 entries during every render.
-        // renderASL737() is called after a checkbox click; auto-adding here
-        // would immediately undo an uncheck. Selection is initialized only
-        // when the ASL list is first populated elsewhere.
+        // ASL 737 are selected by default only when they first appear.
+        // Once the user changes a checkbox, renderASL737() must preserve
+        // that choice and never re-select a manually unchecked aircraft.
+        asl737Flights.forEach(function(f2) {
+          var idx = flights.indexOf(f2);
+          if (!selectedASL737Initialized.has(idx)) {
+            selectedASL737.add(idx);
+            selectedASL737Initialized.add(idx);
+          }
+        });
+        selectedASL737Initialized.forEach(function(idx) {
+          if (!asl737Flights.includes(flights[idx])) selectedASL737Initialized.delete(idx);
+        });
         selectedASL737.forEach(function(idx) {
           if (!asl737Flights.includes(flights[idx])) selectedASL737.delete(idx);
         });
@@ -3474,6 +3484,7 @@ ${(function(){
     caterings = [];
     selectedCaterings = new Set();
     selectedASL737 = new Set();
+    selectedASL737Initialized = new Set();
     selectedShift = null;
     flightOverrides = {}; // Edit Mode : les modifications manuelles ne survivent pas a "Recommencer"
     blankWorksheets = [];
