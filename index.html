@@ -694,6 +694,10 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
         <div><label class="field-label">Registration</label><input type="text" id="m-reg" placeholder="ex: OO-TNA" oninput="handleRegInput(this.value)"></div>
         <div><label class="field-label">Stand</label><input type="text" id="m-stand" placeholder="ex: A12"></div>
       </div>
+      <div class="field-row" style="margin-bottom:14px">
+        <div><label class="field-label">Company</label><input type="text" id="m-company" placeholder="ex: Qatar, ASL, WFS..."></div>
+        <div></div>
+      </div>
       <div id="known-aircraft-hint" class="hidden" style="font-size:11px;color:#00e5a0;margin:-6px 0 12px;font-family:var(--mono)"></div>
       <div style="margin-bottom:14px">
         <label onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;background:rgba(255,180,0,.08);border:1px solid rgba(255,180,0,.3);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:#ffb400">
@@ -1020,6 +1024,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
           (ct.departure ? '<span class="flight-time">✈ ' + ct.departure + '</span>' : '') +
           (ct.crew ? '<span class="flight-stand">' + ct.crew + ' crew</span>' : '') +
         '</div>' +
+        '<button onclick="event.stopPropagation();printSingleCatering(' + i + ')" title="Imprimer cette worksheet" style="margin-left:auto;flex-shrink:0;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.35);border-radius:7px;color:#00e5a0;font-size:11px;font-weight:700;padding:6px 9px;cursor:pointer">🖨</button>' +
       '</div>';
     }).join('');
   }
@@ -1584,7 +1589,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     section.classList.remove('hidden');
     list.innerHTML = blankWorksheets.map(function(b) {
       const ov = flightOverrides[b.key.toUpperCase()] || {};
-      const displayFlight = (ov.flight && ov.flight !== b.key) ? ov.flight : b.key;
+      const displayFlight = (ov.reg && ov.reg.trim()) ? ov.reg.trim() : ((ov.flight && ov.flight !== b.key) ? ov.flight : b.key);
       const displayReg = ov.reg || '—';
       return '<div class="flight-card" style="border-color:rgba(255,180,0,.3)">' +
         '<div class="flight-info">' +
@@ -1990,7 +1995,10 @@ function restoreActiveTextField(saved) {
           (f.stand ? '<span class="flight-stand">Stand ' + f.stand + '</span>' : '') +
           '<span class="flight-stand" style="color:#888">' + f.handler + '</span>' +
         '</div>' +
-        (f.manual ? '<button onclick="removeFlight(event,' + i + ')" title="Supprimer" style="background:none;border:none;color:#e05252;cursor:pointer;font-size:16px;padding:0 4px">×</button>' : '') +
+        '<div onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;margin-left:auto">' +
+          '<button onclick="printSingleWorksheet(' + i + ')" title="Imprimer cette worksheet" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--a1);cursor:pointer;font-size:12px;padding:4px 7px">🖨</button>' +
+          '<button onclick="removeFlight(event,' + i + ')" title="Supprimer ce vol de la liste" style="background:none;border:1px solid rgba(224,82,82,.45);border-radius:6px;color:#e05252;cursor:pointer;font-size:15px;line-height:1;padding:3px 7px">×</button>' +
+        '</div>' +
         (pills ? '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding-right:4px;margin-left:auto;background:rgba(255,255,255,.02);border-radius:8px;padding:3px 6px">' + pills + '</div>' : '') +
         (fleetBadge && !pills ? fleetBadge : '') +
         '</div>' +
@@ -2182,6 +2190,7 @@ function restoreActiveTextField(saved) {
             '<div onclick="event.stopPropagation()" style="margin-left:auto;display:flex;gap:6px;align-items:center">' +
               makePill('asl737-handling-'+origIdx2, '⚙ HANDLING', null, 255, 180, 0) +
               makePill('asl737-'+origIdx2, '✈ Worksheet', null, 255, 180, 0) +
+              '<button onclick="event.stopPropagation();printSingleASL737(' + asl737Flights.indexOf(f2) + ')" title="Imprimer cette worksheet ASL 737" style="background:rgba(255,180,0,.12);border:1px solid rgba(255,180,0,.4);border-radius:7px;color:#ffb400;font-size:11px;font-weight:700;padding:5px 8px;cursor:pointer">🖨</button>' +
             '</div>' +
           '</div>';
         }).join('');
@@ -2271,6 +2280,7 @@ function restoreActiveTextField(saved) {
     const handlingChecked = document.getElementById('m-handling') ? document.getElementById('m-handling').checked : false;
     if (!flight || !time) { alert('N° de vol et heure requis.'); return; }
     var detected = detectCompany(flight, reg);
+    var manualCompany = (document.getElementById('m-company')?.value || '').trim();
     var handler  = detected.company;
 
     var abdChoiceValue = null;
@@ -2281,7 +2291,7 @@ function restoreActiveTextField(saved) {
       handler = abdChoiceValue;
     }
 
-    flights.push({ flight, time, reg, stand, handler: handler, manual: true, _manualASL737: detected.isASL737, _handling: handlingChecked });
+    flights.push({ flight, time, reg, stand, handler: handler, company: manualCompany, manual: true, _manualASL737: detected.isASL737, _handling: handlingChecked });
 
     // Se souvenir de cet avion pour la prochaine fois
     if (reg) {
@@ -2305,7 +2315,7 @@ function restoreActiveTextField(saved) {
     const newSelected = new Set();
     flights.forEach((f, i) => { if (f.manual || selectedFlights.has(i)) newSelected.add(i); });
     selectedFlights = newSelected;
-    ['m-flight','m-time','m-reg','m-stand'].forEach(id => document.getElementById(id).value = '');
+    ['m-flight','m-time','m-reg','m-stand','m-company'].forEach(id => document.getElementById(id).value = '');
     if (document.getElementById('m-handling')) document.getElementById('m-handling').checked = false;
     var hintEl = document.getElementById('known-aircraft-hint');
     if (hintEl) hintEl.classList.add('hidden');
@@ -2632,7 +2642,7 @@ ${(function(){
 
       html += '<tr>';
       html += td(H, 'COMPANY :');
-      var company = (f.handler || '');
+      var company = (f.company !== undefined ? f.company : (f.handler || ''));
       var isQTRCatering = f._qtrCatering === true;
       if (isQTRCatering) {
         company = 'QATAR';
@@ -2810,6 +2820,50 @@ ${(function(){
     return swissportDepartures;
   }
 
+  // Imprime une seule worksheet sans exiger la selection d'un autre avion.
+  function printSingleWorksheet(index) {
+    var f = flights[index];
+    if (!f) return;
+    var flt = (f.flight || '').toUpperCase();
+    var hnd = (f.handler || '').toUpperCase();
+    var reg = (f.reg || '').toUpperCase();
+    var aslB744 = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
+    var isASL737 = f._manualASL737 === true ||
+      (flt.startsWith('TAY') && reg.startsWith('OEI') && !aslB744.includes(reg)) ||
+      (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !aslB744.includes(reg)) ||
+      (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+      (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')));
+
+    var sheet = makeSheet(Object.assign({}, f, isASL737 ? {_asl737:true} : {}));
+    if (!sheet) { alert('Aucune worksheet disponible pour ce vol.'); return; }
+    openPrintWindow(sheet, 'Worksheet ' + (f.flight || f.reg || 'LGG'));
+  }
+
+  function printSingleCatering(index) {
+    var ct = caterings[index];
+    if (!ct) return;
+    var sheet = makeSheet({ flight:ct.flight||'', reg:ct.reg||'', handler:ct.company||'', time:ct.delivery||'', stand:'', _catering:true });
+    openPrintWindow(sheet, 'Catering ' + (ct.flight || ct.reg || 'LGG'));
+  }
+
+  function printSingleASL737(index) {
+    var asl = flights.filter(function(f){
+      var flt=(f.flight||'').toUpperCase(), hnd=(f.handler||'').toUpperCase(), reg=(f.reg||'').toUpperCase();
+      var b=['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
+      return f._manualASL737===true || (flt.startsWith('TAY')&&reg.startsWith('OEI')&&!b.includes(reg)) || (flt.startsWith('TAY')&&(hnd.includes('FEDEX')||hnd.includes('AERO'))&&!b.includes(reg)) || (flt.startsWith('FDX')&&(hnd.includes('FEDEX')||hnd.includes('AERO'))) || (reg==='OEIMD'&&(hnd.includes('FEDEX')||hnd.includes('AERO')));
+    });
+    var f=asl[index];
+    if (!f) return;
+    openPrintWindow(makeSheet(Object.assign({},f,{_asl737:true})), 'ASL 737 ' + (f.flight||f.reg||''));
+  }
+
+  function openPrintWindow(page, title) {
+    var html='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>'+title.replace(/</g,'&lt;')+'</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}.page:last-child{page-break-after:avoid}</style></head><body>'+page+'</body></html>';
+    var w=window.open('','_blank');
+    if(w){w.document.open();w.document.write(html);w.document.close();w.focus();w.print();}
+    else alert('Autorise les popups pour imprimer.');
+  }
+
   function generateWorksheets() {
     var date = document.getElementById('shift-date').value;
     var eligible = flights.filter(function(f, i) { return selectedFlights.has(i) && needsFullTransit(f); });
@@ -2953,6 +3007,7 @@ ${(function(){
     // integralement, aucune detection automatique par prefixe/handler ici.
     var pagesBlank = '';
     blankWorksheets.forEach(function(b) {
+      var blankOv = flightOverrides[b.key.toUpperCase()] || {};
       pagesBlank += makeSheet({ flight: b.key, reg: '', handler: '', time: '', stand: '' });
     });
 
