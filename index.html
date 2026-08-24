@@ -299,6 +299,89 @@
 [data-layout="aero"] input:focus,[data-layout="aero"] textarea:focus{border-color:#ffb000;box-shadow:0 0 0 3px rgba(255,176,0,.10)}
 [data-layout="aero"] .check{border-radius:4px}
 [data-layout="aero"] .flight-stand{border-radius:4px;background:#20262e}
+
+/* ── Aero Operations: animated operational console ── */
+@keyframes aeroGridDrift{
+  0%{background-position:0 0,0 0}
+  50%{background-position:16px 10px,-12px 8px}
+  100%{background-position:32px 20px,-24px 16px}
+}
+@keyframes aeroScanline{
+  0%{transform:translateY(-120%)}
+  100%{transform:translateY(120vh)}
+}
+@keyframes aeroPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(255,176,0,0),inset 0 1px 0 rgba(255,255,255,.025)}
+  50%{box-shadow:0 0 22px rgba(255,176,0,.12),inset 0 1px 0 rgba(255,255,255,.05)}
+}
+@keyframes aeroBorder{
+  0%,100%{border-color:rgba(255,176,0,.22)}
+  50%{border-color:rgba(255,107,0,.65)}
+}
+@keyframes aeroBeacon{
+  0%,100%{opacity:.45;transform:scale(.85)}
+  50%{opacity:1;transform:scale(1.15);box-shadow:0 0 16px rgba(255,176,0,.75)}
+}
+@keyframes aeroSweep{
+  0%{background-position:-220% 0}
+  100%{background-position:220% 0}
+}
+@keyframes aeroFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-2px)}
+}
+[data-layout="aero"] body{
+  background-size:32px 32px;
+  animation:aeroGridDrift 18s linear infinite;
+}
+[data-layout="aero"] body::after{
+  content:'';
+  position:fixed;inset:-15% 0 auto 0;height:35%;
+  pointer-events:none;z-index:1;
+  background:linear-gradient(to bottom,transparent 0%,rgba(255,176,0,.035) 48%,rgba(255,176,0,.10) 50%,rgba(255,176,0,.035) 52%,transparent 100%);
+  animation:aeroScanline 9s linear infinite;
+}
+[data-layout="aero"] header{
+  position:sticky;
+  animation:aeroBorder 3.2s ease-in-out infinite;
+  box-shadow:0 5px 30px rgba(255,176,0,.08);
+}
+[data-layout="aero"] .logo-icon{
+  animation:aeroBeacon 2.4s ease-in-out infinite;
+}
+[data-layout="aero"] .panel,
+[data-layout="aero"] .stat-card{
+  animation:aeroPulse 5s ease-in-out infinite;
+}
+[data-layout="aero"] .flight-card{
+  transition:transform .22s ease,background .22s ease,border-color .22s ease,box-shadow .22s ease;
+}
+[data-layout="aero"] .flight-card:nth-child(3n+1){animation:aeroFloat 6s ease-in-out infinite}
+[data-layout="aero"] .flight-card:nth-child(3n+2){animation:aeroFloat 7.5s ease-in-out .4s infinite}
+[data-layout="aero"] .flight-card:nth-child(3n){animation:aeroFloat 8.5s ease-in-out .8s infinite}
+[data-layout="aero"] .flight-card:hover{
+  transform:translateX(5px) scale(1.008);
+  box-shadow:0 0 24px rgba(255,176,0,.12);
+}
+[data-layout="aero"] .flight-card.selected{
+  animation:aeroBorder 2.2s ease-in-out infinite;
+}
+[data-layout="aero"] .btn-primary,
+[data-layout="aero"] .btn-amber{
+  background-size:220% 100%;
+  animation:aeroSweep 4s linear infinite;
+}
+[data-layout="aero"] .eyebrow-dot{
+  animation:aeroBeacon 1.8s ease-in-out infinite;
+}
+[data-layout="aero"] .section-title{
+  text-shadow:0 0 18px rgba(255,176,0,.16);
+}
+@media (prefers-reduced-motion: reduce){
+  [data-layout="aero"] *{animation:none!important;scroll-behavior:auto!important}
+  [data-layout="aero"] body::after{display:none}
+}
+
 @media (prefers-reduced-motion: reduce){[data-layout="aero"] *{scroll-behavior:auto!important}}
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -2047,13 +2130,18 @@ function restoreActiveTextField(saved) {
 
       let pills = '';
 
-      if (isWFS && !isSVA) {
+      if (isASL737) {
+        // ASL 737 uses its dedicated Handling control in the ASL list.
+        pills = '';
+      }
+
+      if (!isASL737 && isWFS && !isSVA) {
         pills += makePill('wfs-handling-'+i, '⚙ HANDLING', null, 0, 200, 255);
       }
-      if (isSVA) {
+      if (!isASL737 && isSVA) {
         pills += makePill('sva-handling-'+i, '⚙ HANDLING', null, 255, 140, 0);
       }
-      if (isSWISS) {
+      if (!isASL737 && isSWISS) {
         pills += makeTag('swi-ft-'+i,  'FT',      '#a78bfa');
         pills += makeTag('swi-cl-'+i,  'CLN',     '#34d399');
         pills += makeTag('swi-lav-'+i, 'LAV',     '#38bdf8');
@@ -2061,13 +2149,14 @@ function restoreActiveTextField(saved) {
         pills += makeTag('swi-hds-'+i, 'HDS',     '#f472b6');
       }
       // LHA → catering pill
-      if (flt.startsWith('LHA')) {
+      if (!isASL737 && flt.startsWith('LHA')) {
         pills += makePill('lha-catering-'+i, '🍽 CATERING', null, 0, 210, 180);
       }
 
       const missingHighlight = f.missingTime ? 'box-shadow:0 0 0 2px #ffff00,0 0 12px #ffff00;' : '';
-      // ASL737 flights only appear in the ASL737 section, not the main list
-      if (isASL737) return '';
+      // ASL 737: appears in the normal cleaning list only when its ASL checkbox is checked.
+      // It remains visible in the dedicated ASL 737 list regardless.
+      if (isASL737 && !selectedASL737.has(i)) return '';
       // Les vols ETH ne s'affichent plus dans la liste "avions a nettoyer" (charges via l'API) :
       // ils gardent quand meme leur worksheet Catering si selectionnes.
       if (f.isETH === true) return '';
@@ -2280,17 +2369,21 @@ function restoreActiveTextField(saved) {
         asl737Section.classList.remove('hidden');
         asl737List.innerHTML = asl737Flights.map(function(f2) {
           var origIdx2 = flights.indexOf(f2);
-          return '<div class="flight-card" style="border-color:rgba(255,180,0,.15);cursor:default">' +
-            '<div class="flight-info">' +
+          const aslSelected = selectedASL737.has(origIdx2);
+          const aslMissingHighlight = f2.missingTime ? 'box-shadow:0 0 0 2px #ffff00,0 0 12px #ffff00;' : '';
+          return '<div class="flight-card ' + (aslSelected ? 'selected' : '') + '" data-idx="' + origIdx2 + '" style="' + aslMissingHighlight + 'border-color:' + (aslSelected ? 'rgba(255,176,0,.35)' : 'rgba(255,180,0,.15)') + '">' +
+            '<div class="check" role="checkbox" aria-checked="' + aslSelected + '" tabindex="0" onclick="event.stopPropagation();toggleASL737(' + origIdx2 + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleASL737(' + origIdx2 + ')}">' + (aslSelected ? '✓' : '') + '</div>' +
+            '<div class="flight-info" onclick="event.stopPropagation()">' +
               '<span class="flight-reg" style="background:linear-gradient(90deg,#ffb400,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent">' + (f2.reg||'—') + '</span>' +
               '<span class="flight-num">' + f2.flight + '</span>' +
               '<span class="flight-time">ETA ' + f2.time + '</span>' +
               (f2.stand ? '<span class="flight-stand">Stand ' + f2.stand + '</span>' : '') +
+              '<span class="flight-stand" style="color:#888">ASL 737</span>' +
             '</div>' +
-            '<div onclick="event.stopPropagation()" style="margin-left:auto;display:flex;gap:6px;align-items:center">' +
-              '<div class="check" onclick="event.stopPropagation();toggleASL737(' + origIdx2 + ')" style="' + (selectedASL737.has(origIdx2) ? 'background:linear-gradient(135deg,#ffb400,#ff8c00);border-color:transparent;color:#000' : '') + '">' + (selectedASL737.has(origIdx2) ? '✓' : '') + '</div>' +
+            '<div onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;margin-left:auto;flex-shrink:0">' +
               makePill('asl737-handling-'+origIdx2, '⚙ HANDLING', null, 255, 180, 0) +
-              '<button onclick="event.stopPropagation();printSingleASL737(' + asl737Flights.indexOf(f2) + ')" title="Imprimer cette worksheet ASL 737" style="background:rgba(255,180,0,.12);border:1px solid rgba(255,180,0,.4);border-radius:7px;color:#ffb400;font-size:11px;font-weight:700;padding:5px 8px;cursor:pointer">🖨</button>' +
+              '<button onclick="event.stopPropagation();printSingleASL737(' + asl737Flights.indexOf(f2) + ')" title="Imprimer cette worksheet" style="background:none;border:1px solid var(--b2);border-radius:6px;color:var(--a1);cursor:pointer;font-size:12px;padding:4px 7px">🖨</button>' +
+              '<button onclick="event.stopPropagation();removeFlight(event,' + origIdx2 + ')" title="Supprimer cet avion de la liste" style="background:none;border:1px solid rgba(224,82,82,.45);border-radius:6px;color:#e05252;cursor:pointer;font-size:15px;line-height:1;padding:3px 7px">×</button>' +
             '</div>' +
           '</div>';
         }).join('');
