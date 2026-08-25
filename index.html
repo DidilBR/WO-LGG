@@ -2506,24 +2506,37 @@ function restoreActiveTextField(saved) {
     const ASL_B744_CHOSEN = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
     const chosen = flights.filter((f, i) => {
       if (!selectedFlights.has(i)) return false;
-      // Les vols ETH ne doivent jamais apparaitre dans "Avions a nettoyer" —
-      // uniquement via la section dediee "Caterings". On verifie a la fois le
-      // flag isETH (chemin normal) ET le prefixe du numero de vol affiche
-      // (filet de securite si le vol a ete charge sans ce flag).
-      if (f.isETH === true) return false;
-      if ((f.flight || '').toUpperCase().startsWith('ETH')) return false;
+      // Les ASL 737 ont leur propre sélection et leur propre section PDF.
+      // Ils ne doivent jamais entrer dans le tableau principal.
       var flt2 = (f.flight||'').toUpperCase();
       var hnd2 = (f.handler||'').toUpperCase();
       var reg2c = (f.reg||'').toUpperCase();
-      // Exclude ASL737 from main list
       var isA737 = f._manualASL737 === true ||
         (flt2.startsWith('TAY') && reg2c.startsWith('OEI') && !ASL_B744_CHOSEN.includes(reg2c)) ||
         (flt2.startsWith('TAY') && (hnd2.includes('FEDEX') || hnd2.includes('AERO')) && !ASL_B744_CHOSEN.includes(reg2c)) ||
         (flt2.startsWith('FDX') && (hnd2.includes('FEDEX') || hnd2.includes('AERO'))) ||
         (reg2c === 'OEIMD' && (hnd2.includes('FEDEX') || hnd2.includes('AERO')));
-      return !isA737;
+      if (isA737) return false;
+      if (f.isETH === true) return false;
+      if (flt2.startsWith('ETH')) return false;
+      return true;
     });
-    if (chosen.length === 0) { alert('Sélectionne au moins un vol.'); return; }
+
+    const asl737Selected = flights.filter(function(f, i) {
+      return selectedASL737.has(i) && (function(){
+        var flt=(f.flight||'').toUpperCase(), hnd=(f.handler||'').toUpperCase(), reg=(f.reg||'').toUpperCase();
+        return f._manualASL737 === true ||
+          (flt.startsWith('TAY') && reg.startsWith('OEI') && !ASL_B744_CHOSEN.includes(reg)) ||
+          (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_CHOSEN.includes(reg)) ||
+          (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+          (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')));
+      })();
+    });
+
+    if (chosen.length === 0 && asl737Selected.length === 0) {
+      alert('Sélectionne au moins un vol.');
+      return;
+    }
 
     const fmt = date
       ? new Date(date + 'T12:00:00').toLocaleDateString('fr-BE', { weekday:'long', year:'numeric', month:'long', day:'numeric' })
@@ -2575,23 +2588,7 @@ function restoreActiveTextField(saved) {
 
     // ASL 737 section (TAY/FEDEX + OEIMD/FEDEX only, not B744)
     const ASL_B744_PDF = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
-    const asl737Flights = flights.filter(function(f) {
-      var flt = (f.flight||'').toUpperCase();
-      var hnd = (f.handler||'').toUpperCase();
-      var reg = (f.reg||'').toUpperCase();
-      return (
-        f._manualASL737 === true ||
-        (flt.startsWith('TAY') && reg.startsWith('OEI') && !ASL_B744_PDF.includes(reg)) ||
-        (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_PDF.includes(reg)) ||
-        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
-        (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
-      );
-    }).filter(function(f, i) {
-      // Only include if checkbox is checked in the ASL737 list
-      var origIdx = flights.indexOf(f);
-      var cb = document.getElementById('asl737-' + origIdx);
-      return cb && cb.checked;
-    });
+    const asl737Flights = asl737Selected;
 
     const asl737Block = asl737Flights.length > 0 ? `
       <div style="border-top:2pt solid #000;margin-top:6pt;padding-top:5pt">
