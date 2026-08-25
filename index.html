@@ -2875,6 +2875,7 @@ ${(function(){
       var showFullTransit  = !isQTRCatering && !(f.isETH === true) && !(f._handling) && !(f._catering) &&
                              !(f._swissCl) && !(f._swissLav) && !(f._swissWat) && !(f._swissHds) &&
                              (f._swissFT !== false);
+      if (isSwissportManhour) showFullTransit = false;
       if (f._gtiSwiss === true) {
         showFullTransit = true;
       } else if (f._swissFT === true || f._swissCl || f._swissLav || f._swissWat || f._swissHds) {
@@ -2948,7 +2949,7 @@ ${(function(){
       html += '</tr>';
 
       html += '<tr>';
-      html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-weight:700;text-align:center;' + hl('manHour', false) + '' + '">MAN HOUR</td>';
+      html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-weight:700;text-align:center;' + (isSwissportManhour ? 'background:#fff200!important;' : hl('manHour', false)) + '">MAN HOUR</td>';
       html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-weight:700;text-align:center;' + hl('crewBus', false) + '">CREW BUS</td>';
       html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-weight:700;text-align:center;' + hl('specialRequest', false) + '" colspan="2">SPECIAL REQUEST</td>';
       html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-weight:700;text-align:center;' + hl('vidangeToilette', false) + '" colspan="2">VIDANGE TOILETTE</td>';
