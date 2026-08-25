@@ -796,8 +796,26 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       <div class="flights-list" id="blank-worksheets-list"></div>
     </div>
     <button id="create-blank-worksheet-btn" class="hidden" onclick="createBlankWorksheet()" style="width:100%;padding:11px;background:linear-gradient(135deg,#ffb400,#ff7a00);border:none;border-radius:var(--r2);color:#000;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-bottom:10px">&#9998; + Creer une worksheet vierge</button>
+    <button class="add-manual-toggle" onclick="openSwissportManhourModal()" style="margin-top:8px;border-color:rgba(167,139,250,.45);color:#c4b5fd">⏱ Swissport MANHOUR</button>
     <button class="add-manual-toggle" onclick="toggleManualForm()">+ Ajouter un vol manuellement</button>
-    <div class="manual-form hidden" id="manual-form">
+    
+    <div class="manual-form hidden" id="swissport-manhour-form">
+      <div class="manual-form-title">Swissport MANHOUR</div>
+      <div style="display:grid;gap:10px">
+        <div>
+          <label class="field-label">AS workers ?</label>
+          <div id="swp-workers-list" style="display:grid;gap:7px"></div>
+          <button type="button" class="btn-secondary" onclick="addSwissportWorker()">＋ Ajouter un prénom</button>
+        </div>
+        <div><label class="field-label">Heure de début</label><input type="time" id="swp-start"></div>
+        <div><label class="field-label">Heure de fin prévue initialement</label><input type="time" id="swp-end"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" class="btn-secondary" onclick="closeSwissportManhour()">Annuler</button>
+          <button type="button" class="btn-primary" onclick="printSwissportManhour()">🖨 Générer & imprimer</button>
+        </div>
+      </div>
+    </div>
+<div class="manual-form hidden" id="manual-form">
       <div class="manual-form-title">Ajout manuel</div>
       <div class="field-row" style="margin-bottom:12px">
         <div><label class="field-label">N de vol *</label><input type="text" id="m-flight" placeholder="ex: TNT123" oninput="var v=this.value.toUpperCase();var row=document.getElementById('abd-choice-row');if(row){if(v.startsWith('ABD'))row.classList.remove('hidden');else row.classList.add('hidden');}"></div>
@@ -2088,7 +2106,7 @@ function restoreActiveTextField(saved) {
         f._manualASL737 === true ||
         (flt.startsWith('TAY') && regR.startsWith('OEI') && !['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'].includes(regR)) ||
         (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'].includes(regR)) ||
-        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+        ((flt.startsWith('FDX') && (reg.startsWith('OEI') || reg.startsWith('OOI')) && (hnd.includes('FEDEX') || hnd.includes('AERO'))) || hnd.includes('AERO')))) ||
         (regR === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
       );
 
@@ -2514,8 +2532,7 @@ function restoreActiveTextField(saved) {
       var isA737 = f._manualASL737 === true ||
         (flt2.startsWith('TAY') && reg2c.startsWith('OEI') && !ASL_B744_CHOSEN.includes(reg2c)) ||
         (flt2.startsWith('TAY') && (hnd2.includes('FEDEX') || hnd2.includes('AERO')) && !ASL_B744_CHOSEN.includes(reg2c)) ||
-        (flt2.startsWith('FDX') && (hnd2.includes('FEDEX') || hnd2.includes('AERO'))) ||
-        (reg2c === 'OEIMD' && (hnd2.includes('FEDEX') || hnd2.includes('AERO')));
+        ((flt2.startsWith('FDX') && (reg2c.startsWith('OEI') || reg2c.startsWith('OOI')) && (hnd2.includes('FEDEX') || hnd2.includes('AERO'))) || hnd2.includes('AERO')))) || hnd2.includes('AERO')));
       if (isA737) return false;
       if (f.isETH === true) return false;
       if (flt2.startsWith('ETH')) return false;
@@ -2528,8 +2545,7 @@ function restoreActiveTextField(saved) {
         return f._manualASL737 === true ||
           (flt.startsWith('TAY') && reg.startsWith('OEI') && !ASL_B744_CHOSEN.includes(reg)) ||
           (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_CHOSEN.includes(reg)) ||
-          (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
-          (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')));
+          ((flt.startsWith('FDX') && (reg.startsWith('OEI') || reg.startsWith('OOI')) && (hnd.includes('FEDEX') || hnd.includes('AERO'))) || hnd.includes('AERO')))) || hnd.includes('AERO')));
       })();
     });
 
@@ -2745,6 +2761,10 @@ ${(function(){
     }
 
     function makeSheet(f) {
+      var isSwissportManhour = f._swissportManhour === true;
+      var manhourWorkers = f._manhourWorkers || '';
+      var manhourStart = f._manhourStart || '';
+      var manhourEnd = f._manhourEnd || '';
       // ── Edit Mode : applique les surcharges manuelles enregistrees pour ce
       // vol (identifie par son numero de vol original, avant tout remplacement
       // de f.flight plus bas dans la fonction — ETH/Crew Bus changent parfois
@@ -2811,12 +2831,13 @@ ${(function(){
 
       html += '<tr>';
       html += td(H, 'AS TEAM :');
-      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="5">&nbsp;</td>';
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="5">' + (isSwissportManhour ? manhourWorkers : '&nbsp;') + '</td>';
       html += '</tr>';
 
       html += '<tr>';
       html += td(H, 'COMPANY :');
       var company = (f.company !== undefined ? f.company : (f.handler || ''));
+      if (isSwissportManhour) company = 'SWP';
       var isQTRCatering = f._qtrCatering === true;
       if (isQTRCatering) {
         company = 'QATAR';
@@ -2832,7 +2853,7 @@ ${(function(){
         company = 'ASL';
       } else if (flt.startsWith('GTI') && hnd.includes('SWISSPORT')) {
         company = 'Atlas Air';
-      } else if (f._asl737 === true || (flt.startsWith('TAY') && hnd.includes('FEDEX')) || (reg === 'OEIMD' && hnd.includes('FEDEX'))) {
+      } else if (f._asl737 === true || (flt.startsWith('TAY') && hnd.includes('FEDEX')))) {
         company = 'ASL 737';
       } else if (flt.startsWith('SVA') && hnd.includes('WFS')) {
         company = 'WFS';
@@ -2858,14 +2879,14 @@ ${(function(){
       var showGTILaundry = f._gtiSwiss  === true;
       html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + company + '</td>';
       html += td(H, 'AIRCRAFT TYPE :');
-      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2">&nbsp;</td>';
+      html += '<td style="border:1.5pt solid #000;' + P + '" colspan="2">' + (isSwissportManhour ? 'XXX' : '&nbsp;') + '</td>';
       html += '</tr>';
 
       html += '<tr>';
       html += td(H, 'REGISTRATION :');
-      html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + (f.reg || '') + '</td>';
+      html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + (isSwissportManhour ? 'XXX' : (f.reg || '')) + '</td>';
       html += td(H, 'FLIGHT NUMBER :');
-      html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + (f.flight || '') + '</td>';
+      html += '<td style="border:1.5pt solid #000;' + P + 'font-weight:700;font-size:9pt" colspan="2">' + (isSwissportManhour ? 'XXX' : (f.flight || '')) + '</td>';
       html += '</tr>';
 
       // SERVICE GRID
@@ -2918,7 +2939,7 @@ ${(function(){
       html += '</tr>';
 
       html += '<tr>';
-      html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-weight:700;text-align:center;' + hl('manHour', false) + '">MAN HOUR</td>';
+      html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-weight:700;text-align:center;' + hl('manHour', false) + (isSwissportManhour ? 'background:#fff200!important;' : '') + '">MAN HOUR</td>';
       html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-weight:700;text-align:center;' + hl('crewBus', false) + '">CREW BUS</td>';
       html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-weight:700;text-align:center;' + hl('specialRequest', false) + '" colspan="2">SPECIAL REQUEST</td>';
       html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-weight:700;text-align:center;' + hl('vidangeToilette', false) + '" colspan="2">VIDANGE TOILETTE</td>';
@@ -2927,7 +2948,7 @@ ${(function(){
       // WORK TIME
       html += '<tr>';
       html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-weight:700;width:18%">WORK START TIME</td>';
-      html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-size:16pt;font-weight:900;text-align:center;width:22%">H</td>';
+      html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-size:16pt;font-weight:900;text-align:center;width:22%">' + (isSwissportManhour ? manhourStart : 'H') + '</td>';
       html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-weight:700;text-align:center;width:16%" colspan="2">WORK END TIME</td>';
       html += '<td style="border:1.5pt solid #000;padding:9pt 8pt;font-size:16pt;font-weight:900;text-align:center" colspan="2">H</td>';
       html += '</tr>';
@@ -2938,7 +2959,7 @@ ${(function(){
       // COMMENT
       html += '<tr>';
       html += '<td style="border:1.5pt solid #000;padding:8pt;font-weight:700;vertical-align:middle;height:59pt" colspan="2">COMMENT / EXPLANATION</td>';
-      html += '<td style="border:1.5pt solid #000;padding:8pt;height:59pt" colspan="4"></td>';
+      html += '<td style="border:1.5pt solid #000;padding:8pt;height:59pt" colspan="4">' + (isSwissportManhour ? ('Heure initiale de début : ' + manhourStart + '<br>Heure initiale de fin : ' + manhourEnd) : '') + '</td>';
       html += '</tr>';
 
       html += '<tr>';
@@ -2995,6 +3016,48 @@ ${(function(){
   }
 
   // Imprime une seule worksheet sans exiger la selection d'un autre avion.
+
+  function openSwissportManhourModal() {
+    var form=document.getElementById('swissport-manhour-form');
+    form.classList.remove('hidden');
+    var list=document.getElementById('swp-workers-list');
+    list.innerHTML='';
+    addSwissportWorker();
+    document.getElementById('swp-start').value='';
+    document.getElementById('swp-end').value='';
+  }
+  function closeSwissportManhour() {
+    document.getElementById('swissport-manhour-form').classList.add('hidden');
+  }
+  function addSwissportWorker() {
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;gap:7px;align-items:center';
+    row.innerHTML='<input class="field-input swp-worker" type="text" placeholder="Prénom" maxlength="40"><button type="button" class="btn-secondary" onclick="this.parentElement.remove()" style="padding:7px 11px;color:#e05252">×</button>';
+    document.getElementById('swp-workers-list').appendChild(row);
+    row.querySelector('input').focus();
+  }
+  function swpTime(v) {
+    if(!v) return '';
+    var p=v.split(':');
+    return p[0]+' H '+p[1];
+  }
+  function printSwissportManhour() {
+    var workers=Array.from(document.querySelectorAll('.swp-worker')).map(function(x){return x.value.trim()}).filter(Boolean);
+    var start=document.getElementById('swp-start').value;
+    var end=document.getElementById('swp-end').value;
+    if(!workers.length){alert('Ajoute au moins un AS worker.');return;}
+    if(!start||!end){alert('Renseigne les heures de début et de fin.');return;}
+    var f={
+      flight:'XXX',reg:'XXX',handler:'SWP',company:'SWP',time:start,stand:'',
+      _swissportManhour:true,_manhourWorkers:workers.join(' │ '),
+      _manhourStart:swpTime(start),_manhourEnd:swpTime(end)
+    };
+    var sheet=makeSheet(f);
+    if(!sheet){alert('Impossible de générer la worksheet MANHOUR.');return;}
+    closeSwissportManhour();
+    openPrintWindow(sheet,'Swissport MANHOUR');
+  }
+
   function printSingleWorksheet(index) {
     var f = flights[index];
     if (!f) return;
@@ -3005,8 +3068,7 @@ ${(function(){
     var isASL737 = f._manualASL737 === true ||
       (flt.startsWith('TAY') && reg.startsWith('OEI') && !aslB744.includes(reg)) ||
       (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !aslB744.includes(reg)) ||
-      (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
-      (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')));
+      ((flt.startsWith('FDX') && (reg.startsWith('OEI') || reg.startsWith('OOI')) && (hnd.includes('FEDEX') || hnd.includes('AERO'))) || hnd.includes('AERO')))) || hnd.includes('AERO')));
 
     // Swissport : l'impression individuelle doit respecter exactement
     // les worksheets cochées (FT / Cleaning / Lavatory / Water / Headset).
@@ -3077,7 +3139,7 @@ ${(function(){
     var asl = flights.filter(function(f){
       var flt=(f.flight||'').toUpperCase(), hnd=(f.handler||'').toUpperCase(), reg=(f.reg||'').toUpperCase();
       var b=['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
-      return f._manualASL737===true || (flt.startsWith('TAY')&&reg.startsWith('OEI')&&!b.includes(reg)) || (flt.startsWith('TAY')&&(hnd.includes('FEDEX')||hnd.includes('AERO'))&&!b.includes(reg)) || (flt.startsWith('FDX')&&(hnd.includes('FEDEX')||hnd.includes('AERO'))) || (reg==='OEIMD'&&(hnd.includes('FEDEX')||hnd.includes('AERO')));
+      return f._manualASL737===true || (flt.startsWith('TAY')&&reg.startsWith('OEI')&&!b.includes(reg)) || (flt.startsWith('TAY')&&(hnd.includes('FEDEX')||hnd.includes('AERO'))&&!b.includes(reg)) || ((flt.startsWith('FDX') && (reg.startsWith('OEI') || reg.startsWith('OOI')) && (hnd.includes('FEDEX') || hnd.includes('AERO'))) || hnd.includes('AERO'))))||hnd.includes('AERO')));
     });
     var f=asl[index];
     if (!f) return;
@@ -3125,7 +3187,7 @@ ${(function(){
         f._manualASL737 === true ||
         (flt.startsWith('TAY') && reg2.startsWith('OEI') && !ASL_B744_W.includes(reg2)) ||
         (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_W.includes(reg2)) ||
-        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+        ((flt.startsWith('FDX') && (reg.startsWith('OEI') || reg.startsWith('OOI')) && (hnd.includes('FEDEX') || hnd.includes('AERO'))) || hnd.includes('AERO')))) ||
         (reg2 === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
       );
 
@@ -3501,8 +3563,7 @@ ${(function(){
         f._manualASL737 === true ||
         (flt.startsWith('TAY') && reg.startsWith('OEI') && !ASL_B744_ONLY.includes(reg)) ||
         (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_ONLY.includes(reg)) ||
-        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
-        (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
+        ((flt.startsWith('FDX') && (reg.startsWith('OEI') || reg.startsWith('OOI')) && (hnd.includes('FEDEX') || hnd.includes('AERO'))) || hnd.includes('AERO')))) || hnd.includes('AERO')))
       );
     });
 
