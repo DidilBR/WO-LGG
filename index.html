@@ -299,22 +299,6 @@
 [data-layout="aero"] input:focus,[data-layout="aero"] textarea:focus{border-color:#ffb000;box-shadow:0 0 0 3px rgba(255,176,0,.10)}
 [data-layout="aero"] .check{border-radius:4px}
 [data-layout="aero"] .flight-stand{border-radius:4px;background:#20262e}
-.asl737-check{
-  appearance:none!important;-webkit-appearance:none!important;
-  display:flex!important;align-items:center!important;justify-content:center!important;
-  width:24px!important;height:24px!important;min-width:24px!important;
-  flex:0 0 24px!important;margin:0!important;padding:0!important;
-  cursor:pointer!important;pointer-events:auto!important;
-  border:1.5px solid var(--b2)!important;border-radius:6px!important;
-  background:transparent!important;color:#fff!important;
-  font:700 13px/1 var(--sans)!important;
-}
-.asl737-check[aria-checked="true"]{
-  background:linear-gradient(135deg,#ffb400,#ff8c00)!important;
-  border-color:transparent!important;color:#000!important;
-  box-shadow:0 0 12px rgba(255,176,0,.18);
-}
-.asl737-check:focus-visible{outline:2px solid #ffb400;outline-offset:2px}
 
 
 /* ── Aero Operations: restrained operational motion ── */
@@ -2045,6 +2029,22 @@ function restoreActiveTextField(saved) {
     try { el.setSelectionRange(saved.selStart, saved.selEnd); } catch (e) {}
   }
 
+  function isASL737Flight(f) {
+    if (!f) return false;
+    const flt = (f.flight || '').toUpperCase();
+    const hnd = (f.handler || '').toUpperCase();
+    const reg = (f.reg || '').toUpperCase();
+    const excluded = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
+    return (
+      f._manualASL737 === true ||
+      f.isASL737 === true ||
+      (flt.startsWith('TAY') && reg.startsWith('OEI') && !excluded.includes(reg)) ||
+      (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !excluded.includes(reg)) ||
+      (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
+      (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
+    );
+  }
+
   function renderFlights() {
     const list = document.getElementById('flights-list');
     const savedCheckboxStates = captureCheckboxStates(list);
@@ -2083,14 +2083,7 @@ function restoreActiveTextField(saved) {
       const isSWISS  = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
       const regR     = (f.reg || '').toUpperCase();
       const isSVA    = flt.startsWith('SVA') && hnd.includes('WFS');
-      const ASL_B744 = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
-      const isASL737 = (
-        f._manualASL737 === true ||
-        (flt.startsWith('TAY') && regR.startsWith('OEI') && !['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'].includes(regR)) ||
-        (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'].includes(regR)) ||
-        (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
-        (regR === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')))
-      );
+      const isASL737 = isASL737Flight(f);
 
       let pills = '';
 
@@ -2344,9 +2337,9 @@ function restoreActiveTextField(saved) {
           var origIdx2 = flights.indexOf(f2);
           const aslSelected = selectedASL737.has(origIdx2);
           const aslMissingHighlight = f2.missingTime ? 'box-shadow:0 0 0 2px #ffff00,0 0 12px #ffff00;' : '';
-          return '<div class="flight-card ' + (aslSelected ? 'selected' : '') + '" data-idx="' + origIdx2 + '" style="' + aslMissingHighlight + 'border-color:' + (aslSelected ? 'rgba(255,176,0,.35)' : 'rgba(255,180,0,.15)') + '">' +
-            '<button type="button" class="check asl737-check" role="checkbox" aria-checked="' + aslSelected + '" tabindex="0" onclick="event.preventDefault();event.stopPropagation();toggleASL737(' + origIdx2 + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();event.stopPropagation();toggleASL737(' + origIdx2 + ')}">' + (aslSelected ? '✓' : '') + '</button>' +
-            '<div class="flight-info" onclick="event.stopPropagation()">' +
+          return '<div class="flight-card ' + (aslSelected ? 'selected' : '') + '" data-idx="' + origIdx2 + '" onclick="toggleASL737(' + origIdx2 + ')" style="' + aslMissingHighlight + 'border-color:' + (aslSelected ? 'rgba(255,176,0,.35)' : 'rgba(255,180,0,.15)') + '">' +
+            '<div class="check asl737-check" aria-hidden="true">' + (aslSelected ? '✓' : '') + '</div>' +
+            '<div class="flight-info"> +
               '<span class="flight-reg" style="background:linear-gradient(90deg,#ffb400,#ff8c00);-webkit-background-clip:text;-webkit-text-fill-color:transparent">' + (f2.reg||'—') + '</span>' +
               '<span class="flight-num">' + f2.flight + '</span>' +
               '<span class="flight-time">ETA ' + f2.time + '</span>' +
@@ -2372,8 +2365,8 @@ function restoreActiveTextField(saved) {
     } else {
       selectedASL737.add(origIdx);
     }
-    updateSelectedCount();
     renderASL737();
+    updateSelectedCount();
   }
 
   // ── Memoire des avions deja rencontres (immat -> traitement habituel) ──
