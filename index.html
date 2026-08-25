@@ -2118,8 +2118,8 @@ function restoreActiveTextField(saved) {
       }
 
       const missingHighlight = f.missingTime ? 'box-shadow:0 0 0 2px #ffff00,0 0 12px #ffff00;' : '';
-      // ASL 737: NEVER appears in the normal cleaning list.
-      // It is displayed exclusively in the dedicated ASL 737 list; its checkbox only controls selection/printing.
+      // ASL 737: appears in the normal cleaning list only when its ASL checkbox is checked.
+      // It remains visible in the dedicated ASL 737 list regardless.
       if (isASL737) return '';
       // Les vols ETH ne s'affichent plus dans la liste "avions a nettoyer" (charges via l'API) :
       // ils gardent quand meme leur worksheet Catering si selectionnes.
@@ -3049,7 +3049,13 @@ ${(function(){
 
   function generateWorksheets() {
     var date = document.getElementById('shift-date').value;
-    var eligible = flights.filter(function(f, i) { return selectedFlights.has(i) && needsFullTransit(f); });
+    // Normal aircraft use selectedFlights + needsFullTransit.
+    // ASL 737 use their own selection set and must still be included in
+    // the cleaning/worksheet generation when selected.
+    var eligible = flights.filter(function(f, i) {
+      if (selectedASL737.has(i)) return true;
+      return selectedFlights.has(i) && needsFullTransit(f);
+    });
     if (eligible.length === 0) { alert('Aucun vol eligible trouve.'); return; }
 
     var swissportDepartures = getSwissportDepartures();
