@@ -3008,6 +3008,59 @@ ${(function(){
       (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
       (reg === 'OEIMD' && (hnd.includes('FEDEX') || hnd.includes('AERO')));
 
+    // Swissport : l'impression individuelle doit respecter exactement
+    // les worksheets cochées (FT / Cleaning / Lavatory / Water / Headset).
+    var isSwissport = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
+
+    if (isSwissport) {
+      var ft  = document.getElementById('swi-ft-'  + index);
+      var cl  = document.getElementById('swi-cl-'  + index);
+      var lav = document.getElementById('swi-lav-' + index);
+      var wat = document.getElementById('swi-wat-' + index);
+      var hds = document.getElementById('swi-hds-' + index);
+
+      var ftChecked  = !!(ft  && ft.checked);
+      var clChecked  = !!(cl  && cl.checked);
+      var lavChecked = !!(lav && lav.checked);
+      var watChecked = !!(wat && wat.checked);
+      var hdsChecked = !!(hds && hds.checked);
+
+      var pages = '';
+      var count = 0;
+
+      if (ftChecked) {
+        pages += makeSheet(Object.assign({}, f, {_swissFT:true}));
+        count++;
+      }
+      if (clChecked) {
+        pages += makeSheet(Object.assign({}, f, {_swissCl:true}));
+        count++;
+      }
+      if (lavChecked) {
+        pages += makeSheet(Object.assign({}, f, {_swissLav:true}));
+        count++;
+      }
+      if (watChecked) {
+        pages += makeSheet(Object.assign({}, f, {_swissWat:true}));
+        count++;
+      }
+      if (hdsChecked) {
+        var departures = getSwissportDepartures();
+        var depFlt = departures[(f.reg || '').toUpperCase()] || f.flight;
+        pages += makeSheet(Object.assign({}, f, {flight:depFlt, _swissHds:true}));
+        count++;
+      }
+
+      // Aucun choix coché : conserver le comportement historique = Full Transit.
+      if (count === 0) {
+        pages = makeSheet(Object.assign({}, f, {_swissFT:true}));
+      }
+
+      if (!pages) { alert('Aucune worksheet sélectionnée.'); return; }
+      openPrintWindow(pages, 'Worksheet ' + (f.flight || f.reg || 'LGG'));
+      return;
+    }
+
     var sheet = makeSheet(Object.assign({}, f, isASL737 ? {_asl737:true} : {}));
     if (!sheet) { alert('Aucune worksheet disponible pour ce vol.'); return; }
     openPrintWindow(sheet, 'Worksheet ' + (f.flight || f.reg || 'LGG'));
