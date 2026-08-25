@@ -875,7 +875,6 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
   let caterings = [];
   let selectedCaterings = new Set();
   let selectedASL737 = new Set();
-  let selectedASL737Initialized = new Set();
   let lastDepartures = []; // derniere liste de departs recuperee (utilisee par la feuille Crew Bus)
 
   // ── Edit Mode : modifications manuelles completes par vol ──────────
@@ -2120,7 +2119,7 @@ function restoreActiveTextField(saved) {
       const missingHighlight = f.missingTime ? 'box-shadow:0 0 0 2px #ffff00,0 0 12px #ffff00;' : '';
       // ASL 737: appears in the normal cleaning list only when its ASL checkbox is checked.
       // It remains visible in the dedicated ASL 737 list regardless.
-      if (isASL737 && !selectedASL737.has(i)) return '';
+      if (isASL737) return '';
       // Les vols ETH ne s'affichent plus dans la liste "avions a nettoyer" (charges via l'API) :
       // ils gardent quand meme leur worksheet Catering si selectionnes.
       if (f.isETH === true) return '';
@@ -2323,18 +2322,9 @@ function restoreActiveTextField(saved) {
         );
       });
       if (asl737Flights.length > 0) {
-        // ASL 737 are selected by default only when they first appear.
-        // Once the user changes a checkbox, renderASL737() must preserve
-        // that choice and never re-select a manually unchecked aircraft.
         asl737Flights.forEach(function(f2) {
           var idx = flights.indexOf(f2);
-          if (!selectedASL737Initialized.has(idx)) {
-            selectedASL737.add(idx);
-            selectedASL737Initialized.add(idx);
-          }
-        });
-        selectedASL737Initialized.forEach(function(idx) {
-          if (!asl737Flights.includes(flights[idx])) selectedASL737Initialized.delete(idx);
+          if (!selectedASL737.has(idx)) selectedASL737.add(idx);
         });
         selectedASL737.forEach(function(idx) {
           if (!asl737Flights.includes(flights[idx])) selectedASL737.delete(idx);
@@ -2367,13 +2357,9 @@ function restoreActiveTextField(saved) {
   }
 
   function toggleASL737(origIdx) {
-    if (selectedASL737.has(origIdx)) {
-      selectedASL737.delete(origIdx);
-    } else {
-      selectedASL737.add(origIdx);
-    }
+    if (selectedASL737.has(origIdx)) selectedASL737.delete(origIdx);
+    else selectedASL737.add(origIdx);
     updateSelectedCount();
-    renderASL737();
   }
 
   // ── Memoire des avions deja rencontres (immat -> traitement habituel) ──
@@ -3484,7 +3470,6 @@ ${(function(){
     caterings = [];
     selectedCaterings = new Set();
     selectedASL737 = new Set();
-    selectedASL737Initialized = new Set();
     selectedShift = null;
     flightOverrides = {}; // Edit Mode : les modifications manuelles ne survivent pas a "Recommencer"
     blankWorksheets = [];
