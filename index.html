@@ -1047,8 +1047,8 @@ async function woLggLogout(){
     const b=document.getElementById('wo-lgg-logout-btn');
     if(b){b.disabled=true;b.textContent='⏳ DÉCONNEXION…';}
     if (!woLggVisitorMode) await woLggSupabase.auth.signOut();
-    clearInterval(woLggSessionSaveTimer); clearInterval(woLggSessionWatchTimer);
-    woLggSessionVersion=null; woLggInitializedUserId=null; woLggCloudInitPromise=null;
+    clearInterval(woLggSessionSaveTimer); clearInterval(woLggSessionSyncTimer);
+    woLggInitializedUserId=null; woLggCloudInitPromise=null; woLggLastCloudUpdatedAt=null; woLggLastLocalFingerprint=null;
     woLggUser=null; woLggProfile=null; woLggVisitorMode=false;
     woLggShowLogin();
     if(b){b.disabled=false;b.textContent='⎋ DÉCONNEXION';}
@@ -1062,36 +1062,23 @@ async function woLggLogout(){
 
 </script>
 <script>
-  // ── WO-LGG : session cloud par compte + un seul appareil actif ──────
-  // Les visiteurs ne passent jamais par cette couche.
-  let woLggDeviceId = null;
-  let woLggSessionVersion = null;
+  // ── WO-LGG : session cloud par compte ─────────────────────────────
+  // IMPORTANT : la session active n'est PAS limitée à un appareil.
+  // Le compte peut être ouvert sur plusieurs appareils sans boucle de
+  // déconnexion. Chaque appareil charge/synchronise le même état cloud.
   let woLggSessionSaveTimer = null;
-  let woLggSessionWatchTimer = null;
+  let woLggSessionSyncTimer = null;
   let woLggSessionHydrating = false;
   let woLggCloudInitPromise = null;
   let woLggInitializedUserId = null;
-
-  function woLggGetDeviceId(){
-    if (woLggDeviceId) return woLggDeviceId;
-    try {
-      woLggDeviceId = sessionStorage.getItem('wo_lgg_device_id');
-      if (!woLggDeviceId) {
-        woLggDeviceId = (crypto && crypto.randomUUID)
-          ? crypto.randomUUID()
-          : 'device-' + Date.now() + '-' + Math.random().toString(36).slice(2);
-        sessionStorage.setItem('wo_lgg_device_id', woLggDeviceId);
-      }
-    } catch(e) {
-      woLggDeviceId = 'device-' + Date.now() + '-' + Math.random().toString(36).slice(2);
-    }
-    return woLggDeviceId;
-  }
+  let woLggLastCloudUpdatedAt = null;
+  let woLggLastLocalFingerprint = null;
+  let woLggSyncInFlight = false;
 
   function woLggBuildSessionState(){
     if (!woLggUser || woLggVisitorMode) return null;
     return {
-      version: 1,
+      version: 2,
       currentStep: (typeof currentStep !== 'undefined' ? currentStep : 1),
       shiftDate: document.getElementById('shift-date')?.value || '',
       selectedShift: (typeof selectedShift !== 'undefined' ? selectedShift : null),
@@ -1108,111 +1095,157 @@ async function woLggLogout(){
     };
   }
 
-  async function woLggSaveCloudSession(){
-    if (woLggSessionHydrating || !woLggUser || woLggVisitorMode) return;
-    const state = woLggBuildSessionState();
-    if (!state) return;
-    const {error} = await woLggSupabase
-      .from('work_sessions')
-      .upsert({user_id: woLggUser.id, state, updated_at: new Date().toISOString()}, {onConflict:'user_id'});
-    if (error) console.warn('WO-LGG session save:', error.message);
+  function woLggFingerprint(state){
+    try { return JSON.stringify(state); } catch(e) { return ''; }
   }
 
-  async function woLggLoadCloudSession(){
-    if (!woLggUser || woLggVisitorMode) return;
-    const {data,error} = await woLggSupabase
+  async function woLggReadCloudSession(){
+    if (!woLggUser || woLggVisitorMode) return null;
+    const {data,error}=await woLggSupabase
       .from('work_sessions')
-      .select('state')
+      .select('state,updated_at')
       .eq('user_id',woLggUser.id)
       .maybeSingle();
-    if (error) { console.warn('WO-LGG session load:', error.message); return; }
-    const s=data?.state;
-    if (!s || s.version !== 1) return;
+    if(error){
+      console.warn('WO-LGG session read:',error.message);
+      return null;
+    }
+    return data || null;
+  }
+
+  function woLggApplyCloudState(s){
+    if (!s || !s.state || (s.state.version !== 1 && s.state.version !== 2)) return false;
 
     woLggSessionHydrating = true;
     try {
-      if (typeof currentStep !== 'undefined' && Number.isFinite(Number(s.currentStep))) currentStep=Number(s.currentStep);
+      if (typeof currentStep !== 'undefined' && Number.isFinite(Number(s.state.currentStep)))
+        currentStep=Number(s.state.currentStep);
+
       const dateEl=document.getElementById('shift-date');
-      if (dateEl && s.shiftDate) dateEl.value=s.shiftDate;
-      if (typeof selectedShift !== 'undefined') selectedShift=s.selectedShift || null;
-      if (s.selectedShift?.name) {
-        const shiftBtn=document.querySelector('.shift-btn[data-shift="'+s.selectedShift.name+'"]');
+      if (dateEl && s.state.shiftDate) dateEl.value=s.state.shiftDate;
+
+      if (typeof selectedShift !== 'undefined') selectedShift=s.state.selectedShift || null;
+      if (s.state.selectedShift?.name) {
+        const shiftBtn=document.querySelector('.shift-btn[data-shift="'+s.state.selectedShift.name+'"]');
         if (shiftBtn) {
           document.querySelectorAll('.shift-btn').forEach(b=>b.classList.remove('active'));
           shiftBtn.classList.add('active');
         }
       }
-      if (typeof flights !== 'undefined') flights=Array.isArray(s.flights)?s.flights:[];
-      if (typeof selectedFlights !== 'undefined') selectedFlights=new Set(Array.isArray(s.selectedFlights)?s.selectedFlights:[]);
-      if (typeof caterings !== 'undefined') caterings=Array.isArray(s.caterings)?s.caterings:[];
-      if (typeof selectedCaterings !== 'undefined') selectedCaterings=new Set(Array.isArray(s.selectedCaterings)?s.selectedCaterings:[]);
-      if (typeof selectedASL737 !== 'undefined') selectedASL737=new Set(Array.isArray(s.selectedASL737)?s.selectedASL737:[]);
-      if (typeof selectedASL737Initialized !== 'undefined') selectedASL737Initialized=new Set(Array.isArray(s.selectedASL737Initialized)?s.selectedASL737Initialized:[]);
-      if (typeof flightOverrides !== 'undefined') flightOverrides=s.flightOverrides && typeof s.flightOverrides==='object'?s.flightOverrides:{};
-      if (typeof blankWorksheets !== 'undefined') blankWorksheets=Array.isArray(s.blankWorksheets)?s.blankWorksheets:[];
-      if (typeof blankWorksheetCounter !== 'undefined') blankWorksheetCounter=Number(s.blankWorksheetCounter)||0;
-      if (typeof lastDepartures !== 'undefined') lastDepartures=Array.isArray(s.lastDepartures)?s.lastDepartures:[];
+
+      if (typeof flights !== 'undefined') flights=Array.isArray(s.state.flights)?s.state.flights:[];
+      if (typeof selectedFlights !== 'undefined') selectedFlights=new Set(Array.isArray(s.state.selectedFlights)?s.state.selectedFlights:[]);
+      if (typeof caterings !== 'undefined') caterings=Array.isArray(s.state.caterings)?s.state.caterings:[];
+      if (typeof selectedCaterings !== 'undefined') selectedCaterings=new Set(Array.isArray(s.state.selectedCaterings)?s.state.selectedCaterings:[]);
+      if (typeof selectedASL737 !== 'undefined') selectedASL737=new Set(Array.isArray(s.state.selectedASL737)?s.state.selectedASL737:[]);
+      if (typeof selectedASL737Initialized !== 'undefined') selectedASL737Initialized=new Set(Array.isArray(s.state.selectedASL737Initialized)?s.state.selectedASL737Initialized:[]);
+      if (typeof flightOverrides !== 'undefined') flightOverrides=s.state.flightOverrides && typeof s.state.flightOverrides==='object'?s.state.flightOverrides:{};
+      if (typeof blankWorksheets !== 'undefined') blankWorksheets=Array.isArray(s.state.blankWorksheets)?s.state.blankWorksheets:[];
+      if (typeof blankWorksheetCounter !== 'undefined') blankWorksheetCounter=Number(s.state.blankWorksheetCounter)||0;
+      if (typeof lastDepartures !== 'undefined') lastDepartures=Array.isArray(s.state.lastDepartures)?s.state.lastDepartures:[];
 
       if (typeof renderFlights === 'function') renderFlights();
       if (typeof renderCaterings === 'function') renderCaterings();
-      if (typeof renderASL737 === 'function') renderASL737();
       if (typeof updateCateringCount === 'function') updateCateringCount();
       if (typeof updateSelectedCount === 'function') updateSelectedCount();
-      if (typeof goToStep === 'function' && Number.isFinite(Number(s.currentStep))) goToStep(Number(s.currentStep));
+      if (typeof goToStep === 'function' && Number.isFinite(Number(s.state.currentStep)))
+        goToStep(Number(s.state.currentStep));
+
+      woLggLastCloudUpdatedAt=s.updated_at || null;
+      woLggLastLocalFingerprint=woLggFingerprint(woLggBuildSessionState());
+      return true;
     } finally {
       woLggSessionHydrating=false;
     }
   }
 
-  async function woLggClaimActiveDevice(){
-    if (!woLggUser || woLggVisitorMode) return false;
-    const {data,error}=await woLggSupabase.rpc('claim_active_device',{p_device_id:woLggGetDeviceId()});
-    if(error){ console.warn('WO-LGG device claim:',error.message); return false; }
-    woLggSessionVersion=Number(data);
+  async function woLggSaveCloudSession(force=false){
+    if (woLggSessionHydrating || !woLggUser || woLggVisitorMode) return false;
+    const state=woLggBuildSessionState();
+    if(!state) return false;
+
+    const fp=woLggFingerprint(state);
+    if(!force && fp===woLggLastLocalFingerprint) return false;
+
+    const now=new Date().toISOString();
+    const {data,error}=await woLggSupabase
+      .from('work_sessions')
+      .upsert({
+        user_id:woLggUser.id,
+        state,
+        updated_at:now
+      },{onConflict:'user_id'})
+      .select('updated_at')
+      .single();
+
+    if(error){
+      console.warn('WO-LGG session save:',error.message);
+      return false;
+    }
+
+    woLggLastLocalFingerprint=fp;
+    woLggLastCloudUpdatedAt=data?.updated_at || now;
     return true;
   }
 
-  async function woLggCheckActiveDevice(){
-    if (!woLggUser || woLggVisitorMode || woLggSessionVersion===null) return;
-    const {data,error}=await woLggSupabase
-      .from('active_devices')
-      .select('device_id,session_version')
-      .eq('user_id',woLggUser.id)
-      .maybeSingle();
-    if(error || !data) return;
-    if(String(data.device_id)!==String(woLggGetDeviceId()) || Number(data.session_version)!==Number(woLggSessionVersion)){
-      clearInterval(woLggSessionSaveTimer);
-      clearInterval(woLggSessionWatchTimer);
-      woLggSessionVersion=null;
-      woLggInitializedUserId=null;
-      woLggUser=null;
-      woLggProfile=null;
-      // IMPORTANT : ne jamais utiliser un signOut global ici.
-      // Sinon l'ancien appareil déconnecte aussi le nouvel appareil.
-      woLggSupabase.auth.signOut({scope:'local'}).catch(()=>{});
-      woLggShowLogin('Votre compte a été ouvert sur un autre ordinateur.');
+  async function woLggSyncCloudSession(){
+    if(woLggSessionHydrating || !woLggUser || woLggVisitorMode || woLggSyncInFlight) return;
+    woLggSyncInFlight=true;
+    try{
+      const localState=woLggBuildSessionState();
+      if(!localState) return;
+      const localFp=woLggFingerprint(localState);
+
+      const remote=await woLggReadCloudSession();
+      if(!remote){
+        await woLggSaveCloudSession(true);
+        return;
+      }
+
+      const remoteTime=remote.updated_at ? Date.parse(remote.updated_at) : 0;
+      const localTime=woLggLastCloudUpdatedAt ? Date.parse(woLggLastCloudUpdatedAt) : 0;
+
+      // If the cloud has changed since our last known cloud version, hydrate it.
+      if(remoteTime > localTime){
+        woLggApplyCloudState(remote);
+        return;
+      }
+
+      // Otherwise only push if this browser actually changed its state.
+      if(localFp !== woLggLastLocalFingerprint){
+        await woLggSaveCloudSession(true);
+      }
+    } finally {
+      woLggSyncInFlight=false;
     }
   }
 
   function woLggStartCloudSession(){
     clearInterval(woLggSessionSaveTimer);
-    clearInterval(woLggSessionWatchTimer);
-    woLggSessionSaveTimer=setInterval(woLggSaveCloudSession,3000);
-    woLggSessionWatchTimer=setInterval(woLggCheckActiveDevice,5000);
+    clearInterval(woLggSessionSyncTimer);
+    // Frequent sync makes the "phone -> computer" test effectively immediate.
+    woLggSessionSyncTimer=setInterval(woLggSyncCloudSession,2000);
+    woLggSessionSaveTimer=setInterval(()=>woLggSaveCloudSession(false),3000);
   }
 
   async function woLggInitializeCloudSession(){
     if(!woLggUser || woLggVisitorMode) return;
-    if(woLggInitializedUserId === woLggUser.id) return;
+    if(woLggInitializedUserId===woLggUser.id) return;
     if(woLggCloudInitPromise) return woLggCloudInitPromise;
 
     const userId=woLggUser.id;
     woLggCloudInitPromise=(async()=>{
-      await woLggClaimActiveDevice();
-      // Load first, then save. This prevents a fresh browser from overwriting
-      // the cloud session with its default empty state.
-      await woLggLoadCloudSession();
-      await woLggSaveCloudSession();
+      const remote=await woLggReadCloudSession();
+
+      // Always hydrate the existing cloud session before starting the
+      // background synchronizer. A new browser must never overwrite it with
+      // its default empty state.
+      if(remote && remote.state) {
+        woLggApplyCloudState(remote);
+      } else {
+        await woLggSaveCloudSession(true);
+      }
+
       woLggInitializedUserId=userId;
       woLggStartCloudSession();
     })().catch(err=>{
@@ -1229,7 +1262,7 @@ async function woLggLogout(){
       // La sauvegarde périodique a déjà enregistré l'état le plus récent.
       // Aucun token Supabase persistant n'est utilisé : sessionStorage uniquement.
       clearInterval(woLggSessionSaveTimer);
-      clearInterval(woLggSessionWatchTimer);
+      clearInterval(woLggSessionSyncTimer);
     }
   });
 </script>
