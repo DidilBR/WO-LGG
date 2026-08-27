@@ -493,6 +493,7 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
       <button class="tdot"        data-theme="sunset"  title="🌅 Sunset"  style="background:linear-gradient(135deg,#ff9900,#ff5500)"></button>
     </div>
     <div id="wo-lgg-identity" style="display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--b2);border-radius:20px;padding:5px 10px;font-family:var(--mono);font-size:9px;line-height:1.1"><span style="color:var(--a1);font-weight:800">●</span><span id="wo-lgg-user-name">Adil</span><span style="color:var(--t3)">·</span><span id="wo-lgg-user-role" style="color:var(--t2)">ADMIN</span></div>
+    <button id="wo-lgg-logout-btn" type="button" onclick="woLggLogout()" title="Se déconnecter" style="display:none;margin-left:6px;background:transparent;border:1px solid var(--b2);border-radius:9px;color:var(--t2);padding:7px 9px;font-family:var(--mono);font-size:9px;font-weight:800;cursor:pointer;transition:.2s" onmouseenter="this.style.borderColor='var(--a1)';this.style.color='var(--a1)'" onmouseleave="this.style.borderColor='var(--b2)';this.style.color='var(--t2)'">⎋ DÉCONNEXION</button>
     <div class="step-pill" id="step-indicator">ETAPE 1 / 3</div>
     <button onclick="openLayoutSettings()" title="Changer l'interface" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:14px;cursor:pointer;padding:6px 9px;line-height:1">&#10024;</button>
     <button onclick="openShiftSettings()" title="Regler les horaires de shift" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:15px;cursor:pointer;padding:6px 9px;line-height:1">&#9881;</button>
@@ -913,6 +914,16 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     <div style="display:flex;gap:12px;margin-top:24px;justify-content:center" class="no-print">
       <button onclick="printSheet()" style="background:#111;color:#fff;border:none;padding:13px 28px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Imprimer / PDF</button>
       <button onclick="closePrintOverlay()" style="background:transparent;color:#888;border:1px solid #ccc;padding:13px 22px;border-radius:8px;font-size:13px;cursor:pointer">Fermer</button>
+    <button type="button" id="wo-lgg-visitor-btn"
+      onclick="woLggContinueAsVisitor()"
+      style="width:100%;margin-top:10px;background:transparent;border:1px solid var(--b2);border-radius:10px;color:var(--t2);padding:11px 16px;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;transition:.2s"
+      onmouseenter="this.style.borderColor='var(--a1)';this.style.color='var(--a1)';this.style.background='rgba(0,212,255,.05)'"
+      onmouseleave="this.style.borderColor='var(--b2)';this.style.color='var(--t2)';this.style.background='transparent'">
+      Continuer en tant que visiteur
+    </button>
+    <div style="margin-top:8px;text-align:center;font-family:var(--mono);font-size:8px;color:var(--t3)">
+      Session temporaire · aucune donnée ne sera enregistrée sur votre compte
+    </div>
     </div>
   </div>
 </div>
@@ -921,7 +932,15 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 <script>
   const WO_LGG_SUPABASE_URL = 'https://yxvtocclrtfznjcuzqjz.supabase.co';
   const WO_LGG_SUPABASE_KEY = 'sb_publishable_yLXgeSWU7xPOQhg9fLsntA_M0zi-qTe';
-  const woLggSupabase = window.supabase.createClient(WO_LGG_SUPABASE_URL, WO_LGG_SUPABASE_KEY);
+  /* Auth navigateur volontairement éphémère : la session Supabase est conservée uniquement dans cet onglet/app. */
+  const woLggSupabase = window.supabase.createClient(WO_LGG_SUPABASE_URL, WO_LGG_SUPABASE_KEY, {
+    auth: {
+      storage: window.sessionStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false
+    }
+  });
   let woLggUser = null, woLggProfile = null;
   async function woLggLoadIdentity(){
     const {data:{session},error}=await woLggSupabase.auth.getSession();
@@ -934,16 +953,59 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     if(error||!profile){woLggShowLogin(error?'Profil inaccessible.':'Compte non initialisé dans WO-LGG.');return;}
     woLggProfile=profile; woLggHideLogin(); woLggShowIdentity();
   }
-  function woLggShowLogin(message){const o=document.getElementById('wo-lgg-auth-overlay');if(o)o.style.display='flex';const m=document.getElementById('wo-lgg-auth-message');if(m)m.textContent=message||'';}
+  function woLggShowLogin(message){
+    const o=document.getElementById('wo-lgg-auth-overlay'),b=document.getElementById('wo-lgg-logout-btn');
+    if(o)o.style.display='flex';
+    if(b)b.style.display='none';
+    const m=document.getElementById('wo-lgg-auth-message');if(m)m.textContent=message||'';
+  }
   function woLggHideLogin(){const o=document.getElementById('wo-lgg-auth-overlay');if(o)o.style.display='none';}
-  function woLggShowIdentity(){const n=document.getElementById('wo-lgg-user-name'),r=document.getElementById('wo-lgg-user-role');if(n)n.textContent=woLggProfile?.display_name||'';if(r)r.textContent=woLggProfile?.role||'';}
+  function woLggShowIdentity(){
+    const n=document.getElementById('wo-lgg-user-name'),r=document.getElementById('wo-lgg-user-role'),b=document.getElementById('wo-lgg-logout-btn');
+    if(n)n.textContent=woLggProfile?.display_name||'';
+    if(r)r.textContent=woLggProfile?.role||'';
+    if(b)b.style.display='inline-flex';
+  }
   async function woLggLogin(){
     const email=document.getElementById('wo-lgg-email').value.trim(),password=document.getElementById('wo-lgg-password').value,m=document.getElementById('wo-lgg-auth-message');
     if(!email||!password){m.textContent='Entre ton e-mail et ton mot de passe.';return;} m.textContent='Connexion…';
     const {data,error}=await woLggSupabase.auth.signInWithPassword({email,password});
     if(error){m.textContent='Connexion refusée : '+error.message;return;} await woLggAcceptSession(data.user);
   }
-  woLggSupabase.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT'){woLggUser=null;woLggProfile=null;woLggShowLogin();}});
+  
+  // ── Mode Visiteur : aucune authentification ni persistance cloud ──
+  let woLggVisitorMode = false;
+
+  function woLggContinueAsVisitor(){
+    woLggVisitorMode = true;
+    woLggUser = null;
+    woLggProfile = { display_name:'Visiteur', role:'VISITOR' };
+
+    const overlay = document.getElementById('wo-lgg-auth-overlay');
+    if (overlay) overlay.style.display = 'none';
+
+    const n = document.getElementById('wo-lgg-user-name');
+    const r = document.getElementById('wo-lgg-user-role');
+    const btn = document.getElementById('wo-lgg-logout-btn');
+
+    if (n) n.textContent = 'Visiteur';
+    if (r) r.textContent = 'VISITEUR';
+    if (btn) btn.style.display = 'inline-flex';
+  }
+
+async function woLggLogout(){
+    const b=document.getElementById('wo-lgg-logout-btn');
+    if(b){b.disabled=true;b.textContent='⏳ DÉCONNEXION…';}
+    if (!woLggVisitorMode) await woLggSupabase.auth.signOut();
+    woLggUser=null; woLggProfile=null; woLggVisitorMode=false;
+    woLggShowLogin();
+    if(b){b.disabled=false;b.textContent='⎋ DÉCONNEXION';}
+  }
+  woLggSupabase.auth.onAuthStateChange((event)=>{
+    if(event==='SIGNED_OUT' && !woLggVisitorMode){
+      woLggUser=null;woLggProfile=null;woLggShowLogin();
+    }
+  });
   document.addEventListener('DOMContentLoaded',woLggLoadIdentity);
 </script>
 <script>
