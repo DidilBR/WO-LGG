@@ -471,6 +471,16 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     <label class="field-label">Mot de passe</label><input type="password" id="wo-lgg-password" autocomplete="current-password" placeholder="mot de passe" onkeydown="if(event.key==='Enter')woLggLogin()" style="margin-bottom:12px">
     <div id="wo-lgg-auth-message" style="min-height:18px;font-size:12px;color:var(--red);margin-bottom:12px"></div>
     <button class="btn btn-primary" style="width:100%" onclick="woLggLogin()">Se connecter</button>
+
+    <button type="button" id="wo-lgg-visitor-btn" onclick="woLggContinueAsVisitor()"
+      style="width:100%;margin-top:10px;background:transparent;border:1px solid rgba(0,212,255,.28);border-radius:10px;color:var(--t1);padding:11px 16px;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;transition:.2s"
+      onmouseenter="this.style.borderColor='var(--a1)';this.style.color='var(--a1)';this.style.background='rgba(0,212,255,.06)'"
+      onmouseleave="this.style.borderColor='rgba(0,212,255,.28)';this.style.color='var(--t1)';this.style.background='transparent'">
+      Continuer en tant que visiteur
+    </button>
+    <div style="margin-top:8px;text-align:center;font-family:var(--mono);font-size:8px;color:var(--t3)">
+      Session temporaire · aucune donnée de compte ne sera enregistrée
+    </div>
   </div>
 </div>
 
@@ -914,16 +924,11 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     <div style="display:flex;gap:12px;margin-top:24px;justify-content:center" class="no-print">
       <button onclick="printSheet()" style="background:#111;color:#fff;border:none;padding:13px 28px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Imprimer / PDF</button>
       <button onclick="closePrintOverlay()" style="background:transparent;color:#888;border:1px solid #ccc;padding:13px 22px;border-radius:8px;font-size:13px;cursor:pointer">Fermer</button>
-    <button type="button" id="wo-lgg-visitor-btn"
-      onclick="woLggContinueAsVisitor()"
-      style="width:100%;margin-top:10px;background:transparent;border:1px solid var(--b2);border-radius:10px;color:var(--t2);padding:11px 16px;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;transition:.2s"
-      onmouseenter="this.style.borderColor='var(--a1)';this.style.color='var(--a1)';this.style.background='rgba(0,212,255,.05)'"
-      onmouseleave="this.style.borderColor='var(--b2)';this.style.color='var(--t2)';this.style.background='transparent'">
-      Continuer en tant que visiteur
-    </button>
-    <div style="margin-top:8px;text-align:center;font-family:var(--mono);font-size:8px;color:var(--t3)">
-      Session temporaire · aucune donnée ne sera enregistrée sur votre compte
-    </div>
+<div id="wo-lgg-visitor-access" style="margin-top:12px">
+  <button type="button" onclick="woLggContinueAsVisitor()" style="width:100%;background:transparent;border:1px solid var(--b2);border-radius:10px;color:var(--t2);padding:11px 16px;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer">
+    Continuer en tant que visiteur
+  </button>
+</div>
     </div>
   </div>
 </div>
@@ -972,25 +977,21 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
     const {data,error}=await woLggSupabase.auth.signInWithPassword({email,password});
     if(error){m.textContent='Connexion refusée : '+error.message;return;} await woLggAcceptSession(data.user);
   }
-  
-  // ── Mode Visiteur : aucune authentification ni persistance cloud ──
-  let woLggVisitorMode = false;
 
+  // Visiteur : accès sans compte, uniquement pendant cette ouverture de page.
+  let woLggVisitorMode = false;
   function woLggContinueAsVisitor(){
     woLggVisitorMode = true;
     woLggUser = null;
     woLggProfile = { display_name:'Visiteur', role:'VISITOR' };
-
     const overlay = document.getElementById('wo-lgg-auth-overlay');
     if (overlay) overlay.style.display = 'none';
-
     const n = document.getElementById('wo-lgg-user-name');
     const r = document.getElementById('wo-lgg-user-role');
-    const btn = document.getElementById('wo-lgg-logout-btn');
-
+    const b = document.getElementById('wo-lgg-logout-btn');
     if (n) n.textContent = 'Visiteur';
     if (r) r.textContent = 'VISITEUR';
-    if (btn) btn.style.display = 'inline-flex';
+    if (b) b.style.display = 'inline-flex';
   }
 
 async function woLggLogout(){
@@ -1002,7 +1003,7 @@ async function woLggLogout(){
     if(b){b.disabled=false;b.textContent='⎋ DÉCONNEXION';}
   }
   woLggSupabase.auth.onAuthStateChange((event)=>{
-    if(event==='SIGNED_OUT' && !woLggVisitorMode){
+    if(event==='SIGNED_OUT'){
       woLggUser=null;woLggProfile=null;woLggShowLogin();
     }
   });
