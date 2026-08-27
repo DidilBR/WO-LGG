@@ -1048,7 +1048,8 @@ async function woLggLogout(){
     if(b){b.disabled=true;b.textContent='⏳ DÉCONNEXION…';}
     if (!woLggVisitorMode) await woLggSupabase.auth.signOut();
     clearInterval(woLggSessionSaveTimer); clearInterval(woLggSessionWatchTimer);
-    woLggSessionVersion=null; woLggUser=null; woLggProfile=null; woLggVisitorMode=false;
+    woLggSessionVersion=null; woLggInitializedUserId=null; woLggCloudInitPromise=null;
+    woLggUser=null; woLggProfile=null; woLggVisitorMode=false;
     woLggShowLogin();
     if(b){b.disabled=false;b.textContent='⎋ DÉCONNEXION';}
   }
@@ -1068,6 +1069,8 @@ async function woLggLogout(){
   let woLggSessionSaveTimer = null;
   let woLggSessionWatchTimer = null;
   let woLggSessionHydrating = false;
+  let woLggCloudInitPromise = null;
+  let woLggInitializedUserId = null;
 
   function woLggGetDeviceId(){
     if (woLggDeviceId) return woLggDeviceId;
@@ -1132,6 +1135,13 @@ async function woLggLogout(){
       const dateEl=document.getElementById('shift-date');
       if (dateEl && s.shiftDate) dateEl.value=s.shiftDate;
       if (typeof selectedShift !== 'undefined') selectedShift=s.selectedShift || null;
+      if (s.selectedShift?.name) {
+        const shiftBtn=document.querySelector('.shift-btn[data-shift="'+s.selectedShift.name+'"]');
+        if (shiftBtn) {
+          document.querySelectorAll('.shift-btn').forEach(b=>b.classList.remove('active'));
+          shiftBtn.classList.add('active');
+        }
+      }
       if (typeof flights !== 'undefined') flights=Array.isArray(s.flights)?s.flights:[];
       if (typeof selectedFlights !== 'undefined') selectedFlights=new Set(Array.isArray(s.selectedFlights)?s.selectedFlights:[]);
       if (typeof caterings !== 'undefined') caterings=Array.isArray(s.caterings)?s.caterings:[];
@@ -1174,6 +1184,7 @@ async function woLggLogout(){
       clearInterval(woLggSessionSaveTimer);
       clearInterval(woLggSessionWatchTimer);
       woLggSessionVersion=null;
+      woLggInitializedUserId=null;
       woLggUser=null;
       woLggProfile=null;
       // IMPORTANT : ne jamais utiliser un signOut global ici.
@@ -1192,10 +1203,25 @@ async function woLggLogout(){
 
   async function woLggInitializeCloudSession(){
     if(!woLggUser || woLggVisitorMode) return;
-    await woLggClaimActiveDevice();
-    await woLggLoadCloudSession();
-    await woLggSaveCloudSession();
-    woLggStartCloudSession();
+    if(woLggInitializedUserId === woLggUser.id) return;
+    if(woLggCloudInitPromise) return woLggCloudInitPromise;
+
+    const userId=woLggUser.id;
+    woLggCloudInitPromise=(async()=>{
+      await woLggClaimActiveDevice();
+      // Load first, then save. This prevents a fresh browser from overwriting
+      // the cloud session with its default empty state.
+      await woLggLoadCloudSession();
+      await woLggSaveCloudSession();
+      woLggInitializedUserId=userId;
+      woLggStartCloudSession();
+    })().catch(err=>{
+      console.warn('WO-LGG cloud session initialization:',err);
+    }).finally(()=>{
+      woLggCloudInitPromise=null;
+    });
+
+    return woLggCloudInitPromise;
   }
 
   window.addEventListener('beforeunload',()=>{
