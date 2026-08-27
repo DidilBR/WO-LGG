@@ -471,6 +471,45 @@ header .logo-text{white-space:nowrap;overflow:visible}
 header .logo-sub{white-space:nowrap}
 </style>
 
+
+<style id="wo-lgg-header-overlap-fix">
+/* Header : le logo et les boutons de droite ne doivent jamais se chevaucher. */
+.header-inner{
+  max-width:920px;
+  width:calc(100% - 24px);
+  box-sizing:border-box;
+  gap:16px;
+}
+.logo-wrap{
+  flex:1 1 auto;
+  min-width:0;
+}
+.logo-wrap > div:last-child{min-width:0}
+.logo-text{white-space:nowrap;overflow:visible}
+.header-right{flex:0 0 auto;min-width:max-content}
+@media (max-width:760px){
+  .header-inner{padding:0 12px;gap:10px}
+  .logo-wrap{gap:8px}
+  .logo-text{font-size:12px}
+  .logo-sub{font-size:9px;letter-spacing:1.5px}
+  .header-right{gap:8px}
+  .theme-dots{gap:4px}
+  .tdot{width:12px;height:12px}
+  #wo-lgg-identity{padding:5px 8px!important}
+}
+@media (max-width:620px){
+  .header-inner{width:100%;padding:0 8px;gap:7px}
+  .logo-wrap{gap:6px}
+  .logo-wrap > button{padding:6px 8px!important}
+  .logo-icon{width:31px;height:31px;font-size:16px}
+  .logo-text{font-size:11px}
+  .logo-sub{font-size:8px;letter-spacing:1px}
+  .header-right{gap:5px}
+  .tdot{width:11px;height:11px}
+  #wo-lgg-identity{font-size:8px!important;padding:5px 7px!important}
+}
+</style>
+
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
