@@ -1176,7 +1176,9 @@ async function woLggLogout(){
       woLggSessionVersion=null;
       woLggUser=null;
       woLggProfile=null;
-      woLggSupabase.auth.signOut().catch(()=>{});
+      // IMPORTANT : ne jamais utiliser un signOut global ici.
+      // Sinon l'ancien appareil déconnecte aussi le nouvel appareil.
+      woLggSupabase.auth.signOut({scope:'local'}).catch(()=>{});
       woLggShowLogin('Votre compte a été ouvert sur un autre ordinateur.');
     }
   }
@@ -1185,13 +1187,14 @@ async function woLggLogout(){
     clearInterval(woLggSessionSaveTimer);
     clearInterval(woLggSessionWatchTimer);
     woLggSessionSaveTimer=setInterval(woLggSaveCloudSession,3000);
-    woLggSessionWatchTimer=setInterval(woLggCheckActiveDevice,4000);
+    woLggSessionWatchTimer=setInterval(woLggCheckActiveDevice,5000);
   }
 
   async function woLggInitializeCloudSession(){
     if(!woLggUser || woLggVisitorMode) return;
     await woLggClaimActiveDevice();
     await woLggLoadCloudSession();
+    await woLggSaveCloudSession();
     woLggStartCloudSession();
   }
 
