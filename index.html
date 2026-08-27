@@ -1005,7 +1005,7 @@ header .logo-sub{white-space:nowrap}
     woLggUser=user;
     const {data:profile,error}=await woLggSupabase.from('profiles').select('display_name,role').eq('id',user.id).maybeSingle();
     if(error||!profile){woLggShowLogin(error?'Profil inaccessible.':'Compte non initialisé dans WO-LGG.');return;}
-    woLggProfile=profile; woLggHideLogin(); woLggShowIdentity();
+    woLggProfile=profile; woLggHideLogin(); woLggShowIdentity(); await woLggInitializeCloudSession();
   }
   function woLggShowLogin(message){
     const o=document.getElementById('wo-lgg-auth-overlay'),b=document.getElementById('wo-lgg-logout-btn');
@@ -1047,16 +1047,162 @@ async function woLggLogout(){
     const b=document.getElementById('wo-lgg-logout-btn');
     if(b){b.disabled=true;b.textContent='⏳ DÉCONNEXION…';}
     if (!woLggVisitorMode) await woLggSupabase.auth.signOut();
-    woLggUser=null; woLggProfile=null; woLggVisitorMode=false;
+    clearInterval(woLggSessionSaveTimer); clearInterval(woLggSessionWatchTimer);
+    woLggSessionVersion=null; woLggUser=null; woLggProfile=null; woLggVisitorMode=false;
     woLggShowLogin();
     if(b){b.disabled=false;b.textContent='⎋ DÉCONNEXION';}
   }
   woLggSupabase.auth.onAuthStateChange((event)=>{
-    if(event==='SIGNED_OUT'){
+    if(event==='SIGNED_OUT' && !woLggVisitorMode){
       woLggUser=null;woLggProfile=null;woLggShowLogin();
     }
   });
   document.addEventListener('DOMContentLoaded',woLggLoadIdentity);
+
+</script>
+<script>
+  // ── WO-LGG : session cloud par compte + un seul appareil actif ──────
+  // Les visiteurs ne passent jamais par cette couche.
+  let woLggDeviceId = null;
+  let woLggSessionVersion = null;
+  let woLggSessionSaveTimer = null;
+  let woLggSessionWatchTimer = null;
+  let woLggSessionHydrating = false;
+
+  function woLggGetDeviceId(){
+    if (woLggDeviceId) return woLggDeviceId;
+    try {
+      woLggDeviceId = sessionStorage.getItem('wo_lgg_device_id');
+      if (!woLggDeviceId) {
+        woLggDeviceId = (crypto && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : 'device-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+        sessionStorage.setItem('wo_lgg_device_id', woLggDeviceId);
+      }
+    } catch(e) {
+      woLggDeviceId = 'device-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    }
+    return woLggDeviceId;
+  }
+
+  function woLggBuildSessionState(){
+    if (!woLggUser || woLggVisitorMode) return null;
+    return {
+      version: 1,
+      currentStep: (typeof currentStep !== 'undefined' ? currentStep : 1),
+      shiftDate: document.getElementById('shift-date')?.value || '',
+      selectedShift: (typeof selectedShift !== 'undefined' ? selectedShift : null),
+      flights: (typeof flights !== 'undefined' ? flights : []),
+      selectedFlights: (typeof selectedFlights !== 'undefined' ? Array.from(selectedFlights) : []),
+      caterings: (typeof caterings !== 'undefined' ? caterings : []),
+      selectedCaterings: (typeof selectedCaterings !== 'undefined' ? Array.from(selectedCaterings) : []),
+      selectedASL737: (typeof selectedASL737 !== 'undefined' ? Array.from(selectedASL737) : []),
+      selectedASL737Initialized: (typeof selectedASL737Initialized !== 'undefined' ? Array.from(selectedASL737Initialized) : []),
+      flightOverrides: (typeof flightOverrides !== 'undefined' ? flightOverrides : {}),
+      blankWorksheets: (typeof blankWorksheets !== 'undefined' ? blankWorksheets : []),
+      blankWorksheetCounter: (typeof blankWorksheetCounter !== 'undefined' ? blankWorksheetCounter : 0),
+      lastDepartures: (typeof lastDepartures !== 'undefined' ? lastDepartures : [])
+    };
+  }
+
+  async function woLggSaveCloudSession(){
+    if (woLggSessionHydrating || !woLggUser || woLggVisitorMode) return;
+    const state = woLggBuildSessionState();
+    if (!state) return;
+    const {error} = await woLggSupabase
+      .from('work_sessions')
+      .upsert({user_id: woLggUser.id, state, updated_at: new Date().toISOString()}, {onConflict:'user_id'});
+    if (error) console.warn('WO-LGG session save:', error.message);
+  }
+
+  async function woLggLoadCloudSession(){
+    if (!woLggUser || woLggVisitorMode) return;
+    const {data,error} = await woLggSupabase
+      .from('work_sessions')
+      .select('state')
+      .eq('user_id',woLggUser.id)
+      .maybeSingle();
+    if (error) { console.warn('WO-LGG session load:', error.message); return; }
+    const s=data?.state;
+    if (!s || s.version !== 1) return;
+
+    woLggSessionHydrating = true;
+    try {
+      if (typeof currentStep !== 'undefined' && Number.isFinite(Number(s.currentStep))) currentStep=Number(s.currentStep);
+      const dateEl=document.getElementById('shift-date');
+      if (dateEl && s.shiftDate) dateEl.value=s.shiftDate;
+      if (typeof selectedShift !== 'undefined') selectedShift=s.selectedShift || null;
+      if (typeof flights !== 'undefined') flights=Array.isArray(s.flights)?s.flights:[];
+      if (typeof selectedFlights !== 'undefined') selectedFlights=new Set(Array.isArray(s.selectedFlights)?s.selectedFlights:[]);
+      if (typeof caterings !== 'undefined') caterings=Array.isArray(s.caterings)?s.caterings:[];
+      if (typeof selectedCaterings !== 'undefined') selectedCaterings=new Set(Array.isArray(s.selectedCaterings)?s.selectedCaterings:[]);
+      if (typeof selectedASL737 !== 'undefined') selectedASL737=new Set(Array.isArray(s.selectedASL737)?s.selectedASL737:[]);
+      if (typeof selectedASL737Initialized !== 'undefined') selectedASL737Initialized=new Set(Array.isArray(s.selectedASL737Initialized)?s.selectedASL737Initialized:[]);
+      if (typeof flightOverrides !== 'undefined') flightOverrides=s.flightOverrides && typeof s.flightOverrides==='object'?s.flightOverrides:{};
+      if (typeof blankWorksheets !== 'undefined') blankWorksheets=Array.isArray(s.blankWorksheets)?s.blankWorksheets:[];
+      if (typeof blankWorksheetCounter !== 'undefined') blankWorksheetCounter=Number(s.blankWorksheetCounter)||0;
+      if (typeof lastDepartures !== 'undefined') lastDepartures=Array.isArray(s.lastDepartures)?s.lastDepartures:[];
+
+      if (typeof renderFlights === 'function') renderFlights();
+      if (typeof renderCaterings === 'function') renderCaterings();
+      if (typeof renderASL737 === 'function') renderASL737();
+      if (typeof updateCateringCount === 'function') updateCateringCount();
+      if (typeof updateSelectedCount === 'function') updateSelectedCount();
+      if (typeof goToStep === 'function' && Number.isFinite(Number(s.currentStep))) goToStep(Number(s.currentStep));
+    } finally {
+      woLggSessionHydrating=false;
+    }
+  }
+
+  async function woLggClaimActiveDevice(){
+    if (!woLggUser || woLggVisitorMode) return false;
+    const {data,error}=await woLggSupabase.rpc('claim_active_device',{p_device_id:woLggGetDeviceId()});
+    if(error){ console.warn('WO-LGG device claim:',error.message); return false; }
+    woLggSessionVersion=Number(data);
+    return true;
+  }
+
+  async function woLggCheckActiveDevice(){
+    if (!woLggUser || woLggVisitorMode || woLggSessionVersion===null) return;
+    const {data,error}=await woLggSupabase
+      .from('active_devices')
+      .select('device_id,session_version')
+      .eq('user_id',woLggUser.id)
+      .maybeSingle();
+    if(error || !data) return;
+    if(String(data.device_id)!==String(woLggGetDeviceId()) || Number(data.session_version)!==Number(woLggSessionVersion)){
+      clearInterval(woLggSessionSaveTimer);
+      clearInterval(woLggSessionWatchTimer);
+      woLggSessionVersion=null;
+      woLggUser=null;
+      woLggProfile=null;
+      woLggSupabase.auth.signOut().catch(()=>{});
+      woLggShowLogin('Votre compte a été ouvert sur un autre ordinateur.');
+    }
+  }
+
+  function woLggStartCloudSession(){
+    clearInterval(woLggSessionSaveTimer);
+    clearInterval(woLggSessionWatchTimer);
+    woLggSessionSaveTimer=setInterval(woLggSaveCloudSession,3000);
+    woLggSessionWatchTimer=setInterval(woLggCheckActiveDevice,4000);
+  }
+
+  async function woLggInitializeCloudSession(){
+    if(!woLggUser || woLggVisitorMode) return;
+    await woLggClaimActiveDevice();
+    await woLggLoadCloudSession();
+    woLggStartCloudSession();
+  }
+
+  window.addEventListener('beforeunload',()=>{
+    if(woLggUser && !woLggVisitorMode) {
+      // La sauvegarde périodique a déjà enregistré l'état le plus récent.
+      // Aucun token Supabase persistant n'est utilisé : sessionStorage uniquement.
+      clearInterval(woLggSessionSaveTimer);
+      clearInterval(woLggSessionWatchTimer);
+    }
+  });
 </script>
 <script>
   let selectedShift = null;
