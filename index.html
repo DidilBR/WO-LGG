@@ -461,6 +461,16 @@ input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4)}
 }
 </style>
 
+
+<style id="wo-lgg-header-logo-fix">
+/* Empêche le titre du logo de se faire écraser par les éléments de droite. */
+header .header-inner{min-width:0}
+header .logo-wrap{flex:0 0 auto;min-width:max-content}
+header .logo-wrap > div:last-child{flex:0 0 auto;min-width:max-content}
+header .logo-text{white-space:nowrap;overflow:visible}
+header .logo-sub{white-space:nowrap}
+</style>
+
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -2457,6 +2467,7 @@ function restoreActiveTextField(saved) {
         var f2eg = (f2.reg||'').toUpperCase();
         return (
           f2._manualASL737 === true ||
+          f2eg === 'OEIXK' ||
           (f2lt.startsWith('TAY') && f2eg.startsWith('OEI') && !ASL_B744_DISP.includes(f2eg)) ||
           (f2lt.startsWith('TAY') && (f2nd.includes('FEDEX') || f2nd.includes('AERO')) && !ASL_B744_DISP.includes(f2eg)) ||
           (f2lt.startsWith('FDX') && (f2nd.includes('FEDEX') || f2nd.includes('AERO'))) ||
@@ -3359,6 +3370,7 @@ ${(function(){
       var ASL_B744_W = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
       var isASL737 = (
         f._manualASL737 === true ||
+        reg2 === 'OEIXK' ||
         (flt.startsWith('TAY') && reg2.startsWith('OEI') && !ASL_B744_W.includes(reg2)) ||
         (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_W.includes(reg2)) ||
         (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
@@ -3735,6 +3747,7 @@ ${(function(){
       var reg = (f.reg||'').toUpperCase();
       return (
         f._manualASL737 === true ||
+        reg === 'OEIXK' ||
         (flt.startsWith('TAY') && reg.startsWith('OEI') && !ASL_B744_ONLY.includes(reg)) ||
         (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_ONLY.includes(reg)) ||
         (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
