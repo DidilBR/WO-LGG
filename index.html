@@ -1980,9 +1980,16 @@ async function woLggLogout(){
         }
       });
 
+      const oldSelectionSignature = JSON.stringify(Array.from(selectedFlights).sort((a,b)=>a-b));
+      const newSelectionSignature = JSON.stringify(Array.from(newSelected).sort((a,b)=>a-b));
+      const oldFlightSignature = JSON.stringify(flights.map(f => ({flight:f.flight,time:f.time,stand:f.stand,reg:f.reg,handler:f.handler,remarks:f.remarks,manual:f.manual})));
+      const newFlightSignature = JSON.stringify(merged.map(f => ({flight:f.flight,time:f.time,stand:f.stand,reg:f.reg,handler:f.handler,remarks:f.remarks,manual:f.manual})));
+
       flights = merged;
       selectedFlights = newSelected;
-      renderFlights();
+      if (oldFlightSignature !== newFlightSignature || oldSelectionSignature !== newSelectionSignature) {
+        renderFlights();
+      }
       showRefreshBadge(diff);
     } catch (e) {
       console.warn('checkForFlightUpdates: echec silencieux', e);
@@ -2541,8 +2548,21 @@ function restoreActiveTextField(saved) {
 
   function renderFlights() {
     const list = document.getElementById('flights-list');
+    // Re-rendering the flight cards must NEVER move the user on the page.
+    // Auto-sync can run while the user is several screens down on mobile.
+    const savedWindowScrollY = window.scrollY || window.pageYOffset || 0;
+    const savedListScrollTop = list ? list.scrollTop : 0;
     const savedCheckboxStates = captureCheckboxStates(list);
     const savedRemarksFocus = captureActiveTextField(list);
+
+    const restoreScrollPosition = () => {
+      try {
+        window.scrollTo({ top: savedWindowScrollY, left: 0, behavior: 'instant' });
+      } catch (e) {
+        window.scrollTo(0, savedWindowScrollY);
+      }
+      if (list) list.scrollTop = savedListScrollTop;
+    };
     document.getElementById('count-total').textContent = flights.length;
     updateSelectedCount();
 
@@ -2552,6 +2572,8 @@ function restoreActiveTextField(saved) {
           <div class="icon">✈</div>
           <p>Aucun vol détecté — ajoute-les manuellement ci-dessous</p>
         </div>`;
+      restoreScrollPosition();
+      requestAnimationFrame(restoreScrollPosition);
       return;
     }
 
@@ -2565,6 +2587,8 @@ function restoreActiveTextField(saved) {
 
     if (indices.length === 0) {
       list.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>Aucun vol ne correspond à la recherche</p></div>';
+      restoreScrollPosition();
+      requestAnimationFrame(restoreScrollPosition);
       return;
     }
 
@@ -2658,6 +2682,9 @@ function restoreActiveTextField(saved) {
     restoreCheckboxStates(savedCheckboxStates);
     restoreActiveTextField(savedRemarksFocus);
     attachSwipeHandlers(list);
+    restoreScrollPosition();
+    requestAnimationFrame(restoreScrollPosition);
+
   }
 
   function toggleFlight(i) {
