@@ -1047,7 +1047,7 @@ async function woLggLogout(){
     const b=document.getElementById('wo-lgg-logout-btn');
     if(b){b.disabled=true;b.textContent='⏳ DÉCONNEXION…';}
     if (!woLggVisitorMode) await woLggSupabase.auth.signOut();
-    clearInterval(woLggSessionSaveTimer); clearInterval(woLggSessionSyncTimer);
+    clearInterval(woLggSessionSaveTimer); clearInterval(woLggSessionSyncTimer); clearTimeout(woLggSaveDebounce); woLggStopRealtime();
     woLggInitializedUserId=null; woLggCloudInitPromise=null; woLggLastCloudUpdatedAt=null; woLggLastLocalFingerprint=null; woLggLastKnownCloudFingerprint=null; woLggLocalDirty=false;
     woLggUser=null; woLggProfile=null; woLggVisitorMode=false;
     woLggShowLogin();
@@ -1077,6 +1077,7 @@ async function woLggLogout(){
   let woLggLocalDirty = false;
   let woLggSyncInFlight = false;
   let woLggSaveDebounce = null;
+  let woLggRealtimeChannel = null;
 
   function woLggBuildSessionState(){
     if (!woLggUser || woLggVisitorMode) return null;
@@ -1174,15 +1175,13 @@ async function woLggLogout(){
     if(!force && fp===woLggLastLocalFingerprint) return false;
 
     const now=new Date().toISOString();
-    const {data,error}=await woLggSupabase
+    const {error}=await woLggSupabase
       .from('work_sessions')
       .upsert({
         user_id:woLggUser.id,
         state,
         updated_at:now
-      },{onConflict:'user_id'})
-      .select('updated_at')
-      .single();
+      },{onConflict:'user_id'});
 
     if(error){
       console.warn('WO-LGG session save:',error.message);
@@ -1191,7 +1190,7 @@ async function woLggLogout(){
 
     woLggLastLocalFingerprint=fp;
     woLggLastKnownCloudFingerprint=fp;
-    woLggLastCloudUpdatedAt=data?.updated_at || now;
+    woLggLastCloudUpdatedAt=now;
     woLggLocalDirty=false;
     return true;
   }
@@ -1260,12 +1259,59 @@ async function woLggLogout(){
     },true);
   }
 
+  function woLggStopRealtime(){
+    if(woLggRealtimeChannel){
+      try { woLggSupabase.removeChannel(woLggRealtimeChannel); } catch(e) {}
+      woLggRealtimeChannel=null;
+    }
+  }
+
+  function woLggStartRealtime(){
+    woLggStopRealtime();
+    if(!woLggUser || woLggVisitorMode) return;
+
+    const userId=woLggUser.id;
+    woLggRealtimeChannel=woLggSupabase
+      .channel('wo-lgg-session-'+userId)
+      .on('postgres_changes',{
+        event:'*',
+        schema:'public',
+        table:'work_sessions',
+        filter:'user_id=eq.'+userId
+      },payload=>{
+        if(!payload || !payload.new || !payload.new.state) return;
+        const incoming=payload.new;
+        const incomingFp=woLggFingerprint(incoming.state);
+
+        // Ignore our own echo. If the user is typing locally, the local
+        // version remains authoritative until it has been saved.
+        if(incomingFp===woLggLastLocalFingerprint){
+          woLggLastCloudUpdatedAt=incoming.updated_at || woLggLastCloudUpdatedAt;
+          woLggLastKnownCloudFingerprint=incomingFp;
+          return;
+        }
+
+        if(woLggSessionHydrating || woLggLocalDirty) return;
+
+        const incomingTime=incoming.updated_at ? Date.parse(incoming.updated_at) : 0;
+        const knownTime=woLggLastCloudUpdatedAt ? Date.parse(woLggLastCloudUpdatedAt) : 0;
+        if(incomingTime>=knownTime){
+          woLggApplyCloudState(incoming);
+          woLggLastKnownCloudFingerprint=incomingFp;
+        }
+      })
+      .subscribe(status=>{
+        console.log('WO-LGG Realtime:',status);
+      });
+  }
+
   function woLggStartCloudSession(){
     clearInterval(woLggSessionSaveTimer);
     clearInterval(woLggSessionSyncTimer);
     // Frequent sync makes the "phone -> computer" test effectively immediate.
     woLggSessionSyncTimer=setInterval(woLggSyncCloudSession,2000);
     woLggSessionSaveTimer=setInterval(()=>woLggSaveCloudSession(false),3000);
+    woLggStartRealtime();
   }
 
   async function woLggInitializeCloudSession(){
@@ -1301,7 +1347,13 @@ async function woLggLogout(){
 
   woLggInstallPersistenceHooks();
 
-  window.addEventListener('beforeunload',()=>{
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='hidden' && woLggUser && !woLggVisitorMode){
+      woLggSaveCloudSession(true);
+    }
+  });
+
+    window.addEventListener('beforeunload',()=>{
     if(woLggUser && !woLggVisitorMode) {
       // La sauvegarde périodique a déjà enregistré l'état le plus récent.
       // Aucun token Supabase persistant n'est utilisé : sessionStorage uniquement.
