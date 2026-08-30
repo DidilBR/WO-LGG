@@ -829,7 +829,7 @@ header .logo-sub{white-space:nowrap}
         Collez ici les lignes de catering depuis votre système.<br>
         Format : <span style="font-family:var(--mono);font-size:11px;color:var(--t1)">11-JUIL  QTR  A7BFO  QR8169  22H45  23H45  4</span>
       </div>
-      <textarea id="catering-text" placeholder="Collez les caterings ici (optionnel)..." style="width:100%;min-height:90px;resize:vertical;background:var(--bg2);border:1px solid rgba(0,229,160,.2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:11px;line-height:1.6;padding:13px 16px;outline:none"></textarea>
+      <textarea id="catering-text" placeholder="Collez les caterings ici (optionnel)..." oninput="if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('cateringText')" style="width:100%;min-height:90px;resize:vertical;background:var(--bg2);border:1px solid rgba(0,229,160,.2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:11px;line-height:1.6;padding:13px 16px;outline:none"></textarea>
     </div>
     <div class="actions">
       <button class="btn btn-ghost" onclick="goToStep(1)">&larr; Retour</button>
@@ -1123,8 +1123,10 @@ async function woLggLogout(){
       selectedFlights:typeof selectedFlights!=='undefined'?Array.from(selectedFlights):[],
       caterings:typeof caterings!=='undefined'?caterings:[],
       selectedCaterings:typeof selectedCaterings!=='undefined'?Array.from(selectedCaterings):[],
+      cateringText:document.getElementById('catering-text')?.value||'',
       selectedASL737:typeof selectedASL737!=='undefined'?Array.from(selectedASL737):[],
       selectedASL737Initialized:typeof selectedASL737Initialized!=='undefined'?Array.from(selectedASL737Initialized):[],
+      swissportSelections:(typeof getSwissportSelectionsForSnapshot==='function'?getSwissportSelectionsForSnapshot():{}),
       flightOverrides:typeof flightOverrides!=='undefined'?flightOverrides:{},
       blankWorksheets:typeof blankWorksheets!=='undefined'?blankWorksheets:[],
       blankWorksheetCounter:typeof blankWorksheetCounter!=='undefined'?blankWorksheetCounter:0,
@@ -1173,8 +1175,11 @@ async function woLggLogout(){
       if(typeof selectedFlights!=='undefined')selectedFlights=new Set(Array.isArray(s.selectedFlights)?s.selectedFlights:[]);
       if(typeof caterings!=='undefined')caterings=Array.isArray(s.caterings)?s.caterings:[];
       if(typeof selectedCaterings!=='undefined')selectedCaterings=new Set(Array.isArray(s.selectedCaterings)?s.selectedCaterings:[]);
+      const ct=document.getElementById('catering-text');
+      if(ct&&typeof s.cateringText==='string')ct.value=s.cateringText;
       if(typeof selectedASL737!=='undefined')selectedASL737=new Set(Array.isArray(s.selectedASL737)?s.selectedASL737:[]);
       if(typeof selectedASL737Initialized!=='undefined')selectedASL737Initialized=new Set(Array.isArray(s.selectedASL737Initialized)?s.selectedASL737Initialized:[]);
+      window.woLggCloudSwissportSelections=(s.swissportSelections&&typeof s.swissportSelections==='object')?s.swissportSelections:{};
       if(typeof flightOverrides!=='undefined')flightOverrides=s.flightOverrides&&typeof s.flightOverrides==='object'?s.flightOverrides:{};
       if(typeof blankWorksheets!=='undefined')blankWorksheets=Array.isArray(s.blankWorksheets)?s.blankWorksheets:[];
       if(typeof blankWorksheetCounter!=='undefined')blankWorksheetCounter=Number(s.blankWorksheetCounter)||0;
@@ -1727,6 +1732,7 @@ async function woLggLogout(){
     if (selectedCaterings.has(i)) selectedCaterings.delete(i);
     else selectedCaterings.add(i);
     renderCaterings();
+    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('toggleCatering');
   }
 
   function updateCateringCount() {
@@ -2577,10 +2583,32 @@ async function woLggLogout(){
       label + '</label></div>';
   }
 
-  // Les pills Swissport/WFS/SVA/LHA sont de vraies checkboxes DOM dont l'etat
-  // n'est pas stocke dans le tableau `flights` — on le sauvegarde avant de
-  // redessiner la liste (renderFlights) puis on le restaure juste apres,
-  // pour ne pas perdre les cases cochees quand on selectionne un autre vol.
+  // Les pills Swissport/WFS/SVA/LHA sont des checkboxes DOM. Leur état
+  // doit cependant voyager avec la session Supabase, sinon un autre appareil
+  // reconstruit les vols mais perd les choix FT/CLN/LAV/WAT/HDS.
+  function swissportFlightKey(f) {
+    return String((f?.flight||'')+'|'+(f?.reg||'')).toUpperCase();
+  }
+
+  function getSwissportSelectionsForSnapshot() {
+    const out = {};
+    if (typeof flights === 'undefined' || !Array.isArray(flights)) return out;
+    flights.forEach((f, i) => {
+      const hnd = String(f.handler||'').toUpperCase();
+      const flt = String(f.flight||'').toUpperCase();
+      const isSwiss = hnd.includes('SWISSPORT') && !flt.startsWith('TAY') && !flt.startsWith('ICE') && !flt.startsWith('GTI');
+      if (!isSwiss) return;
+      const ids = ['ft','cl','lav','wat','hds'];
+      const vals = {};
+      ids.forEach(k => {
+        const cb = document.getElementById('swi-'+k+'-'+i);
+        vals[k] = !!(cb && cb.checked);
+      });
+      out[swissportFlightKey(f)] = vals;
+    });
+    return out;
+  }
+
   function captureCheckboxStates(container) {
     const map = {};
     if (!container) return map;
@@ -2591,14 +2619,33 @@ async function woLggLogout(){
   }
 
   function restoreCheckboxStates(map) {
-    Object.keys(map).forEach(id => {
-      if (!map[id]) return; // seules les cases cochees ont besoin d'etre restaurees
+    Object.keys(map || {}).forEach(id => {
+      if (!map[id]) return;
       const cb = document.getElementById(id);
       if (cb && !cb.checked) {
         cb.checked = true;
-        cb.dispatchEvent(new Event('change')); // reapplique le style visuel de la pill
+        cb.dispatchEvent(new Event('change'));
       }
     });
+
+    // Les choix Swissport persistés côté serveur priment sur les états DOM
+    // hérités d'un ancien rendu/local device.
+    const cloud = window.woLggCloudSwissportSelections || {};
+    if (typeof flights !== 'undefined' && Array.isArray(flights)) {
+      flights.forEach((f, i) => {
+        const vals = cloud[swissportFlightKey(f)];
+        if (!vals) return;
+        ['ft','cl','lav','wat','hds'].forEach(k => {
+          const cb = document.getElementById('swi-'+k+'-'+i);
+          if (!cb) return;
+          const wanted = !!vals[k];
+          if (cb.checked !== wanted) {
+            cb.checked = wanted;
+            cb.dispatchEvent(new Event('change'));
+          }
+        });
+      });
+    }
   }
 
   // ── Preservation du focus sur le champ "Remarques" en cours de frappe ──
@@ -4249,6 +4296,7 @@ ${(function(){
 
   function resetAll() {
     if (!confirm('Recommencer depuis le début ?')) return;
+    window.woLggCloudSwissportSelections = {};
     flights = [];
     selectedFlights = new Set();
     caterings = [];
