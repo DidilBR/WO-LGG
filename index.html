@@ -1186,6 +1186,7 @@ async function woLggLogout(){
       if(typeof selectedASL737!=='undefined')selectedASL737=new Set(Array.isArray(s.selectedASL737)?s.selectedASL737:[]);
       if(typeof selectedASL737Initialized!=='undefined')selectedASL737Initialized=new Set(Array.isArray(s.selectedASL737Initialized)?s.selectedASL737Initialized:[]);
       window.woLggCloudSwissportSelections=(s.swissportSelections&&typeof s.swissportSelections==='object')?s.swissportSelections:{};
+      window.woLggCloudHandlingSelections=(s.handlingSelections&&typeof s.handlingSelections==='object')?s.handlingSelections:{};
       if(typeof flightOverrides!=='undefined')flightOverrides=s.flightOverrides&&typeof s.flightOverrides==='object'?s.flightOverrides:{};
       if(typeof blankWorksheets!=='undefined')blankWorksheets=Array.isArray(s.blankWorksheets)?s.blankWorksheets:[];
       if(typeof blankWorksheetCounter!=='undefined')blankWorksheetCounter=Number(s.blankWorksheetCounter)||0;
