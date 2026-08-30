@@ -531,6 +531,10 @@ header .logo-sub{white-space:nowrap}
 <style id="wo-lgg-save-state-css">
 #wo-lgg-save-state{font-family:var(--mono);font-size:8px;letter-spacing:.5px;color:var(--t3);margin-left:5px;white-space:nowrap}
 #wo-lgg-save-state.ok{color:#00e5a0}#wo-lgg-save-state.err{color:#ff5b7d}
+</style><style>
+.wo-save-spinner{display:inline-block;margin-left:7px;font-size:14px;vertical-align:-1px;animation:woSaveSpin 1.1s linear infinite}
+@keyframes woSaveSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+#wo-lgg-save-state{font-size:13px!important;padding:8px 12px!important}
 </style></head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -807,6 +811,7 @@ header .logo-sub{white-space:nowrap}
       <div class="section-desc">Collez les donnees depuis fids.liegeairport.com/spw</div>
     </div>
     <div class="panel">
+      <button class="btn btn-ghost" id="btn-refresh-fids-now" onclick="checkForFlightUpdates(true)" style="width:100%;margin-bottom:10px">🔄 Réactualiser maintenant</button>
       <button class="btn btn-primary" id="btn-load-api" onclick="loadFromFidsAPI()" style="width:100%;margin-bottom:10px">&#128260; Charger automatiquement (API FIDS)</button>
       <div id="api-status" style="font-size:12px;min-height:16px;margin-bottom:14px"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -1997,6 +2002,7 @@ async function woLggLogout(){
       }
 
       renderFlights();
+      if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('loadFromFidsAPI');
     } catch (err) {
       console.error('loadFromFidsAPI error:', err);
       if (status) {
@@ -2015,9 +2021,11 @@ async function woLggLogout(){
   let currentStep = 1;
   let autoRefreshBadgeTimer = null;
 
-  async function checkForFlightUpdates() {
-    if (currentStep !== 3) return;
-    if (!flights || flights.length === 0) return;
+  async function checkForFlightUpdates(manual=false) {
+    if (!manual && currentStep !== 3) return;
+    if (!manual && (!flights || flights.length === 0)) return;
+    const manualBtn=document.getElementById('btn-refresh-fids-now');
+    if(manual&&manualBtn){manualBtn.disabled=true;manualBtn.textContent='⏳ Actualisation...';}
     // Ne jamais interrompre une saisie en cours dans un champ Remarques : on
     // reessaiera simplement au prochain cycle d'actualisation automatique.
     const active = document.activeElement;
@@ -2042,6 +2050,17 @@ async function woLggLogout(){
       });
 
       const key = f => f.flight + '|' + f.time + '|' + (f.stand || '');
+      const oldByFlight = {};
+      flights.forEach(f=>{if(!f.manual)oldByFlight[f.flight]={...f};});
+      const changeDetails=[];
+      fresh.forEach(nf=>{
+        const of=oldByFlight[nf.flight];
+        if(!of)return;
+        [['ETA','time'],['Stand','stand'],['Immatriculation','reg']].forEach(([label,k])=>{
+          const ov=of[k]??''; const nv=nf[k]??'';
+          if(String(ov)!==String(nv))changeDetails.push({flight:nf.flight,reg:nf.reg||of.reg,field:label,oldValue:ov,newValue:nv});
+        });
+      });
       const oldApiFlights = flights.filter(f => !f.manual);
       const oldKeys = new Set(oldApiFlights.map(key));
       const newKeys = new Set(fresh.map(key));
@@ -2081,37 +2100,57 @@ async function woLggLogout(){
       if (oldFlightSignature !== newFlightSignature || oldSelectionSignature !== newSelectionSignature) {
         renderFlights();
       }
-      showRefreshBadge(diff);
+      showRefreshBadge(diff,changeDetails);
     } catch (e) {
       console.warn('checkForFlightUpdates: echec silencieux', e);
       showRefreshBadge(null); // null = echec de la tentative de mise a jour
+    } finally {
+      if(manual&&manualBtn){manualBtn.disabled=false;manualBtn.textContent='🔄 Réactualiser maintenant';}
     }
   }
 
-  function showRefreshBadge(n) {
-    const el = document.getElementById('refresh-badge');
-    const txt = document.getElementById('refresh-badge-text');
-    if (!el || !txt) return;
-    const now = new Date().toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit' });
-    if (n === null) {
-      el.style.borderColor = 'rgba(255,77,109,.35)';
-      el.style.background = 'rgba(255,77,109,.1)';
-      el.style.color = '#ff4d6d';
-      txt.textContent = 'Echec de la mise a jour automatique (' + now + ')';
-    } else if (n > 0) {
-      el.style.borderColor = 'rgba(0,229,160,.35)';
-      el.style.background = 'rgba(0,229,160,.1)';
-      el.style.color = '#00e5a0';
-      txt.textContent = 'Mis a jour automatiquement (' + now + ') — ' + n + ' changement' + (n > 1 ? 's' : '');
-    } else {
-      el.style.borderColor = 'rgba(0,229,160,.35)';
-      el.style.background = 'rgba(0,229,160,.1)';
-      el.style.color = '#00e5a0';
-      txt.textContent = 'A jour (' + now + ') — aucun changement';
+  function showRefreshBadge(n, details) {
+    const el=document.getElementById('refresh-badge');
+    const txt=document.getElementById('refresh-badge-text');
+    if(!el||!txt)return;
+    const now=new Date().toLocaleTimeString('fr-BE',{hour:'2-digit',minute:'2-digit'});
+    let detailBtn=document.getElementById('refresh-badge-details-btn');
+    if(!detailBtn){
+      detailBtn=document.createElement('button');
+      detailBtn.id='refresh-badge-details-btn';
+      detailBtn.type='button';
+      detailBtn.textContent='Détails';
+      detailBtn.style.cssText='margin-left:auto;background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.35);border-radius:7px;color:#00e5a0;padding:5px 9px;font-size:11px;font-weight:800;cursor:pointer';
+      el.appendChild(detailBtn);
     }
-    el.style.display = 'flex';
-    if (autoRefreshBadgeTimer) clearTimeout(autoRefreshBadgeTimer);
-    autoRefreshBadgeTimer = setTimeout(() => { el.style.display = 'none'; }, 8000);
+    if(n===null){
+      el.style.borderColor='rgba(255,77,109,.35)';el.style.background='rgba(255,77,109,.1)';el.style.color='#ff4d6d';
+      txt.textContent='Échec de la mise à jour automatique ('+now+')'; detailBtn.style.display='none';
+    }else if(n>0){
+      el.style.borderColor='rgba(0,229,160,.35)';el.style.background='rgba(0,229,160,.1)';el.style.color='#00e5a0';
+      txt.textContent='Mis à jour automatiquement ('+now+') — '+n+' changement'+(n>1?'s':'');
+      detailBtn.style.display='inline-block';
+      const safe=Array.isArray(details)?details:[];
+      detailBtn.onclick=()=>showFidsChangeDetails(safe);
+    }else{
+      el.style.borderColor='rgba(0,229,160,.35)';el.style.background='rgba(0,229,160,.1)';el.style.color='#00e5a0';
+      txt.textContent='À jour ('+now+') — aucun changement'; detailBtn.style.display='none';
+    }
+    el.style.display='flex';
+    if(autoRefreshBadgeTimer)clearTimeout(autoRefreshBadgeTimer);
+    autoRefreshBadgeTimer=setTimeout(()=>{el.style.display='none';},8000);
+  }
+
+  function showFidsChangeDetails(details){
+    const overlay=document.getElementById('fids-change-details-overlay');
+    const list=document.getElementById('fids-change-details-list');
+    if(!overlay||!list)return;
+    const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    list.innerHTML=details.length?details.map(d=>'<div style="padding:9px 0;border-bottom:1px solid var(--b2)"><strong>'+esc(d.flight||'VOL')+'</strong> <span style="color:var(--t2)">'+esc(d.reg||'')+'</span><br><span>'+esc(d.field||'Modification')+' : </span><span style="color:#ffb400">'+esc(d.oldValue??'—')+'</span> → <span style="color:#00e5a0">'+esc(d.newValue??'—')+'</span></div>').join(''):'Aucun détail disponible.';
+    overlay.classList.remove('hidden');
+  }
+  function closeFidsChangeDetails(){
+    document.getElementById('fids-change-details-overlay')?.classList.add('hidden');
   }
 
   function hideRefreshBadge() {
@@ -2255,6 +2294,7 @@ async function woLggLogout(){
     closeEditFlightModal();
     if (currentStep === 3) renderFlights();
     renderBlankWorksheetsList();
+    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('saveEditFlightOverride');
   }
 
   function resetEditFlightOverride() {
@@ -2264,6 +2304,7 @@ async function woLggLogout(){
     closeEditFlightModal();
     if (currentStep === 3) renderFlights();
     renderBlankWorksheetsList();
+    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('resetEditFlightOverride');
   }
 
   // ── Worksheets vierges (Edit Mode uniquement) ───────────────────────
@@ -2277,6 +2318,7 @@ async function woLggLogout(){
     flightOverrides[key] = { flight: key, grid: {} };
     renderBlankWorksheetsList();
     openEditFlightModal(key);
+    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('createBlankWorksheet');
   }
 
   function deleteBlankWorksheet(key) {
@@ -2284,6 +2326,7 @@ async function woLggLogout(){
     blankWorksheets = blankWorksheets.filter(function(b) { return b.key !== key; });
     delete flightOverrides[key.toUpperCase()];
     renderBlankWorksheetsList();
+    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('deleteBlankWorksheet');
   }
 
   function renderBlankWorksheetsList() {
@@ -2346,6 +2389,7 @@ async function woLggLogout(){
     closeEditFlightModal();
     if (currentStep === 3) renderFlights();
     renderBlankWorksheetsList();
+    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('resetAllEditOverrides');
   }
 
   // ── Interface (mise en page) : Classic, Neo, Purete ou Aero ──
@@ -2578,7 +2622,7 @@ async function woLggLogout(){
       'font-size:9.5px;font-weight:700;color:rgb('+r+','+g+','+b+');letter-spacing:0.8px;text-transform:uppercase;' +
       'box-shadow:0 0 6px rgba('+r+','+g+','+b+',0.12);transition:all 0.2s ease">' +
       '<input type="checkbox" id="'+id+'" onclick="event.stopPropagation()" ' +
-      'onchange="var l=this.closest(\'label\');if(this.checked){l.style.background=\'linear-gradient(135deg,rgba('+r+','+g+','+b+',0.28),rgba('+r+','+g+','+b+',0.15))\';l.style.borderColor=\'rgb('+r+','+g+','+b+')\';l.style.boxShadow=\'0 0 12px rgba('+r+','+g+','+b+',0.4)\';}else{l.style.background=\'linear-gradient(135deg,rgba('+r+','+g+','+b+',0.1),rgba('+r+','+g+','+b+',0.05))\';l.style.borderColor=\'rgba('+r+','+g+','+b+',0.35)\';l.style.boxShadow=\'0 0 6px rgba('+r+','+g+','+b+',0.12)\';}" ' +
+      'onchange="var l=this.closest(\'label\');if(this.checked){l.style.background=\'linear-gradient(135deg,rgba('+r+','+g+','+b+',0.28),rgba('+r+','+g+','+b+',0.15))\';l.style.borderColor=\'rgb('+r+','+g+','+b+')\';l.style.boxShadow=\'0 0 12px rgba('+r+','+g+','+b+',0.4)\';}else{l.style.background=\'linear-gradient(135deg,rgba('+r+','+g+','+b+',0.1),rgba('+r+','+g+','+b+',0.05))\';l.style.borderColor=\'rgba('+r+','+g+','+b+',0.35)\';l.style.boxShadow=\'0 0 6px rgba('+r+','+g+','+b+',0.12)\';}if(typeof woLggMarkWorkChanged===\'function\')woLggMarkWorkChanged(\'pill:\'+id);" ' +
       'style="width:12px;height:12px;cursor:pointer;accent-color:rgb('+r+','+g+','+b+')">' +
       label + '</label></div>';
   }
@@ -4356,5 +4400,14 @@ ${(function(){
 
 </script>
 <!-- Service worker désactivé : source réseau directe pour éviter les sessions HTML obsolètes. -->
+<div id="fids-change-details-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(7px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="width:100%;max-width:620px;max-height:80vh;overflow:auto;background:var(--bg1);border:1px solid rgba(0,229,160,.35);border-radius:16px;box-shadow:0 20px 70px rgba(0,0,0,.6);padding:22px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:800;color:var(--a1)">🔎 Détails des changements FIDS</div>
+      <button onclick="closeFidsChangeDetails()" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);cursor:pointer;padding:5px 9px">✕</button>
+    </div>
+    <div id="fids-change-details-list" style="font-family:var(--mono);font-size:12px;line-height:1.65"></div>
+  </div>
+</div>
 </body>
 </html>
