@@ -1048,7 +1048,7 @@ async function woLggLogout(){
     if(b){b.disabled=true;b.textContent='⏳ DÉCONNEXION…';}
     if (!woLggVisitorMode) await woLggSupabase.auth.signOut();
     clearInterval(woLggSessionSaveTimer); clearInterval(woLggSessionSyncTimer); clearTimeout(woLggSaveDebounce); woLggStopRealtime();
-    woLggInitializedUserId=null; woLggCloudInitPromise=null; woLggLastCloudUpdatedAt=null; woLggLastLocalFingerprint=null; woLggLastKnownCloudFingerprint=null; woLggLocalDirty=false;
+    woLggInitializedUserId=null; woLggCloudInitPromise=null; woLggLastSavedFingerprint=null; woLggPendingSave=false; woLggStopRealtime(); woLggLastCloudUpdatedAt=null; woLggLastLocalFingerprint=null; woLggLastKnownCloudFingerprint=null; woLggLocalDirty=false; woLggSessionId=null; woLggSessionLastActivityAt=null; woLggActiveDeviceId=null; woLggIsActiveDevice=true;
     woLggUser=null; woLggProfile=null; woLggVisitorMode=false;
     woLggShowLogin();
     if(b){b.disabled=false;b.textContent='⎋ DÉCONNEXION';}
@@ -1062,298 +1062,118 @@ async function woLggLogout(){
 
 </script>
 <script>
-  // ── WO-LGG : session cloud par compte ─────────────────────────────
-  // IMPORTANT : la session active n'est PAS limitée à un appareil.
-  // Le compte peut être ouvert sur plusieurs appareils sans boucle de
-  // déconnexion. Chaque appareil charge/synchronise le même état cloud.
-  let woLggSessionSaveTimer = null;
-  let woLggSessionSyncTimer = null;
-  let woLggSessionHydrating = false;
-  let woLggCloudInitPromise = null;
-  let woLggInitializedUserId = null;
-  let woLggLastCloudUpdatedAt = null;
-  let woLggLastLocalFingerprint = null;
-  let woLggLastKnownCloudFingerprint = null;
-  let woLggLocalDirty = false;
-  let woLggSyncInFlight = false;
-  let woLggSaveDebounce = null;
-  let woLggRealtimeChannel = null;
+  // ── WO-LGG : sauvegarde de session ───────────────────────────────
+  let woLggSaveDebounce=null, woLggSessionHydrating=false, woLggCloudInitPromise=null;
+  let woLggInitializedUserId=null, woLggLastSavedFingerprint=null, woLggLastCloudUpdatedAt=null;
+  let woLggPendingSave=false, woLggRealtimeChannel=null;
 
   function woLggBuildSessionState(){
-    if (!woLggUser || woLggVisitorMode) return null;
-    return {
-      version: 2,
-      currentStep: (typeof currentStep !== 'undefined' ? currentStep : 1),
-      shiftDate: document.getElementById('shift-date')?.value || '',
-      extraNotes: document.getElementById('extra-notes')?.value || '',
-      selectedShift: (typeof selectedShift !== 'undefined' ? selectedShift : null),
-      flights: (typeof flights !== 'undefined' ? flights : []),
-      selectedFlights: (typeof selectedFlights !== 'undefined' ? Array.from(selectedFlights) : []),
-      caterings: (typeof caterings !== 'undefined' ? caterings : []),
-      selectedCaterings: (typeof selectedCaterings !== 'undefined' ? Array.from(selectedCaterings) : []),
-      selectedASL737: (typeof selectedASL737 !== 'undefined' ? Array.from(selectedASL737) : []),
-      selectedASL737Initialized: (typeof selectedASL737Initialized !== 'undefined' ? Array.from(selectedASL737Initialized) : []),
-      flightOverrides: (typeof flightOverrides !== 'undefined' ? flightOverrides : {}),
-      blankWorksheets: (typeof blankWorksheets !== 'undefined' ? blankWorksheets : []),
-      blankWorksheetCounter: (typeof blankWorksheetCounter !== 'undefined' ? blankWorksheetCounter : 0),
-      lastDepartures: (typeof lastDepartures !== 'undefined' ? lastDepartures : [])
-    };
+    if(!woLggUser||woLggVisitorMode)return null;
+    return {version:3,currentStep:typeof currentStep!=='undefined'?currentStep:1,
+      shiftDate:document.getElementById('shift-date')?.value||'',
+      selectedShift:typeof selectedShift!=='undefined'?selectedShift:null,
+      flights:typeof flights!=='undefined'?flights:[],
+      selectedFlights:typeof selectedFlights!=='undefined'?Array.from(selectedFlights):[],
+      caterings:typeof caterings!=='undefined'?caterings:[],
+      selectedCaterings:typeof selectedCaterings!=='undefined'?Array.from(selectedCaterings):[],
+      selectedASL737:typeof selectedASL737!=='undefined'?Array.from(selectedASL737):[],
+      selectedASL737Initialized:typeof selectedASL737Initialized!=='undefined'?Array.from(selectedASL737Initialized):[],
+      flightOverrides:typeof flightOverrides!=='undefined'?flightOverrides:{},
+      blankWorksheets:typeof blankWorksheets!=='undefined'?blankWorksheets:[],
+      blankWorksheetCounter:typeof blankWorksheetCounter!=='undefined'?blankWorksheetCounter:0,
+      lastDepartures:typeof lastDepartures!=='undefined'?lastDepartures:[],
+      extraNotes:document.getElementById('extra-notes')?.value||''};
   }
-
-  function woLggFingerprint(state){
-    try { return JSON.stringify(state); } catch(e) { return ''; }
-  }
-
+  function woLggFingerprint(s){try{return JSON.stringify(s)}catch(e){return''}}
   async function woLggReadCloudSession(){
-    if (!woLggUser || woLggVisitorMode) return null;
-    const {data,error}=await woLggSupabase
-      .from('work_sessions')
-      .select('state,updated_at')
-      .eq('user_id',woLggUser.id)
-      .maybeSingle();
-    if(error){
-      console.warn('WO-LGG session read:',error.message);
-      return null;
-    }
-    return data || null;
+    if(!woLggUser||woLggVisitorMode)return null;
+    const {data,error}=await woLggSupabase.from('work_sessions').select('state,updated_at').eq('user_id',woLggUser.id).maybeSingle();
+    if(error){console.warn('WO-LGG session read:',error.message);return null} return data||null;
   }
-
-  function woLggApplyCloudState(s){
-    if (!s || !s.state || (s.state.version !== 1 && s.state.version !== 2)) return false;
-
-    woLggSessionHydrating = true;
-    try {
-      if (typeof currentStep !== 'undefined' && Number.isFinite(Number(s.state.currentStep)))
-        currentStep=Number(s.state.currentStep);
-
-      const dateEl=document.getElementById('shift-date');
-      if (dateEl && s.state.shiftDate) dateEl.value=s.state.shiftDate;
-      const notesEl=document.getElementById('extra-notes');
-      if (notesEl && typeof s.state.extraNotes === 'string') notesEl.value=s.state.extraNotes;
-
-      if (typeof selectedShift !== 'undefined') selectedShift=s.state.selectedShift || null;
-      if (s.state.selectedShift?.name) {
-        const shiftBtn=document.querySelector('.shift-btn[data-shift="'+s.state.selectedShift.name+'"]');
-        if (shiftBtn) {
-          document.querySelectorAll('.shift-btn').forEach(b=>b.classList.remove('active'));
-          shiftBtn.classList.add('active');
-        }
-      }
-
-      if (typeof flights !== 'undefined') flights=Array.isArray(s.state.flights)?s.state.flights:[];
-      if (typeof selectedFlights !== 'undefined') selectedFlights=new Set(Array.isArray(s.state.selectedFlights)?s.state.selectedFlights:[]);
-      if (typeof caterings !== 'undefined') caterings=Array.isArray(s.state.caterings)?s.state.caterings:[];
-      if (typeof selectedCaterings !== 'undefined') selectedCaterings=new Set(Array.isArray(s.state.selectedCaterings)?s.state.selectedCaterings:[]);
-      if (typeof selectedASL737 !== 'undefined') selectedASL737=new Set(Array.isArray(s.state.selectedASL737)?s.state.selectedASL737:[]);
-      if (typeof selectedASL737Initialized !== 'undefined') selectedASL737Initialized=new Set(Array.isArray(s.state.selectedASL737Initialized)?s.state.selectedASL737Initialized:[]);
-      if (typeof flightOverrides !== 'undefined') flightOverrides=s.state.flightOverrides && typeof s.state.flightOverrides==='object'?s.state.flightOverrides:{};
-      if (typeof blankWorksheets !== 'undefined') blankWorksheets=Array.isArray(s.state.blankWorksheets)?s.state.blankWorksheets:[];
-      if (typeof blankWorksheetCounter !== 'undefined') blankWorksheetCounter=Number(s.state.blankWorksheetCounter)||0;
-      if (typeof lastDepartures !== 'undefined') lastDepartures=Array.isArray(s.state.lastDepartures)?s.state.lastDepartures:[];
-
-      if (typeof renderFlights === 'function') renderFlights();
-      if (typeof renderCaterings === 'function') renderCaterings();
-      if (typeof updateCateringCount === 'function') updateCateringCount();
-      if (typeof updateSelectedCount === 'function') updateSelectedCount();
-      if (typeof goToStep === 'function' && Number.isFinite(Number(s.state.currentStep)))
-        goToStep(Number(s.state.currentStep));
-
-      woLggLastCloudUpdatedAt=s.updated_at || null;
-      woLggLastLocalFingerprint=woLggFingerprint(woLggBuildSessionState());
-      return true;
-    } finally {
-      woLggSessionHydrating=false;
-    }
-  }
-
-  async function woLggSaveCloudSession(force=false){
-    if (woLggSessionHydrating || !woLggUser || woLggVisitorMode) return false;
-    const state=woLggBuildSessionState();
-    if(!state) return false;
-
-    const fp=woLggFingerprint(state);
-    if(!force && fp===woLggLastLocalFingerprint) return false;
-
-    const now=new Date().toISOString();
-    const {error}=await woLggSupabase
-      .from('work_sessions')
-      .upsert({
-        user_id:woLggUser.id,
-        state,
-        updated_at:now
-      },{onConflict:'user_id'});
-
-    if(error){
-      console.warn('WO-LGG session save:',error.message);
-      return false;
-    }
-
-    woLggLastLocalFingerprint=fp;
-    woLggLastKnownCloudFingerprint=fp;
-    woLggLastCloudUpdatedAt=now;
-    woLggLocalDirty=false;
-    return true;
-  }
-
-  async function woLggSyncCloudSession(){
-    if(woLggSessionHydrating || !woLggUser || woLggVisitorMode || woLggSyncInFlight) return;
-    woLggSyncInFlight=true;
+  function woLggApplyCloudState(row){
+    const s=row?.state;if(!s||![1,2,3].includes(Number(s.version)))return false;
+    woLggSessionHydrating=true;
     try{
-      const localState=woLggBuildSessionState();
-      if(!localState) return;
-
-      const localFp=woLggFingerprint(localState);
-      // Detect changes even when they happened through existing inline
-      // handlers and no explicit save hook fired.
-      if(localFp !== woLggLastLocalFingerprint) woLggLocalDirty=true;
-
-      const remote=await woLggReadCloudSession();
-
-      if(!remote){
-        if(woLggLocalDirty) await woLggSaveCloudSession(true);
-        return;
-      }
-
-      const remoteFp=woLggFingerprint(remote.state || {});
-      const remoteTime=remote.updated_at ? Date.parse(remote.updated_at) : 0;
-      const localCloudTime=woLggLastCloudUpdatedAt ? Date.parse(woLggLastCloudUpdatedAt) : 0;
-
-      // Another device has written a newer version.
-      if(remoteTime > localCloudTime){
-        if(woLggLocalDirty){
-          // We have a real unsaved user change. Save it instead of silently
-          // deleting what the user just typed.
-          await woLggSaveCloudSession(true);
-        } else {
-          woLggApplyCloudState(remote);
-          woLggLastKnownCloudFingerprint=remoteFp;
-          woLggLocalDirty=false;
-        }
-        return;
-      }
-
-      // Cloud did not change: publish our local change if there is one.
-      if(woLggLocalDirty || localFp !== woLggLastLocalFingerprint){
-        await woLggSaveCloudSession(true);
-      }
-    } finally {
-      woLggSyncInFlight=false;
-    }
+      if(typeof currentStep!=='undefined'&&Number.isFinite(Number(s.currentStep)))currentStep=Number(s.currentStep);
+      const d=document.getElementById('shift-date');if(d&&s.shiftDate)d.value=s.shiftDate;
+      const n=document.getElementById('extra-notes');if(n&&typeof s.extraNotes==='string')n.value=s.extraNotes;
+      if(typeof selectedShift!=='undefined')selectedShift=s.selectedShift||null;
+      if(s.selectedShift?.name){const b=document.querySelector('.shift-btn[data-shift="'+s.selectedShift.name+'"]');if(b){document.querySelectorAll('.shift-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active')}}
+      if(typeof flights!=='undefined')flights=Array.isArray(s.flights)?s.flights:[];
+      if(typeof selectedFlights!=='undefined')selectedFlights=new Set(Array.isArray(s.selectedFlights)?s.selectedFlights:[]);
+      if(typeof caterings!=='undefined')caterings=Array.isArray(s.caterings)?s.caterings:[];
+      if(typeof selectedCaterings!=='undefined')selectedCaterings=new Set(Array.isArray(s.selectedCaterings)?s.selectedCaterings:[]);
+      if(typeof selectedASL737!=='undefined')selectedASL737=new Set(Array.isArray(s.selectedASL737)?s.selectedASL737:[]);
+      if(typeof selectedASL737Initialized!=='undefined')selectedASL737Initialized=new Set(Array.isArray(s.selectedASL737Initialized)?s.selectedASL737Initialized:[]);
+      if(typeof flightOverrides!=='undefined')flightOverrides=s.flightOverrides&&typeof s.flightOverrides==='object'?s.flightOverrides:{};
+      if(typeof blankWorksheets!=='undefined')blankWorksheets=Array.isArray(s.blankWorksheets)?s.blankWorksheets:[];
+      if(typeof blankWorksheetCounter!=='undefined')blankWorksheetCounter=Number(s.blankWorksheetCounter)||0;
+      if(typeof lastDepartures!=='undefined')lastDepartures=Array.isArray(s.lastDepartures)?s.lastDepartures:[];
+      if(typeof renderFlights==='function')renderFlights();
+      if(typeof renderCaterings==='function')renderCaterings();
+      if(typeof updateCateringCount==='function')updateCateringCount();
+      if(typeof updateSelectedCount==='function')updateSelectedCount();
+      woLggLastCloudUpdatedAt=row.updated_at||null;woLggLastSavedFingerprint=woLggFingerprint(woLggBuildSessionState());woLggPendingSave=false;return true;
+    }finally{woLggSessionHydrating=false}
   }
-
-  function woLggMarkDirty(){
-    if(woLggSessionHydrating || !woLggUser || woLggVisitorMode) return;
-    woLggLocalDirty=true;
-    clearTimeout(woLggSaveDebounce);
-    woLggSaveDebounce=setTimeout(()=>woLggSaveCloudSession(true),350);
+  async function woLggSaveCloudSession(force=false){
+    if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return false;
+    const s=woLggBuildSessionState();if(!s)return false;const fp=woLggFingerprint(s);
+    if(!force&&fp===woLggLastSavedFingerprint){woLggPendingSave=false;return true}
+    const now=new Date().toISOString();
+    const {error}=await woLggSupabase.from('work_sessions').upsert({user_id:woLggUser.id,state:s,updated_at:now},{onConflict:'user_id'});
+    if(error){console.warn('WO-LGG session save:',error.message);woLggPendingSave=true;return false}
+    woLggLastSavedFingerprint=fp;woLggLastCloudUpdatedAt=now;woLggPendingSave=false;return true;
   }
-
+  function woLggMarkWorkChanged(){
+    if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
+    woLggPendingSave=true;clearTimeout(woLggSaveDebounce);
+    woLggSaveDebounce=setTimeout(()=>woLggSaveCloudSession(true),150);
+  }
   function woLggInstallPersistenceHooks(){
-    // Existing UI uses inline onclick/oninput handlers. A document-level hook
-    // catches those mutations without requiring every feature to be rewritten.
-    document.addEventListener('input',woLggMarkDirty,true);
-    document.addEventListener('change',woLggMarkDirty,true);
-    document.addEventListener('click',()=>{
-      if(!woLggSessionHydrating && woLggUser && !woLggVisitorMode)
-        setTimeout(woLggMarkDirty,60);
-    },true);
+    document.addEventListener('input',woLggMarkWorkChanged,true);
+    document.addEventListener('change',woLggMarkWorkChanged,true);
+    document.addEventListener('click',()=>{if(!woLggSessionHydrating&&woLggUser&&!woLggVisitorMode)setTimeout(woLggMarkWorkChanged,80)},true);
   }
-
-  function woLggStopRealtime(){
-    if(woLggRealtimeChannel){
-      try { woLggSupabase.removeChannel(woLggRealtimeChannel); } catch(e) {}
-      woLggRealtimeChannel=null;
-    }
-  }
-
+  function woLggStopRealtime(){if(woLggRealtimeChannel){try{woLggSupabase.removeChannel(woLggRealtimeChannel)}catch(e){}woLggRealtimeChannel=null}}
   function woLggStartRealtime(){
-    woLggStopRealtime();
-    if(!woLggUser || woLggVisitorMode) return;
-
-    const userId=woLggUser.id;
-    woLggRealtimeChannel=woLggSupabase
-      .channel('wo-lgg-session-'+userId)
-      .on('postgres_changes',{
-        event:'*',
-        schema:'public',
-        table:'work_sessions',
-        filter:'user_id=eq.'+userId
-      },payload=>{
-        if(!payload || !payload.new || !payload.new.state) return;
-        const incoming=payload.new;
-        const incomingFp=woLggFingerprint(incoming.state);
-
-        // Ignore our own echo. If the user is typing locally, the local
-        // version remains authoritative until it has been saved.
-        if(incomingFp===woLggLastLocalFingerprint){
-          woLggLastCloudUpdatedAt=incoming.updated_at || woLggLastCloudUpdatedAt;
-          woLggLastKnownCloudFingerprint=incomingFp;
-          return;
-        }
-
-        if(woLggSessionHydrating || woLggLocalDirty) return;
-
-        const incomingTime=incoming.updated_at ? Date.parse(incoming.updated_at) : 0;
-        const knownTime=woLggLastCloudUpdatedAt ? Date.parse(woLggLastCloudUpdatedAt) : 0;
-        if(incomingTime>=knownTime){
-          woLggApplyCloudState(incoming);
-          woLggLastKnownCloudFingerprint=incomingFp;
-        }
-      })
-      .subscribe(status=>{
-        console.log('WO-LGG Realtime:',status);
-      });
+    woLggStopRealtime();if(!woLggUser||woLggVisitorMode)return;const uid=woLggUser.id;
+    woLggRealtimeChannel=woLggSupabase.channel('wo-lgg-session-'+uid).on('postgres_changes',{event:'*',schema:'public',table:'work_sessions',filter:'user_id=eq.'+uid},p=>{
+      if(!p?.new?.state||woLggSessionHydrating||woLggPendingSave)return;
+      const fp=woLggFingerprint(p.new.state);if(fp===woLggLastSavedFingerprint){woLggLastCloudUpdatedAt=p.new.updated_at||woLggLastCloudUpdatedAt;return}
+      woLggApplyCloudState(p.new);
+    }).subscribe(status=>console.log('WO-LGG Realtime:',status));
   }
-
-  function woLggStartCloudSession(){
-    clearInterval(woLggSessionSaveTimer);
-    clearInterval(woLggSessionSyncTimer);
-    // Frequent sync makes the "phone -> computer" test effectively immediate.
-    woLggSessionSyncTimer=setInterval(woLggSyncCloudSession,2000);
-    woLggSessionSaveTimer=setInterval(()=>woLggSaveCloudSession(false),3000);
-    woLggStartRealtime();
-  }
-
-  async function woLggInitializeCloudSession(){
-    if(!woLggUser || woLggVisitorMode) return;
-    if(woLggInitializedUserId===woLggUser.id) return;
-    if(woLggCloudInitPromise) return woLggCloudInitPromise;
-
-    const userId=woLggUser.id;
-    woLggCloudInitPromise=(async()=>{
-      const remote=await woLggReadCloudSession();
-
-      // Always hydrate the existing cloud session before starting the
-      // background synchronizer. A new browser must never overwrite it with
-      // its default empty state.
-      if(remote && remote.state) {
-        woLggApplyCloudState(remote);
-        woLggLastKnownCloudFingerprint=woLggFingerprint(remote.state);
-        woLggLocalDirty=false;
-      } else {
-        await woLggSaveCloudSession(true);
-      }
-
-      woLggInitializedUserId=userId;
-      woLggStartCloudSession();
-    })().catch(err=>{
-      console.warn('WO-LGG cloud session initialization:',err);
-    }).finally(()=>{
-      woLggCloudInitPromise=null;
+  async function woLggChooseExistingSession(row){
+    if(!row?.state)return true;
+    const when=row.updated_at?new Date(row.updated_at).toLocaleString('fr-BE',{dateStyle:'full',timeStyle:'short'}):'date inconnue';
+    const count=Array.isArray(row.state.flights)?row.state.flights.length:0,step=Number(row.state.currentStep)||1;
+    return await new Promise(resolve=>{
+      const old=document.getElementById('wo-lgg-resume-modal');if(old)old.remove();
+      const o=document.createElement('div');o.id='wo-lgg-resume-modal';
+      o.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.58);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+      o.innerHTML=`<div style="width:min(480px,100%);background:#fff;border-radius:22px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:inherit"><div style="font-size:30px">💾</div><h2 style="margin:8px 0">Sauvegarde détectée</h2><p>Une sauvegarde de votre dernière utilisation a été trouvée.</p><div style="background:#f5f7fa;border-radius:14px;padding:14px;margin:16px 0"><b>Dernière sauvegarde automatique</b><br>${when}<br>${count} vol(s) enregistré(s) · étape ${step}</div><div style="display:flex;gap:10px;flex-direction:column"><button id="wo-resume" style="border:0;border-radius:12px;padding:13px;font-weight:700">Reprendre à la dernière sauvegarde</button><button id="wo-fresh" style="border:1px solid #d6d9df;background:#fff;border-radius:12px;padding:13px;font-weight:700">Recommencer à zéro</button></div></div>`;
+      document.body.appendChild(o);
+      o.querySelector('#wo-resume').onclick=()=>{o.remove();resolve(true)};
+      o.querySelector('#wo-fresh').onclick=async()=>{
+        o.remove();const fresh={version:3,currentStep:1,shiftDate:'',selectedShift:null,flights:[],selectedFlights:[],caterings:[],selectedCaterings:[],selectedASL737:[],selectedASL737Initialized:[],flightOverrides:{},blankWorksheets:[],blankWorksheetCounter:0,lastDepartures:[],extraNotes:''};
+        await woLggSupabase.from('work_sessions').upsert({user_id:woLggUser.id,state:fresh,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+        woLggApplyCloudState({state:fresh,updated_at:new Date().toISOString()});resolve(false);
+      };
     });
-
+  }
+  async function woLggInitializeCloudSession(){
+    if(!woLggUser||woLggVisitorMode||woLggInitializedUserId===woLggUser.id)return;
+    if(woLggCloudInitPromise)return woLggCloudInitPromise;
+    const uid=woLggUser.id;woLggCloudInitPromise=(async()=>{
+      const remote=await woLggReadCloudSession();if(remote?.state)await woLggChooseExistingSession(remote);
+      woLggInitializedUserId=uid;woLggStartRealtime();
+    })().catch(e=>console.warn('WO-LGG cloud initialization:',e)).finally(()=>{woLggCloudInitPromise=null});
     return woLggCloudInitPromise;
   }
-
   woLggInstallPersistenceHooks();
 
-  document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='hidden' && woLggUser && !woLggVisitorMode){
-      woLggSaveCloudSession(true);
-    }
-  });
-
-    window.addEventListener('beforeunload',()=>{
+  window.addEventListener('beforeunload',()=>{
     if(woLggUser && !woLggVisitorMode) {
       // La sauvegarde périodique a déjà enregistré l'état le plus récent.
       // Aucun token Supabase persistant n'est utilisé : sessionStorage uniquement.
@@ -4173,6 +3993,11 @@ ${(function(){
     document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
     autoDetectShift();
     goToStep(1);
+    if(typeof woLggSessionId!=='undefined' && woLggUser && !woLggVisitorMode){
+      woLggSessionId=woLggNewSessionId(); woLggSessionLastActivityAt=new Date().toISOString();
+      woLggActiveDeviceId=woLggDeviceId; woLggIsActiveDevice=true; woLggLocalDirty=true;
+      if(typeof woLggMarkDirty==='function') woLggMarkDirty();
+    }
   }
 
   function applyTheme(theme) {
@@ -4197,7 +4022,7 @@ ${(function(){
     // Restaure les notes complementaires ecrites precedemment (survit a
     // l'actualisation automatique des vols ET a un rechargement de page).
     var savedNotes = localStorage.getItem('lgg_extra_notes');
-    if (savedNotes && document.getElementById('extra-notes')) {
+    if (!woLggUser && savedNotes && document.getElementById('extra-notes')) {
       document.getElementById('extra-notes').value = savedNotes;
     }
     var notesEl = document.getElementById('extra-notes');
