@@ -539,7 +539,24 @@ header .logo-sub{white-space:nowrap}
 #wo-lgg-logout-btn{pointer-events:auto!important;position:relative!important;z-index:1000!important;cursor:pointer!important}
 #wo-lgg-auth-overlay input[type="email"],#wo-lgg-auth-overlay input[type="password"]{autocomplete:none}
 <style id="wo-lgg-auth-layout-fix">
-/* V32 — restauration du layout de connexion desktop/mobile */
+
+/* ── Contrôle FIDS compact, directement à côté de « Vols détectés » ── */
+.fids-title-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.fids-refresh-control{display:inline-flex;align-items:center;gap:7px;min-height:30px}
+#btn-refresh-fids-now{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:1px solid rgba(255,77,109,.75);border-radius:8px;background:rgba(255,77,109,.07);color:#ff4d6d;cursor:pointer;font-size:18px;line-height:1;transition:background .18s,border-color .18s,transform .18s,opacity .18s;vertical-align:middle}
+#btn-refresh-fids-now:hover{background:rgba(255,77,109,.15);border-color:#ff4d6d;transform:translateY(-1px)}
+#btn-refresh-fids-now:focus-visible{outline:2px solid rgba(255,77,109,.55);outline-offset:2px}
+#btn-refresh-fids-now:disabled{cursor:wait;opacity:.8;transform:none}
+#btn-refresh-fids-now.is-refreshing .fids-refresh-icon{animation:fidsManualSpin .75s linear infinite}
+.fids-refresh-icon{display:inline-block;font-size:18px;line-height:1}
+.fids-refresh-inline-status{display:inline-block;min-width:0;font-size:10px;font-weight:600;letter-spacing:.15px;color:var(--t3);white-space:nowrap;opacity:0;transform:translateX(-3px);transition:opacity .2s,transform .2s}
+.fids-refresh-inline-status.visible{opacity:1;transform:translateX(0)}
+.fids-refresh-inline-status.success{color:#00e5a0}
+.fids-refresh-inline-status.loading{color:#ffb400}
+.fids-refresh-inline-status.error{color:#ff4d6d}
+@keyframes fidsManualSpin{to{transform:rotate(360deg)}}
+
+/* V33 — restauration du layout + contrôle FIDS inline */
 #wo-lgg-auth-overlay{box-sizing:border-box!important;width:100vw!important;max-width:none!important;overflow:auto!important;}
 #wo-lgg-auth-overlay > div{box-sizing:border-box!important;display:block!important;flex:0 1 390px!important;width:min(390px,100%)!important;max-width:390px!important;min-width:0!important;margin:auto!important;}
 #wo-lgg-auth-overlay input[type="email"],
@@ -870,7 +887,15 @@ header .logo-sub{white-space:nowrap}
   <div id="step-3" class="hidden">
     <div class="section-hd">
       <div class="section-eyebrow"><span class="eyebrow-dot"></span>Etape 3 sur 3</div>
-      <div class="section-title">Vols detectes</div>
+      <div class="section-title fids-title-row">
+        <span>Vols detectes</span>
+        <span class="fids-refresh-control" aria-live="polite">
+          <button id="btn-refresh-fids-now" type="button" title="Forcer la réactualisation des vols" aria-label="Forcer la réactualisation des vols" onclick="checkForFlightUpdates(true)">
+            <span class="fids-refresh-icon" aria-hidden="true">⟳</span>
+          </button>
+          <span id="fids-refresh-inline-status" class="fids-refresh-inline-status" aria-live="polite"></span>
+        </span>
+      </div>
       <div class="section-desc">Verifiez et ajustez avant de generer</div>
     </div>
     <div class="stats-row">
@@ -878,12 +903,8 @@ header .logo-sub{white-space:nowrap}
       <div class="stat-card"><div class="num" id="count-total">0</div><div class="lbl">Total detectes</div></div>
     </div>
 
-    <!-- Badge discret : nouveaux changements detectes par l'auto-refresh -->
-    <button id="btn-refresh-fids-now" type="button"
-      title="Forcer la réactualisation des avions maintenant"
-      aria-label="Réactualiser les avions maintenant"
-      onclick="checkForFlightUpdates(true)"
-      style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;margin-left:6px;border:1px solid var(--b2);border-radius:8px;background:var(--bg2);color:var(--t2);cursor:pointer;font-size:16px;line-height:1;vertical-align:middle">⟳</button><div id="refresh-badge" style="display:none;align-items:center;gap:8px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.35);border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12px;color:#00e5a0;font-weight:600">
+    <!-- Statut de l'auto-refresh / détails des changements -->
+    <div id="refresh-badge" style="display:none;align-items:center;gap:8px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.35);border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12px;color:#00e5a0;font-weight:600">
       <span style="animation:spin 1.5s linear infinite;display:inline-block">&#128260;</span>
       <span id="refresh-badge-text">A jour</span>
     </div>
@@ -2114,7 +2135,12 @@ async function woLggLogout(){
     if (!manual && currentStep !== 3) return;
     if (!manual && (!flights || flights.length === 0)) return;
     const manualBtn=document.getElementById('btn-refresh-fids-now');
-    if(manual&&manualBtn){manualBtn.disabled=true;manualBtn.textContent='⏳ Actualisation...';}
+    const inlineStatus=document.getElementById('fids-refresh-inline-status');
+    if(manual&&manualBtn){
+      manualBtn.disabled=true;
+      manualBtn.classList.add('is-refreshing');
+      if(inlineStatus){inlineStatus.textContent='Actualisation en cours…';inlineStatus.className='fids-refresh-inline-status loading visible';}
+    }
     // Ne jamais interrompre une saisie en cours dans un champ Remarques : on
     // reessaiera simplement au prochain cycle d'actualisation automatique.
     const active = document.activeElement;
@@ -2198,12 +2224,26 @@ async function woLggLogout(){
       if (oldFlightSignature !== newFlightSignature || oldSelectionSignature !== newSelectionSignature) {
         renderFlights();
       }
+      if(manual&&manualBtn) manualBtn.dataset.refreshOk='true';
       showRefreshBadge(diff,changeDetails);
     } catch (e) {
       console.warn('checkForFlightUpdates: echec silencieux', e);
+      if(manual&&manualBtn) manualBtn.dataset.refreshOk='false';
       showRefreshBadge(null); // null = echec de la tentative de mise a jour
     } finally {
-      if(manual&&manualBtn){manualBtn.disabled=false;manualBtn.textContent='🔄 Réactualiser maintenant';}
+      if(manual&&manualBtn){
+        manualBtn.disabled=false;
+        manualBtn.classList.remove('is-refreshing');
+        if(inlineStatus){
+          const failed = manualBtn.dataset.refreshOk === 'false';
+          inlineStatus.textContent = failed ? 'Échec de la réactualisation' : 'Réactualisation effectuée';
+          inlineStatus.className='fids-refresh-inline-status '+(failed?'error':'success')+' visible';
+          setTimeout(()=>{
+            if(inlineStatus){inlineStatus.textContent='';inlineStatus.className='fids-refresh-inline-status';}
+            delete manualBtn.dataset.refreshOk;
+          },3200);
+        }
+      }
     }
   }
 
