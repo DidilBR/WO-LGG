@@ -1137,17 +1137,11 @@ async function woLggLogout(){
       woLggPendingSave=false;return true;
     }finally{woLggSessionHydrating=false}
   }
-  async function woLggSaveCloudSession(force=false){
-    if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return false;
-    const s=woLggBuildSessionState();if(!s)return false;
-    const fp=woLggFingerprint(s);
+  async function woLggWriteSnapshot(snapshot){
+    if(!woLggUser||woLggVisitorMode||!snapshot)return false;
     const now=new Date().toISOString();
-
-    // UNE sauvegarde par utilisateur. La contrainte UNIQUE sur user_id
-    // garantit que cet upsert remplace toujours l'ancienne sauvegarde.
-    // updated_at est écrit à chaque action utilisateur.
     const {error}=await woLggSupabase.from('work_sessions').upsert(
-      {user_id:woLggUser.id,state:s,updated_at:now},
+      {user_id:woLggUser.id,state:snapshot,updated_at:now},
       {onConflict:'user_id'}
     );
     if(error){
@@ -1155,20 +1149,29 @@ async function woLggLogout(){
       woLggPendingSave=true;
       return false;
     }
-    woLggLastSavedFingerprint=fp;
+    woLggLastSavedFingerprint=woLggFingerprint(snapshot);
     woLggLastCloudUpdatedAt=now;
     woLggPendingSave=false;
     return true;
+  }
+
+  async function woLggSaveCloudSession(force=false){
+    if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return false;
+    const snapshot=woLggBuildSessionState();
+    if(!snapshot)return false;
+    return woLggWriteSnapshot(snapshot);
   }
 
   // Les sauvegardes sont sérialisées : deux actions très rapprochées ne peuvent
   // plus se terminer dans le mauvais ordre et faire réapparaître un ancien état.
   function woLggQueueSave(){
     if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
+    const snapshot=woLggBuildSessionState();
+    if(!snapshot)return;
     woLggPendingSave=true;
     woLggSaveQueue=woLggSaveQueue
       .catch(()=>{})
-      .then(()=>woLggSaveCloudSession(true));
+      .then(()=>woLggWriteSnapshot(snapshot));
   }
 
   function woLggMarkWorkChanged(){
@@ -1253,13 +1256,29 @@ async function woLggLogout(){
         </div>`;
       document.body.appendChild(o);
 
-      o.querySelector('#wo-resume').onclick=()=>{o.remove();resolve(true)};
+      o.querySelector('#wo-resume').onclick=async()=>{
+        o.remove();
+        // Relecture juste avant reprise : on garantit que "Reprendre" signifie
+        // bien la dernière sauvegarde cloud disponible à cet instant.
+        const latest=await woLggReadCloudSession();
+        if(latest?.state) woLggApplyCloudState(latest);
+        else woLggApplyCloudState(row);
+        resolve(true);
+      };
       o.querySelector('#wo-fresh').onclick=async()=>{
         o.remove();
         const fresh={version:3,currentStep:1,shiftDate:'',selectedShift:null,flights:[],selectedFlights:[],caterings:[],selectedCaterings:[],selectedASL737:[],selectedASL737Initialized:[],flightOverrides:{},blankWorksheets:[],blankWorksheetCounter:0,lastDepartures:[],extraNotes:'',scrollX:0,scrollY:0};
         const now=new Date().toISOString();
-        const {error}=await woLggSupabase.from('work_sessions').upsert({user_id:woLggUser.id,state:fresh,updated_at:now},{onConflict:'user_id'});
+        const {error}=await woLggSupabase.from('work_sessions').upsert(
+          {user_id:woLggUser.id,state:fresh,updated_at:now},
+          {onConflict:'user_id'}
+        );
         if(error)console.warn('WO-LGG fresh session:',error.message);
+        else{
+          woLggLastSavedFingerprint=woLggFingerprint(fresh);
+          woLggLastCloudUpdatedAt=now;
+          woLggPendingSave=false;
+        }
         woLggApplyCloudState({state:fresh,updated_at:now});
         window.scrollTo(0,0);
         resolve(false);
