@@ -1082,12 +1082,15 @@ async function woLggLogout(){
       blankWorksheets:typeof blankWorksheets!=='undefined'?blankWorksheets:[],
       blankWorksheetCounter:typeof blankWorksheetCounter!=='undefined'?blankWorksheetCounter:0,
       lastDepartures:typeof lastDepartures!=='undefined'?lastDepartures:[],
-      extraNotes:document.getElementById('extra-notes')?.value||''};
+      extraNotes:document.getElementById('extra-notes')?.value||'',
+      scrollX: window.scrollX || 0,
+      scrollY: window.scrollY || 0
+    };
   }
   function woLggFingerprint(s){try{return JSON.stringify(s)}catch(e){return''}}
   async function woLggReadCloudSession(){
     if(!woLggUser||woLggVisitorMode)return null;
-    const {data,error}=await woLggSupabase.from('work_sessions').select('state,updated_at').eq('user_id',woLggUser.id).maybeSingle();
+    const {data,error}=await woLggSupabase.from('work_sessions').select('id,state,updated_at').eq('user_id',woLggUser.id).maybeSingle();
     if(error){console.warn('WO-LGG session read:',error.message);return null} return data||null;
   }
   function woLggApplyCloudState(row){
@@ -1113,15 +1116,38 @@ async function woLggLogout(){
       if(typeof renderCaterings==='function')renderCaterings();
       if(typeof updateCateringCount==='function')updateCateringCount();
       if(typeof updateSelectedCount==='function')updateSelectedCount();
-      woLggLastCloudUpdatedAt=row.updated_at||null;woLggLastSavedFingerprint=woLggFingerprint(woLggBuildSessionState());woLggPendingSave=false;return true;
+
+      // Revenir exactement à l'étape et à la position mémorisées.
+      // On attend le prochain frame pour que le DOM ait fini de se reconstruire.
+      const savedStep=Number(s.currentStep)||1;
+      const savedX=Number.isFinite(Number(s.scrollX))?Number(s.scrollX):0;
+      const savedY=Number.isFinite(Number(s.scrollY))?Number(s.scrollY):0;
+      if(typeof goToStep==='function' && typeof currentStep!=='undefined'){
+        const alreadyOnStep=(Number(currentStep)===savedStep);
+        if(!alreadyOnStep) goToStep(savedStep);
+      }
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        window.scrollTo(savedX,savedY);
+      }));
+
+      woLggLastCloudUpdatedAt=row.updated_at||null;
+      woLggLastSavedFingerprint=woLggFingerprint(woLggBuildSessionState());
+      woLggPendingSave=false;return true;
     }finally{woLggSessionHydrating=false}
   }
   async function woLggSaveCloudSession(force=false){
     if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return false;
     const s=woLggBuildSessionState();if(!s)return false;const fp=woLggFingerprint(s);
-    if(!force&&fp===woLggLastSavedFingerprint){woLggPendingSave=false;return true}
     const now=new Date().toISOString();
-    const {error}=await woLggSupabase.from('work_sessions').upsert({user_id:woLggUser.id,state:s,updated_at:now},{onConflict:'user_id'});
+
+    // Une seule ligne par utilisateur est garantie par l'index UNIQUE
+    // work_sessions_user_id_unique. Chaque action utilisateur met à jour
+    // cette même sauvegarde et actualise updated_at, même si l'état JSON
+    // n'a pas changé : updated_at représente réellement le dernier usage.
+    const {error}=await woLggSupabase.from('work_sessions').upsert(
+      {user_id:woLggUser.id,state:s,updated_at:now},
+      {onConflict:'user_id'}
+    );
     if(error){console.warn('WO-LGG session save:',error.message);woLggPendingSave=true;return false}
     woLggLastSavedFingerprint=fp;woLggLastCloudUpdatedAt=now;woLggPendingSave=false;return true;
   }
@@ -1131,9 +1157,12 @@ async function woLggLogout(){
     woLggSaveDebounce=setTimeout(()=>woLggSaveCloudSession(true),150);
   }
   function woLggInstallPersistenceHooks(){
+    // On sauvegarde les actions, pas la consultation/lecture/scroll.
     document.addEventListener('input',woLggMarkWorkChanged,true);
     document.addEventListener('change',woLggMarkWorkChanged,true);
-    document.addEventListener('click',()=>{if(!woLggSessionHydrating&&woLggUser&&!woLggVisitorMode)setTimeout(woLggMarkWorkChanged,80)},true);
+    document.addEventListener('click',()=>{
+      if(!woLggSessionHydrating&&woLggUser&&!woLggVisitorMode)setTimeout(woLggMarkWorkChanged,80);
+    },true);
   }
   function woLggStopRealtime(){if(woLggRealtimeChannel){try{woLggSupabase.removeChannel(woLggRealtimeChannel)}catch(e){}woLggRealtimeChannel=null}}
   function woLggStartRealtime(){
@@ -1147,21 +1176,72 @@ async function woLggLogout(){
   async function woLggChooseExistingSession(row){
     if(!row?.state)return true;
     const when=row.updated_at?new Date(row.updated_at).toLocaleString('fr-BE',{dateStyle:'full',timeStyle:'short'}):'date inconnue';
-    const count=Array.isArray(row.state.flights)?row.state.flights.length:0,step=Number(row.state.currentStep)||1;
+    const s=row.state||{};
+    const count=Array.isArray(s.flights)?s.flights.length:0;
+    const step=Math.max(1,Number(s.currentStep)||1);
+    const shift=s.selectedShift?.name || s.selectedShift?.label || '';
+    const notes=Array.isArray(s.flights)?s.flights.filter(f=>f && (f.note||f.notes||f.extraInfo)).length:0;
+
     return await new Promise(resolve=>{
       const old=document.getElementById('wo-lgg-resume-modal');if(old)old.remove();
-      const o=document.createElement('div');o.id='wo-lgg-resume-modal';
-      o.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.58);display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
-      o.innerHTML=`<div style="width:min(480px,100%);background:#fff;border-radius:22px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:inherit"><div style="font-size:30px">💾</div><h2 style="margin:8px 0">Sauvegarde détectée</h2><p>Une sauvegarde de votre dernière utilisation a été trouvée.</p><div style="background:#f5f7fa;border-radius:14px;padding:14px;margin:16px 0"><b>Dernière sauvegarde automatique</b><br>${when}<br>${count} vol(s) enregistré(s) · étape ${step}</div><div style="display:flex;gap:10px;flex-direction:column"><button id="wo-resume" style="border:0;border-radius:12px;padding:13px;font-weight:700">Reprendre à la dernière sauvegarde</button><button id="wo-fresh" style="border:1px solid #d6d9df;background:#fff;border-radius:12px;padding:13px;font-weight:700">Recommencer à zéro</button></div></div>`;
+      const o=document.createElement('div');
+      o.id='wo-lgg-resume-modal';
+      o.innerHTML=`
+        <style>
+          #wo-lgg-resume-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;background:rgba(7,18,32,.72);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+          #wo-lgg-resume-modal .wo-card{width:min(520px,100%);max-height:calc(100vh - 36px);overflow:auto;background:linear-gradient(180deg,#ffffff 0%,#f5f8fc 100%);border:1px solid rgba(255,255,255,.8);border-radius:24px;box-shadow:0 28px 90px rgba(0,0,0,.42);font-family:inherit;color:#122033}
+          #wo-lgg-resume-modal .wo-head{padding:24px 24px 18px;background:linear-gradient(135deg,#071a2d,#123d62);color:#fff;border-radius:24px 24px 0 0}
+          #wo-lgg-resume-modal .wo-logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.08em;font-size:14px;text-transform:uppercase;opacity:.95}
+          #wo-lgg-resume-modal .wo-dot{width:10px;height:10px;border-radius:50%;background:#42a5ff;box-shadow:0 0 18px rgba(66,165,255,.8)}
+          #wo-lgg-resume-modal h2{margin:14px 0 6px;font-size:25px;line-height:1.15}
+          #wo-lgg-resume-modal .wo-sub{margin:0;color:rgba(255,255,255,.82);line-height:1.45}
+          #wo-lgg-resume-modal .wo-body{padding:20px 24px 24px}
+          #wo-lgg-resume-modal .wo-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+          #wo-lgg-resume-modal .wo-info div{background:#fff;border:1px solid #e3eaf2;border-radius:14px;padding:12px 13px}
+          #wo-lgg-resume-modal .wo-info small{display:block;color:#718096;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+          #wo-lgg-resume-modal .wo-info strong{font-size:14px}
+          #wo-lgg-resume-modal .wo-actions{display:flex;flex-direction:column;gap:10px}
+          #wo-lgg-resume-modal button{width:100%;min-height:50px;border-radius:14px;font:inherit;font-weight:800;font-size:15px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+          #wo-lgg-resume-modal button:active{transform:scale(.985)}
+          #wo-lgg-resume-modal #wo-resume{border:0;background:linear-gradient(135deg,#1479d1,#0d5da8);color:#fff;box-shadow:0 9px 22px rgba(13,93,168,.28)}
+          #wo-lgg-resume-modal #wo-fresh{border:1px solid #ccd7e3;background:#fff;color:#17324b}
+          @media(max-width:520px){#wo-lgg-resume-modal{padding:12px}#wo-lgg-resume-modal .wo-head{padding:20px 19px 16px}#wo-lgg-resume-modal .wo-body{padding:17px 19px 20px}#wo-lgg-resume-modal .wo-info{grid-template-columns:1fr}#wo-lgg-resume-modal h2{font-size:22px}}
+        </style>
+        <div class="wo-card" role="dialog" aria-modal="true" aria-labelledby="wo-lgg-title">
+          <div class="wo-head">
+            <div class="wo-logo"><span class="wo-dot"></span>WO-LGG · Session</div>
+            <h2 id="wo-lgg-title">Une sauvegarde a été détectée</h2>
+            <p class="wo-sub">Souhaitez-vous reprendre votre dernier travail ou commencer un nouveau shift ?</p>
+          </div>
+          <div class="wo-body">
+            <div class="wo-info">
+              <div><small>Dernière sauvegarde</small><strong>${when}</strong></div>
+              <div><small>Étape</small><strong>${step}</strong></div>
+              <div><small>Vols enregistrés</small><strong>${count}</strong></div>
+              <div><small>Shift</small><strong>${shift||'Non défini'}</strong></div>
+            </div>
+            <div class="wo-actions">
+              <button id="wo-resume">↩︎ Reprendre à la dernière sauvegarde</button>
+              <button id="wo-fresh">＋ Recommencer à zéro</button>
+            </div>
+          </div>
+        </div>`;
       document.body.appendChild(o);
+
       o.querySelector('#wo-resume').onclick=()=>{o.remove();resolve(true)};
       o.querySelector('#wo-fresh').onclick=async()=>{
-        o.remove();const fresh={version:3,currentStep:1,shiftDate:'',selectedShift:null,flights:[],selectedFlights:[],caterings:[],selectedCaterings:[],selectedASL737:[],selectedASL737Initialized:[],flightOverrides:{},blankWorksheets:[],blankWorksheetCounter:0,lastDepartures:[],extraNotes:''};
-        await woLggSupabase.from('work_sessions').upsert({user_id:woLggUser.id,state:fresh,updated_at:new Date().toISOString()},{onConflict:'user_id'});
-        woLggApplyCloudState({state:fresh,updated_at:new Date().toISOString()});resolve(false);
+        o.remove();
+        const fresh={version:3,currentStep:1,shiftDate:'',selectedShift:null,flights:[],selectedFlights:[],caterings:[],selectedCaterings:[],selectedASL737:[],selectedASL737Initialized:[],flightOverrides:{},blankWorksheets:[],blankWorksheetCounter:0,lastDepartures:[],extraNotes:'',scrollX:0,scrollY:0};
+        const now=new Date().toISOString();
+        const {error}=await woLggSupabase.from('work_sessions').upsert({user_id:woLggUser.id,state:fresh,updated_at:now},{onConflict:'user_id'});
+        if(error)console.warn('WO-LGG fresh session:',error.message);
+        woLggApplyCloudState({state:fresh,updated_at:now});
+        window.scrollTo(0,0);
+        resolve(false);
       };
     });
   }
+
   async function woLggInitializeCloudSession(){
     if(!woLggUser||woLggVisitorMode||woLggInitializedUserId===woLggUser.id)return;
     if(woLggCloudInitPromise)return woLggCloudInitPromise;
@@ -1174,12 +1254,9 @@ async function woLggLogout(){
   woLggInstallPersistenceHooks();
 
   window.addEventListener('beforeunload',()=>{
-    if(woLggUser && !woLggVisitorMode) {
-      // La sauvegarde périodique a déjà enregistré l'état le plus récent.
-      // Aucun token Supabase persistant n'est utilisé : sessionStorage uniquement.
-      clearInterval(woLggSessionSaveTimer);
-      clearInterval(woLggSessionSyncTimer);
-    }
+    // Les actions ont déjà été persistées au fil de l'utilisation.
+    // On ne sauvegarde pas le scroll ni une simple consultation.
+    clearTimeout(woLggSaveDebounce);
   });
 </script>
 <script>
