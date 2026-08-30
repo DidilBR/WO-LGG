@@ -1132,6 +1132,7 @@ async function woLggLogout(){
       selectedASL737:typeof selectedASL737!=='undefined'?Array.from(selectedASL737):[],
       selectedASL737Initialized:typeof selectedASL737Initialized!=='undefined'?Array.from(selectedASL737Initialized):[],
       swissportSelections:(typeof getSwissportSelectionsForSnapshot==='function'?getSwissportSelectionsForSnapshot():{}),
+      handlingSelections:(typeof getHandlingSelectionsForSnapshot==='function'?getHandlingSelectionsForSnapshot():{}),
       flightOverrides:typeof flightOverrides!=='undefined'?flightOverrides:{},
       blankWorksheets:typeof blankWorksheets!=='undefined'?blankWorksheets:[],
       blankWorksheetCounter:typeof blankWorksheetCounter!=='undefined'?blankWorksheetCounter:0,
@@ -1194,6 +1195,7 @@ async function woLggLogout(){
 
       if(typeof updateEditModeButtonUI==='function')updateEditModeButtonUI();
       if(typeof renderFlights==='function')renderFlights();
+      if(typeof restoreHandlingSelections==='function')restoreHandlingSelections();
       if(typeof renderCaterings==='function')renderCaterings();
       if(typeof updateCateringCount==='function')updateCateringCount();
       if(typeof updateSelectedCount==='function')updateSelectedCount();
@@ -2634,6 +2636,49 @@ async function woLggLogout(){
     return String((f?.flight||'')+'|'+(f?.reg||'')).toUpperCase();
   }
 
+
+  // Les boutons HANDLING sont eux aussi des checkboxes DOM (WFS/SVA/ASL737).
+  // Leur état doit voyager côté serveur avec la session, et être indexé par
+  // vol + immatriculation plutôt que par l'index du tableau.
+  function handlingFlightKey(f) {
+    return String((f?.flight||'')+'|'+(f?.reg||'')).toUpperCase();
+  }
+
+  function getHandlingSelectionsForSnapshot() {
+    const out = {};
+    if (typeof flights === 'undefined' || !Array.isArray(flights)) return out;
+    flights.forEach((f, i) => {
+      const vals = {};
+      ['wfs-handling','sva-handling','asl737-handling','lha-catering'].forEach(prefix => {
+        const cb = document.getElementById(prefix+'-'+i);
+        if (cb) vals[prefix] = !!cb.checked;
+      });
+      if (Object.keys(vals).length) out[handlingFlightKey(f)] = vals;
+    });
+    return out;
+  }
+
+  function restoreHandlingSelections() {
+    const cloud = window.woLggCloudHandlingSelections || {};
+    if (typeof flights === 'undefined' || !Array.isArray(flights)) return;
+    flights.forEach((f, i) => {
+      const vals = cloud[handlingFlightKey(f)];
+      if (!vals) return;
+      ['wfs-handling','sva-handling','asl737-handling','lha-catering'].forEach(prefix => {
+        const cb = document.getElementById(prefix+'-'+i);
+        if (!cb || typeof vals[prefix] === 'undefined') return;
+        cb.checked = !!vals[prefix];
+        // Re-applique visuellement l'état sans déclencher une nouvelle sauvegarde.
+        const label = cb.closest('label');
+        if (label && cb.id.startsWith('wfs-handling-')) {
+          label.style.background = cb.checked ? 'linear-gradient(135deg,rgba(0,200,255,.28),rgba(0,200,255,.15))' : 'linear-gradient(135deg,rgba(0,200,255,.1),rgba(0,200,255,.05))';
+          label.style.borderColor = cb.checked ? 'rgb(0,200,255)' : 'rgba(0,200,255,.35)';
+          label.style.boxShadow = cb.checked ? '0 0 12px rgba(0,200,255,.4)' : '0 0 6px rgba(0,200,255,.12)';
+        }
+      });
+    });
+  }
+
   function getSwissportSelectionsForSnapshot() {
     const out = {};
     if (typeof flights === 'undefined' || !Array.isArray(flights)) return out;
@@ -2864,6 +2909,7 @@ function restoreActiveTextField(saved) {
     }).join('');
 
     restoreCheckboxStates(savedCheckboxStates);
+    restoreHandlingSelections();
     restoreActiveTextField(savedRemarksFocus);
     attachSwipeHandlers(list);
     restoreScrollPosition();
