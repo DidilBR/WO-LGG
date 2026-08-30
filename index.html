@@ -973,11 +973,6 @@ header .logo-sub{white-space:nowrap}
     <div style="display:flex;gap:12px;margin-top:24px;justify-content:center" class="no-print">
       <button onclick="printSheet()" style="background:#111;color:#fff;border:none;padding:13px 28px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Imprimer / PDF</button>
       <button onclick="closePrintOverlay()" style="background:transparent;color:#888;border:1px solid #ccc;padding:13px 22px;border-radius:8px;font-size:13px;cursor:pointer">Fermer</button>
-<div id="wo-lgg-visitor-access" style="margin-top:12px">
-  <button type="button" onclick="woLggContinueAsVisitor()" style="width:100%;background:transparent;border:1px solid var(--b2);border-radius:10px;color:var(--t2);padding:11px 16px;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer">
-    Continuer en tant que visiteur
-  </button>
-</div>
     </div>
   </div>
 </div>
@@ -1062,16 +1057,30 @@ async function woLggLogout(){
 
 </script>
 <script>
-  // ── WO-LGG : sauvegarde de session ───────────────────────────────
+  // ── WO-LGG : sauvegarde de session V20 ───────────────────────────
+  // Objectif : UNE sauvegarde cloud par utilisateur, toujours la plus recente.
+  // Chaque mutation est snapshottee immediatement. Les evenements Realtime
+  // provenant d'un autre appareil ne peuvent plus ecraser une saisie locale
+  // plus recente ni voler le focus d'un champ en cours de frappe.
   let woLggSaveDebounce=null, woLggSessionHydrating=false, woLggCloudInitPromise=null;
   let woLggInitializedUserId=null, woLggLastSavedFingerprint=null, woLggLastCloudUpdatedAt=null;
   let woLggPendingSave=false, woLggRealtimeChannel=null;
   let woLggSaveQueue=Promise.resolve();
+  let woLggMutationSeq=0, woLggLastLocalMutationAt=0, woLggDeferredRemoteRow=null;
+  const woLggDeviceId = (()=>{
+    try{
+      const k='wo_lgg_device_id';
+      let v=sessionStorage.getItem(k);
+      if(!v){v=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2));sessionStorage.setItem(k,v)}
+      return v;
+    }catch(e){return String(Date.now())+'-'+Math.random().toString(36).slice(2)}
+  })();
 
   function woLggBuildSessionState(){
     if(!woLggUser||woLggVisitorMode)return null;
-    return {version:3,currentStep:typeof currentStep!=='undefined'?currentStep:1,
+    return {version:4,currentStep:typeof currentStep!=='undefined'?currentStep:1,
       shiftDate:document.getElementById('shift-date')?.value||'',
+      shiftAgent:document.getElementById('shift-agent')?.value||'',
       selectedShift:typeof selectedShift!=='undefined'?selectedShift:null,
       flights:typeof flights!=='undefined'?flights:[],
       selectedFlights:typeof selectedFlights!=='undefined'?Array.from(selectedFlights):[],
@@ -1084,22 +1093,32 @@ async function woLggLogout(){
       blankWorksheetCounter:typeof blankWorksheetCounter!=='undefined'?blankWorksheetCounter:0,
       lastDepartures:typeof lastDepartures!=='undefined'?lastDepartures:[],
       extraNotes:document.getElementById('extra-notes')?.value||'',
+      flightSearchTerm:typeof flightSearchTerm!=='undefined'?flightSearchTerm:'',
+      editModeEnabled:typeof editModeEnabled!=='undefined'?!!editModeEnabled:false,
       scrollX: window.scrollX || 0,
-      scrollY: window.scrollY || 0
+      scrollY: window.scrollY || 0,
+      _sync:{deviceId:woLggDeviceId,seq:woLggMutationSeq,clientAt:new Date().toISOString()}
     };
   }
   function woLggFingerprint(s){try{return JSON.stringify(s)}catch(e){return''}}
+  function woLggIsRemoteNewer(row){
+    if(!row)return false;
+    const remoteMs=Date.parse(row.updated_at||row.state?._sync?.clientAt||'');
+    const localMs=Date.parse(woLggLastCloudUpdatedAt||'');
+    return Number.isFinite(remoteMs) && (!Number.isFinite(localMs) || remoteMs>localMs);
+  }
   async function woLggReadCloudSession(){
     if(!woLggUser||woLggVisitorMode)return null;
     const {data,error}=await woLggSupabase.from('work_sessions').select('id,state,updated_at').eq('user_id',woLggUser.id).maybeSingle();
     if(error){console.warn('WO-LGG session read:',error.message);return null} return data||null;
   }
   function woLggApplyCloudState(row){
-    const s=row?.state;if(!s||![1,2,3].includes(Number(s.version)))return false;
+    const s=row?.state;if(!s||![1,2,3,4].includes(Number(s.version)))return false;
     woLggSessionHydrating=true;
     try{
       if(typeof currentStep!=='undefined'&&Number.isFinite(Number(s.currentStep)))currentStep=Number(s.currentStep);
-      const d=document.getElementById('shift-date');if(d&&s.shiftDate)d.value=s.shiftDate;
+      const d=document.getElementById('shift-date');if(d&&typeof s.shiftDate==='string')d.value=s.shiftDate;
+      const a=document.getElementById('shift-agent');if(a&&typeof s.shiftAgent==='string')a.value=s.shiftAgent;
       const n=document.getElementById('extra-notes');if(n&&typeof s.extraNotes==='string')n.value=s.extraNotes;
       if(typeof selectedShift!=='undefined')selectedShift=s.selectedShift||null;
       if(s.selectedShift?.name){const b=document.querySelector('.shift-btn[data-shift="'+s.selectedShift.name+'"]');if(b){document.querySelectorAll('.shift-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active')}}
@@ -1113,111 +1132,152 @@ async function woLggLogout(){
       if(typeof blankWorksheets!=='undefined')blankWorksheets=Array.isArray(s.blankWorksheets)?s.blankWorksheets:[];
       if(typeof blankWorksheetCounter!=='undefined')blankWorksheetCounter=Number(s.blankWorksheetCounter)||0;
       if(typeof lastDepartures!=='undefined')lastDepartures=Array.isArray(s.lastDepartures)?s.lastDepartures:[];
+      if(typeof flightSearchTerm!=='undefined')flightSearchTerm=typeof s.flightSearchTerm==='string'?s.flightSearchTerm:'';
+      if(typeof editModeEnabled!=='undefined')editModeEnabled=!!s.editModeEnabled;
       if(typeof renderFlights==='function')renderFlights();
       if(typeof renderCaterings==='function')renderCaterings();
       if(typeof updateCateringCount==='function')updateCateringCount();
       if(typeof updateSelectedCount==='function')updateSelectedCount();
+      if(typeof updateEditModeButtonUI==='function')updateEditModeButtonUI();
 
-      // Revenir exactement à l'étape et à la position mémorisées.
-      // On attend le prochain frame pour que le DOM ait fini de se reconstruire.
-      const savedStep=Number(s.currentStep)||1;
+      const savedStep=Math.max(1,Math.min(3,Number(s.currentStep)||1));
       const savedX=Number.isFinite(Number(s.scrollX))?Number(s.scrollX):0;
       const savedY=Number.isFinite(Number(s.scrollY))?Number(s.scrollY):0;
       if(typeof goToStep==='function' && typeof currentStep!=='undefined'){
-        // Toujours reconstruire l'interface de l'étape sauvegardée.
-        // Le simple fait de modifier currentStep ne change pas le DOM.
         goToStep(savedStep);
       }
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{
-        window.scrollTo(savedX,savedY);
-      }));
+      requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(savedX,savedY)));
 
-      woLggLastCloudUpdatedAt=row.updated_at||null;
-      woLggLastSavedFingerprint=woLggFingerprint(woLggBuildSessionState());
-      woLggPendingSave=false;return true;
+      woLggLastCloudUpdatedAt=row.updated_at||s._sync?.clientAt||null;
+      woLggLastSavedFingerprint=woLggFingerprint(s);
+      woLggPendingSave=false;
+      woLggDeferredRemoteRow=null;
+      return true;
     }finally{woLggSessionHydrating=false}
   }
+
   async function woLggWriteSnapshot(snapshot){
     if(!woLggUser||woLggVisitorMode||!snapshot)return false;
-    const now=new Date().toISOString();
+    const actionAt=snapshot._sync?.clientAt||new Date().toISOString();
+    snapshot._sync=Object.assign({},snapshot._sync||{},{deviceId:woLggDeviceId,clientAt:actionAt});
+
+    // Latest-wins : une vieille requete en file ne peut pas ecraser une
+    // sauvegarde deja plus recente provenant du telephone ou du PC.
+    const current=await woLggReadCloudSession();
+    const currentMs=Date.parse(current?.updated_at||current?.state?._sync?.clientAt||'');
+    const actionMs=Date.parse(actionAt);
+    if(Number.isFinite(currentMs)&&Number.isFinite(actionMs)&&currentMs>actionMs){
+      woLggLastCloudUpdatedAt=current.updated_at||current.state?._sync?.clientAt||woLggLastCloudUpdatedAt;
+      woLggPendingSave=false;
+      return false;
+    }
+
     const {error}=await woLggSupabase.from('work_sessions').upsert(
-      {user_id:woLggUser.id,state:snapshot,updated_at:now},
+      {user_id:woLggUser.id,state:snapshot,updated_at:actionAt},
       {onConflict:'user_id'}
     );
     if(error){
       console.warn('WO-LGG session save:',error.message);
-      woLggPendingSave=true;
+      return false;
+    }
+
+    // Verification : on ne considere pas la sauvegarde comme reussie tant que
+    // Supabase ne nous a pas rendu exactement le snapshot envoye.
+    const verify=await woLggReadCloudSession();
+    if(!verify?.state||woLggFingerprint(verify.state)!==woLggFingerprint(snapshot)){
+      console.warn('WO-LGG session save: verification cloud differente');
       return false;
     }
     woLggLastSavedFingerprint=woLggFingerprint(snapshot);
-    woLggLastCloudUpdatedAt=now;
-    woLggPendingSave=false;
+    woLggLastCloudUpdatedAt=verify.updated_at||actionAt;
     return true;
   }
 
-  async function woLggSaveCloudSession(force=false){
-    if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return false;
-    const snapshot=woLggBuildSessionState();
-    if(!snapshot)return false;
-    return woLggWriteSnapshot(snapshot);
-  }
-
-  // Les sauvegardes sont sérialisées : deux actions très rapprochées ne peuvent
-  // plus se terminer dans le mauvais ordre et faire réapparaître un ancien état.
-  function woLggQueueSave(){
+  function woLggQueueSave(reason='mutation'){
     if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
+    woLggMutationSeq++;
+    woLggLastLocalMutationAt=Date.now();
     const snapshot=woLggBuildSessionState();
     if(!snapshot)return;
+    snapshot._sync.reason=reason;
     woLggPendingSave=true;
-    woLggSaveQueue=woLggSaveQueue
-      .catch(()=>{})
-      .then(()=>woLggWriteSnapshot(snapshot));
+    const mySeq=snapshot._sync.seq;
+    woLggSaveQueue=woLggSaveQueue.catch(()=>{}).then(()=>woLggWriteSnapshot(snapshot)).then(()=>{
+      // Uniquement la derniere action actuellement en file peut liberer le verrou
+      // anti-Realtime. Une ancienne ecriture ne doit jamais ouvrir une fenetre
+      // pendant laquelle une nouvelle saisie attend encore d'etre envoyee.
+      if(mySeq===woLggMutationSeq)woLggPendingSave=false;
+    }).catch(()=>{});
   }
-
-  function woLggMarkWorkChanged(){
+  function woLggMarkWorkChanged(reason='mutation'){
     if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
-    woLggQueueSave();
+    woLggQueueSave(reason);
   }
 
   function woLggInstallPersistenceHooks(){
-    // input/change : la valeur a déjà été modifiée au moment où l'événement remonte.
-    document.addEventListener('input',woLggMarkWorkChanged,true);
-    document.addEventListener('change',woLggMarkWorkChanged,true);
-
-    // click en phase bubble + micro-délai : le onclick de l'élément a fini de
-    // modifier l'état (goToStep, sélection, ajout/suppression, etc.) avant le snapshot.
+    // Une saisie clavier = une mutation. On sauvegarde immediatement, mais sans
+    // jamais re-rendre le champ actif a cause de son propre echo Realtime.
+    document.addEventListener('input',()=>woLggMarkWorkChanged('input'),true);
+    document.addEventListener('change',()=>woLggMarkWorkChanged('change'),true);
     document.addEventListener('click',(event)=>{
       if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
       if(event.target?.closest?.('#wo-lgg-resume-modal'))return;
-      setTimeout(woLggMarkWorkChanged,0);
+      setTimeout(()=>woLggMarkWorkChanged('click'),0);
     },false);
   }
   function woLggStopRealtime(){if(woLggRealtimeChannel){try{woLggSupabase.removeChannel(woLggRealtimeChannel)}catch(e){}woLggRealtimeChannel=null}}
   function woLggStartRealtime(){
     woLggStopRealtime();if(!woLggUser||woLggVisitorMode)return;const uid=woLggUser.id;
     woLggRealtimeChannel=woLggSupabase.channel('wo-lgg-session-'+uid).on('postgres_changes',{event:'*',schema:'public',table:'work_sessions',filter:'user_id=eq.'+uid},p=>{
-      if(!p?.new?.state||woLggSessionHydrating||woLggPendingSave)return;
-      const fp=woLggFingerprint(p.new.state);if(fp===woLggLastSavedFingerprint){woLggLastCloudUpdatedAt=p.new.updated_at||woLggLastCloudUpdatedAt;return}
-      woLggApplyCloudState(p.new);
+      const row=p?.new;
+      if(!row?.state||woLggSessionHydrating)return;
+      const remoteDevice=row.state?._sync?.deviceId||'';
+      const remoteMs=Date.parse(row.updated_at||row.state?._sync?.clientAt||'');
+      const localMs=Date.parse(woLggLastCloudUpdatedAt||'');
+      // Notre propre echo : inutile de re-render le DOM.
+      if(remoteDevice===woLggDeviceId)return;
+      // Un evenement plus vieux que notre dernier cloud connu ne peut pas nous ecraser.
+      if(Number.isFinite(remoteMs)&&Number.isFinite(localMs)&&remoteMs<=localMs)return;
+      // Tant qu'un champ texte est actif, on ne remplace JAMAIS le DOM sous le clavier.
+      const active=document.activeElement;
+      const editing=!!active && (active.matches?.('input[type="text"],textarea,input[type="time"],input[type="date"]'));
+      if(editing||woLggPendingSave||Date.now()-woLggLastLocalMutationAt<900){
+        woLggDeferredRemoteRow=row;
+        return;
+      }
+      woLggApplyCloudState(row);
     }).subscribe(status=>console.log('WO-LGG Realtime:',status));
   }
+
+  async function woLggFlushDeferredRemote(){
+    const row=woLggDeferredRemoteRow;
+    if(!row||woLggPendingSave)return;
+    const remoteMs=Date.parse(row.updated_at||row.state?._sync?.clientAt||'');
+    const localMs=Date.parse(woLggLastCloudUpdatedAt||'');
+    if(Number.isFinite(remoteMs)&&Number.isFinite(localMs)&&remoteMs<=localMs){woLggDeferredRemoteRow=null;return}
+    const active=document.activeElement;
+    if(active&&active.matches?.('input[type="text"],textarea,input[type="time"],input[type="date"]'))return;
+    woLggApplyCloudState(row);
+  }
+
   async function woLggChooseExistingSession(row){
     if(!row?.state)return true;
+    // Toujours relire le cloud juste avant d'afficher la modale : le popup ne doit
+    // jamais utiliser une copie vieille d'un autre appareil.
+    const latest=await woLggReadCloudSession();
+    row=latest?.state?latest:row;
     const when=row.updated_at?new Date(row.updated_at).toLocaleString('fr-BE',{dateStyle:'full',timeStyle:'short'}):'date inconnue';
     const s=row.state||{};
     const count=Array.isArray(s.flights)?s.flights.length:0;
     const step=Math.max(1,Number(s.currentStep)||1);
     const shift=s.selectedShift?.name || s.selectedShift?.label || '';
-    const notes=Array.isArray(s.flights)?s.flights.filter(f=>f && (f.note||f.notes||f.extraInfo)).length:0;
-
     return await new Promise(resolve=>{
       const old=document.getElementById('wo-lgg-resume-modal');if(old)old.remove();
-      const o=document.createElement('div');
-      o.id='wo-lgg-resume-modal';
+      const o=document.createElement('div');o.id='wo-lgg-resume-modal';
       o.innerHTML=`
         <style>
           #wo-lgg-resume-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;background:rgba(7,18,32,.72);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
-          #wo-lgg-resume-modal .wo-card{width:min(520px,100%);max-height:calc(100vh - 36px);overflow:auto;background:linear-gradient(180deg,#ffffff 0%,#f5f8fc 100%);border:1px solid rgba(255,255,255,.8);border-radius:24px;box-shadow:0 28px 90px rgba(0,0,0,.42);font-family:inherit;color:#122033}
+          #wo-lgg-resume-modal .wo-card{width:min(520px,100%);max-height:calc(100vh - 36px);overflow:auto;background:linear-gradient(180deg,#fff 0%,#f5f8fc 100%);border:1px solid rgba(255,255,255,.8);border-radius:24px;box-shadow:0 28px 90px rgba(0,0,0,.42);font-family:inherit;color:#122033}
           #wo-lgg-resume-modal .wo-head{padding:24px 24px 18px;background:linear-gradient(135deg,#071a2d,#123d62);color:#fff;border-radius:24px 24px 0 0}
           #wo-lgg-resume-modal .wo-logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.08em;font-size:14px;text-transform:uppercase;opacity:.95}
           #wo-lgg-resume-modal .wo-dot{width:10px;height:10px;border-radius:50%;background:#42a5ff;box-shadow:0 0 18px rgba(66,165,255,.8)}
@@ -1236,52 +1296,25 @@ async function woLggLogout(){
           @media(max-width:520px){#wo-lgg-resume-modal{padding:12px}#wo-lgg-resume-modal .wo-head{padding:20px 19px 16px}#wo-lgg-resume-modal .wo-body{padding:17px 19px 20px}#wo-lgg-resume-modal .wo-info{grid-template-columns:1fr}#wo-lgg-resume-modal h2{font-size:22px}}
         </style>
         <div class="wo-card" role="dialog" aria-modal="true" aria-labelledby="wo-lgg-title">
-          <div class="wo-head">
-            <div class="wo-logo"><span class="wo-dot"></span>WO-LGG · Session</div>
-            <h2 id="wo-lgg-title">Une sauvegarde a été détectée</h2>
-            <p class="wo-sub">Souhaitez-vous reprendre votre dernier travail ou commencer un nouveau shift ?</p>
-          </div>
-          <div class="wo-body">
-            <div class="wo-info">
-              <div><small>Dernière sauvegarde</small><strong>${when}</strong></div>
-              <div><small>Étape</small><strong>${step}</strong></div>
-              <div><small>Vols enregistrés</small><strong>${count}</strong></div>
-              <div><small>Shift</small><strong>${shift||'Non défini'}</strong></div>
-            </div>
-            <div class="wo-actions">
-              <button id="wo-resume">↩︎ Reprendre à la dernière sauvegarde</button>
-              <button id="wo-fresh">＋ Recommencer à zéro</button>
-            </div>
+          <div class="wo-head"><div class="wo-logo"><span class="wo-dot"></span>WO-LGG · Session</div><h2 id="wo-lgg-title">Une sauvegarde a été détectée</h2><p class="wo-sub">Souhaitez-vous reprendre votre dernier travail ou commencer un nouveau shift ?</p></div>
+          <div class="wo-body"><div class="wo-info"><div><small>Dernière sauvegarde</small><strong>${when}</strong></div><div><small>Étape</small><strong>${step}</strong></div><div><small>Vols enregistrés</small><strong>${count}</strong></div><div><small>Shift</small><strong>${shift||'Non défini'}</strong></div></div>
+            <div class="wo-actions"><button id="wo-resume">↩︎ Reprendre à la dernière sauvegarde</button><button id="wo-fresh">＋ Recommencer à zéro</button></div>
           </div>
         </div>`;
       document.body.appendChild(o);
-
       o.querySelector('#wo-resume').onclick=async()=>{
         o.remove();
-        // Relecture juste avant reprise : on garantit que "Reprendre" signifie
-        // bien la dernière sauvegarde cloud disponible à cet instant.
         const latest=await woLggReadCloudSession();
-        if(latest?.state) woLggApplyCloudState(latest);
-        else woLggApplyCloudState(row);
+        if(latest?.state)woLggApplyCloudState(latest);else woLggApplyCloudState(row);
         resolve(true);
       };
       o.querySelector('#wo-fresh').onclick=async()=>{
         o.remove();
-        const fresh={version:3,currentStep:1,shiftDate:'',selectedShift:null,flights:[],selectedFlights:[],caterings:[],selectedCaterings:[],selectedASL737:[],selectedASL737Initialized:[],flightOverrides:{},blankWorksheets:[],blankWorksheetCounter:0,lastDepartures:[],extraNotes:'',scrollX:0,scrollY:0};
+        const fresh={version:4,currentStep:1,shiftDate:'',shiftAgent:'',selectedShift:null,flights:[],selectedFlights:[],caterings:[],selectedCaterings:[],selectedASL737:[],selectedASL737Initialized:[],flightOverrides:{},blankWorksheets:[],blankWorksheetCounter:0,lastDepartures:[],extraNotes:'',flightSearchTerm:'',editModeEnabled:false,scrollX:0,scrollY:0,_sync:{deviceId:woLggDeviceId,seq:++woLggMutationSeq,clientAt:new Date().toISOString(),reason:'fresh'}};
         const now=new Date().toISOString();
-        const {error}=await woLggSupabase.from('work_sessions').upsert(
-          {user_id:woLggUser.id,state:fresh,updated_at:now},
-          {onConflict:'user_id'}
-        );
-        if(error)console.warn('WO-LGG fresh session:',error.message);
-        else{
-          woLggLastSavedFingerprint=woLggFingerprint(fresh);
-          woLggLastCloudUpdatedAt=now;
-          woLggPendingSave=false;
-        }
-        woLggApplyCloudState({state:fresh,updated_at:now});
-        window.scrollTo(0,0);
-        resolve(false);
+        const {error}=await woLggSupabase.from('work_sessions').upsert({user_id:woLggUser.id,state:fresh,updated_at:now},{onConflict:'user_id'});
+        if(error)console.warn('WO-LGG fresh session:',error.message);else{woLggLastSavedFingerprint=woLggFingerprint(fresh);woLggLastCloudUpdatedAt=now;woLggPendingSave=false}
+        woLggApplyCloudState({state:fresh,updated_at:now});window.scrollTo(0,0);resolve(false);
       };
     });
   }
@@ -1297,16 +1330,16 @@ async function woLggLogout(){
   }
   woLggInstallPersistenceHooks();
 
-  // Dernier filet de sécurité : si l'utilisateur ferme/quitte la page après
-  // une action, on remet immédiatement l'état courant dans la file. Les actions
-  // normales sont déjà sauvegardées au fil de l'utilisation.
-  window.addEventListener('pagehide',()=>{
-    if(woLggUser&&!woLggVisitorMode&&!woLggSessionHydrating) woLggQueueSave();
-  });
+  // Dernier filet : sauvegarde de l'etat courant lors du passage en arriere-plan.
+  // Le queue garantit que l'action est placee apres les mutations precedentes.
+  window.addEventListener('pagehide',()=>{if(woLggUser&&!woLggVisitorMode&&!woLggSessionHydrating)woLggQueueSave('pagehide')});
   document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='hidden'&&woLggUser&&!woLggVisitorMode&&!woLggSessionHydrating) woLggQueueSave();
+    if(document.visibilityState==='hidden'&&woLggUser&&!woLggVisitorMode&&!woLggSessionHydrating)woLggQueueSave('visibility-hidden');
+    if(document.visibilityState==='visible')setTimeout(woLggFlushDeferredRemote,300);
   });
+  document.addEventListener('focusout',()=>setTimeout(woLggFlushDeferredRemote,250),true);
 </script>
+
 <script>
   let selectedShift = null;
   let flights = [];
@@ -1878,7 +1911,7 @@ async function woLggLogout(){
     // Ne jamais interrompre une saisie en cours dans un champ Remarques : on
     // reessaiera simplement au prochain cycle d'actualisation automatique.
     const active = document.activeElement;
-    if (active && active.tagName === 'INPUT' && active.classList.contains('remarks-input')) return;
+    if (active && active.matches && active.matches('input[type=\"text\"],textarea,input[type=\"time\"],input[type=\"date\"]')) return;
     try {
       const [arrivals, departures] = await Promise.all([
         fetchJsonWithFallback(FIDS_ARRIVALS_URL),
@@ -2476,12 +2509,13 @@ async function woLggLogout(){
 function captureActiveTextField(container) {
     if (!container) return null;
     const active = document.activeElement;
-    if (!active || active.tagName !== 'INPUT') return null;
+    if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'TEXTAREA')) return null;
     if (!active.classList.contains('remarks-input') && !active.classList.contains('reg-input')) return null;
     if (!container.contains(active)) return null;
     return {
       cls: active.classList.contains('reg-input') ? 'reg-input' : 'remarks-input',
       flightKey: active.dataset.flightKey,
+      value: active.value,
       selStart: active.selectionStart,
       selEnd: active.selectionEnd
     };
@@ -2490,6 +2524,13 @@ function restoreActiveTextField(saved) {
     if (!saved) return;
     const el = document.querySelector('.' + saved.cls + '[data-flight-key="' + CSS.escape(saved.flightKey) + '"]');
     if (!el) return;
+    // Un refresh FIDS peut detruire/recreer le champ pendant la frappe.
+    // On restaure sa valeur exacte et sa selection avant de rendre le focus.
+    if (typeof saved.value === 'string' && el.value !== saved.value) el.value = saved.value;
+    if (saved.cls === 'remarks-input' && saved.flightKey && typeof flights !== 'undefined') {
+      const idx = flights.findIndex(f => String(f.flight || '') === String(saved.flightKey));
+      if (idx >= 0) flights[idx].remarks = saved.value;
+    }
     el.focus();
     try { el.setSelectionRange(saved.selStart, saved.selEnd); } catch (e) {}
   }
