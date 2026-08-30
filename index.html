@@ -538,6 +538,28 @@ header .logo-sub{white-space:nowrap}
 </style><style id="wo-lgg-security-ui">
 #wo-lgg-logout-btn{pointer-events:auto!important;position:relative!important;z-index:1000!important;cursor:pointer!important}
 #wo-lgg-auth-overlay input[type="email"],#wo-lgg-auth-overlay input[type="password"]{autocomplete:none}
+<style id="wo-lgg-auth-layout-fix">
+/* V32 — restauration du layout de connexion desktop/mobile */
+#wo-lgg-auth-overlay{box-sizing:border-box!important;width:100vw!important;max-width:none!important;overflow:auto!important;}
+#wo-lgg-auth-overlay > div{box-sizing:border-box!important;display:block!important;flex:0 1 390px!important;width:min(390px,100%)!important;max-width:390px!important;min-width:0!important;margin:auto!important;}
+#wo-lgg-auth-overlay input[type="email"],
+#wo-lgg-auth-overlay input[type="password"]{
+  display:block!important;width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+  min-height:42px!important;background:var(--bg2)!important;border:1px solid var(--b2)!important;
+  border-radius:var(--r2)!important;color:var(--t1)!important;
+  font:500 14px/1 var(--sans)!important;padding:13px 16px!important;outline:none!important;
+}
+#wo-lgg-auth-overlay .btn,
+#wo-lgg-auth-overlay #wo-lgg-visitor-btn{
+  display:flex!important;box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+  min-width:0!important;align-items:center!important;justify-content:center!important;
+}
+#wo-lgg-auth-overlay .field-label{display:block!important;width:100%!important;}
+@media(max-width:520px){
+  #wo-lgg-auth-overlay{padding:16px!important;}
+  #wo-lgg-auth-overlay > div{padding:22px!important;width:100%!important;}
+}
+</style>
 </style></head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
