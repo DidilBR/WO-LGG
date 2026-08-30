@@ -1,6 +1,24 @@
 <!DOCTYPE html>
 <html lang="fr" data-theme="cyber">
 <head>
+<!-- WO-LGG CACHE GUARD v22 -->
+<script>
+(function(){
+  try{
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistrations().then(function(regs){
+        regs.forEach(function(reg){ reg.unregister().catch(function(){}); });
+      }).catch(function(){});
+    }
+    if('caches' in window){
+      caches.keys().then(function(keys){
+        return Promise.all(keys.map(function(k){ return caches.delete(k); }));
+      }).catch(function(){});
+    }
+  }catch(e){}
+})();
+</script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LGG - Cleaning Ops</title>
@@ -510,7 +528,10 @@ header .logo-sub{white-space:nowrap}
 }
 </style>
 
-</head>
+<style id="wo-lgg-save-state-css">
+#wo-lgg-save-state{font-family:var(--mono);font-size:8px;letter-spacing:.5px;color:var(--t3);margin-left:5px;white-space:nowrap}
+#wo-lgg-save-state.ok{color:#00e5a0}#wo-lgg-save-state.err{color:#ff5b7d}
+</style></head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
   <div style="width:100%;max-width:390px;background:var(--bg1);border:1px solid var(--b2);border-radius:16px;padding:28px;box-shadow:0 20px 70px rgba(0,0,0,.55)">
@@ -954,7 +975,7 @@ header .logo-sub{white-space:nowrap}
     </div>
     <div class="panel" style="margin-top:16px;border-color:rgba(0,212,255,.15)">
       <label class="field-label" style="margin-bottom:8px">&#128221; Informations complémentaires</label>
-      <textarea id="extra-notes" placeholder="Ajoutez vos notes ici... (elles apparaîtront dans la section Notes de la feuille)" style="width:100%;min-height:80px;resize:vertical;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--sans);font-size:13px;line-height:1.6;padding:13px 16px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--a1)'" onblur="this.style.borderColor='var(--b2)'" oninput="localStorage.setItem('lgg_extra_notes', this.value)"></textarea>
+      <textarea id="extra-notes" placeholder="Ajoutez vos notes ici... (elles apparaîtront dans la section Notes de la feuille)" style="width:100%;min-height:80px;resize:vertical;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--sans);font-size:13px;line-height:1.6;padding:13px 16px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--a1)'" onblur="this.style.borderColor='var(--b2)'" oninput="localStorage.setItem('lgg_extra_notes', this.value); if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('extraNotes')"></textarea>
     </div>
     <div class="actions">
       <button class="btn btn-ghost" onclick="goToStep(2)">&larr; Retour</button>
@@ -1079,6 +1100,17 @@ async function woLggLogout(){
     }catch(e){ return String(Date.now())+'-'+Math.random().toString(36).slice(2); }
   })();
 
+  function woLggUpdateSaveState(ok, serverTime){
+    let el=document.getElementById('wo-lgg-save-state');
+    if(!el){
+      el=document.createElement('span'); el.id='wo-lgg-save-state';
+      const host=document.querySelector('.header-right')||document.body;
+      host.appendChild(el);
+    }
+    el.className=ok?'ok':'err';
+    el.textContent=ok?'✓ '+(serverTime||'ENREGISTRÉ'):'⚠ SAUVEGARDE ÉCHOUÉE';
+  }
+
   function woLggBuildSessionState(){
     if(!woLggUser||woLggVisitorMode)return null;
     return {
@@ -1110,7 +1142,12 @@ async function woLggLogout(){
 
   async function woLggReadCloudSession(){
     if(!woLggUser||woLggVisitorMode)return null;
-    const {data,error}=await woLggSupabase.from('work_sessions').select('id,state,updated_at').eq('user_id',woLggUser.id).maybeSingle();
+    const {data,error}=await woLggSupabase.from('work_sessions')
+      .select('id,state,updated_at')
+      .eq('user_id',woLggUser.id)
+      .order('updated_at',{ascending:false})
+      .limit(1)
+      .maybeSingle();
     if(error){console.warn('WO-LGG session read:',error.message);return null}
     return data||null;
   }
@@ -1178,11 +1215,20 @@ async function woLggLogout(){
     if(error){
       console.warn('WO-LGG session save:',error.message);
       woLggPendingSave=true;
+      woLggUpdateSaveState(false);
       return false;
     }
 
     woLggLastSavedFingerprint=woLggFingerprint(data.state);
     woLggLastCloudUpdatedAt=data.updated_at||null;
+    const deferred=window.woLggDeferredRemoteRow;
+    if(deferred){
+      const dts=deferred.updated_at?Date.parse(deferred.updated_at):0;
+      const lts=data.updated_at?Date.parse(data.updated_at):0;
+      if(!dts||!lts||dts<=lts)window.woLggDeferredRemoteRow=null;
+    }
+    woLggPendingSave=false;
+    woLggUpdateSaveState(true,data.updated_at?new Date(data.updated_at).toLocaleTimeString('fr-BE',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'ENREGISTRÉ');
     return true;
   }
 
@@ -1208,22 +1254,16 @@ async function woLggLogout(){
   }
 
   function woLggInstallPersistenceHooks(){
-    // BUBBLE PHASE : oninput/onchange inline a déjà modifié la donnée.
-    // Capture phase causait la sauvegarde de la valeur précédente (lettres perdues).
+    // Bubble phase: inline oninput/onchange handlers have already modified
+    // flights[] before we snapshot the state.
     document.addEventListener('input',()=>{
-      if(!woLggSessionHydrating&&woLggUser&&!woLggVisitorMode)
-        setTimeout(()=>woLggMarkWorkChanged('input'),0);
+      if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
+      setTimeout(()=>woLggMarkWorkChanged('input'),0);
     },false);
 
     document.addEventListener('change',()=>{
-      if(!woLggSessionHydrating&&woLggUser&&!woLggVisitorMode)
-        setTimeout(()=>woLggMarkWorkChanged('change'),0);
-    },false);
-
-    document.addEventListener('click',(event)=>{
       if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
-      if(event.target?.closest?.('#wo-lgg-resume-modal'))return;
-      setTimeout(()=>woLggMarkWorkChanged('click'),0);
+      setTimeout(()=>woLggMarkWorkChanged('change'),0);
     },false);
   }
 
@@ -1250,12 +1290,20 @@ async function woLggLogout(){
         // Echo de notre propre écriture : aucun re-render.
         if(row.state?._sync?.deviceId===woLggDeviceId)return;
 
+        // Le serveur est chronologique : une version plus ancienne ne peut
+        // jamais écraser l'état déjà affiché sur cet appareil.
+        const incomingTs=row.updated_at?Date.parse(row.updated_at):0;
+        const knownTs=woLggLastCloudUpdatedAt?Date.parse(woLggLastCloudUpdatedAt):0;
+        if(incomingTs&&knownTs&&incomingTs<knownTs)return;
+
         // Ne jamais reconstruire le champ actuellement édité ni une mutation locale
         // encore en attente. Le changement distant est traité après focusout.
         const active=document.activeElement;
         const editing=!!active&&active.matches?.('input[type="text"],textarea,input[type="time"],input[type="date"]');
         if(editing||woLggPendingSave){
-          window.woLggDeferredRemoteRow=row;
+          const prev=window.woLggDeferredRemoteRow;
+          const prevTs=prev?.updated_at?Date.parse(prev.updated_at):0;
+          if(!prev||incomingTs>=prevTs)window.woLggDeferredRemoteRow=row;
           return;
         }
         woLggApplyCloudState(row);
@@ -1270,7 +1318,10 @@ async function woLggLogout(){
     if(!row||woLggPendingSave)return;
     const active=document.activeElement;
     if(active&&active.matches?.('input[type="text"],textarea,input[type="time"],input[type="date"]'))return;
+    const rowTs=row.updated_at?Date.parse(row.updated_at):0;
+    const knownTs=woLggLastCloudUpdatedAt?Date.parse(woLggLastCloudUpdatedAt):0;
     window.woLggDeferredRemoteRow=null;
+    if(rowTs&&knownTs&&rowTs<knownTs)return;
     woLggApplyCloudState(row);
   }
 
@@ -2733,6 +2784,7 @@ function restoreActiveTextField(saved) {
     if (selectedFlights.has(i)) selectedFlights.delete(i);
     else selectedFlights.add(i);
     renderFlights();
+    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('toggleFlight');
   }
 
   function removeFlightAtIndex(i) {
@@ -2741,6 +2793,7 @@ function restoreActiveTextField(saved) {
     selectedFlights.forEach(idx => { if (idx < i) ns.add(idx); else if (idx > i) ns.add(idx-1); });
     selectedFlights = ns;
     renderFlights();
+    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('removeFlight');
   }
 
   function removeFlight(e, i) {
@@ -4215,6 +4268,7 @@ ${(function(){
     document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
     autoDetectShift();
     goToStep(1);
+    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('resetAll');
 
   }
 
@@ -4253,14 +4307,6 @@ ${(function(){
   })();
 
 </script>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
-      navigator.serviceWorker.register('sw.js').catch(function (err) {
-        console.warn('Service worker non enregistre :', err);
-      });
-    });
-  }
-</script>
+<!-- Service worker désactivé : source réseau directe pour éviter les sessions HTML obsolètes. -->
 </body>
 </html>
