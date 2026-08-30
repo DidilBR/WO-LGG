@@ -1057,28 +1057,33 @@ async function woLggLogout(){
 
 </script>
 <script>
-  // ── WO-LGG : sauvegarde de session V20 ───────────────────────────
-  // Objectif : UNE sauvegarde cloud par utilisateur, toujours la plus recente.
-  // Chaque mutation est snapshottee immediatement. Les evenements Realtime
-  // provenant d'un autre appareil ne peuvent plus ecraser une saisie locale
-  // plus recente ni voler le focus d'un champ en cours de frappe.
-  let woLggSaveDebounce=null, woLggSessionHydrating=false, woLggCloudInitPromise=null;
-  let woLggInitializedUserId=null, woLggLastSavedFingerprint=null, woLggLastCloudUpdatedAt=null;
-  let woLggPendingSave=false, woLggRealtimeChannel=null;
+  // ── WO-LGG : session de travail persistante ───────────────────────
+  // Une seule sauvegarde par utilisateur. Le timestamp updated_at est
+  // fourni par PostgreSQL. Les mutations sont sauvegardées, le scroll/lecture
+  // et les refreshs automatiques ne le sont pas.
+  let woLggSessionHydrating=false;
+  let woLggCloudInitPromise=null;
+  let woLggInitializedUserId=null;
+  let woLggLastSavedFingerprint=null;
+  let woLggLastCloudUpdatedAt=null;
+  let woLggPendingSave=false;
+  let woLggRealtimeChannel=null;
   let woLggSaveQueue=Promise.resolve();
-  let woLggMutationSeq=0, woLggLastLocalMutationAt=0, woLggDeferredRemoteRow=null;
-  const woLggDeviceId = (()=>{
+
+  const woLggDeviceId=(()=>{
     try{
       const k='wo_lgg_device_id';
       let v=sessionStorage.getItem(k);
-      if(!v){v=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2));sessionStorage.setItem(k,v)}
+      if(!v){ v=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2)); sessionStorage.setItem(k,v); }
       return v;
-    }catch(e){return String(Date.now())+'-'+Math.random().toString(36).slice(2)}
+    }catch(e){ return String(Date.now())+'-'+Math.random().toString(36).slice(2); }
   })();
 
   function woLggBuildSessionState(){
     if(!woLggUser||woLggVisitorMode)return null;
-    return {version:4,currentStep:typeof currentStep!=='undefined'?currentStep:1,
+    return {
+      version:5,
+      currentStep:typeof currentStep!=='undefined'?currentStep:1,
       shiftDate:document.getElementById('shift-date')?.value||'',
       shiftAgent:document.getElementById('shift-agent')?.value||'',
       selectedShift:typeof selectedShift!=='undefined'?selectedShift:null,
@@ -1095,33 +1100,38 @@ async function woLggLogout(){
       extraNotes:document.getElementById('extra-notes')?.value||'',
       flightSearchTerm:typeof flightSearchTerm!=='undefined'?flightSearchTerm:'',
       editModeEnabled:typeof editModeEnabled!=='undefined'?!!editModeEnabled:false,
-      scrollX: window.scrollX || 0,
-      scrollY: window.scrollY || 0,
-      _sync:{deviceId:woLggDeviceId,seq:woLggMutationSeq,clientAt:new Date().toISOString()}
+      scrollX:window.scrollX||0,
+      scrollY:window.scrollY||0,
+      _sync:{deviceId:woLggDeviceId}
     };
   }
-  function woLggFingerprint(s){try{return JSON.stringify(s)}catch(e){return''}}
-  function woLggIsRemoteNewer(row){
-    if(!row)return false;
-    const remoteMs=Date.parse(row.updated_at||row.state?._sync?.clientAt||'');
-    const localMs=Date.parse(woLggLastCloudUpdatedAt||'');
-    return Number.isFinite(remoteMs) && (!Number.isFinite(localMs) || remoteMs>localMs);
-  }
+
+  function woLggFingerprint(s){ try{return JSON.stringify(s)}catch(e){return''} }
+
   async function woLggReadCloudSession(){
     if(!woLggUser||woLggVisitorMode)return null;
     const {data,error}=await woLggSupabase.from('work_sessions').select('id,state,updated_at').eq('user_id',woLggUser.id).maybeSingle();
-    if(error){console.warn('WO-LGG session read:',error.message);return null} return data||null;
+    if(error){console.warn('WO-LGG session read:',error.message);return null}
+    return data||null;
   }
+
   function woLggApplyCloudState(row){
-    const s=row?.state;if(!s||![1,2,3,4].includes(Number(s.version)))return false;
+    const s=row?.state;
+    if(!s||![1,2,3,4,5].includes(Number(s.version)))return false;
+
     woLggSessionHydrating=true;
     try{
       if(typeof currentStep!=='undefined'&&Number.isFinite(Number(s.currentStep)))currentStep=Number(s.currentStep);
-      const d=document.getElementById('shift-date');if(d&&typeof s.shiftDate==='string')d.value=s.shiftDate;
-      const a=document.getElementById('shift-agent');if(a&&typeof s.shiftAgent==='string')a.value=s.shiftAgent;
-      const n=document.getElementById('extra-notes');if(n&&typeof s.extraNotes==='string')n.value=s.extraNotes;
+      const d=document.getElementById('shift-date'); if(d&&typeof s.shiftDate==='string')d.value=s.shiftDate;
+      const a=document.getElementById('shift-agent'); if(a&&typeof s.shiftAgent==='string')a.value=s.shiftAgent;
+      const n=document.getElementById('extra-notes'); if(n&&typeof s.extraNotes==='string')n.value=s.extraNotes;
+
       if(typeof selectedShift!=='undefined')selectedShift=s.selectedShift||null;
-      if(s.selectedShift?.name){const b=document.querySelector('.shift-btn[data-shift="'+s.selectedShift.name+'"]');if(b){document.querySelectorAll('.shift-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active')}}
+      if(s.selectedShift?.name){
+        const b=document.querySelector('.shift-btn[data-shift="'+s.selectedShift.name+'"]');
+        if(b){document.querySelectorAll('.shift-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
+      }
+
       if(typeof flights!=='undefined')flights=Array.isArray(s.flights)?s.flights:[];
       if(typeof selectedFlights!=='undefined')selectedFlights=new Set(Array.isArray(s.selectedFlights)?s.selectedFlights:[]);
       if(typeof caterings!=='undefined')caterings=Array.isArray(s.caterings)?s.caterings:[];
@@ -1134,149 +1144,156 @@ async function woLggLogout(){
       if(typeof lastDepartures!=='undefined')lastDepartures=Array.isArray(s.lastDepartures)?s.lastDepartures:[];
       if(typeof flightSearchTerm!=='undefined')flightSearchTerm=typeof s.flightSearchTerm==='string'?s.flightSearchTerm:'';
       if(typeof editModeEnabled!=='undefined')editModeEnabled=!!s.editModeEnabled;
+
+      if(typeof updateEditModeButtonUI==='function')updateEditModeButtonUI();
       if(typeof renderFlights==='function')renderFlights();
       if(typeof renderCaterings==='function')renderCaterings();
       if(typeof updateCateringCount==='function')updateCateringCount();
       if(typeof updateSelectedCount==='function')updateSelectedCount();
-      if(typeof updateEditModeButtonUI==='function')updateEditModeButtonUI();
 
       const savedStep=Math.max(1,Math.min(3,Number(s.currentStep)||1));
       const savedX=Number.isFinite(Number(s.scrollX))?Number(s.scrollX):0;
       const savedY=Number.isFinite(Number(s.scrollY))?Number(s.scrollY):0;
-      if(typeof goToStep==='function' && typeof currentStep!=='undefined'){
-        goToStep(savedStep);
-      }
+
+      // IMPORTANT: currentStep modifié seul ne change pas le DOM.
+      if(typeof goToStep==='function')goToStep(savedStep);
       requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(savedX,savedY)));
 
-      woLggLastCloudUpdatedAt=row.updated_at||s._sync?.clientAt||null;
+      woLggLastCloudUpdatedAt=row.updated_at||null;
       woLggLastSavedFingerprint=woLggFingerprint(s);
       woLggPendingSave=false;
-      woLggDeferredRemoteRow=null;
       return true;
     }finally{woLggSessionHydrating=false}
   }
 
   async function woLggWriteSnapshot(snapshot){
     if(!woLggUser||woLggVisitorMode||!snapshot)return false;
-    const actionAt=snapshot._sync?.clientAt||new Date().toISOString();
-    snapshot._sync=Object.assign({},snapshot._sync||{},{deviceId:woLggDeviceId,clientAt:actionAt});
 
-    // Latest-wins : une vieille requete en file ne peut pas ecraser une
-    // sauvegarde deja plus recente provenant du telephone ou du PC.
-    const current=await woLggReadCloudSession();
-    const currentMs=Date.parse(current?.updated_at||current?.state?._sync?.clientAt||'');
-    const actionMs=Date.parse(actionAt);
-    if(Number.isFinite(currentMs)&&Number.isFinite(actionMs)&&currentMs>actionMs){
-      woLggLastCloudUpdatedAt=current.updated_at||current.state?._sync?.clientAt||woLggLastCloudUpdatedAt;
-      woLggPendingSave=false;
-      return false;
-    }
-
-    const {error}=await woLggSupabase.from('work_sessions').upsert(
-      {user_id:woLggUser.id,state:snapshot,updated_at:actionAt},
+    // Le serveur fournit l'heure. Le navigateur ne fournit plus updated_at.
+    const {data,error}=await woLggSupabase.from('work_sessions').upsert(
+      {user_id:woLggUser.id,state:snapshot},
       {onConflict:'user_id'}
-    );
+    ).select('state,updated_at').single();
+
     if(error){
       console.warn('WO-LGG session save:',error.message);
+      woLggPendingSave=true;
       return false;
     }
 
-    // Verification : on ne considere pas la sauvegarde comme reussie tant que
-    // Supabase ne nous a pas rendu exactement le snapshot envoye.
-    const verify=await woLggReadCloudSession();
-    if(!verify?.state||woLggFingerprint(verify.state)!==woLggFingerprint(snapshot)){
-      console.warn('WO-LGG session save: verification cloud differente');
-      return false;
-    }
-    woLggLastSavedFingerprint=woLggFingerprint(snapshot);
-    woLggLastCloudUpdatedAt=verify.updated_at||actionAt;
+    woLggLastSavedFingerprint=woLggFingerprint(data.state);
+    woLggLastCloudUpdatedAt=data.updated_at||null;
     return true;
   }
 
   function woLggQueueSave(reason='mutation'){
     if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
-    woLggMutationSeq++;
-    woLggLastLocalMutationAt=Date.now();
+
+    // Snapshot immuable pris APRÈS l'action.
     const snapshot=woLggBuildSessionState();
     if(!snapshot)return;
     snapshot._sync.reason=reason;
     woLggPendingSave=true;
-    const mySeq=snapshot._sync.seq;
-    woLggSaveQueue=woLggSaveQueue.catch(()=>{}).then(()=>woLggWriteSnapshot(snapshot)).then(()=>{
-      // Uniquement la derniere action actuellement en file peut liberer le verrou
-      // anti-Realtime. Une ancienne ecriture ne doit jamais ouvrir une fenetre
-      // pendant laquelle une nouvelle saisie attend encore d'etre envoyee.
-      if(mySeq===woLggMutationSeq)woLggPendingSave=false;
-    }).catch(()=>{});
+
+    // Les snapshots gardent strictement l'ordre des actions.
+    woLggSaveQueue=woLggSaveQueue
+      .catch(()=>{})
+      .then(()=>woLggWriteSnapshot(snapshot))
+      .catch(e=>{woLggPendingSave=true;console.warn('WO-LGG queued save:',e)});
   }
+
   function woLggMarkWorkChanged(reason='mutation'){
     if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
     woLggQueueSave(reason);
   }
 
   function woLggInstallPersistenceHooks(){
-    // Une saisie clavier = une mutation. On sauvegarde immediatement, mais sans
-    // jamais re-rendre le champ actif a cause de son propre echo Realtime.
-    document.addEventListener('input',()=>woLggMarkWorkChanged('input'),true);
-    document.addEventListener('change',()=>woLggMarkWorkChanged('change'),true);
+    // BUBBLE PHASE : oninput/onchange inline a déjà modifié la donnée.
+    // Capture phase causait la sauvegarde de la valeur précédente (lettres perdues).
+    document.addEventListener('input',()=>{
+      if(!woLggSessionHydrating&&woLggUser&&!woLggVisitorMode)
+        setTimeout(()=>woLggMarkWorkChanged('input'),0);
+    },false);
+
+    document.addEventListener('change',()=>{
+      if(!woLggSessionHydrating&&woLggUser&&!woLggVisitorMode)
+        setTimeout(()=>woLggMarkWorkChanged('change'),0);
+    },false);
+
     document.addEventListener('click',(event)=>{
       if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
       if(event.target?.closest?.('#wo-lgg-resume-modal'))return;
       setTimeout(()=>woLggMarkWorkChanged('click'),0);
     },false);
   }
-  function woLggStopRealtime(){if(woLggRealtimeChannel){try{woLggSupabase.removeChannel(woLggRealtimeChannel)}catch(e){}woLggRealtimeChannel=null}}
-  function woLggStartRealtime(){
-    woLggStopRealtime();if(!woLggUser||woLggVisitorMode)return;const uid=woLggUser.id;
-    woLggRealtimeChannel=woLggSupabase.channel('wo-lgg-session-'+uid).on('postgres_changes',{event:'*',schema:'public',table:'work_sessions',filter:'user_id=eq.'+uid},p=>{
-      const row=p?.new;
-      if(!row?.state||woLggSessionHydrating)return;
-      const remoteDevice=row.state?._sync?.deviceId||'';
-      const remoteMs=Date.parse(row.updated_at||row.state?._sync?.clientAt||'');
-      const localMs=Date.parse(woLggLastCloudUpdatedAt||'');
-      // Notre propre echo : inutile de re-render le DOM.
-      if(remoteDevice===woLggDeviceId)return;
-      // Un evenement plus vieux que notre dernier cloud connu ne peut pas nous ecraser.
-      if(Number.isFinite(remoteMs)&&Number.isFinite(localMs)&&remoteMs<=localMs)return;
-      // Tant qu'un champ texte est actif, on ne remplace JAMAIS le DOM sous le clavier.
-      const active=document.activeElement;
-      const editing=!!active && (active.matches?.('input[type="text"],textarea,input[type="time"],input[type="date"]'));
-      if(editing||woLggPendingSave||Date.now()-woLggLastLocalMutationAt<900){
-        woLggDeferredRemoteRow=row;
-        return;
-      }
-      woLggApplyCloudState(row);
-    }).subscribe(status=>console.log('WO-LGG Realtime:',status));
+
+  function woLggStopRealtime(){
+    if(woLggRealtimeChannel){
+      try{woLggSupabase.removeChannel(woLggRealtimeChannel)}catch(e){}
+      woLggRealtimeChannel=null;
+    }
   }
 
+  function woLggStartRealtime(){
+    woLggStopRealtime();
+    if(!woLggUser||woLggVisitorMode)return;
+
+    const uid=woLggUser.id;
+    woLggRealtimeChannel=woLggSupabase
+      .channel('wo-lgg-session-'+uid)
+      .on('postgres_changes',{
+        event:'*',schema:'public',table:'work_sessions',filter:'user_id=eq.'+uid
+      },payload=>{
+        const row=payload?.new;
+        if(!row?.state||woLggSessionHydrating)return;
+
+        // Echo de notre propre écriture : aucun re-render.
+        if(row.state?._sync?.deviceId===woLggDeviceId)return;
+
+        // Ne jamais reconstruire le champ actuellement édité ni une mutation locale
+        // encore en attente. Le changement distant est traité après focusout.
+        const active=document.activeElement;
+        const editing=!!active&&active.matches?.('input[type="text"],textarea,input[type="time"],input[type="date"]');
+        if(editing||woLggPendingSave){
+          window.woLggDeferredRemoteRow=row;
+          return;
+        }
+        woLggApplyCloudState(row);
+      })
+      .subscribe(status=>console.log('WO-LGG Realtime:',status));
+  }
+
+  window.woLggDeferredRemoteRow=null;
+
   async function woLggFlushDeferredRemote(){
-    const row=woLggDeferredRemoteRow;
+    const row=window.woLggDeferredRemoteRow;
     if(!row||woLggPendingSave)return;
-    const remoteMs=Date.parse(row.updated_at||row.state?._sync?.clientAt||'');
-    const localMs=Date.parse(woLggLastCloudUpdatedAt||'');
-    if(Number.isFinite(remoteMs)&&Number.isFinite(localMs)&&remoteMs<=localMs){woLggDeferredRemoteRow=null;return}
     const active=document.activeElement;
     if(active&&active.matches?.('input[type="text"],textarea,input[type="time"],input[type="date"]'))return;
+    window.woLggDeferredRemoteRow=null;
     woLggApplyCloudState(row);
   }
 
   async function woLggChooseExistingSession(row){
     if(!row?.state)return true;
-    // Toujours relire le cloud juste avant d'afficher la modale : le popup ne doit
-    // jamais utiliser une copie vieille d'un autre appareil.
+
+    // Relecture juste avant le popup : il affiche la ligne réellement présente.
     const latest=await woLggReadCloudSession();
-    row=latest?.state?latest:row;
+    if(latest?.state)row=latest;
+
     const when=row.updated_at?new Date(row.updated_at).toLocaleString('fr-BE',{dateStyle:'full',timeStyle:'short'}):'date inconnue';
     const s=row.state||{};
     const count=Array.isArray(s.flights)?s.flights.length:0;
-    const step=Math.max(1,Number(s.currentStep)||1);
-    const shift=s.selectedShift?.name || s.selectedShift?.label || '';
+    const step=Math.max(1,Math.min(3,Number(s.currentStep)||1));
+    const shift=s.selectedShift?.name||s.selectedShift?.label||'';
+
     return await new Promise(resolve=>{
       const old=document.getElementById('wo-lgg-resume-modal');if(old)old.remove();
-      const o=document.createElement('div');o.id='wo-lgg-resume-modal';
+      const o=document.createElement('div');
+      o.id='wo-lgg-resume-modal';
       o.innerHTML=`
         <style>
-          #wo-lgg-resume-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;background:rgba(7,18,32,.72);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+          #wo-lgg-resume-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;background:rgba(7,18,32,.74);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
           #wo-lgg-resume-modal .wo-card{width:min(520px,100%);max-height:calc(100vh - 36px);overflow:auto;background:linear-gradient(180deg,#fff 0%,#f5f8fc 100%);border:1px solid rgba(255,255,255,.8);border-radius:24px;box-shadow:0 28px 90px rgba(0,0,0,.42);font-family:inherit;color:#122033}
           #wo-lgg-resume-modal .wo-head{padding:24px 24px 18px;background:linear-gradient(135deg,#071a2d,#123d62);color:#fff;border-radius:24px 24px 0 0}
           #wo-lgg-resume-modal .wo-logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.08em;font-size:14px;text-transform:uppercase;opacity:.95}
@@ -1296,25 +1313,57 @@ async function woLggLogout(){
           @media(max-width:520px){#wo-lgg-resume-modal{padding:12px}#wo-lgg-resume-modal .wo-head{padding:20px 19px 16px}#wo-lgg-resume-modal .wo-body{padding:17px 19px 20px}#wo-lgg-resume-modal .wo-info{grid-template-columns:1fr}#wo-lgg-resume-modal h2{font-size:22px}}
         </style>
         <div class="wo-card" role="dialog" aria-modal="true" aria-labelledby="wo-lgg-title">
-          <div class="wo-head"><div class="wo-logo"><span class="wo-dot"></span>WO-LGG · Session</div><h2 id="wo-lgg-title">Une sauvegarde a été détectée</h2><p class="wo-sub">Souhaitez-vous reprendre votre dernier travail ou commencer un nouveau shift ?</p></div>
-          <div class="wo-body"><div class="wo-info"><div><small>Dernière sauvegarde</small><strong>${when}</strong></div><div><small>Étape</small><strong>${step}</strong></div><div><small>Vols enregistrés</small><strong>${count}</strong></div><div><small>Shift</small><strong>${shift||'Non défini'}</strong></div></div>
-            <div class="wo-actions"><button id="wo-resume">↩︎ Reprendre à la dernière sauvegarde</button><button id="wo-fresh">＋ Recommencer à zéro</button></div>
+          <div class="wo-head">
+            <div class="wo-logo"><span class="wo-dot"></span>WO-LGG · Session</div>
+            <h2 id="wo-lgg-title">Une sauvegarde a été détectée</h2>
+            <p class="wo-sub">Souhaitez-vous reprendre votre dernier travail ou commencer un nouveau shift ?</p>
+          </div>
+          <div class="wo-body">
+            <div class="wo-info">
+              <div><small>Dernière sauvegarde</small><strong>${when}</strong></div>
+              <div><small>Étape</small><strong>${step}</strong></div>
+              <div><small>Vols enregistrés</small><strong>${count}</strong></div>
+              <div><small>Shift</small><strong>${shift||'Non défini'}</strong></div>
+            </div>
+            <div class="wo-actions">
+              <button id="wo-resume">↩︎ Reprendre à la dernière sauvegarde</button>
+              <button id="wo-fresh">＋ Recommencer à zéro</button>
+            </div>
           </div>
         </div>`;
+
       document.body.appendChild(o);
+
       o.querySelector('#wo-resume').onclick=async()=>{
         o.remove();
-        const latest=await woLggReadCloudSession();
-        if(latest?.state)woLggApplyCloudState(latest);else woLggApplyCloudState(row);
+        const latestNow=await woLggReadCloudSession();
+        woLggApplyCloudState(latestNow?.state?latestNow:row);
         resolve(true);
       };
+
       o.querySelector('#wo-fresh').onclick=async()=>{
         o.remove();
-        const fresh={version:4,currentStep:1,shiftDate:'',shiftAgent:'',selectedShift:null,flights:[],selectedFlights:[],caterings:[],selectedCaterings:[],selectedASL737:[],selectedASL737Initialized:[],flightOverrides:{},blankWorksheets:[],blankWorksheetCounter:0,lastDepartures:[],extraNotes:'',flightSearchTerm:'',editModeEnabled:false,scrollX:0,scrollY:0,_sync:{deviceId:woLggDeviceId,seq:++woLggMutationSeq,clientAt:new Date().toISOString(),reason:'fresh'}};
-        const now=new Date().toISOString();
-        const {error}=await woLggSupabase.from('work_sessions').upsert({user_id:woLggUser.id,state:fresh,updated_at:now},{onConflict:'user_id'});
-        if(error)console.warn('WO-LGG fresh session:',error.message);else{woLggLastSavedFingerprint=woLggFingerprint(fresh);woLggLastCloudUpdatedAt=now;woLggPendingSave=false}
-        woLggApplyCloudState({state:fresh,updated_at:now});window.scrollTo(0,0);resolve(false);
+        const fresh={
+          version:5,currentStep:1,shiftDate:'',shiftAgent:'',selectedShift:null,
+          flights:[],selectedFlights:[],caterings:[],selectedCaterings:[],
+          selectedASL737:[],selectedASL737Initialized:[],flightOverrides:{},
+          blankWorksheets:[],blankWorksheetCounter:0,lastDepartures:[],
+          extraNotes:'',flightSearchTerm:'',editModeEnabled:false,
+          scrollX:0,scrollY:0,_sync:{deviceId:woLggDeviceId,reason:'fresh'}
+        };
+        const {data,error}=await woLggSupabase.from('work_sessions')
+          .upsert({user_id:woLggUser.id,state:fresh},{onConflict:'user_id'})
+          .select('state,updated_at').single();
+
+        if(error)console.warn('WO-LGG fresh session:',error.message);
+        else{
+          woLggLastSavedFingerprint=woLggFingerprint(data.state);
+          woLggLastCloudUpdatedAt=data.updated_at||null;
+          woLggPendingSave=false;
+          woLggApplyCloudState(data);
+        }
+        window.scrollTo(0,0);
+        resolve(false);
       };
     });
   }
@@ -1322,20 +1371,24 @@ async function woLggLogout(){
   async function woLggInitializeCloudSession(){
     if(!woLggUser||woLggVisitorMode||woLggInitializedUserId===woLggUser.id)return;
     if(woLggCloudInitPromise)return woLggCloudInitPromise;
-    const uid=woLggUser.id;woLggCloudInitPromise=(async()=>{
-      const remote=await woLggReadCloudSession();if(remote?.state)await woLggChooseExistingSession(remote);
-      woLggInitializedUserId=uid;woLggStartRealtime();
-    })().catch(e=>console.warn('WO-LGG cloud initialization:',e)).finally(()=>{woLggCloudInitPromise=null});
+
+    const uid=woLggUser.id;
+    woLggCloudInitPromise=(async()=>{
+      const remote=await woLggReadCloudSession();
+      if(remote?.state)await woLggChooseExistingSession(remote);
+      woLggInitializedUserId=uid;
+      woLggStartRealtime();
+    })().catch(e=>console.warn('WO-LGG cloud initialization:',e))
+      .finally(()=>{woLggCloudInitPromise=null});
     return woLggCloudInitPromise;
   }
+
   woLggInstallPersistenceHooks();
 
-  // Dernier filet : sauvegarde de l'etat courant lors du passage en arriere-plan.
-  // Le queue garantit que l'action est placee apres les mutations precedentes.
-  window.addEventListener('pagehide',()=>{if(woLggUser&&!woLggVisitorMode&&!woLggSessionHydrating)woLggQueueSave('pagehide')});
+  // Aucun enregistrement au pagehide : il ne faut surtout pas réécrire un état
+  // vierge/initial d'une nouvelle page par-dessus la dernière vraie action.
   document.addEventListener('visibilitychange',()=>{
-    if(document.visibilityState==='hidden'&&woLggUser&&!woLggVisitorMode&&!woLggSessionHydrating)woLggQueueSave('visibility-hidden');
-    if(document.visibilityState==='visible')setTimeout(woLggFlushDeferredRemote,300);
+    if(document.visibilityState==='visible')setTimeout(woLggFlushDeferredRemote,250);
   });
   document.addEventListener('focusout',()=>setTimeout(woLggFlushDeferredRemote,250),true);
 </script>
@@ -4162,11 +4215,7 @@ ${(function(){
     document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
     autoDetectShift();
     goToStep(1);
-    if(typeof woLggSessionId!=='undefined' && woLggUser && !woLggVisitorMode){
-      woLggSessionId=woLggNewSessionId(); woLggSessionLastActivityAt=new Date().toISOString();
-      woLggActiveDeviceId=woLggDeviceId; woLggIsActiveDevice=true; woLggLocalDirty=true;
-      if(typeof woLggMarkDirty==='function') woLggMarkDirty();
-    }
+
   }
 
   function applyTheme(theme) {
