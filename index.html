@@ -2665,7 +2665,7 @@ async function woLggLogout(){
       ((f.reg || f.flight || 'Worksheet').replace(/[<>]/g,'')) +
       '</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:avoid;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}</style></head><body>' + page + '</body></html>';
     const w = window.open('', '_blank');
-    if (w) { w.document.open(); w.document.write(html); w.document.close(); w.focus(); setTimeout(function(){ w.print(); }, 150); }
+    if (w) { printHtmlWhenReady(w, html); }
     else { alert('Autorise les popups pour imprimer la worksheet.'); }
   }
 
@@ -3741,11 +3741,7 @@ ${(function(){
 
     const w = window.open('', '_blank');
     if (w) {
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
-      w.focus();
-      w.print();
+      printHtmlWhenReady(w, html);
     } else {
       alert("Autorise les popups pour imprimer. Sur GitHub Pages cela fonctionnera automatiquement.");
     }
@@ -4234,10 +4230,43 @@ ${(function(){
     openPrintWindow(pages, 'ASL 737 ' + (f.flight||f.reg||''));
   }
 
+
+  // Impression robuste : attendre le chargement ET le décodage de toutes les images
+  // (notamment le logo Aero Services) avant d'appeler print().
+  async function printHtmlWhenReady(w, html) {
+    if (!w) return false;
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+
+    try {
+      if (w.document.fonts && w.document.fonts.ready) await w.document.fonts.ready;
+    } catch(e) {}
+
+    const images = Array.from(w.document.images || []);
+    await Promise.all(images.map(img => new Promise(resolve => {
+      const finish = () => {
+        if (typeof img.decode === 'function') img.decode().catch(()=>{}).finally(resolve);
+        else resolve();
+      };
+      if (img.complete) finish();
+      else {
+        img.addEventListener('load', finish, {once:true});
+        img.addEventListener('error', resolve, {once:true});
+      }
+    })));
+
+    await new Promise(r => w.requestAnimationFrame(() => w.requestAnimationFrame(r)));
+    w.focus();
+    w.print();
+    return true;
+  }
+
   function openPrintWindow(page, title) {
-    var html='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>'+title.replace(/</g,'&lt;')+'</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}.page:last-child{page-break-after:avoid}</style></head><body>'+page+'</body></html>';
+    var safeTitle = String(title || 'Worksheet').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var html='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>'+safeTitle+'</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}.page:last-child{page-break-after:avoid}</style></head><body>'+page+'</body></html>';
     var w=window.open('','_blank');
-    if(w){w.document.open();w.document.write(html);w.document.close();w.focus();w.print();}
+    if(w) printHtmlWhenReady(w,html);
     else alert('Autorise les popups pour imprimer.');
   }
 
@@ -4416,11 +4445,7 @@ ${(function(){
 
     var w = window.open('', '_blank');
     if (w) {
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
-      w.focus();
-      w.print();
+      printHtmlWhenReady(w, html);
     } else {
       alert('Autorise les popups pour generer les worksheets.');
     }
@@ -4630,7 +4655,7 @@ ${(function(){
       + '</body></html>';
 
     var w = window.open('', '_blank');
-    if (w) { w.document.open(); w.document.write(html); w.document.close(); w.focus(); w.print(); }
+    if (w) { printHtmlWhenReady(w, html); }
     else { alert('Autorise les popups pour imprimer la feuille Crew Bus.'); }
   }
 
@@ -4671,11 +4696,118 @@ ${(function(){
       + '<style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
       + 'html,body{height:100%}'
       + 'body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}'
-      + '.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}.page:last-child{page-break-after:avoid}</style></head>'
+      + '.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}.page:last-child{page-break-after:avoid}</style>
+<style id="wo-lgg-responsive-mobile-v35">
+/* V35 — vraie mise en page mobile : l'interface utilise toute la largeur
+   et le header devient une barre horizontale défilable pour conserver
+   l'accès à TOUS les contrôles sans les écraser. Le desktop reste inchangé. */
+html{width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%;}
+body{width:100%;min-width:0;overflow-x:hidden;}
+@media (max-width:760px){
+  /* HEADER MOBILE */
+  header{width:100%;height:58px;min-height:58px;overflow:hidden;}
+  .header-inner{
+    width:100%;max-width:none;height:58px;min-height:58px;margin:0;
+    padding:8px 10px;gap:8px;display:flex;flex-wrap:nowrap;
+    align-items:center;justify-content:flex-start;overflow:hidden;
+  }
+  .logo-wrap{
+    flex:0 0 auto;width:auto;min-width:0;gap:7px;
+    display:flex;align-items:center;
+  }
+  .logo-wrap>div:last-child{min-width:0;max-width:112px;}
+  .logo-icon{width:32px;height:32px;min-width:32px;font-size:16px;border-radius:8px;}
+  .logo-text{font-size:10px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .logo-sub{font-size:6.5px;letter-spacing:1px;white-space:nowrap;}
+
+  /* Rolling menu: swipe horizontally to reach every action. */
+  .header-right{
+    flex:1 1 auto;width:auto;min-width:0;height:42px;
+    display:flex;flex-wrap:nowrap;align-items:center;justify-content:flex-start;
+    gap:6px;overflow-x:auto;overflow-y:hidden;
+    padding:2px 2px 2px 0;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+    touch-action:pan-x;
+  }
+  .header-right::-webkit-scrollbar{display:none;}
+  .header-right>*{flex:0 0 auto;}
+  .theme-dots{gap:4px;}
+  .tdot{width:12px;height:12px;min-width:12px;}
+  #wo-lgg-identity{font-size:8px!important;padding:5px 7px!important;max-width:100px;white-space:nowrap;}
+  #wo-lgg-identity #wo-lgg-user-name{max-width:42px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #wo-lgg-logout-btn{font-size:8px!important;padding:7px 8px!important;margin-left:0!important;min-height:34px;}
+  .step-pill{font-size:8px;padding:6px 9px;letter-spacing:.8px;white-space:nowrap;}
+  .header-right>button{min-width:34px;min-height:34px;padding:7px 9px!important;}
+
+  /* CONTENT — no fixed desktop width on a phone. */
+  .app-wrap{
+    width:100%;max-width:none;margin:0;
+    padding:24px 12px calc(92px + env(safe-area-inset-bottom));
+  }
+  .progress-bar{width:100%;gap:5px;margin-bottom:28px;}
+  .prog-step{gap:5px;font-size:8px;letter-spacing:.5px;min-width:0;white-space:nowrap;}
+  .prog-num{width:27px;height:27px;min-width:27px;font-size:9px;}
+  .prog-line{min-width:10px;}
+  .section-hd{margin-bottom:18px;}
+  .section-title{font-size:23px;line-height:1.15;}
+  .section-desc{font-size:13px;line-height:1.45;}
+  .panel{width:100%;max-width:100%;padding:15px;border-radius:10px;margin-bottom:12px;}
+
+  /* Form controls: touch-friendly, never wider than viewport. */
+  .field-row{grid-template-columns:1fr;gap:10px;}
+  .shift-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}
+  .shift-btn{min-width:0;padding:13px 4px;}
+  .shift-name{font-size:10px;}
+  .shift-time{font-size:8px;white-space:nowrap;}
+  input[type=text],input[type=date],input[type=email],input[type=password],input[type=time],textarea,select{
+    width:100%;max-width:100%;min-width:0;min-height:44px;font-size:16px!important;
+  }
+  button,.btn{touch-action:manipulation;}
+  .actions{grid-template-columns:1fr;gap:8px;}
+  .actions .btn,.btn{width:100%;min-height:46px;}
+
+  /* FIDS */
+  .fids-title-row{width:100%;max-width:100%;gap:6px;overflow:hidden;}
+  .fids-title-row>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;}
+  .fids-refresh-control{min-width:0;flex:0 0 auto;}
+  #btn-refresh-fids-now{width:36px;height:36px;min-width:36px;min-height:36px;}
+  .fids-refresh-inline-status{max-width:100px;font-size:8px;white-space:normal;}
+  .flight-card{width:100%;max-width:100%;min-width:0;padding:11px 9px;gap:8px;flex-wrap:wrap;}
+  .flight-info{min-width:0;flex:1 1 calc(100% - 38px);}
+  .flight-reg,.flight-num,.flight-time,.flight-stand{min-width:0;overflow:hidden;text-overflow:ellipsis;}
+
+  /* Modals and edit mode fit inside the phone safe area. */
+  #settings-modal-overlay,#refresh-settings-overlay,#crewbus-password-overlay,#layout-settings-overlay,#history-modal-overlay,#edit-flight-overlay,#print-overlay{
+    width:100vw!important;max-width:100vw!important;padding:10px!important;overflow:auto!important;
+  }
+  #settings-modal-overlay>div,#refresh-settings-overlay>div,#crewbus-password-overlay>div,#layout-settings-overlay>div,#history-modal-overlay>div,#edit-flight-overlay>div{
+    width:100%!important;max-width:100%!important;margin:8px 0!important;
+    max-height:calc(100dvh - 36px)!important;overflow:auto!important;padding:16px!important;
+  }
+  #print-overlay>div{width:100%!important;max-width:100%!important;}
+}
+
+@media (max-width:430px){
+  header,.header-inner{height:56px;min-height:56px;}
+  .header-inner{padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right));gap:6px;}
+  .logo-wrap>div:last-child{max-width:92px;}
+  .logo-text{font-size:9px;}
+  .logo-sub{font-size:6px;}
+  .logo-icon{width:30px;height:30px;min-width:30px;}
+  .header-right{height:40px;gap:5px;}
+  .app-wrap{padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right));}
+  .progress-bar{margin-bottom:24px;}
+  .prog-step{font-size:7px;letter-spacing:.3px;}
+  .prog-num{width:25px;height:25px;min-width:25px;}
+  .section-title{font-size:22px;}
+  .panel{padding:13px;}
+}
+</style>
+</head>'
       + '<body>' + pagesOnly + '</body></html>';
 
     var w = window.open('', '_blank');
-    if (w) { w.document.open(); w.document.write(html); w.document.close(); w.focus(); w.print(); }
+    if (w) { printHtmlWhenReady(w, html); }
     else { alert('Autorise les popups pour générer les worksheets.'); }
   }
 
