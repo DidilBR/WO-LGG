@@ -1047,7 +1047,7 @@ async function woLggLogout(){
     const b=document.getElementById('wo-lgg-logout-btn');
     if(b){b.disabled=true;b.textContent='⏳ DÉCONNEXION…';}
     if (!woLggVisitorMode) await woLggSupabase.auth.signOut();
-    clearInterval(woLggSessionSaveTimer); clearInterval(woLggSessionSyncTimer); clearTimeout(woLggSaveDebounce); woLggStopRealtime();
+    clearTimeout(woLggSaveDebounce); woLggSaveQueue=Promise.resolve(); woLggStopRealtime();
     woLggInitializedUserId=null; woLggCloudInitPromise=null; woLggLastSavedFingerprint=null; woLggPendingSave=false; woLggStopRealtime(); woLggLastCloudUpdatedAt=null; woLggLastLocalFingerprint=null; woLggLastKnownCloudFingerprint=null; woLggLocalDirty=false; woLggSessionId=null; woLggSessionLastActivityAt=null; woLggActiveDeviceId=null; woLggIsActiveDevice=true;
     woLggUser=null; woLggProfile=null; woLggVisitorMode=false;
     woLggShowLogin();
@@ -1066,6 +1066,7 @@ async function woLggLogout(){
   let woLggSaveDebounce=null, woLggSessionHydrating=false, woLggCloudInitPromise=null;
   let woLggInitializedUserId=null, woLggLastSavedFingerprint=null, woLggLastCloudUpdatedAt=null;
   let woLggPendingSave=false, woLggRealtimeChannel=null;
+  let woLggSaveQueue=Promise.resolve();
 
   function woLggBuildSessionState(){
     if(!woLggUser||woLggVisitorMode)return null;
@@ -1123,8 +1124,9 @@ async function woLggLogout(){
       const savedX=Number.isFinite(Number(s.scrollX))?Number(s.scrollX):0;
       const savedY=Number.isFinite(Number(s.scrollY))?Number(s.scrollY):0;
       if(typeof goToStep==='function' && typeof currentStep!=='undefined'){
-        const alreadyOnStep=(Number(currentStep)===savedStep);
-        if(!alreadyOnStep) goToStep(savedStep);
+        // Toujours reconstruire l'interface de l'étape sauvegardée.
+        // Le simple fait de modifier currentStep ne change pas le DOM.
+        goToStep(savedStep);
       }
       requestAnimationFrame(()=>requestAnimationFrame(()=>{
         window.scrollTo(savedX,savedY);
@@ -1137,32 +1139,55 @@ async function woLggLogout(){
   }
   async function woLggSaveCloudSession(force=false){
     if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return false;
-    const s=woLggBuildSessionState();if(!s)return false;const fp=woLggFingerprint(s);
+    const s=woLggBuildSessionState();if(!s)return false;
+    const fp=woLggFingerprint(s);
     const now=new Date().toISOString();
 
-    // Une seule ligne par utilisateur est garantie par l'index UNIQUE
-    // work_sessions_user_id_unique. Chaque action utilisateur met à jour
-    // cette même sauvegarde et actualise updated_at, même si l'état JSON
-    // n'a pas changé : updated_at représente réellement le dernier usage.
+    // UNE sauvegarde par utilisateur. La contrainte UNIQUE sur user_id
+    // garantit que cet upsert remplace toujours l'ancienne sauvegarde.
+    // updated_at est écrit à chaque action utilisateur.
     const {error}=await woLggSupabase.from('work_sessions').upsert(
       {user_id:woLggUser.id,state:s,updated_at:now},
       {onConflict:'user_id'}
     );
-    if(error){console.warn('WO-LGG session save:',error.message);woLggPendingSave=true;return false}
-    woLggLastSavedFingerprint=fp;woLggLastCloudUpdatedAt=now;woLggPendingSave=false;return true;
+    if(error){
+      console.warn('WO-LGG session save:',error.message);
+      woLggPendingSave=true;
+      return false;
+    }
+    woLggLastSavedFingerprint=fp;
+    woLggLastCloudUpdatedAt=now;
+    woLggPendingSave=false;
+    return true;
   }
+
+  // Les sauvegardes sont sérialisées : deux actions très rapprochées ne peuvent
+  // plus se terminer dans le mauvais ordre et faire réapparaître un ancien état.
+  function woLggQueueSave(){
+    if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
+    woLggPendingSave=true;
+    woLggSaveQueue=woLggSaveQueue
+      .catch(()=>{})
+      .then(()=>woLggSaveCloudSession(true));
+  }
+
   function woLggMarkWorkChanged(){
     if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
-    woLggPendingSave=true;clearTimeout(woLggSaveDebounce);
-    woLggSaveDebounce=setTimeout(()=>woLggSaveCloudSession(true),150);
+    woLggQueueSave();
   }
+
   function woLggInstallPersistenceHooks(){
-    // On sauvegarde les actions, pas la consultation/lecture/scroll.
+    // input/change : la valeur a déjà été modifiée au moment où l'événement remonte.
     document.addEventListener('input',woLggMarkWorkChanged,true);
     document.addEventListener('change',woLggMarkWorkChanged,true);
-    document.addEventListener('click',()=>{
-      if(!woLggSessionHydrating&&woLggUser&&!woLggVisitorMode)setTimeout(woLggMarkWorkChanged,80);
-    },true);
+
+    // click en phase bubble + micro-délai : le onclick de l'élément a fini de
+    // modifier l'état (goToStep, sélection, ajout/suppression, etc.) avant le snapshot.
+    document.addEventListener('click',(event)=>{
+      if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
+      if(event.target?.closest?.('#wo-lgg-resume-modal'))return;
+      setTimeout(woLggMarkWorkChanged,0);
+    },false);
   }
   function woLggStopRealtime(){if(woLggRealtimeChannel){try{woLggSupabase.removeChannel(woLggRealtimeChannel)}catch(e){}woLggRealtimeChannel=null}}
   function woLggStartRealtime(){
@@ -1253,10 +1278,14 @@ async function woLggLogout(){
   }
   woLggInstallPersistenceHooks();
 
-  window.addEventListener('beforeunload',()=>{
-    // Les actions ont déjà été persistées au fil de l'utilisation.
-    // On ne sauvegarde pas le scroll ni une simple consultation.
-    clearTimeout(woLggSaveDebounce);
+  // Dernier filet de sécurité : si l'utilisateur ferme/quitte la page après
+  // une action, on remet immédiatement l'état courant dans la file. Les actions
+  // normales sont déjà sauvegardées au fil de l'utilisation.
+  window.addEventListener('pagehide',()=>{
+    if(woLggUser&&!woLggVisitorMode&&!woLggSessionHydrating) woLggQueueSave();
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='hidden'&&woLggUser&&!woLggVisitorMode&&!woLggSessionHydrating) woLggQueueSave();
   });
 </script>
 <script>
@@ -1327,6 +1356,7 @@ async function woLggLogout(){
     document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     selectedShift = { name: btn.dataset.shift, time: btn.dataset.time };
+    if(typeof woLggQueueSave==='function') woLggQueueSave();
   }
 
   function goToStep(n) {
@@ -1336,6 +1366,8 @@ async function woLggLogout(){
     document.getElementById('step-'+n).classList.remove('hidden');
     document.getElementById('step-indicator').textContent = 'ETAPE ' + n + ' / 3';
     window.scrollTo(0,0);
+    // Sauvegarder l'étape immédiatement après le changement logique.
+    if(typeof woLggQueueSave==='function') woLggQueueSave();
     // Update progress bar
     [1,2,3].forEach(i => {
       var el = document.getElementById('prog-'+i);
