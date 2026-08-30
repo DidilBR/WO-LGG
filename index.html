@@ -535,14 +535,17 @@ header .logo-sub{white-space:nowrap}
 .wo-save-spinner{display:inline-block;margin-left:7px;font-size:14px;vertical-align:-1px;animation:woSaveSpin 1.1s linear infinite}
 @keyframes woSaveSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 #wo-lgg-save-state{font-size:13px!important;padding:8px 12px!important}
+</style><style id="wo-lgg-security-ui">
+#wo-lgg-logout-btn{pointer-events:auto!important;position:relative!important;z-index:1000!important;cursor:pointer!important}
+#wo-lgg-auth-overlay input[type="email"],#wo-lgg-auth-overlay input[type="password"]{autocomplete:none}
 </style></head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
   <div style="width:100%;max-width:390px;background:var(--bg1);border:1px solid var(--b2);border-radius:16px;padding:28px;box-shadow:0 20px 70px rgba(0,0,0,.55)">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><div class="logo-icon" style="animation:none">✈</div><div><div class="logo-text" style="font-size:15px">LGG · Cleaning Ops</div><div class="logo-sub">Connexion sécurisée</div></div></div>
     <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:18px">Veuillez vous connecter à votre compte utilisateur.</div>
-    <label class="field-label">E-mail</label><input type="email" id="wo-lgg-email" autocomplete="username" placeholder="adresse e-mail" style="margin-bottom:12px">
-    <label class="field-label">Mot de passe</label><input type="password" id="wo-lgg-password" autocomplete="current-password" placeholder="mot de passe" onkeydown="if(event.key==='Enter')woLggLogin()" style="margin-bottom:12px">
+    <label class="field-label">E-mail</label><input type="email" id="wo-lgg-email" autocomplete="username" placeholder="adresse e-mail" style="margin-bottom:12px"
+    <label class="field-label">Mot de passe</label><input type="password" id="wo-lgg-password" autocomplete="current-password" placeholder="mot de passe" onkeydown="if(event.key==='Enter')woLggLogin()" style="margin-bottom:12px"
     <div id="wo-lgg-auth-message" style="min-height:18px;font-size:12px;color:var(--red);margin-bottom:12px"></div>
     <button class="btn btn-primary" style="width:100%" onclick="woLggLogin()">Se connecter</button>
 
@@ -811,7 +814,7 @@ header .logo-sub{white-space:nowrap}
       <div class="section-desc">Collez les donnees depuis fids.liegeairport.com/spw</div>
     </div>
     <div class="panel">
-      <button class="btn btn-ghost" id="btn-refresh-fids-now" onclick="checkForFlightUpdates(true)" style="width:100%;margin-bottom:10px">🔄 Réactualiser maintenant</button>
+      
       <button class="btn btn-primary" id="btn-load-api" onclick="loadFromFidsAPI()" style="width:100%;margin-bottom:10px">&#128260; Charger automatiquement (API FIDS)</button>
       <div id="api-status" style="font-size:12px;min-height:16px;margin-bottom:14px"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -854,7 +857,11 @@ header .logo-sub{white-space:nowrap}
     </div>
 
     <!-- Badge discret : nouveaux changements detectes par l'auto-refresh -->
-    <div id="refresh-badge" style="display:none;align-items:center;gap:8px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.35);border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12px;color:#00e5a0;font-weight:600">
+    <button id="btn-refresh-fids-now" type="button"
+      title="Forcer la réactualisation des avions maintenant"
+      aria-label="Réactualiser les avions maintenant"
+      onclick="checkForFlightUpdates(true)"
+      style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;margin-left:6px;border:1px solid var(--b2);border-radius:8px;background:var(--bg2);color:var(--t2);cursor:pointer;font-size:16px;line-height:1;vertical-align:middle">⟳</button><div id="refresh-badge" style="display:none;align-items:center;gap:8px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.35);border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12px;color:#00e5a0;font-weight:600">
       <span style="animation:spin 1.5s linear infinite;display:inline-block">&#128260;</span>
       <span id="refresh-badge-text">A jour</span>
     </div>
@@ -1031,7 +1038,8 @@ header .logo-sub{white-space:nowrap}
   function woLggShowLogin(message){
     const o=document.getElementById('wo-lgg-auth-overlay'),b=document.getElementById('wo-lgg-logout-btn');
     if(o)o.style.display='flex';
-    if(b)b.style.display='none';
+    if(b){b.style.display='none';b.disabled=false;b.style.pointerEvents='auto';}
+    document.querySelectorAll('#wo-lgg-auth-overlay input[type="email"],#wo-lgg-auth-overlay input[type="password"]').forEach(el=>{try{el.value='';el.setAttribute('autocomplete','off');el.setAttribute('value','');}catch(e){}});
     const m=document.getElementById('wo-lgg-auth-message');if(m)m.textContent=message||'';
   }
   function woLggHideLogin(){const o=document.getElementById('wo-lgg-auth-overlay');if(o)o.style.display='none';}
@@ -1066,17 +1074,53 @@ header .logo-sub{white-space:nowrap}
 
 async function woLggLogout(){
     const b=document.getElementById('wo-lgg-logout-btn');
-    if(b){b.disabled=true;b.textContent='⏳ DÉCONNEXION…';}
-    if (!woLggVisitorMode) await woLggSupabase.auth.signOut();
-    clearTimeout(woLggSaveDebounce); woLggSaveQueue=Promise.resolve(); woLggStopRealtime();
-    woLggInitializedUserId=null; woLggCloudInitPromise=null; woLggLastSavedFingerprint=null; woLggPendingSave=false; woLggStopRealtime(); woLggLastCloudUpdatedAt=null; woLggLastLocalFingerprint=null; woLggLastKnownCloudFingerprint=null; woLggLocalDirty=false; woLggSessionId=null; woLggSessionLastActivityAt=null; woLggActiveDeviceId=null; woLggIsActiveDevice=true;
-    woLggUser=null; woLggProfile=null; woLggVisitorMode=false;
-    woLggShowLogin();
-    if(b){b.disabled=false;b.textContent='⎋ DÉCONNEXION';}
-  }
-  woLggSupabase.auth.onAuthStateChange((event)=>{
+    const clearLogin=()=>{
+      document.querySelectorAll('#wo-lgg-auth-overlay input[type="email"],#wo-lgg-auth-overlay input[type="password"],input[type="email"],input[type="password"]').forEach(el=>{
+        try{el.value='';el.setAttribute('autocomplete','off');el.setAttribute('value','');}catch(e){}
+      });
+      const form=document.getElementById('wo-lgg-auth-form');
+      if(form){try{form.reset()}catch(e){}}
+    };
+
+    if(b){b.disabled=true;b.style.pointerEvents='none';b.textContent='⏳ DÉCONNEXION…';}
+
+    try{
+      // Do not wait for any work-session save here: the latest mutation has
+      // already been serialized by the normal queue.
+      if(!woLggVisitorMode){
+        try{await woLggSupabase.auth.signOut({scope:'local'});}catch(e){console.warn('WO-LGG logout:',e)}
+      }
+    }finally{
+      clearTimeout(typeof woLggSaveDebounce!=='undefined'?woLggSaveDebounce:null);
+      woLggSaveQueue=Promise.resolve();
+      woLggStopRealtime();
+
+      woLggInitializedUserId=null;
+      woLggCloudInitPromise=null;
+      woLggLastSavedFingerprint=null;
+      woLggPendingSave=false;
+      woLggLastCloudUpdatedAt=null;
+
+      woLggUser=null;
+      woLggProfile=null;
+      woLggVisitorMode=false;
+
+      clearLogin();
+      woLggShowLogin();
+
+      if(b){
+        b.disabled=false;
+        b.style.pointerEvents='auto';
+        b.style.zIndex='1000';
+        b.textContent='⎋ DÉCONNEXION';
+      }
+    }
+  }  woLggSupabase.auth.onAuthStateChange((event)=>{
     if(event==='SIGNED_OUT' && !woLggVisitorMode){
+      document.querySelectorAll('#wo-lgg-auth-overlay input[type="email"],#wo-lgg-auth-overlay input[type="password"],input[type="email"],input[type="password"]').forEach(el=>{try{el.value='';el.setAttribute('autocomplete','off');el.setAttribute('value','');}catch(e){}});
       woLggUser=null;woLggProfile=null;woLggShowLogin();
+      const b=document.getElementById('wo-lgg-logout-btn');
+      if(b){b.disabled=false;b.style.pointerEvents='auto';b.style.zIndex='1000';b.textContent='⎋ DÉCONNEXION';}
     }
   });
   document.addEventListener('DOMContentLoaded',woLggLoadIdentity);
@@ -1266,6 +1310,24 @@ async function woLggLogout(){
     woLggQueueSave(reason);
   }
 
+
+  function woLggCaptureHandlingMutation(event){
+    if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
+    const cb=event.target;
+    if(!cb||cb.tagName!=='INPUT'||cb.type!=='checkbox')return;
+    const id=String(cb.id||'');
+    const m=id.match(/^(?:wfs-handling|sva-handling|asl737-handling|lha-catering)-(\d+)$/);
+    if(!m)return;
+    const idx=Number(m[1]);
+    if(!Array.isArray(flights)||!flights[idx])return;
+    // Store the actual selection in the flight object. This is the authoritative
+    // session state, so it survives renderFlights()/FIDS and is included in `flights`.
+    if(id.startsWith('lha-catering-')) flights[idx]._lhaCatering=!!cb.checked;
+    else flights[idx]._handling=!!cb.checked;
+    // Also keep the richer map for compatibility with older snapshots.
+    woLggMarkWorkChanged('handling:'+id);
+  }
+
   function woLggInstallPersistenceHooks(){
     // Bubble phase: inline oninput/onchange handlers have already modified
     // flights[] before we snapshot the state.
@@ -1278,6 +1340,8 @@ async function woLggLogout(){
       if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
       setTimeout(()=>woLggMarkWorkChanged('change'),0);
     },false);
+
+    document.addEventListener('change',woLggCaptureHandlingMutation,false);
   }
 
   function woLggStopRealtime(){
@@ -2044,12 +2108,21 @@ async function woLggLogout(){
       // Ne jamais perdre une immat saisie a la main (si l'API n'en fournit toujours pas)
       // ni les remarques (qui ne viennent jamais de l'API) lors du rafraichissement auto.
       const oldDataByFlight = {};
-      flights.forEach(f => { oldDataByFlight[f.flight] = { reg: f.reg, remarks: f.remarks }; });
+      flights.forEach(f => {
+        oldDataByFlight[f.flight] = {
+          reg: f.reg,
+          remarks: f.remarks,
+          handling: f._handling === true,
+          lhaCatering: f._lhaCatering === true
+        };
+      });
       fresh.forEach(f => {
         const old = oldDataByFlight[f.flight];
         if (!old) return;
         if (!f.reg && old.reg) f.reg = old.reg;
         if (old.remarks) f.remarks = old.remarks;
+        if (old.handling) f._handling = true;
+        if (old.lhaCatering) f._lhaCatering = true;
       });
 
       const key = f => f.flight + '|' + f.time + '|' + (f.stand || '');
@@ -2663,6 +2736,12 @@ async function woLggLogout(){
     const cloud = window.woLggCloudHandlingSelections || {};
     if (typeof flights === 'undefined' || !Array.isArray(flights)) return;
     flights.forEach((f, i) => {
+      // Primary source: model property persisted inside `flights`.
+      if (f._handling === true || f._lhaCatering === true) {
+        const prefix = f._lhaCatering === true ? 'lha-catering' : 'wfs-handling';
+        const cb0 = document.getElementById(prefix+'-'+i);
+        if (cb0) cb0.checked = true;
+      }
       const vals = cloud[handlingFlightKey(f)];
       if (!vals) return;
       ['wfs-handling','sva-handling','asl737-handling','lha-catering'].forEach(prefix => {
