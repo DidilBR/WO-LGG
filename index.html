@@ -1011,59 +1011,112 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:1
 })();
 </script>
 
-<style id="wo-lgg-new-theme-glacier">
-/* V41 — GLACIER OPS
-   New interface theme using the existing data-theme engine only.
-   No layout, navigation or business logic is changed. */
-[data-theme="glacier"]{
-  --bg0:#071018;
-  --bg1:#0b1823;
-  --bg2:#102431;
-  --bg3:#163241;
-  --b1:rgba(255,255,255,.08);
-  --b2:rgba(108,220,255,.28);
-  --b3:rgba(108,220,255,.46);
-  --a1:#6cf0ff;
-  --a2:#8ab4ff;
-  --t1:#f4fbff;
-  --t2:#a9c6d8;
-  --t3:#5d7890;
-  --red:#ff667a;
+<style id="wo-lgg-interface-orbit">
+/* V42 — ORBIT OPS
+   Interface complète indépendante de data-theme.
+   Toutes les règles sont strictement préfixées [data-layout="orbit"].
+   Aucun sélecteur global, aucune logique métier, aucun changement de structure.
+*/
+[data-layout="orbit"]{
+  --bg0:#050814;--bg1:#0a1020;--bg2:#10182b;--bg3:#16223a;
+  --b1:rgba(155,180,255,.10);--b2:rgba(120,150,255,.26);--b3:rgba(120,150,255,.46);
+  --a1:#8fa8ff;--a2:#c36cff;--t1:#f4f6ff;--t2:#aab5d4;--t3:#65718f;
 }
-[data-theme="glacier"] body{
+[data-layout="orbit"] body{
   background:
-    radial-gradient(circle at 15% 0%,rgba(108,240,255,.10),transparent 30%),
-    radial-gradient(circle at 100% 85%,rgba(138,180,255,.10),transparent 30%),
+    radial-gradient(ellipse 70% 50% at 8% 0%,rgba(92,120,255,.13),transparent 62%),
+    radial-gradient(ellipse 65% 50% at 100% 100%,rgba(195,108,255,.10),transparent 62%),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0,rgba(255,255,255,.018) 1px,transparent 1px,transparent 44px),
     var(--bg0);
 }
-[data-theme="glacier"] header{
-  background:linear-gradient(90deg,rgba(7,18,27,.97),rgba(11,35,49,.96)) !important;
-  border-bottom:1px solid rgba(108,240,255,.42) !important;
+[data-layout="orbit"] body::before{
+  background:
+    radial-gradient(circle at 18% 18%,rgba(143,168,255,.10) 0 1px,transparent 2px),
+    radial-gradient(circle at 74% 32%,rgba(195,108,255,.09) 0 1px,transparent 2px);
+  background-size:90px 90px,140px 140px;
 }
-[data-theme="glacier"] .panel,
-[data-theme="glacier"] .stat-card,
-[data-theme="glacier"] .flight-card{
-  background:linear-gradient(145deg,rgba(14,30,41,.94),rgba(8,19,28,.94)) !important;
-  border-color:rgba(108,220,255,.22) !important;
+[data-layout="orbit"] header{
+  background:linear-gradient(180deg,rgba(8,14,28,.96),rgba(10,16,32,.88)) !important;
+  border-bottom:1px solid rgba(143,168,255,.42) !important;
+  box-shadow:0 10px 34px rgba(0,0,0,.20);
 }
-[data-theme="glacier"] .btn-primary{
-  background:linear-gradient(135deg,#62dfff,#7e9cff) !important;
-  color:#06131c !important;
-  box-shadow:0 8px 26px rgba(98,223,255,.18) !important;
+[data-layout="orbit"] .logo-icon{
+  border-radius:12px;
+  background:linear-gradient(135deg,#718dff,#b55cff);
+  box-shadow:0 0 0 1px rgba(255,255,255,.10),0 8px 24px rgba(103,116,255,.28);
 }
-[data-theme="glacier"] input,
-[data-theme="glacier"] textarea,
-[data-theme="glacier"] select{
-  background:rgba(4,12,18,.82) !important;
-  border-color:rgba(108,220,255,.20) !important;
+[data-layout="orbit"] .logo-text{
+  background:linear-gradient(90deg,#9db3ff,#d38cff);
+  -webkit-background-clip:text;background-clip:text;
 }
-[data-theme="glacier"] .section-title{
-  text-shadow:0 0 24px rgba(108,240,255,.16);
+[data-layout="orbit"] .panel,
+[data-layout="orbit"] .stat-card{
+  background:linear-gradient(145deg,rgba(16,25,46,.94),rgba(8,14,28,.94)) !important;
+  border:1px solid rgba(143,168,255,.16);
+  border-radius:14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 12px 34px rgba(0,0,0,.18);
+}
+[data-layout="orbit"] .flight-card{
+  background:linear-gradient(135deg,rgba(14,23,42,.96),rgba(8,14,27,.96)) !important;
+  border-color:rgba(143,168,255,.14);
+  border-radius:12px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+[data-layout="orbit"] .flight-card:hover{
+  border-color:rgba(143,168,255,.40);
+  transform:translateY(-1px);
+  box-shadow:0 8px 24px rgba(64,82,170,.16);
+}
+[data-layout="orbit"] input,
+[data-layout="orbit"] textarea,
+[data-layout="orbit"] select{
+  background:rgba(5,10,22,.76) !important;
+  border-color:rgba(143,168,255,.18) !important;
+}
+[data-layout="orbit"] input:focus,
+[data-layout="orbit"] textarea:focus,
+[data-layout="orbit"] select:focus{
+  border-color:rgba(143,168,255,.62) !important;
+  box-shadow:0 0 0 3px rgba(143,168,255,.08);
+}
+[data-layout="orbit"] .btn-primary{
+  background:linear-gradient(135deg,#718dff,#c05fff) !important;
+  color:#fff !important;
+  border:0 !important;
+  box-shadow:0 9px 28px rgba(111,105,255,.24);
+}
+[data-layout="orbit"] .btn-primary:hover{
+  filter:brightness(1.08);
+  transform:translateY(-1px);
+}
+[data-layout="orbit"] .btn-ghost{
+  background:rgba(14,23,43,.52);
+  border-color:rgba(143,168,255,.20);
+}
+[data-layout="orbit"] .section-eyebrow,
+[data-layout="orbit"] .field-label{
+  letter-spacing:1.8px;
+}
+[data-layout="orbit"] .section-title{
+  text-shadow:0 0 30px rgba(143,168,255,.20);
+}
+[data-layout="orbit"] .prog-step.active .prog-num{
+  box-shadow:0 0 0 4px rgba(143,168,255,.08),0 0 22px rgba(143,168,255,.28);
+}
+[data-layout="orbit"] .theme-dots .tdot.active{
+  box-shadow:0 0 0 2px var(--bg0),0 0 0 4px var(--a1),0 0 16px rgba(143,168,255,.38);
 }
 @media(max-width:760px){
-  [data-theme="glacier"] header{
-    background:linear-gradient(180deg,rgba(8,25,36,.98),rgba(7,15,24,.98)) !important;
+  [data-layout="orbit"] header{
+    background:linear-gradient(180deg,rgba(8,14,28,.985),rgba(7,12,24,.97)) !important;
   }
+  [data-layout="orbit"] .panel,
+  [data-layout="orbit"] .stat-card{
+    border-radius:12px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  [data-layout="orbit"] *{transition-duration:.001ms!important;animation-duration:.001ms!important;animation-iteration-count:1!important}
 }
 </style>
 
@@ -1107,7 +1160,6 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:1
       <button class="tdot"        data-theme="ocean"   title="🌊 Ocean"   style="background:linear-gradient(135deg,#00c8ff,#0088cc)"></button>
       <button class="tdot"        data-theme="forest"  title="🌿 Forest"  style="background:linear-gradient(135deg,#00ee66,#00aa44)"></button>
       <button class="tdot"        data-theme="sunset"  title="🌅 Sunset"  style="background:linear-gradient(135deg,#ff9900,#ff5500)"></button>
-       <button class="tdot"        data-theme="glacier"  title="🏔️ Glacier"  style="background:linear-gradient(135deg,#6cf0ff,#8ab4ff)"></button>
     </div>
     <div id="wo-lgg-identity" style="display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--b2);border-radius:20px;padding:5px 10px;font-family:var(--mono);font-size:9px;line-height:1.1"><span style="color:var(--a1);font-weight:800">●</span><span id="wo-lgg-user-name">Adil</span><span style="color:var(--t3)">·</span><span id="wo-lgg-user-role" style="color:var(--t2)">ADMIN</span></div>
     <button id="wo-lgg-logout-btn" type="button" onclick="woLggLogout()" title="Se déconnecter" style="display:none;margin-left:6px;background:transparent;border:1px solid var(--b2);border-radius:9px;color:var(--t2);padding:7px 9px;font-family:var(--mono);font-size:9px;font-weight:800;cursor:pointer;transition:.2s" onmouseenter="this.style.borderColor='var(--a1)';this.style.color='var(--a1)'" onmouseleave="this.style.borderColor='var(--b2)';this.style.color='var(--t2)'">⎋ DÉCONNEXION</button>
@@ -1258,6 +1310,13 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:1
         <div id="layout-check-aero" style="font-size:14px;color:#ffb000;visibility:hidden">&#10003;</div>
       </div>
       <div style="font-size:11px;color:var(--t2);margin-top:4px">Interface graphite inspiree des cockpits et outils operations : contraste fort, orange signaletique et grille technique.</div>
+    </div>
+    <div id="layout-opt-orbit" onclick="selectLayoutOption('orbit')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:20px;transition:border-color .2s,background .2s">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">Orbit — Command Center</div>
+        <div id="layout-check-orbit" style="font-size:14px;color:#9fb3ff;visibility:hidden">&#10003;</div>
+      </div>
+      <div style="font-size:11px;color:var(--t2);margin-top:4px">Ambiance centre de contrôle orbital : bleu nuit, violet électrique, profondeur vitrée et détails inspirés des consoles spatiales.</div>
     </div>
 
     <div style="display:flex;gap:10px">
@@ -3029,7 +3088,7 @@ async function woLggLogout(){
 
   // ── Interface (mise en page) : Classic, Neo, Purete ou Aero ──
   function applyLayoutMode(mode) {
-    const valid = ['classic', 'neo', 'purete', 'aero'];
+    const valid = ['classic', 'neo', 'purete', 'aero', 'orbit'];
     document.documentElement.setAttribute('data-layout', valid.includes(mode) ? mode : 'classic');
   }
   function openLayoutSettings() {
@@ -3041,7 +3100,7 @@ async function woLggLogout(){
     document.getElementById('layout-settings-overlay').classList.add('hidden');
   }
   function reflectLayoutOptionUI(mode) {
-    ['classic', 'neo', 'purete', 'aero'].forEach(m => {
+    ['classic', 'neo', 'purete', 'aero', 'orbit'].forEach(m => {
       const active = m === mode;
       document.getElementById('layout-opt-' + m).style.borderColor = active ? 'var(--a1)' : 'var(--b2)';
       document.getElementById('layout-opt-' + m).style.background  = active ? 'var(--bg2)' : 'transparent';
