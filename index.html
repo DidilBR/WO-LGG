@@ -1842,6 +1842,7 @@ async function woLggLogout(){
       }
     }finally{
       clearTimeout(typeof woLggSaveDebounce!=='undefined'?woLggSaveDebounce:null);
+      clearTimeout(typeof woLggRemarksSaveTimer!=='undefined'?woLggRemarksSaveTimer:null);
       woLggSaveQueue=Promise.resolve();
       woLggStopRealtime();
 
@@ -2078,18 +2079,59 @@ async function woLggLogout(){
     woLggMarkWorkChanged('handling:'+id);
   }
 
+  let woLggRemarksSaveTimer = null;
+
+  function woLggSyncRemarkField(el, immediate=false){
+    if(woLggSessionHydrating||!woLggUser||woLggVisitorMode||!el)return;
+    if(!el.classList?.contains('remarks-input'))return;
+
+    const key=String(el.dataset.flightKey||'');
+    if(!key||typeof flights==='undefined'||!Array.isArray(flights))return;
+
+    // Le tableau flights peut être réordonné après un refresh FIDS.
+    // On retrouve donc toujours le vol par son numéro, jamais par son index DOM.
+    const idx=flights.findIndex(f=>String(f?.flight||'')===key);
+    if(idx<0)return;
+    flights[idx].remarks=el.value;
+
+    if(woLggRemarksSaveTimer)clearTimeout(woLggRemarksSaveTimer);
+    if(immediate){
+      woLggMarkWorkChanged('remark:'+key);
+      return;
+    }
+    // Évite une écriture Supabase à chaque caractère tout en gardant une
+    // synchronisation quasi instantanée pendant la saisie.
+    woLggRemarksSaveTimer=setTimeout(()=>{
+      woLggRemarksSaveTimer=null;
+      woLggMarkWorkChanged('remark:'+key);
+    },350);
+  }
+
   function woLggInstallPersistenceHooks(){
-    // Bubble phase: inline oninput/onchange handlers have already modified
-    // flights[] before we snapshot the state.
-    document.addEventListener('input',()=>{
+    document.addEventListener('input',(event)=>{
       if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
+      const el=event.target;
+      if(el?.classList?.contains('remarks-input')){
+        woLggSyncRemarkField(el,false);
+        return;
+      }
       setTimeout(()=>woLggMarkWorkChanged('input'),0);
     },false);
 
-    document.addEventListener('change',()=>{
+    document.addEventListener('change',(event)=>{
       if(woLggSessionHydrating||!woLggUser||woLggVisitorMode)return;
+      const el=event.target;
+      if(el?.classList?.contains('remarks-input')){
+        woLggSyncRemarkField(el,true);
+        return;
+      }
       setTimeout(()=>woLggMarkWorkChanged('change'),0);
     },false);
+
+    document.addEventListener('focusout',(event)=>{
+      const el=event.target;
+      if(el?.classList?.contains('remarks-input'))woLggSyncRemarkField(el,true);
+    },true);
 
     document.addEventListener('change',woLggCaptureHandlingMutation,false);
   }
@@ -2884,24 +2926,70 @@ async function woLggLogout(){
         if (old.lhaCatering) f._lhaCatering = true;
       });
 
-      const key = f => f.flight + '|' + f.time + '|' + (f.stand || '');
+      const key = f => String(f.flight||'') + '|' + String(f.time||'') + '|' + String(f.stand||'');
       const oldByFlight = {};
-      flights.forEach(f=>{if(!f.manual)oldByFlight[f.flight]={...f};});
+      flights.forEach(f=>{
+        if(!f.manual)oldByFlight[String(f.flight||'')]=f;
+      });
+
+      // Diff complet : l'ancien système ne détaillait que ETA/stand/immat
+      // et pouvait compter un ajout/suppression sans l'afficher dans le modal.
       const changeDetails=[];
-      fresh.forEach(nf=>{
-        const of=oldByFlight[nf.flight];
-        if(!of)return;
-        [['ETA','time'],['Stand','stand'],['Immatriculation','reg']].forEach(([label,k])=>{
-          const ov=of[k]??''; const nv=nf[k]??'';
-          if(String(ov)!==String(nv))changeDetails.push({flight:nf.flight,reg:nf.reg||of.reg,field:label,oldValue:ov,newValue:nv});
+      const newByFlight={};
+      fresh.forEach(f=>{newByFlight[String(f.flight||'')]=f;});
+
+      const detailFields=[
+        ['ETA','time'],
+        ['Stand','stand'],
+        ['Immatriculation','reg'],
+        ['Handler','handler']
+      ];
+
+      Object.keys(newByFlight).forEach(flight=>{
+        const nf=newByFlight[flight];
+        const of=oldByFlight[flight];
+
+        if(!of){
+          changeDetails.push({
+            flight:nf.flight,
+            reg:nf.reg||'',
+            field:'Nouveau vol',
+            oldValue:'Absent',
+            newValue:[nf.time,nf.stand].filter(Boolean).join(' · ')||'Présent'
+          });
+          return;
+        }
+
+        detailFields.forEach(([label,k])=>{
+          const ov=of[k]??'';
+          const nv=nf[k]??'';
+          if(String(ov)!==String(nv)){
+            changeDetails.push({
+              flight:nf.flight,
+              reg:nf.reg||of.reg||'',
+              field:label,
+              oldValue:ov,
+              newValue:nv
+            });
+          }
         });
       });
-      const oldApiFlights = flights.filter(f => !f.manual);
-      const oldKeys = new Set(oldApiFlights.map(key));
-      const newKeys = new Set(fresh.map(key));
-      let diff = 0;
-      newKeys.forEach(k => { if (!oldKeys.has(k)) diff++; });
-      oldKeys.forEach(k => { if (!newKeys.has(k)) diff++; });
+
+      Object.keys(oldByFlight).forEach(flight=>{
+        if(newByFlight[flight])return;
+        const of=oldByFlight[flight];
+        changeDetails.push({
+          flight:of.flight,
+          reg:of.reg||'',
+          field:'Vol retiré',
+          oldValue:[of.time,of.stand].filter(Boolean).join(' · ')||'Présent',
+          newValue:'Absent'
+        });
+      });
+
+      // Le compteur est désormais exactement égal au nombre de lignes
+      // affichables dans « Voir les détails ».
+      const diff=changeDetails.length;
 
       // Garde la selection existante pour les vols deja connus + les vols ajoutes a la main,
       // n'applique la selection par defaut (regles du shift) qu'aux vols vraiment nouveaux.
@@ -2968,7 +3056,7 @@ async function woLggLogout(){
       detailBtn=document.createElement('button');
       detailBtn.id='refresh-badge-details-btn';
       detailBtn.type='button';
-      detailBtn.textContent='Détails';
+      detailBtn.textContent='Voir les détails';
       detailBtn.style.cssText='margin-left:auto;background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.35);border-radius:7px;color:#00e5a0;padding:5px 9px;font-size:11px;font-weight:800;cursor:pointer';
       el.appendChild(detailBtn);
     }
@@ -2995,7 +3083,19 @@ async function woLggLogout(){
     const list=document.getElementById('fids-change-details-list');
     if(!overlay||!list)return;
     const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    list.innerHTML=details.length?details.map(d=>'<div style="padding:9px 0;border-bottom:1px solid var(--b2)"><strong>'+esc(d.flight||'VOL')+'</strong> <span style="color:var(--t2)">'+esc(d.reg||'')+'</span><br><span>'+esc(d.field||'Modification')+' : </span><span style="color:#ffb400">'+esc(d.oldValue??'—')+'</span> → <span style="color:#00e5a0">'+esc(d.newValue??'—')+'</span></div>').join(''):'Aucun détail disponible.';
+    list.innerHTML=details.length?details.map(d=>{
+      const field=String(d.field||'Modification');
+      const isAdd=field==='Nouveau vol';
+      const isRemove=field==='Vol retiré';
+      const accent=isAdd?'#00e5a0':(isRemove?'#ff4d6d':'#ffb400');
+      return '<div style="padding:11px 0;border-bottom:1px solid var(--b2)">'+
+        '<strong>'+esc(d.flight||'VOL')+'</strong> '+
+        '<span style="color:var(--t2)">'+esc(d.reg||'')+'</span><br>'+
+        '<span style="font-weight:800;color:'+accent+'">'+esc(field)+'</span> : '+
+        '<span style="color:#ffb400">'+esc(d.oldValue??'—')+'</span> → '+
+        '<span style="color:#00e5a0">'+esc(d.newValue??'—')+'</span>'+
+        '</div>';
+    }).join(''):'Aucun détail de modification disponible.';
     overlay.classList.remove('hidden');
   }
   function closeFidsChangeDetails(){
