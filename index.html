@@ -984,6 +984,23 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:1
 }
 </style>
 
+<style id="wo-lgg-v38-mobile-dots">
+@media (max-width:760px){
+  .header-right .theme-dots .tdot,
+  .header-right .theme-dots button.tdot{
+    width:10px!important;height:10px!important;
+    min-width:10px!important;min-height:10px!important;
+    max-width:10px!important;max-height:10px!important;
+    flex:0 0 10px!important;
+  }
+  .header-right .theme-dots .tdot.active{
+    width:11px!important;height:11px!important;
+    min-width:11px!important;min-height:11px!important;
+    max-width:11px!important;max-height:11px!important;
+    flex-basis:11px!important;
+  }
+}
+</style>
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -2482,6 +2499,10 @@ async function woLggLogout(){
   }
 
   async function loadFromFidsAPI() {
+    if(!selectedShift){
+      const active=document.querySelector('.shift-btn.active');
+      if(active)selectShift(active); else autoDetectShift();
+    }
     const btn = document.getElementById('btn-load-api');
     const status = document.getElementById('api-status');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Chargement...'; }
@@ -2979,6 +3000,22 @@ async function woLggLogout(){
     const raw = document.getElementById('fids-text').value.trim();
     if (raw || flights.length === 0) {
       analyzeFids();
+    } else {
+      if (!selectedShift) {
+        const active=document.querySelector('.shift-btn.active');
+        if(active)selectShift(active); else autoDetectShift();
+      }
+      if (selectedShift) {
+        flights = flights.filter(f => f.manual || f.missingTime || isInDisplayWindow(f.time));
+      }
+      selectedFlights = new Set();
+      flights.forEach((f,i)=>{
+        if(!isInShift(f.time))return;
+        if((f.flight||'').toUpperCase().startsWith('ICE'))return;
+        if((f.reg||'').toUpperCase()==='SERLE')return;
+        selectedFlights.add(i);
+      });
+      renderFlights();
     }
     parseCaterings();
     goToStep(3);
@@ -2986,6 +3023,10 @@ async function woLggLogout(){
 
   function analyzeFids() {
     const raw = document.getElementById('fids-text').value.trim();
+    if(!selectedShift){
+      const active=document.querySelector('.shift-btn.active');
+      if(active)selectShift(active); else autoDetectShift();
+    }
     flights = [];
 
     if (raw) {
@@ -5031,5 +5072,26 @@ ${(function(){
     <div id="fids-change-details-list" style="font-family:var(--mono);font-size:12px;line-height:1.65"></div>
   </div>
 </div>
+<script id="wo-lgg-fids-manual-toggle-v38">
+(function(){
+  function initFidsManualToggle(){
+    var btn=document.getElementById('fids-manual-toggle');
+    var panel=document.getElementById('fids-manual-panel');
+    if(!btn||!panel||btn.dataset.v38Ready==='1')return;
+    btn.dataset.v38Ready='1';
+    btn.addEventListener('click',function(){
+      var open=btn.getAttribute('aria-expanded')==='true';
+      btn.setAttribute('aria-expanded',open?'false':'true');
+      panel.hidden=open;
+      if(!open){
+        var ta=document.getElementById('fids-text');
+        if(ta)setTimeout(function(){ta.focus({preventScroll:true});},40);
+      }
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initFidsManualToggle);
+  else initFidsManualToggle();
+})();
+</script>
 </body>
 </html>
