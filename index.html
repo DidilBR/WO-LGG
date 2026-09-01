@@ -857,6 +857,133 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:1
   }
 }
 </style>
+
+<style id="wo-lgg-v37-mobile-dots-and-fids">
+/* V37 — mobile polish: tiny theme dots + collapsible manual FIDS entry.
+   Desktop is intentionally unchanged. */
+.fids-manual-toggle{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:42px;
+  padding:10px 13px;
+  margin-top:2px;
+  background:var(--bg2);
+  color:var(--t2);
+  border:1px solid var(--b2);
+  border-radius:var(--r2);
+  cursor:pointer;
+  font:700 10px/1 var(--sans);
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  text-align:left;
+  transition:border-color .2s,background .2s,color .2s;
+}
+.fids-manual-toggle:hover{
+  border-color:var(--b3);
+  color:var(--t1);
+  background:rgba(0,212,255,.035);
+}
+.fids-manual-arrow{
+  display:inline-block;
+  width:14px;
+  flex:0 0 14px;
+  color:var(--a1);
+  font-size:14px;
+  line-height:1;
+  transition:transform .2s ease;
+}
+.fids-manual-toggle[aria-expanded="true"] .fids-manual-arrow{
+  transform:rotate(90deg);
+}
+.fids-manual-hint{
+  margin-left:auto;
+  color:var(--t3);
+  font-size:8px;
+  letter-spacing:.5px;
+  text-transform:none;
+  font-weight:500;
+}
+.fids-manual-panel{
+  margin-top:10px;
+  animation:fidsManualOpen .18s ease-out;
+}
+.fids-manual-panel[hidden]{display:none!important;}
+@keyframes fidsManualOpen{
+  from{opacity:0;transform:translateY(-4px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* The dots must not inherit the 38px mobile button touch target.
+   Keep a generous invisible parent area via .theme-dots, while the
+   actual coloured circles stay genuinely small. */
+@media (max-width:760px){
+  .header-right .theme-dots{
+    display:flex!important;
+    align-items:center!important;
+    gap:3px!important;
+    min-width:0!important;
+    min-height:38px!important;
+    flex:0 0 auto!important;
+  }
+  .header-right .theme-dots .tdot,
+  .header-right .theme-dots button.tdot{
+    appearance:none!important;
+    -webkit-appearance:none!important;
+    display:block!important;
+    box-sizing:border-box!important;
+    width:8px!important;
+    height:8px!important;
+    min-width:8px!important;
+    min-height:8px!important;
+    max-width:8px!important;
+    max-height:8px!important;
+    flex:0 0 8px!important;
+    padding:0!important;
+    margin:0!important;
+    border-width:1px!important;
+    border-radius:50%!important;
+    line-height:0!important;
+  }
+  .header-right .theme-dots .tdot.active{
+    width:9px!important;
+    height:9px!important;
+    min-width:9px!important;
+    min-height:9px!important;
+    max-width:9px!important;
+    max-height:9px!important;
+    flex-basis:9px!important;
+    transform:none!important;
+    box-shadow:0 0 0 1.5px rgba(255,255,255,.9),0 0 0 3px rgba(255,255,255,.10)!important;
+  }
+}
+@media (max-width:430px){
+  .fids-manual-toggle{min-height:44px;padding:11px 12px;}
+  .fids-manual-hint{font-size:7px;}
+  .header-right .theme-dots{gap:2px!important;}
+  .header-right .theme-dots .tdot,
+  .header-right .theme-dots button.tdot{
+    width:7px!important;
+    height:7px!important;
+    min-width:7px!important;
+    min-height:7px!important;
+    max-width:7px!important;
+    max-height:7px!important;
+    flex-basis:7px!important;
+  }
+  .header-right .theme-dots .tdot.active{
+    width:8px!important;
+    height:8px!important;
+    min-width:8px!important;
+    min-height:8px!important;
+    max-width:8px!important;
+    max-height:8px!important;
+    flex-basis:8px!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -1136,19 +1263,21 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:1
       
       <button class="btn btn-primary" id="btn-load-api" onclick="loadFromFidsAPI()" style="width:100%;margin-bottom:10px">&#128260; Charger automatiquement (API FIDS)</button>
       <div id="api-status" style="font-size:12px;min-height:16px;margin-bottom:14px"></div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-        <div style="height:1px;flex:1;background:var(--b2)"></div>
-        <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t3)">ou manuellement</div>
-        <div style="height:1px;flex:1;background:var(--b2)"></div>
+      <button type="button" id="fids-manual-toggle" class="fids-manual-toggle" aria-expanded="false" aria-controls="fids-manual-panel">
+        <span class="fids-manual-arrow" aria-hidden="true">▸</span>
+        <span>Saisie manuelle</span>
+        <span class="fids-manual-hint">si l'API ne fonctionne pas</span>
+      </button>
+      <div id="fids-manual-panel" class="fids-manual-panel" hidden>
+        <div class="panel-hint">
+          <strong>Comment faire :</strong><br>
+          1. Ouvrez <strong>fids.liegeairport.com/spw</strong><br>
+          2. Attendez que tous les vols chargent<br>
+          3. Selectionnez tout &rarr; Copier<br>
+          4. Collez ci-dessous
+        </div>
+        <textarea id="fids-text" placeholder="Collez le texte du FIDS ici..." style="width:100%;min-height:130px;resize:vertical;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:11px;line-height:1.6;padding:13px 16px;outline:none"></textarea>
       </div>
-      <div class="panel-hint">
-        <strong>Comment faire :</strong><br>
-        1. Ouvrez <strong>fids.liegeairport.com/spw</strong><br>
-        2. Attendez que tous les vols chargent<br>
-        3. Selectionnez tout &rarr; Copier<br>
-        4. Collez ci-dessous
-      </div>
-      <textarea id="fids-text" placeholder="Collez le texte du FIDS ici..." style="width:100%;min-height:130px;resize:vertical;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:11px;line-height:1.6;padding:13px 16px;outline:none"></textarea>
     </div>
     <div class="panel" style="margin-top:16px">
       <div class="panel-hint" style="border-left-color:#00e5a0">
@@ -2790,7 +2919,35 @@ async function woLggLogout(){
     const page = makeSheet(f);
     const html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheet ' +
       ((f.reg || f.flight || 'Worksheet').replace(/[<>]/g,'')) +
-      '</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:avoid;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}</style></head><body>' + page + '</body></html>';
+      '</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:avoid;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}</style></head><body>' + page + '
+<script id="wo-lgg-v37-fids-manual-toggle">
+(function(){
+  function initFidsManualToggle(){
+    var btn = document.getElementById('fids-manual-toggle');
+    var panel = document.getElementById('fids-manual-panel');
+    if(!btn || !panel || btn.dataset.v37Ready === '1') return;
+    btn.dataset.v37Ready = '1';
+
+    btn.addEventListener('click', function(){
+      var open = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+      panel.hidden = open;
+      if(!open){
+        var ta = document.getElementById('fids-text');
+        if(ta) setTimeout(function(){ ta.focus({preventScroll:true}); }, 40);
+      }
+    });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initFidsManualToggle);
+  }else{
+    initFidsManualToggle();
+  }
+})();
+</script>
+
+</body></html>';
     const w = window.open('', '_blank');
     if (w) { printHtmlWhenReady(w, html); }
     else { alert('Autorise les popups pour imprimer la worksheet.'); }
