@@ -1114,6 +1114,19 @@ body[data-layout="aurora"] .active{
 .v39-lha-flight .v39-hide-catering-pill{display:none!important}
 </style>
 
+
+<style id="wo-lgg-v41-step-visibility">
+/* V41 — autorité unique pour la visibilité des 3 étapes. */
+body[data-active-step="1"] #step-1{display:block!important;}
+body[data-active-step="1"] #step-2,
+body[data-active-step="1"] #step-3{display:none!important;}
+body[data-active-step="2"] #step-1,
+body[data-active-step="2"] #step-3{display:none!important;}
+body[data-active-step="2"] #step-2{display:block!important;}
+body[data-active-step="3"] #step-1,
+body[data-active-step="3"] #step-2{display:none!important;}
+body[data-active-step="3"] #step-3{display:block!important;}
+</style>
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -2177,29 +2190,43 @@ async function woLggLogout(){
   }
 
   function goToStep(n) {
-    // Protection anti-écran vide : toute valeur invalide est ramenée à une étape réelle.
+    // V41: visibilité des étapes pilotée par un attribut sur <body>.
+    // Cela évite qu'un état .hidden laissé par une restauration de session
+    // puisse rendre les trois étapes invisibles simultanément.
     n = Number(n);
     if (!Number.isFinite(n)) n = 1;
     n = Math.max(1, Math.min(3, Math.round(n)));
     currentStep = n;
-    if (n !== 3) hideRefreshBadge();
+
+    const body = document.body;
+    if (body) body.setAttribute('data-active-step', String(n));
+
     [1,2,3].forEach(i => {
       const el = document.getElementById('step-'+i);
-      if (el) el.classList.add('hidden');
+      if (!el) return;
+      if (i === n) {
+        el.classList.remove('hidden');
+        el.style.removeProperty('display');
+      } else {
+        el.classList.add('hidden');
+      }
     });
+
+    if (n !== 3) hideRefreshBadge();
     const targetStep = document.getElementById('step-'+n);
     if (!targetStep) {
+      currentStep = 1;
+      if (body) body.setAttribute('data-active-step', '1');
       const fallback = document.getElementById('step-1');
       if (fallback) fallback.classList.remove('hidden');
-      currentStep = 1;
-    } else {
-      targetStep.classList.remove('hidden');
+      n = 1;
     }
-    document.getElementById('step-indicator').textContent = 'ETAPE ' + n + ' / 3';
+
+    const indicator = document.getElementById('step-indicator');
+    if (indicator) indicator.textContent = 'ETAPE ' + n + ' / 3';
     window.scrollTo(0,0);
-    // Sauvegarder l'étape immédiatement après le changement logique.
     if(typeof woLggQueueSave==='function') woLggQueueSave();
-    // Update progress bar
+
     [1,2,3].forEach(i => {
       var el = document.getElementById('prog-'+i);
       if (!el) return;
@@ -5279,30 +5306,41 @@ ${(function(){
 </script>
 
 
-<!-- WO-LGG V40 — anti-écran vide / restauration robuste de l'étape -->
-<script id="wo-lgg-v40-screen-safety">
+<!-- WO-LGG V41 — initialisation déterministe de l'étape visible -->
+<script id="wo-lgg-v41-screen-safety">
 (function(){
-  function ensureStepVisible(){
+  function forceStep(){
     try{
-      var steps=[1,2,3].map(function(i){return document.getElementById('step-'+i)}).filter(Boolean);
-      if(!steps.length)return;
-      var visible=steps.some(function(el){return !el.classList.contains('hidden')});
-      if(visible)return;
-      var n=(typeof currentStep!=='undefined')?Number(currentStep):1;
-      if(!Number.isFinite(n)||n<1||n>3)n=1;
-      var target=document.getElementById('step-'+Math.round(n))||document.getElementById('step-1');
-      steps.forEach(function(el){el.classList.add('hidden')});
-      target.classList.remove('hidden');
+      var body=document.body;
+      if(!body)return;
+      var n=Number(body.getAttribute('data-active-step'));
+      if(!Number.isFinite(n)||n<1||n>3){
+        n=(typeof currentStep==='number'&&currentStep>=1&&currentStep<=3)?currentStep:1;
+      }
+      n=Math.round(n);
+      body.setAttribute('data-active-step',String(n));
       var indicator=document.getElementById('step-indicator');
-      if(indicator)indicator.textContent='ETAPE '+Math.round(n)+' / 3';
+      if(indicator)indicator.textContent='ETAPE '+n+' / 3';
+      [1,2,3].forEach(function(i){
+        var el=document.getElementById('step-'+i);
+        if(!el)return;
+        if(i===n)el.classList.remove('hidden'); else el.classList.add('hidden');
+      });
     }catch(e){
-      var first=document.getElementById('step-1');
-      if(first)first.classList.remove('hidden');
+      try{
+        document.body.setAttribute('data-active-step','1');
+        var first=document.getElementById('step-1');
+        if(first)first.classList.remove('hidden');
+      }catch(_e){}
     }
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(ensureStepVisible,0)});
-  else setTimeout(ensureStepVisible,0);
-  window.addEventListener('pageshow',function(){setTimeout(ensureStepVisible,0)});
+  // Le HTML de l'étape 1 est déjà visible par défaut. On pose immédiatement
+  // l'état de référence, puis on le vérifie après les scripts de restauration.
+  if(document.body){document.body.setAttribute('data-active-step','1');}
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',function(){setTimeout(forceStep,0);});
+  }else{setTimeout(forceStep,0);}
+  window.addEventListener('pageshow',function(){setTimeout(forceStep,0);});
 })();
 </script>
 </body>
