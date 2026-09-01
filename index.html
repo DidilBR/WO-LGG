@@ -1001,132 +1001,15 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:1
   }
 }
 </style>
-
-<style id="wo-lgg-v39-aurora-theme">
-/* =========================================================
-   V39 — AURORA OPS
-   A cool polar-night / aurora operations-room interface.
-   Existing desktop/mobile layouts remain untouched unless
-   this theme is selected.
-   ========================================================= */
-:root{
-  --aurora-cyan:#58f4ff;
-  --aurora-mint:#72ffc8;
-  --aurora-violet:#9c7cff;
-  --aurora-blue:#4ca6ff;
-  --aurora-bg:#050b12;
-  --aurora-panel:rgba(9,19,30,.82);
-  --aurora-border:rgba(88,244,255,.22);
-}
-html[data-layout="aurora"] body,
-body[data-layout="aurora"]{
-  background:
-    radial-gradient(circle at 12% 8%,rgba(76,166,255,.13),transparent 28%),
-    radial-gradient(circle at 88% 18%,rgba(156,124,255,.12),transparent 30%),
-    radial-gradient(circle at 52% 92%,rgba(114,255,200,.07),transparent 34%),
-    #05080d !important;
-}
-html[data-layout="aurora"] body::before,
-body[data-layout="aurora"]::before{
-  content:"";
-  position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:
-    linear-gradient(115deg,transparent 0 34%,rgba(88,244,255,.025) 42%,transparent 52%),
-    repeating-linear-gradient(0deg,rgba(255,255,255,.012) 0 1px,transparent 1px 4px);
-  mix-blend-mode:screen;
-}
-html[data-layout="aurora"] header,
-body[data-layout="aurora"] header,
-html[data-layout="aurora"] .header,
-body[data-layout="aurora"] .header{
-  background:
-    linear-gradient(90deg,rgba(5,12,20,.96),rgba(9,24,35,.94),rgba(15,10,30,.94)) !important;
-  border-bottom:1px solid rgba(88,244,255,.55) !important;
-  box-shadow:0 8px 40px rgba(30,180,255,.08) !important;
-}
-html[data-layout="aurora"] .card,
-html[data-layout="aurora"] .panel,
-html[data-layout="aurora"] .box,
-html[data-layout="aurora"] .flight-card,
-body[data-layout="aurora"] .card,
-body[data-layout="aurora"] .panel,
-body[data-layout="aurora"] .box,
-body[data-layout="aurora"] .flight-card{
-  background:linear-gradient(145deg,rgba(10,20,31,.90),rgba(7,13,23,.82)) !important;
-  border-color:var(--aurora-border) !important;
-  box-shadow:0 12px 38px rgba(0,0,0,.28),inset 0 1px rgba(255,255,255,.035) !important;
-}
-html[data-layout="aurora"] button,
-body[data-layout="aurora"] button{
-  border-color:rgba(88,244,255,.20);
-}
-html[data-layout="aurora"] .btn-primary,
-html[data-layout="aurora"] button.primary,
-body[data-layout="aurora"] .btn-primary,
-body[data-layout="aurora"] button.primary{
-  background:linear-gradient(135deg,#5f7cff,#31dff5) !important;
-  color:#041018 !important;
-  box-shadow:0 8px 26px rgba(49,223,245,.20) !important;
-}
-html[data-layout="aurora"] input,
-html[data-layout="aurora"] textarea,
-html[data-layout="aurora"] select,
-body[data-layout="aurora"] input,
-body[data-layout="aurora"] textarea,
-body[data-layout="aurora"] select{
-  background:rgba(4,10,18,.78) !important;
-  border-color:rgba(88,244,255,.18) !important;
-}
-html[data-layout="aurora"] h1,
-html[data-layout="aurora"] h2,
-body[data-layout="aurora"] h1,
-body[data-layout="aurora"] h2{
-  text-shadow:0 0 22px rgba(88,244,255,.12);
-}
-html[data-layout="aurora"] .accent,
-html[data-layout="aurora"] .active,
-body[data-layout="aurora"] .accent,
-body[data-layout="aurora"] .active{
-  --accent:#58f4ff;
-}
-@media(max-width:760px){
-  html[data-layout="aurora"] header,
-  body[data-layout="aurora"] header,
-  html[data-layout="aurora"] .header,
-  body[data-layout="aurora"] .header{
-    background:linear-gradient(180deg,rgba(7,18,29,.98),rgba(9,12,24,.96)) !important;
-  }
-  html[data-layout="aurora"] .card,
-  html[data-layout="aurora"] .panel,
-  html[data-layout="aurora"] .box,
-  html[data-layout="aurora"] .flight-card,
-  body[data-layout="aurora"] .card,
-  body[data-layout="aurora"] .panel,
-  body[data-layout="aurora"] .box,
-  body[data-layout="aurora"] .flight-card{
-    border-radius:14px !important;
-  }
-}
-</style>
-
-
-<style id="wo-lgg-v39-lha-hide-css">
-.v39-lha-flight .v39-hide-catering-pill{display:none!important}
-</style>
-
-
-<style id="wo-lgg-v41-step-visibility">
-/* V41 — autorité unique pour la visibilité des 3 étapes. */
-body[data-active-step="1"] #step-1{display:block!important;}
-body[data-active-step="1"] #step-2,
-body[data-active-step="1"] #step-3{display:none!important;}
-body[data-active-step="2"] #step-1,
-body[data-active-step="2"] #step-3{display:none!important;}
-body[data-active-step="2"] #step-2{display:block!important;}
-body[data-active-step="3"] #step-1,
-body[data-active-step="3"] #step-2{display:none!important;}
-body[data-active-step="3"] #step-3{display:block!important;}
-</style>
+<script id="wo-lgg-v40-aurora-cleanup">
+(function(){
+  try{
+    if(localStorage.getItem('lgg_layout_mode')==='aurora'){
+      localStorage.setItem('lgg_layout_mode','classic');
+    }
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -1313,9 +1196,7 @@ body[data-active-step="3"] #step-3{display:block!important;}
 
     <div id="layout-opt-aero" onclick="selectLayoutOption('aero')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:20px;transition:border-color .2s,background .2s">
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:13px;font-weight:700;color:var(--t1)">Aero — Operations</div><div id="layout-opt-aurora" onclick="selectLayoutOption('aero')" style="cursor:pointer;border:1.5px solid var(--b2);border-radius:12px;padding:14px;margin-bottom:20px;transition:border-color .2s,background .2s">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:13px;font-weight:700;color:var(--t1)">Aurora — Operations</div>
+        <div style="font-size:13px;font-weight:700;color:var(--t1)">Aero — Operations</div>
         <div id="layout-check-aero" style="font-size:14px;color:#ffb000;visibility:hidden">&#10003;</div>
       </div>
       <div style="font-size:11px;color:var(--t2);margin-top:4px">Interface graphite inspiree des cockpits et outils operations : contraste fort, orange signaletique et grille technique.</div>
@@ -2190,43 +2071,15 @@ async function woLggLogout(){
   }
 
   function goToStep(n) {
-    // V41: visibilité des étapes pilotée par un attribut sur <body>.
-    // Cela évite qu'un état .hidden laissé par une restauration de session
-    // puisse rendre les trois étapes invisibles simultanément.
-    n = Number(n);
-    if (!Number.isFinite(n)) n = 1;
-    n = Math.max(1, Math.min(3, Math.round(n)));
     currentStep = n;
-
-    const body = document.body;
-    if (body) body.setAttribute('data-active-step', String(n));
-
-    [1,2,3].forEach(i => {
-      const el = document.getElementById('step-'+i);
-      if (!el) return;
-      if (i === n) {
-        el.classList.remove('hidden');
-        el.style.removeProperty('display');
-      } else {
-        el.classList.add('hidden');
-      }
-    });
-
     if (n !== 3) hideRefreshBadge();
-    const targetStep = document.getElementById('step-'+n);
-    if (!targetStep) {
-      currentStep = 1;
-      if (body) body.setAttribute('data-active-step', '1');
-      const fallback = document.getElementById('step-1');
-      if (fallback) fallback.classList.remove('hidden');
-      n = 1;
-    }
-
-    const indicator = document.getElementById('step-indicator');
-    if (indicator) indicator.textContent = 'ETAPE ' + n + ' / 3';
+    [1,2,3].forEach(i => document.getElementById('step-'+i).classList.add('hidden'));
+    document.getElementById('step-'+n).classList.remove('hidden');
+    document.getElementById('step-indicator').textContent = 'ETAPE ' + n + ' / 3';
     window.scrollTo(0,0);
+    // Sauvegarder l'étape immédiatement après le changement logique.
     if(typeof woLggQueueSave==='function') woLggQueueSave();
-
+    // Update progress bar
     [1,2,3].forEach(i => {
       var el = document.getElementById('prog-'+i);
       if (!el) return;
@@ -3118,7 +2971,7 @@ async function woLggLogout(){
 
   // ── Interface (mise en page) : Classic, Neo, Purete ou Aero ──
   function applyLayoutMode(mode) {
-    const valid = ['classic', 'neo', 'purete', 'aero', 'aurora'];
+    const valid = ['classic', 'neo', 'purete', 'aero'];
     document.documentElement.setAttribute('data-layout', valid.includes(mode) ? mode : 'classic');
   }
   function openLayoutSettings() {
@@ -3130,7 +2983,7 @@ async function woLggLogout(){
     document.getElementById('layout-settings-overlay').classList.add('hidden');
   }
   function reflectLayoutOptionUI(mode) {
-    ['classic', 'neo', 'purete', 'aero', 'aurora'].forEach(m => {
+    ['classic', 'neo', 'purete', 'aero'].forEach(m => {
       const active = m === mode;
       document.getElementById('layout-opt-' + m).style.borderColor = active ? 'var(--a1)' : 'var(--b2)';
       document.getElementById('layout-opt-' + m).style.background  = active ? 'var(--bg2)' : 'transparent';
@@ -3607,11 +3460,6 @@ function restoreActiveTextField(saved) {
         pills += makeTag('swi-wat-'+i, 'WAT',     '#60a5fa');
         pills += makeTag('swi-hds-'+i, 'HDS',     '#f472b6');
       }
-      // LHA → catering pill
-      if (!isASL737 && flt.startsWith('LHA')) {
-        pills += makePill('lha-catering-'+i, '🍽 CATERING', null, 0, 210, 180);
-      }
-
       const missingHighlight = f.missingTime ? 'box-shadow:0 0 0 2px #ffff00,0 0 12px #ffff00;' : '';
       // ASL 737: appears in the normal cleaning list only when its ASL checkbox is checked.
       // It remains visible in the dedicated ASL 737 list regardless.
@@ -5247,100 +5095,6 @@ ${(function(){
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initFidsManualToggle);
   else initFidsManualToggle();
-})();
-</script>
-
-<script id="wo-lgg-v39-lha-catering">
-(function(){
-  function markLHACards(){
-    document.querySelectorAll('[data-flight-index], .flight-card, .flight-item, .flight-row').forEach(function(card){
-      if(card.dataset.v39LhaChecked==='1') return;
-      var t=(card.textContent||'').toUpperCase();
-      /* LHA flight cards contain the airline/operator code; avoid matching
-         unrelated text elsewhere in the page. */
-      var isLha=/\bLHA\b/.test(t);
-      if(isLha){
-        card.classList.add('v39-lha-flight');
-        card.querySelectorAll('button,span,div,label').forEach(function(el){
-          var s=(el.textContent||'').trim().toUpperCase();
-          if(s==='CATERING' || s==='🍽️ CATERING' || s==='🍴 CATERING'){
-            el.classList.add('v39-hide-catering-pill');
-          }
-        });
-      }
-      card.dataset.v39LhaChecked='1';
-    });
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',markLHACards);
-  else markLHACards();
-  new MutationObserver(markLHACards).observe(document.body,{childList:true,subtree:true});
-})();
-</script>
-
-
-<script id="wo-lgg-v39-aurora-mode">
-(function(){
-  var MODE='aurora';
-  function applyAuroraMode(){
-    var root=document.documentElement, body=document.body;
-    if(root.getAttribute('data-layout')===MODE || body.getAttribute('data-layout')===MODE){
-      root.setAttribute('data-layout',MODE);
-      body.setAttribute('data-layout',MODE);
-    }
-  }
-  window.WOLGG_AURORA_THEME={apply:applyAuroraMode,name:'AURORA OPS'};
-})();
-</script>
-
-
-<script id="wo-lgg-v39-aurora-sync">
-(function(){
-  function syncAurora(){
-    var mode=document.documentElement.getAttribute('data-layout');
-    if(mode==='aurora') document.body.setAttribute('data-layout','aurora');
-    else if(document.body.getAttribute('data-layout')==='aurora') document.body.removeAttribute('data-layout');
-  }
-  new MutationObserver(syncAurora).observe(document.documentElement,{attributes:true,attributeFilter:['data-layout']});
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',syncAurora);else syncAurora();
-})();
-</script>
-
-
-<!-- WO-LGG V41 — initialisation déterministe de l'étape visible -->
-<script id="wo-lgg-v41-screen-safety">
-(function(){
-  function forceStep(){
-    try{
-      var body=document.body;
-      if(!body)return;
-      var n=Number(body.getAttribute('data-active-step'));
-      if(!Number.isFinite(n)||n<1||n>3){
-        n=(typeof currentStep==='number'&&currentStep>=1&&currentStep<=3)?currentStep:1;
-      }
-      n=Math.round(n);
-      body.setAttribute('data-active-step',String(n));
-      var indicator=document.getElementById('step-indicator');
-      if(indicator)indicator.textContent='ETAPE '+n+' / 3';
-      [1,2,3].forEach(function(i){
-        var el=document.getElementById('step-'+i);
-        if(!el)return;
-        if(i===n)el.classList.remove('hidden'); else el.classList.add('hidden');
-      });
-    }catch(e){
-      try{
-        document.body.setAttribute('data-active-step','1');
-        var first=document.getElementById('step-1');
-        if(first)first.classList.remove('hidden');
-      }catch(_e){}
-    }
-  }
-  // Le HTML de l'étape 1 est déjà visible par défaut. On pose immédiatement
-  // l'état de référence, puis on le vérifie après les scripts de restauration.
-  if(document.body){document.body.setAttribute('data-active-step','1');}
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',function(){setTimeout(forceStep,0);});
-  }else{setTimeout(forceStep,0);}
-  window.addEventListener('pageshow',function(){setTimeout(forceStep,0);});
 })();
 </script>
 </body>
