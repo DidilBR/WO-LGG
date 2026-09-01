@@ -821,6 +821,42 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:1
   .prog-num{width:28px;height:28px;min-width:28px;}
 }
 </style>
+
+<style id="wo-lgg-mobile-v36-dots-fix">
+/* V36 — mobile only: compact theme colour dots. Desktop remains untouched. */
+@media (max-width:760px){
+  .header-right .theme-dots{display:flex!important;align-items:center!important;gap:4px!important;flex:0 0 auto!important;}
+  .header-right .theme-dots .tdot{
+    width:9px!important;
+    height:9px!important;
+    min-width:9px!important;
+    min-height:9px!important;
+    max-width:9px!important;
+    max-height:9px!important;
+    flex:0 0 9px!important;
+    padding:0!important;
+    margin:0!important;
+    border-width:1px!important;
+    border-radius:50%!important;
+  }
+  .header-right .theme-dots .tdot.active{
+    transform:scale(1.12)!important;
+    box-shadow:0 0 0 2px rgba(255,255,255,.12)!important;
+  }
+}
+@media (max-width:430px){
+  .header-right .theme-dots{gap:3px!important;}
+  .header-right .theme-dots .tdot{
+    width:8px!important;
+    height:8px!important;
+    min-width:8px!important;
+    min-height:8px!important;
+    max-width:8px!important;
+    max-height:8px!important;
+    flex-basis:8px!important;
+  }
+}
+</style>
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
