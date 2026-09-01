@@ -2177,10 +2177,24 @@ async function woLggLogout(){
   }
 
   function goToStep(n) {
+    // Protection anti-écran vide : toute valeur invalide est ramenée à une étape réelle.
+    n = Number(n);
+    if (!Number.isFinite(n)) n = 1;
+    n = Math.max(1, Math.min(3, Math.round(n)));
     currentStep = n;
     if (n !== 3) hideRefreshBadge();
-    [1,2,3].forEach(i => document.getElementById('step-'+i).classList.add('hidden'));
-    document.getElementById('step-'+n).classList.remove('hidden');
+    [1,2,3].forEach(i => {
+      const el = document.getElementById('step-'+i);
+      if (el) el.classList.add('hidden');
+    });
+    const targetStep = document.getElementById('step-'+n);
+    if (!targetStep) {
+      const fallback = document.getElementById('step-1');
+      if (fallback) fallback.classList.remove('hidden');
+      currentStep = 1;
+    } else {
+      targetStep.classList.remove('hidden');
+    }
     document.getElementById('step-indicator').textContent = 'ETAPE ' + n + ' / 3';
     window.scrollTo(0,0);
     // Sauvegarder l'étape immédiatement après le changement logique.
@@ -5264,5 +5278,32 @@ ${(function(){
 })();
 </script>
 
+
+<!-- WO-LGG V40 — anti-écran vide / restauration robuste de l'étape -->
+<script id="wo-lgg-v40-screen-safety">
+(function(){
+  function ensureStepVisible(){
+    try{
+      var steps=[1,2,3].map(function(i){return document.getElementById('step-'+i)}).filter(Boolean);
+      if(!steps.length)return;
+      var visible=steps.some(function(el){return !el.classList.contains('hidden')});
+      if(visible)return;
+      var n=(typeof currentStep!=='undefined')?Number(currentStep):1;
+      if(!Number.isFinite(n)||n<1||n>3)n=1;
+      var target=document.getElementById('step-'+Math.round(n))||document.getElementById('step-1');
+      steps.forEach(function(el){el.classList.add('hidden')});
+      target.classList.remove('hidden');
+      var indicator=document.getElementById('step-indicator');
+      if(indicator)indicator.textContent='ETAPE '+Math.round(n)+' / 3';
+    }catch(e){
+      var first=document.getElementById('step-1');
+      if(first)first.classList.remove('hidden');
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(ensureStepVisible,0)});
+  else setTimeout(ensureStepVisible,0);
+  window.addEventListener('pageshow',function(){setTimeout(ensureStepVisible,0)});
+})();
+</script>
 </body>
 </html>
