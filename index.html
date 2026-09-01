@@ -1120,6 +1120,36 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:1
    Animation renforcée, volontairement lente et douce.
    Toutes les règles visuelles restent confinées à data-layout="orbit".
 */
+/* V45 — ORBIT refined motion: more alive, still calm. */
+[data-layout="orbit"] .progress-bar .prog-line{
+  background-size:220% 100% !important;
+  animation:orbitProgressFlow 7s linear infinite;
+}
+[data-layout="orbit"] .section-hd .section-title{
+  animation:orbitTitleGlow 6.5s ease-in-out infinite;
+}
+[data-layout="orbit"] .stat-card .num{
+  animation:orbitNumberFloat 5.5s ease-in-out infinite;
+}
+[data-layout="orbit"] .flight-card:nth-child(3n+1){
+  animation-delay:-1.5s;
+}
+[data-layout="orbit"] .flight-card:nth-child(3n+2){
+  animation-delay:-3s;
+}
+@keyframes orbitProgressFlow{
+  0%{background-position:0% 50%}
+  100%{background-position:220% 50%}
+}
+@keyframes orbitTitleGlow{
+  0%,100%{opacity:1;text-shadow:0 0 18px rgba(143,168,255,.08)}
+  50%{opacity:.96;text-shadow:0 0 28px rgba(195,108,255,.16)}
+}
+@keyframes orbitNumberFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-1px)}
+}
+
 [data-layout="orbit"]{
   --orbit-speed: 18s;
   --orbit-slow: 32s;
@@ -1933,6 +1963,8 @@ async function woLggLogout(){
       blankWorksheetCounter:typeof blankWorksheetCounter!=='undefined'?blankWorksheetCounter:0,
       lastDepartures:typeof lastDepartures!=='undefined'?lastDepartures:[],
       extraNotes:document.getElementById('extra-notes')?.value||'',
+      colorTheme:document.documentElement.getAttribute('data-theme')||localStorage.getItem('lgg-theme')||'cyber',
+      layoutMode:localStorage.getItem('lgg_layout_mode')||document.documentElement.getAttribute('data-layout')||'classic',
       flightSearchTerm:typeof flightSearchTerm!=='undefined'?flightSearchTerm:'',
       editModeEnabled:typeof editModeEnabled!=='undefined'?!!editModeEnabled:false,
       scrollX:window.scrollX||0,
@@ -1965,6 +1997,16 @@ async function woLggLogout(){
       const d=document.getElementById('shift-date'); if(d&&typeof s.shiftDate==='string')d.value=s.shiftDate;
       const a=document.getElementById('shift-agent'); if(a&&typeof s.shiftAgent==='string')a.value=s.shiftAgent;
       const n=document.getElementById('extra-notes'); if(n&&typeof s.extraNotes==='string')n.value=s.extraNotes;
+
+      if(typeof applyTheme==='function' && typeof s.colorTheme==='string' && s.colorTheme){
+        applyTheme(s.colorTheme);
+        try{localStorage.setItem('lgg-theme',s.colorTheme)}catch(e){}
+      }
+      if(typeof applyLayoutMode==='function' && typeof s.layoutMode==='string' && s.layoutMode){
+        const lm=['classic','neo','purete','aero'].includes(s.layoutMode)?s.layoutMode:'classic';
+        applyLayoutMode(lm);
+        try{localStorage.setItem('lgg_layout_mode',lm)}catch(e){}
+      }
 
       if(typeof selectedShift!=='undefined')selectedShift=s.selectedShift||null;
       if(s.selectedShift?.name){
@@ -3366,6 +3408,9 @@ async function woLggLogout(){
     localStorage.setItem('lgg_layout_mode', mode);
     applyLayoutMode(mode);
     reflectLayoutOptionUI(mode);
+    if(typeof woLggMarkWorkChanged==='function' && woLggUser && !woLggVisitorMode){
+      woLggMarkWorkChanged('layoutMode:'+mode);
+    }
   }
 
   // ── Recherche / filtre des vols ───────────────────────────────
@@ -5413,8 +5458,12 @@ ${(function(){
   // ── Init au chargement : theme, notes persistantes, auto-refresh ──
   document.querySelectorAll('.tdot').forEach(b => {
     b.addEventListener('click', function(){
-      applyTheme(this.dataset.theme);
-      localStorage.setItem('lgg-theme', this.dataset.theme);
+      const theme=this.dataset.theme;
+      applyTheme(theme);
+      localStorage.setItem('lgg-theme', theme);
+      if(typeof woLggMarkWorkChanged==='function' && woLggUser && !woLggVisitorMode){
+        woLggMarkWorkChanged('colorTheme:'+theme);
+      }
     });
   });
 
