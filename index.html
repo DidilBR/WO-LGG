@@ -1010,6 +1010,63 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:1
   }catch(e){}
 })();
 </script>
+
+<style id="wo-lgg-new-theme-glacier">
+/* V41 — GLACIER OPS
+   New interface theme using the existing data-theme engine only.
+   No layout, navigation or business logic is changed. */
+[data-theme="glacier"]{
+  --bg0:#071018;
+  --bg1:#0b1823;
+  --bg2:#102431;
+  --bg3:#163241;
+  --b1:rgba(255,255,255,.08);
+  --b2:rgba(108,220,255,.28);
+  --b3:rgba(108,220,255,.46);
+  --a1:#6cf0ff;
+  --a2:#8ab4ff;
+  --t1:#f4fbff;
+  --t2:#a9c6d8;
+  --t3:#5d7890;
+  --red:#ff667a;
+}
+[data-theme="glacier"] body{
+  background:
+    radial-gradient(circle at 15% 0%,rgba(108,240,255,.10),transparent 30%),
+    radial-gradient(circle at 100% 85%,rgba(138,180,255,.10),transparent 30%),
+    var(--bg0);
+}
+[data-theme="glacier"] header{
+  background:linear-gradient(90deg,rgba(7,18,27,.97),rgba(11,35,49,.96)) !important;
+  border-bottom:1px solid rgba(108,240,255,.42) !important;
+}
+[data-theme="glacier"] .panel,
+[data-theme="glacier"] .stat-card,
+[data-theme="glacier"] .flight-card{
+  background:linear-gradient(145deg,rgba(14,30,41,.94),rgba(8,19,28,.94)) !important;
+  border-color:rgba(108,220,255,.22) !important;
+}
+[data-theme="glacier"] .btn-primary{
+  background:linear-gradient(135deg,#62dfff,#7e9cff) !important;
+  color:#06131c !important;
+  box-shadow:0 8px 26px rgba(98,223,255,.18) !important;
+}
+[data-theme="glacier"] input,
+[data-theme="glacier"] textarea,
+[data-theme="glacier"] select{
+  background:rgba(4,12,18,.82) !important;
+  border-color:rgba(108,220,255,.20) !important;
+}
+[data-theme="glacier"] .section-title{
+  text-shadow:0 0 24px rgba(108,240,255,.16);
+}
+@media(max-width:760px){
+  [data-theme="glacier"] header{
+    background:linear-gradient(180deg,rgba(8,25,36,.98),rgba(7,15,24,.98)) !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -1050,6 +1107,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:1
       <button class="tdot"        data-theme="ocean"   title="🌊 Ocean"   style="background:linear-gradient(135deg,#00c8ff,#0088cc)"></button>
       <button class="tdot"        data-theme="forest"  title="🌿 Forest"  style="background:linear-gradient(135deg,#00ee66,#00aa44)"></button>
       <button class="tdot"        data-theme="sunset"  title="🌅 Sunset"  style="background:linear-gradient(135deg,#ff9900,#ff5500)"></button>
+       <button class="tdot"        data-theme="glacier"  title="🏔️ Glacier"  style="background:linear-gradient(135deg,#6cf0ff,#8ab4ff)"></button>
     </div>
     <div id="wo-lgg-identity" style="display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--b2);border-radius:20px;padding:5px 10px;font-family:var(--mono);font-size:9px;line-height:1.1"><span style="color:var(--a1);font-weight:800">●</span><span id="wo-lgg-user-name">Adil</span><span style="color:var(--t3)">·</span><span id="wo-lgg-user-role" style="color:var(--t2)">ADMIN</span></div>
     <button id="wo-lgg-logout-btn" type="button" onclick="woLggLogout()" title="Se déconnecter" style="display:none;margin-left:6px;background:transparent;border:1px solid var(--b2);border-radius:9px;color:var(--t2);padding:7px 9px;font-family:var(--mono);font-size:9px;font-weight:800;cursor:pointer;transition:.2s" onmouseenter="this.style.borderColor='var(--a1)';this.style.color='var(--a1)'" onmouseleave="this.style.borderColor='var(--b2)';this.style.color='var(--t2)'">⎋ DÉCONNEXION</button>
