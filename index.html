@@ -1394,6 +1394,68 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   .swp-manhour-backdrop,#swissport-manhour-form{transition:none!important}
 }
 </style>
+<style id="wo-lgg-v49-manhour-modern">
+/* V49 — Swissport MANHOUR : modal moderne + indépendante de l'étape */
+.swp-manhour-backdrop{background:rgba(2,4,12,.74)!important;backdrop-filter:blur(12px) saturate(120%)!important}
+#swissport-manhour-form{
+  width:min(500px,calc(100vw - 24px))!important;
+  max-height:min(88vh,760px)!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border:1px solid rgba(143,168,255,.28)!important;
+  border-radius:22px!important;
+  background:
+    radial-gradient(circle at 90% 0%,rgba(143,168,255,.13),transparent 33%),
+    radial-gradient(circle at 8% 18%,rgba(210,90,255,.08),transparent 28%),
+    linear-gradient(180deg,rgba(13,18,37,.985),rgba(6,10,23,.985))!important;
+  box-shadow:0 34px 120px rgba(0,0,0,.66),0 0 0 1px rgba(255,255,255,.035) inset,0 0 44px rgba(143,168,255,.09)!important;
+}
+#swissport-manhour-form:before{content:'';display:block;height:2px;background:linear-gradient(90deg,transparent,var(--a1),var(--a2),transparent);opacity:.9}
+#swissport-manhour-form .swp-modal-head{padding:20px 22px 14px;margin:0;border-bottom:1px solid rgba(143,168,255,.13);background:rgba(255,255,255,.012)}
+#swissport-manhour-form .manual-form-title{display:flex;align-items:center;gap:9px;font-size:16px!important;letter-spacing:1.6px!important;font-weight:900!important;margin:0!important}
+#swissport-manhour-form .manual-form-title:before{content:'⏱';display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,rgba(143,168,255,.20),rgba(201,85,255,.18));border:1px solid rgba(143,168,255,.22);color:var(--a1);font-size:17px;box-shadow:0 0 20px rgba(143,168,255,.09)}
+.swp-modal-subtitle{font-size:10px!important;color:var(--t3)!important;line-height:1.55!important;margin:8px 0 0 43px!important;max-width:360px}
+.swp-modal-close{width:34px!important;height:34px!important;border-radius:11px!important;background:rgba(255,255,255,.025)!important;border:1px solid rgba(143,168,255,.18)!important;color:var(--t2)!important;font-size:19px!important}
+.swp-modal-close:hover{background:rgba(143,168,255,.08)!important;border-color:rgba(143,168,255,.38)!important;color:var(--t1)!important;transform:translateY(-1px)}
+#swissport-manhour-form > div:last-child{padding:18px 22px 20px!important;overflow:auto;max-height:calc(min(88vh,760px) - 93px)}
+#swissport-manhour-form .field-label{font-size:9px!important;letter-spacing:1.7px!important;margin:0 0 8px!important;color:var(--t2)!important}
+.swp-field-block{padding:12px 13px;border:1px solid rgba(143,168,255,.12);border-radius:15px;background:rgba(255,255,255,.018);box-shadow:0 10px 26px rgba(0,0,0,.10)}
+.swp-field-block + .swp-field-block{margin-top:11px}
+.swp-field-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
+.swp-field-badge{font:800 8px/1 var(--mono);letter-spacing:1.2px;text-transform:uppercase;color:var(--a1);padding:5px 8px;border:1px solid rgba(143,168,255,.16);border-radius:999px;background:rgba(143,168,255,.055)}
+#swissport-manhour-form .swp-worker-row{display:grid!important;grid-template-columns:1fr auto!important;align-items:center;gap:8px!important}
+#swissport-manhour-form .swp-worker-row + .swp-worker-row{margin-top:7px}
+#swissport-manhour-form input[type="text"],#swissport-manhour-form input[type="time"]{width:100%;height:44px!important;box-sizing:border-box;border:1px solid rgba(143,168,255,.15)!important;border-radius:12px!important;background:rgba(4,8,20,.76)!important;color:var(--t1)!important;padding:0 13px!important;outline:none!important;font-family:var(--sans)!important;font-size:12px!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.01)!important;transition:border-color .18s,box-shadow .18s,background .18s!important}
+#swissport-manhour-form input[type="text"]:focus,#swissport-manhour-form input[type="time"]:focus{border-color:rgba(143,168,255,.48)!important;background:rgba(7,12,29,.92)!important;box-shadow:0 0 0 3px rgba(143,168,255,.09)!important}
+#swissport-manhour-form input[type="time"]{color-scheme:dark}
+.swp-worker-remove{width:42px;height:42px;border-radius:11px!important;border:1px solid rgba(255,77,109,.20)!important;background:rgba(255,77,109,.05)!important;color:#ff7b94!important;cursor:pointer!important;font-size:18px!important;transition:.18s!important}
+.swp-worker-remove:hover{background:rgba(255,77,109,.10)!important;border-color:rgba(255,77,109,.38)!important;transform:translateY(-1px)}
+#swissport-manhour-form .swp-add-worker{width:100%;margin-top:9px;padding:10px 12px!important;border-radius:11px!important;border:1px dashed rgba(143,168,255,.24)!important;background:rgba(143,168,255,.035)!important;color:var(--a1)!important;font-family:var(--sans)!important;font-size:11px!important;font-weight:800!important;cursor:pointer!important;transition:.18s!important}
+#swissport-manhour-form .swp-add-worker:hover{background:rgba(143,168,255,.075)!important;border-color:rgba(143,168,255,.42)!important;transform:translateY(-1px)}
+.swp-time-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.swp-time-item{padding:11px;border-radius:13px;border:1px solid rgba(143,168,255,.10);background:rgba(0,0,0,.11)}
+.swp-time-item .field-label{display:flex!important;align-items:center;gap:6px}
+.swp-modal-actions{display:grid!important;grid-template-columns:1fr 1.35fr;gap:9px!important;margin-top:14px!important;padding-top:14px;border-top:1px solid rgba(143,168,255,.10)}
+#swissport-manhour-form .swp-btn-secondary,#swissport-manhour-form .swp-btn-primary{height:44px!important;border-radius:12px!important;font-family:var(--sans)!important;font-size:11px!important;font-weight:900!important;letter-spacing:.2px!important;cursor:pointer!important;transition:.18s!important}
+#swissport-manhour-form .swp-btn-secondary{border:1px solid rgba(143,168,255,.16)!important;background:rgba(255,255,255,.025)!important;color:var(--t2)!important}
+#swissport-manhour-form .swp-btn-secondary:hover{border-color:rgba(143,168,255,.34)!important;color:var(--t1)!important;background:rgba(143,168,255,.05)!important;transform:translateY(-1px)}
+#swissport-manhour-form .swp-btn-primary{border:1px solid rgba(255,255,255,.12)!important;background:linear-gradient(135deg,var(--a1),var(--a2))!important;color:#fff!important;box-shadow:0 10px 26px rgba(120,90,255,.22)!important}
+#swissport-manhour-form .swp-btn-primary:hover{transform:translateY(-1px);box-shadow:0 13px 31px rgba(120,90,255,.30)!important;filter:brightness(1.04)}
+#swissport-manhour-form .swp-modal-hint{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:9px;color:var(--t3);line-height:1.5}
+#swissport-manhour-form .swp-modal-hint .dot{width:6px;height:6px;border-radius:50%;background:var(--a1);box-shadow:0 0 9px color-mix(in srgb,var(--a1) 55%,transparent);flex:0 0 auto}
+@media(max-width:760px){
+  #swissport-manhour-form{width:calc(100vw - 18px)!important;border-radius:20px!important}
+  #swissport-manhour-form .swp-modal-head{padding:17px 17px 13px}
+  #swissport-manhour-form > div:last-child{padding:14px 14px 15px!important;max-height:calc(88vh - 85px)}
+  #swissport-manhour-form .manual-form-title{font-size:14px!important}
+  .swp-modal-subtitle{margin-left:43px!important;font-size:9px!important}
+  .swp-time-grid{grid-template-columns:1fr;gap:9px}
+  .swp-modal-actions{grid-template-columns:1fr 1.25fr}
+}
+@media(prefers-reduced-motion:reduce){
+  #swissport-manhour-form *{transition:none!important}
+}
+</style>
 <style id="wo-lgg-v47-clean-header">
 /* V47 — Header professionnel + menu lateral compact */
 #app-header{position:sticky;top:0;z-index:200;background:rgba(5,5,15,.82);backdrop-filter:blur(26px) saturate(130%);border-bottom:1px solid var(--b1)}
@@ -2003,23 +2065,38 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
         </div>
         <button type="button" class="swp-modal-close" onclick="toggleSwissportManhour()" title="Fermer">&times;</button>
       </div>
-      <div style="display:grid;gap:12px">
-        <div>
-          <label class="field-label">AS workers ?</label>
+      <div>
+        <div class="swp-field-block">
+          <div class="swp-field-heading">
+            <label class="field-label" style="margin:0!important">AS workers</label>
+            <span class="swp-field-badge">Personnel</span>
+          </div>
           <div id="swp-workers-list" style="display:grid;gap:7px"></div>
-          <button type="button" class="btn-secondary" onclick="addSwissportWorker()">＋ Ajouter un prénom</button>
+          <button type="button" class="swp-add-worker" onclick="addSwissportWorker()">＋ Ajouter un AS worker</button>
         </div>
-        <div>
-          <label class="field-label">Heure de début</label>
-          <input type="time" id="swp-start" step="60">
+
+        <div class="swp-field-block">
+          <div class="swp-field-heading">
+            <label class="field-label" style="margin:0!important">Horaires de la prestation</label>
+            <span class="swp-field-badge">Temps</span>
+          </div>
+          <div class="swp-time-grid">
+            <div class="swp-time-item">
+              <label class="field-label">◷ Début</label>
+              <input type="time" id="swp-start" step="60">
+            </div>
+            <div class="swp-time-item">
+              <label class="field-label">◷ Fin prévue</label>
+              <input type="time" id="swp-end" step="60">
+            </div>
+          </div>
         </div>
-        <div>
-          <label class="field-label">Heure de fin prévue initialement</label>
-          <input type="time" id="swp-end" step="60">
-        </div>
+
+        <div class="swp-modal-hint"><span class="dot"></span><span>La worksheet Swissport sera générée avec les informations renseignées.</span></div>
+
         <div class="swp-modal-actions">
-          <button type="button" class="btn-secondary" onclick="toggleSwissportManhour()">Annuler</button>
-          <button type="button" class="btn-primary" onclick="printSwissportManhour()">🖨 Générer & imprimer</button>
+          <button type="button" class="swp-btn-secondary" onclick="toggleSwissportManhour()">Annuler</button>
+          <button type="button" class="swp-btn-primary" onclick="printSwissportManhour()">✦ Générer la worksheet</button>
         </div>
       </div>
     </div>
@@ -5172,7 +5249,17 @@ ${(function(){
 
   // Imprime une seule worksheet sans exiger la selection d'un autre avion.
 
+  // Le modal vit au niveau du <body> : il n'est donc plus dépendant de l'étape 3.
+  function ensureSwissportManhourModalHost() {
+    var form = document.getElementById('swissport-manhour-form');
+    var back = document.getElementById('swp-manhour-backdrop');
+    if (!form || !document.body) return;
+    if (back && back.parentElement !== document.body) document.body.appendChild(back);
+    if (form.parentElement !== document.body) document.body.appendChild(form);
+  }
+
   function toggleSwissportManhour() {
+    ensureSwissportManhourModalHost();
     var form = document.getElementById('swissport-manhour-form');
     var back = document.getElementById('swp-manhour-backdrop');
     if (!form) return;
@@ -5200,10 +5287,10 @@ ${(function(){
     var list = document.getElementById('swp-workers-list');
     if (!list) return;
     var row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:7px;align-items:center';
+    row.className = 'swp-worker-row';
     row.innerHTML =
-      '<input class="field-input swp-worker" type="text" maxlength="40" placeholder="Prénom">' +
-      '<button type="button" class="btn-secondary" title="Supprimer" style="padding:7px 11px;color:#e05252">×</button>';
+      '<input class="field-input swp-worker" type="text" maxlength="40" placeholder="Prénom de l’AS worker">' +
+      '<button type="button" class="swp-worker-remove" title="Supprimer">×</button>';
     list.appendChild(row);
 
     var input = row.querySelector('input');
@@ -5904,6 +5991,7 @@ ${(function(){
   })();
 
 </script>
+<!-- V52 — V51 conservée + Swissport MANHOUR moderne restauré (modal indépendant de l’étape). -->
 <!-- Service worker désactivé : source réseau directe pour éviter les sessions HTML obsolètes. -->
 <div id="fids-change-details-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(7px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px">
   <div style="width:100%;max-width:620px;max-height:80vh;overflow:auto;background:var(--bg1);border:1px solid rgba(0,229,160,.35);border-radius:16px;box-shadow:0 20px 70px rgba(0,0,0,.6);padding:22px">
@@ -5978,6 +6066,7 @@ ${(function(){
     closeAppHeaderMenu();
   },true);
   document.addEventListener('DOMContentLoaded',function(){
+    ensureSwissportManhourModalHost();
     var back=document.getElementById('app-menu-backdrop');
     if(back)back.addEventListener('click',closeAppHeaderMenu);
     var swpBack=document.getElementById('swp-manhour-backdrop');
