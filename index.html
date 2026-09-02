@@ -1661,6 +1661,62 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 }
 </style>
 
+<style id="wo-lgg-v57-edit-launcher">
+/* V57 — Edit Mode centralisé : petit panneau discret, même langage visuel que Swissport/menu */
+#edit-mode-launcher{
+  position:fixed;
+  top:78px;
+  right:max(18px,calc((100vw - 680px)/2 + 18px));
+  width:min(380px,calc(100vw - 28px));
+  max-height:min(610px,calc(100dvh - 94px));
+  overflow:hidden;
+  z-index:99995;
+  padding:14px;
+  border:1px solid rgba(143,168,255,.30);
+  border-radius:18px;
+  background:radial-gradient(circle at 90% 0%,rgba(143,168,255,.12),transparent 34%),linear-gradient(180deg,rgba(12,18,37,.985),rgba(6,10,23,.985));
+  box-shadow:0 28px 90px rgba(0,0,0,.62),0 0 34px rgba(91,126,255,.09),0 0 0 1px rgba(255,255,255,.025) inset;
+  backdrop-filter:blur(26px) saturate(135%);
+  opacity:0;
+  transform:translateY(-9px) scale(.975);
+  transform-origin:top right;
+  pointer-events:none;
+  transition:opacity .22s ease,transform .34s cubic-bezier(.16,1,.3,1);
+}
+#edit-mode-launcher.open{opacity:1;transform:none;pointer-events:auto}
+#edit-mode-launcher.hidden{display:none}
+.edit-launcher-glow{position:absolute;inset:-30% -15% auto auto;width:170px;height:150px;background:radial-gradient(circle,rgba(0,212,255,.10),transparent 68%);pointer-events:none}
+.edit-launcher-head{position:relative;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:2px 2px 13px}
+.edit-launcher-kicker{font:800 8px/1 var(--mono);letter-spacing:2px;color:var(--a1);text-transform:uppercase;opacity:.9}
+.edit-launcher-title{font-size:16px;font-weight:850;line-height:1.2;color:var(--t1);margin-top:6px}
+.edit-launcher-close{width:30px;height:30px;flex:0 0 30px;border-radius:9px;border:1px solid var(--b1);background:rgba(255,255,255,.025);color:var(--t2);font-size:19px;line-height:1;cursor:pointer;transition:.18s}
+.edit-launcher-close:hover{color:var(--t1);border-color:var(--b2);background:rgba(255,255,255,.06);transform:scale(1.03)}
+.edit-launcher-choice{position:relative;display:flex;align-items:center;gap:10px;padding:11px;border:1px solid rgba(143,168,255,.23);border-radius:13px;background:linear-gradient(135deg,rgba(143,168,255,.09),rgba(143,168,255,.035));cursor:pointer;transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease}
+.edit-launcher-choice:hover,.edit-launcher-choice:focus-visible{transform:translateY(-1px);border-color:rgba(143,168,255,.48);background:rgba(143,168,255,.09);box-shadow:0 12px 28px rgba(0,0,0,.18);outline:none}
+.edit-launcher-choice-icon{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-size:19px;box-shadow:0 8px 20px rgba(0,212,255,.15);flex:0 0 auto}
+.edit-launcher-choice-copy{flex:1;min-width:0}.edit-launcher-choice-copy b{display:block;font-size:11px;font-weight:850;color:var(--t1)}.edit-launcher-choice-copy small{display:block;margin-top:3px;font-size:9px;color:var(--t3)}
+.edit-launcher-arrow{font:700 20px/1 var(--mono);color:var(--a1);opacity:.9}
+.edit-launcher-divider{display:flex;align-items:center;gap:8px;margin:14px 1px 9px;color:var(--t3);font:800 7px/1 var(--mono);letter-spacing:1.6px}
+.edit-launcher-divider::before,.edit-launcher-divider::after{content:"";height:1px;flex:1;background:var(--b1)}
+.edit-launcher-search-wrap{display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;border:1px solid var(--b1);border-radius:10px;background:rgba(255,255,255,.025);color:var(--t3);margin-bottom:8px}
+.edit-launcher-search-wrap:focus-within{border-color:rgba(143,168,255,.45);box-shadow:0 0 0 3px rgba(143,168,255,.06)}
+.edit-launcher-search-wrap span{font-size:16px;color:var(--a1)}
+.edit-launcher-search-wrap input{width:100%;border:0!important;outline:0!important;background:transparent!important;color:var(--t1)!important;font:500 10px var(--sans)!important;padding:0!important;box-shadow:none!important}
+.edit-launcher-search-wrap input::placeholder{color:var(--t3)}
+.edit-launcher-flights{display:grid;gap:5px;max-height:310px;overflow-y:auto;overscroll-behavior:contain;padding-right:2px;scrollbar-gutter:stable}
+.edit-launcher-flight{width:100%;display:flex;align-items:center;gap:9px;text-align:left;padding:9px;border:1px solid transparent;border-radius:11px;background:rgba(255,255,255,.018);color:var(--t1);cursor:pointer;transition:transform .16s ease,border-color .16s ease,background .16s ease}
+.edit-launcher-flight:hover,.edit-launcher-flight:focus-visible{transform:translateX(2px);background:rgba(255,255,255,.04);border-color:var(--b1);outline:none}
+.edit-launcher-flight-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--b1);background:rgba(0,212,255,.035);color:var(--a1);font-size:13px;flex:0 0 auto}
+.edit-launcher-flight-copy{flex:1;min-width:0}.edit-launcher-flight-copy b{display:block;font:800 10px/1.2 var(--mono);color:var(--t1);letter-spacing:.3px}.edit-launcher-flight-copy small{display:block;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:8px;color:var(--t3)}
+.edit-launcher-empty{display:flex;align-items:center;gap:10px;padding:16px 12px;border:1px dashed var(--b1);border-radius:11px;color:var(--t2)}.edit-launcher-empty>span{color:var(--a1);font-size:17px}.edit-launcher-empty b{display:block;font-size:10px;color:var(--t1)}.edit-launcher-empty small{display:block;margin-top:3px;font-size:8px;color:var(--t3);line-height:1.4}
+@media(max-width:760px){
+  #edit-mode-launcher{top:70px;right:12px;width:min(360px,calc(100vw - 24px));max-height:calc(100dvh - 82px);padding:13px;border-radius:16px}
+  .edit-launcher-title{font-size:15px}
+  .edit-launcher-flights{max-height:min(300px,42dvh)}
+}
+@media(prefers-reduced-motion:reduce){#edit-mode-launcher,#edit-mode-launcher *{transition:none!important;animation:none!important}}
+</style>
+
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -1750,8 +1806,8 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       <button type="button" class="app-menu-item" onclick="closeAppHeaderMenu();toggleSwissportManhour()">
         <span class="app-menu-item-icon">&#9201;</span><span><b>Swissport MANHOUR</b><small>Créer la worksheet manhour</small></span>
       </button>
-      <button type="button" class="app-menu-item" id="app-menu-edit-item" onclick="closeAppHeaderMenu();toggleEditMode()">
-        <span class="app-menu-item-icon">&#9998;</span><span><b>Mode édition</b><small>Modifier manuellement un vol</small></span>
+      <button type="button" class="app-menu-item" id="app-menu-edit-item" onclick="closeAppHeaderMenu();openEditModeLauncher()">
+        <span class="app-menu-item-icon">&#9998;</span><span><b>Mode édition</b><small>Modifier un vol ou créer une worksheet</small></span>
       </button>
     </div>
 
@@ -1875,6 +1931,31 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       <button class="btn" style="width:100%;background:transparent;border:1px solid var(--red);color:var(--red)" onclick="resetAllEditOverrides()">&#9888; Annuler toutes les modifications</button>
     </div>
   </div>
+</div>
+
+<!-- V57 — lanceur Edit Mode discret, accessible depuis le menu principal -->
+<div id="edit-mode-launcher" class="hidden" role="dialog" aria-modal="false" aria-labelledby="edit-launcher-title" aria-hidden="true">
+  <div class="edit-launcher-glow"></div>
+  <div class="edit-launcher-head">
+    <div>
+      <div class="edit-launcher-kicker">EDIT MODE · ÉTAPE 3</div>
+      <div class="edit-launcher-title" id="edit-launcher-title">Que souhaitez-vous modifier ?</div>
+    </div>
+    <button type="button" class="edit-launcher-close" onclick="closeEditModeLauncher()" title="Fermer">&times;</button>
+  </div>
+
+  <div class="edit-launcher-choice" id="edit-launcher-create" role="button" tabindex="0">
+    <span class="edit-launcher-choice-icon">＋</span>
+    <span class="edit-launcher-choice-copy"><b>Créer une worksheet</b><small>Nouvelle fiche personnalisée</small></span>
+    <span class="edit-launcher-arrow">›</span>
+  </div>
+
+  <div class="edit-launcher-divider"><span>OU MODIFIER UN AVION</span></div>
+  <div class="edit-launcher-search-wrap">
+    <span>⌕</span>
+    <input id="edit-launcher-search" type="search" placeholder="Rechercher un vol ou une immat." autocomplete="off">
+  </div>
+  <div id="edit-launcher-flights" class="edit-launcher-flights"></div>
 </div>
 
 <div id="layout-settings-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -2119,11 +2200,9 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       <div style="font-size:11px;color:var(--t2);margin-bottom:10px">Créez des worksheets libres, indépendantes de la feuille de nettoyage.</div>
       <div class="flights-list" id="blank-worksheets-list"></div>
     </div>
-    <button id="create-blank-worksheet-btn" class="hidden blank-create-btn" onclick="createBlankWorksheet()" aria-label="Créer une nouvelle worksheet vierge">
-      <span class="blank-create-icon">＋</span>
-      <span class="blank-create-copy"><span class="blank-create-title">Nouvelle worksheet vierge</span><span class="blank-create-sub">Créer une fiche personnalisée en quelques secondes</span></span>
-      <span class="blank-create-arrow">→</span>
-    </button>
+    <!-- Ancien bouton de création conservé uniquement pour compatibilité JS :
+         la création passe désormais par Menu > Mode édition. -->
+    <button id="create-blank-worksheet-btn" class="hidden" onclick="createBlankWorksheet()" aria-hidden="true" tabindex="-1" style="display:none!important"></button>
     <button class="add-manual-toggle" onclick="toggleSwissportManhour()" style="display:none;margin-top:8px;border-color:rgba(167,139,250,.45);color:#c4b5fd">⏱ Swissport MANHOUR</button>
     <button class="add-manual-toggle" onclick="toggleManualForm()">+ Ajouter un vol manuellement</button>
     
@@ -2955,8 +3034,9 @@ async function woLggLogout(){
 
   function goToStep(n) {
     currentStep = n;
-    if (n !== 3 && editModeEnabled) {
+    if (n !== 3) {
       editModeEnabled = false;
+      if(typeof closeEditModeLauncher==='function') closeEditModeLauncher();
       const blankBtn=document.getElementById('create-blank-worksheet-btn');
       if(blankBtn)blankBtn.classList.add('hidden');
     }
@@ -3780,7 +3860,7 @@ async function woLggLogout(){
     startAutoRefresh();
   }
 
-  // ── Edit Mode : disponible uniquement à l'étape 3 ─────────────────────
+  // ── Edit Mode : lanceur centralisé depuis le menu, disponible uniquement à l’étape 3 ──
   function updateEditModeButtonUI() {
     const item=document.getElementById('app-menu-edit-item');
     const allowed=(currentStep===3);
@@ -3788,31 +3868,93 @@ async function woLggLogout(){
       item.disabled=!allowed;
       item.classList.toggle('is-disabled',!allowed);
       item.setAttribute('aria-disabled',allowed?'false':'true');
-      item.title=allowed?'Modifier manuellement un vol':'Disponible uniquement à l’étape 3';
+      item.title=allowed?'Modifier un vol ou créer une worksheet':'Disponible uniquement à l’étape 3';
     }
     const btn=document.getElementById('edit-mode-toggle-btn');
     if(btn)btn.disabled=!allowed;
   }
 
-  function toggleEditMode() {
+  function openEditModeLauncher() {
     if (currentStep !== 3) { updateEditModeButtonUI(); return; }
-    editModeEnabled = !editModeEnabled;
-    const btn = document.getElementById('edit-mode-toggle-btn');
-    if (btn) {
-      btn.style.color = editModeEnabled ? '#000' : 'var(--t2)';
-      btn.style.background = editModeEnabled ? 'linear-gradient(135deg,#ffb400,#ff7a00)' : 'none';
-      btn.style.borderColor = editModeEnabled ? '#ff9500' : 'var(--b2)';
+    const launcher = document.getElementById('edit-mode-launcher');
+    if (!launcher) return;
+    renderEditModeLauncherFlights();
+    launcher.classList.remove('hidden');
+    launcher.classList.add('open');
+    launcher.setAttribute('aria-hidden','false');
+    requestAnimationFrame(function(){
+      var search=document.getElementById('edit-launcher-search');
+      if(search) search.focus({preventScroll:true});
+    });
+    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('editModeLauncher:open');
+  }
+
+  function closeEditModeLauncher() {
+    const launcher=document.getElementById('edit-mode-launcher');
+    if(!launcher)return;
+    launcher.classList.remove('open');
+    launcher.setAttribute('aria-hidden','true');
+    setTimeout(function(){
+      if(!launcher.classList.contains('open')) launcher.classList.add('hidden');
+    },220);
+  }
+
+  function editLauncherEscapeHtml(value) {
+    return String(value==null?'':value).replace(/[&<>"']/g,function(ch){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+    });
+  }
+
+  function renderEditModeLauncherFlights(filter) {
+    const list=document.getElementById('edit-launcher-flights');
+    if(!list)return;
+    const q=String(filter||'').trim().toUpperCase();
+    const seen=new Set();
+    const available=(Array.isArray(flights)?flights:[]).filter(function(f){
+      const key=String((f&&f.flight)||'').trim();
+      if(!key || key.indexOf('BLANK-')===0 || seen.has(key))return false;
+      seen.add(key);
+      return true;
+    }).sort(function(a,b){
+      return String(a.flight||'').localeCompare(String(b.flight||''),'fr',{numeric:true,sensitivity:'base'});
+    });
+    const filtered=available.filter(function(f){
+      if(!q)return true;
+      return [f.flight,f.reg,f.stand,f.handler].some(function(v){return String(v||'').toUpperCase().indexOf(q)!==-1;});
+    });
+
+    if(filtered.length===0){
+      list.innerHTML = '<div class="edit-launcher-empty"><span>✦</span><div><b>Aucun avion trouvé</b><small>' + (available.length ? 'Essayez un autre numéro ou une immatriculation.' : 'Aucun vol disponible à modifier pour le moment.') + '</small></div></div>';
+      return;
     }
-    const blankBtn = document.getElementById('create-blank-worksheet-btn');
-    if (blankBtn) blankBtn.classList.toggle('hidden', !editModeEnabled);
-    updateEditModeButtonUI();
-    if (currentStep === 3) renderFlights();
-    renderBlankWorksheetsList();
-    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('editMode:'+editModeEnabled);
+
+    list.innerHTML=filtered.map(function(f){
+      const flight=editLauncherEscapeHtml(f.flight||'—');
+      const reg=editLauncherEscapeHtml(f.reg||'Immat. non renseignée');
+      const meta=[f.stand?'Stand '+f.stand:'',f.handler||''].filter(Boolean).join(' · ');
+      return '<button type="button" class="edit-launcher-flight" data-flight-key="'+editLauncherEscapeHtml(f.flight||'')+'">' +
+        '<span class="edit-launcher-flight-icon">✈</span>' +
+        '<span class="edit-launcher-flight-copy"><b>'+flight+'</b><small>'+reg+(meta?' · '+editLauncherEscapeHtml(meta):'')+'</small></span>' +
+        '<span class="edit-launcher-arrow">›</span>' +
+      '</button>';
+    }).join('');
+
+    list.querySelectorAll('.edit-launcher-flight').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        const key=btn.getAttribute('data-flight-key');
+        closeEditModeLauncher();
+        setTimeout(function(){openEditFlightModal(key);},90);
+      });
+    });
+  }
+
+  // Compatibilité avec l'ancien bouton caché : il ouvre désormais le lanceur.
+  function toggleEditMode() {
+    openEditModeLauncher();
   }
 
   // ── Modale d'edition complete d'un vol ──────────────────────────────
-  let __editFlightKey = null; // numero de vol ORIGINAL en cours d'edition (cle stable de flightOverrides)
+  let __editFlightKey = null; // numero de vol ORIGINAL en cours d’edition (cle stable de flightOverrides)
 
   function openEditFlightModal(flightKey) {
     __editFlightKey = flightKey;
@@ -3913,7 +4055,7 @@ async function woLggLogout(){
     const section = document.getElementById('blank-worksheets-section');
     const list = document.getElementById('blank-worksheets-list');
     if (!section || !list) return;
-    if (!editModeEnabled || blankWorksheets.length === 0) {
+    if (currentStep !== 3 || blankWorksheets.length === 0) {
       section.classList.add('hidden');
       return;
     }
@@ -4505,9 +4647,7 @@ function restoreActiveTextField(saved) {
             ? '<input type="text" placeholder="Immat. manquante" value="" oninput="flights[' + i + '].reg=this.value.toUpperCase()" style="width:112px;flex-shrink:0;background:var(--bg2);border:1px solid #ffb400;border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none">'
             : '') +
           '<input type="text" class="remarks-input" data-flight-key="' + (f.flight || '').replace(/"/g,'&quot;') + '" placeholder="Remarques..." value="' + (f.remarks ? f.remarks.replace(/"/g,'&quot;') : '') + '" oninput="flights[' + i + '].remarks=this.value" style="flex:1;background:var(--bg2);border:1px solid var(--b2);border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none">' +
-          (editModeEnabled
-            ? '<button onclick="openEditFlightModal(&quot;' + (f.flight || '').replace(/"/g,'&amp;quot;') + '&quot;)" title="Tout modifier (Edit Mode)" style="flex-shrink:0;background:linear-gradient(135deg,#ffb400,#ff7a00);border:none;border-radius:6px;color:#000;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;white-space:nowrap">&#9998; Editer</button>'
-            : '') +
+
         '</div>' +
       '</div>';
     }).join('');
@@ -6244,6 +6384,46 @@ body.wo-lgg-scroll-locked{
 @keyframes woOverlayPanelIn{0%{opacity:0;transform:translateY(10px) scale(.975);filter:blur(1.5px)}65%{opacity:1;transform:translateY(-1px) scale(1.003);filter:blur(0)}100%{opacity:1;transform:none;filter:none}}
 @media(prefers-reduced-motion:reduce){#fids-change-details-overlay:not(.hidden),#fids-change-details-overlay > div{animation:none!important}}
 </style>
+<script id="wo-lgg-v57-edit-launcher">
+(function(){
+  'use strict';
+  function initEditLauncher(){
+    var launcher=document.getElementById('edit-mode-launcher');
+    if(!launcher || launcher.dataset.ready==='1')return;
+    launcher.dataset.ready='1';
+    var create=document.getElementById('edit-launcher-create');
+    var search=document.getElementById('edit-launcher-search');
+    if(create){
+      create.addEventListener('click',function(){
+        closeEditModeLauncher();
+        setTimeout(function(){createBlankWorksheet();},90);
+      });
+      create.addEventListener('keydown',function(e){
+        if(e.key==='Enter'||e.key===' '){e.preventDefault();create.click();}
+      });
+    }
+    if(search){
+      search.addEventListener('input',function(){
+        if(typeof renderEditModeLauncherFlights==='function')renderEditModeLauncherFlights(search.value);
+      });
+    }
+    document.addEventListener('pointerdown',function(e){
+      if(!launcher.classList.contains('open'))return;
+      if(launcher.contains(e.target))return;
+      closeEditModeLauncher();
+    },true);
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape' && launcher.classList.contains('open')){
+        closeEditModeLauncher();
+        e.stopPropagation();
+      }
+    },true);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initEditLauncher,{once:true});
+  else initEditLauncher();
+})();
+</script>
+
 <script id="wo-lgg-v53-scroll-isolation">
 (function(){
   'use strict';
@@ -6252,7 +6432,7 @@ body.wo-lgg-scroll-locked{
     'wo-lgg-auth-overlay','settings-modal-overlay','refresh-settings-overlay',
     'crewbus-password-overlay','layout-settings-overlay','history-modal-overlay',
     'fleet-modal-overlay','edit-flight-overlay','fids-change-details-overlay',
-    'swissport-manhour-form','swp-manhour-backdrop','print-overlay','wo-lgg-resume-modal'
+    'swissport-manhour-form','swp-manhour-backdrop','edit-mode-launcher','print-overlay','wo-lgg-resume-modal'
   ];
 
   function isVisible(el){
@@ -6287,7 +6467,7 @@ body.wo-lgg-scroll-locked{
       var menu=document.getElementById('app-menu-panel');
       var insideMenu=menu && menu.classList.contains('open') && menu.contains(target);
       var modal=target && target.closest && target.closest(
-        '#history-modal-overlay,#fleet-modal-overlay,#settings-modal-overlay,#refresh-settings-overlay,#crewbus-password-overlay,#layout-settings-overlay,#edit-flight-overlay,#fids-change-details-overlay,#swissport-manhour-form,#print-overlay,#wo-lgg-resume-modal,#wo-lgg-auth-overlay'
+        '#history-modal-overlay,#fleet-modal-overlay,#settings-modal-overlay,#refresh-settings-overlay,#crewbus-password-overlay,#layout-settings-overlay,#edit-flight-overlay,#fids-change-details-overlay,#swissport-manhour-form,#edit-mode-launcher,#print-overlay,#wo-lgg-resume-modal,#wo-lgg-auth-overlay'
       );
       if(!insideMenu && !modal && (document.body.classList.contains('wo-lgg-scroll-locked'))){
         e.preventDefault();
@@ -6299,7 +6479,7 @@ body.wo-lgg-scroll-locked{
       var menu=document.getElementById('app-menu-panel');
       var insideMenu=menu && menu.classList.contains('open') && menu.contains(target);
       var modal=target && target.closest && target.closest(
-        '#history-modal-overlay,#fleet-modal-overlay,#settings-modal-overlay,#refresh-settings-overlay,#crewbus-password-overlay,#layout-settings-overlay,#edit-flight-overlay,#fids-change-details-overlay,#swissport-manhour-form,#print-overlay,#wo-lgg-resume-modal,#wo-lgg-auth-overlay'
+        '#history-modal-overlay,#fleet-modal-overlay,#settings-modal-overlay,#refresh-settings-overlay,#crewbus-password-overlay,#layout-settings-overlay,#edit-flight-overlay,#fids-change-details-overlay,#swissport-manhour-form,#edit-mode-launcher,#print-overlay,#wo-lgg-resume-modal,#wo-lgg-auth-overlay'
       );
       if(!insideMenu && !modal && document.body.classList.contains('wo-lgg-scroll-locked')){
         e.preventDefault();
