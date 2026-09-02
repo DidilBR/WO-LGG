@@ -1616,6 +1616,51 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 }
 </style>
 
+
+<style id="wo-lgg-v56-edit-mode-polish">
+/* V56 — Edit Mode / worksheets vierges : plus propre, plus lisible, sans toucher à la logique */
+.wo-edit-shell{
+  background:linear-gradient(180deg,rgba(11,17,34,.985),rgba(7,11,24,.985))!important;
+  border:1px solid rgba(143,168,255,.28)!important;
+  border-radius:20px!important;
+  box-shadow:0 28px 90px rgba(0,0,0,.62),0 0 0 1px rgba(255,255,255,.025) inset!important;
+  backdrop-filter:blur(24px);
+}
+.wo-edit-kicker{font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#ffb400;opacity:.9}
+.wo-edit-title{font-size:20px;font-weight:800;line-height:1.15;color:var(--t1);margin-top:4px}
+.wo-edit-copy{font-size:11px;color:var(--t2);line-height:1.55;margin:7px 0 18px}
+.wo-edit-fields{margin-bottom:18px!important}
+.wo-edit-grid-label{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);margin:2px 0 10px}
+.wo-edit-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px!important;margin-bottom:18px!important}
+.wo-edit-grid label{min-height:38px;background:rgba(255,255,255,.025)!important;border:1px solid rgba(143,168,255,.18)!important;border-radius:9px!important;padding:7px 9px!important;transition:border-color .18s,background .18s,transform .18s}
+.wo-edit-grid label:hover{border-color:rgba(143,168,255,.42)!important;background:rgba(143,168,255,.055)!important;transform:translateY(-1px)}
+.wo-edit-grid input{accent-color:#ffb400}
+.blank-create-btn{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;margin:4px 0 12px;
+  background:linear-gradient(180deg,rgba(143,168,255,.07),rgba(143,168,255,.035));
+  border:1px solid rgba(143,168,255,.22);border-radius:12px;color:var(--t1);
+  cursor:pointer;text-align:left;transition:transform .18s,border-color .18s,background .18s,box-shadow .18s;
+}
+.blank-create-btn:hover{transform:translateY(-1px);border-color:rgba(143,168,255,.5);background:rgba(143,168,255,.07);box-shadow:0 10px 26px rgba(0,0,0,.18)}
+.blank-create-btn .blank-create-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ffb400,#ff7a00);color:#101010;font-size:17px;flex:0 0 auto;box-shadow:0 8px 18px rgba(255,180,0,.16)}
+.blank-create-btn .blank-create-copy{flex:1;min-width:0}
+.blank-create-btn .blank-create-title{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+.blank-create-btn .blank-create-sub{font-size:9px;color:var(--t3);margin-top:3px}
+.blank-create-btn .blank-create-arrow{font-family:var(--mono);font-size:14px;color:#ffb400}
+.blank-list-card{background:rgba(255,255,255,.018)!important;border-color:rgba(255,180,0,.22)!important}
+.wo-blank-actions{display:flex;gap:6px;align-items:center;flex:0 0 auto}
+.wo-blank-action{border-radius:8px!important;padding:6px 9px!important;font-size:10px!important;font-weight:800!important}
+.wo-blank-action.edit{background:rgba(255,180,0,.09)!important;border:1px solid rgba(255,180,0,.32)!important;color:#ffcf66!important}
+.wo-blank-action.print{background:rgba(34,193,195,.08)!important;border:1px solid rgba(34,193,195,.3)!important;color:#5ce5e8!important}
+.wo-blank-action.delete{background:transparent!important;border:1px solid rgba(255,77,109,.35)!important;color:#ff6b83!important}
+@media(max-width:760px){
+  .wo-edit-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .blank-create-btn{padding:11px 12px}
+  .wo-blank-actions{width:100%;justify-content:flex-end}
+}
+</style>
+
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -1808,26 +1853,26 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   </div>
 </div>
 
-<div id="edit-flight-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px">
-  <div style="background:var(--bg1);border:1px solid #ff9500;border-radius:14px;padding:22px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 10px 50px rgba(0,0,0,.6)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div style="font-size:16px;font-weight:800;color:#ffb400">&#9998; Edit Mode &#8212; <span id="edit-flight-title"></span></div>
-      <button onclick="closeEditFlightModal()" style="background:none;border:none;color:var(--t2);font-size:20px;cursor:pointer;line-height:1;padding:0 4px">&times;</button>
+<div id="edit-flight-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px">
+  <div class="wo-edit-shell" style="padding:22px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:2px">
+      <div><div class="wo-edit-kicker">WORKSHEET / ÉDITION</div><div class="wo-edit-title">&#9998; <span id="edit-flight-title"></span></div></div>
+      <button onclick="closeEditFlightModal()" style="background:rgba(255,255,255,.03);border:1px solid var(--b2);border-radius:9px;color:var(--t2);font-size:18px;cursor:pointer;line-height:1;width:34px;height:34px">&times;</button>
     </div>
-    <div style="font-size:11px;color:var(--t2);margin-bottom:16px">Ces modifications restent actives tant que le site reste ouvert (survivent aux actualisations FIDS automatiques), et sont perdues a un vrai rechargement de page ou via "Recommencer".</div>
+    <div class="wo-edit-copy">Ces modifications restent actives pendant que le site est ouvert et survivent aux actualisations FIDS automatiques.</div>
 
-    <div id="edit-flight-fields" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px"></div>
+    <div id="edit-flight-fields" class="wo-edit-fields" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"></div>
 
-    <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t2);margin-bottom:8px;margin-top:6px">Grille de la worksheet — coche = surlignage jaune a l'impression</div>
-    <div id="edit-flight-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:18px"></div>
+    <div class="wo-edit-grid-label">Services de la worksheet — coche = surlignage jaune à l'impression</div>
+    <div id="edit-flight-grid" class="wo-edit-grid"></div>
 
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost" style="flex:1" onclick="resetEditFlightOverride()">Reinitialiser ce vol</button>
-      <button class="btn btn-ghost" style="flex:1" onclick="closeEditFlightModal()">Fermer sans sauver</button>
-      <button class="btn btn-primary" style="flex:1" onclick="saveEditFlightOverride()">&#128190; Sauvegarder</button>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn btn-ghost" style="flex:1;min-width:150px" onclick="resetEditFlightOverride()">Réinitialiser ce vol</button>
+      <button class="btn btn-ghost" style="flex:1;min-width:150px" onclick="closeEditFlightModal()">Fermer sans sauver</button>
+      <button class="btn btn-primary" style="flex:1;min-width:150px" onclick="saveEditFlightOverride()">&#128190; Sauvegarder</button>
     </div>
     <div style="border-top:1px solid var(--b2);margin-top:16px;padding-top:12px">
-      <button class="btn" style="width:100%;background:transparent;border:1px solid var(--red);color:var(--red)" onclick="resetAllEditOverrides()">&#9888; Annuler TOUTES les modifications (tous les vols)</button>
+      <button class="btn" style="width:100%;background:transparent;border:1px solid var(--red);color:var(--red)" onclick="resetAllEditOverrides()">&#9888; Annuler toutes les modifications</button>
     </div>
   </div>
 </div>
@@ -2067,14 +2112,18 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     <!-- Worksheets vierges (Edit Mode) -->
     <div id="blank-worksheets-section" class="hidden" style="margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
-        <div style="height:1px;flex:1;background:rgba(255,180,0,.2)"></div>
-        <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ffb400;padding:5px 14px;border:1px solid rgba(255,180,0,.3);border-radius:20px;background:rgba(255,180,0,.06)">&#9998; Worksheets vierges</div>
-        <div style="height:1px;flex:1;background:rgba(255,180,0,.2)"></div>
+        <div style="height:1px;flex:1;background:rgba(255,180,0,.18)"></div>
+        <div style="font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#ffb400;padding:5px 14px;border:1px solid rgba(255,180,0,.28);border-radius:20px;background:rgba(255,180,0,.05)">&#9998; Worksheets personnalisées</div>
+        <div style="height:1px;flex:1;background:rgba(255,180,0,.18)"></div>
       </div>
-      <div style="font-size:11px;color:var(--t2);margin-bottom:10px">Generees a la main, jamais incluses dans la feuille de nettoyage — uniquement imprimees via le bouton "Worksheets".</div>
+      <div style="font-size:11px;color:var(--t2);margin-bottom:10px">Créez des worksheets libres, indépendantes de la feuille de nettoyage.</div>
       <div class="flights-list" id="blank-worksheets-list"></div>
     </div>
-    <button id="create-blank-worksheet-btn" class="hidden" onclick="createBlankWorksheet()" style="width:100%;padding:11px;background:linear-gradient(135deg,#ffb400,#ff7a00);border:none;border-radius:var(--r2);color:#000;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-bottom:10px">&#9998; + Creer une worksheet vierge</button>
+    <button id="create-blank-worksheet-btn" class="hidden blank-create-btn" onclick="createBlankWorksheet()" aria-label="Créer une nouvelle worksheet vierge">
+      <span class="blank-create-icon">＋</span>
+      <span class="blank-create-copy"><span class="blank-create-title">Nouvelle worksheet vierge</span><span class="blank-create-sub">Créer une fiche personnalisée en quelques secondes</span></span>
+      <span class="blank-create-arrow">→</span>
+    </button>
     <button class="add-manual-toggle" onclick="toggleSwissportManhour()" style="display:none;margin-top:8px;border-color:rgba(167,139,250,.45);color:#c4b5fd">⏱ Swissport MANHOUR</button>
     <button class="add-manual-toggle" onclick="toggleManualForm()">+ Ajouter un vol manuellement</button>
     
@@ -3789,7 +3838,7 @@ async function woLggLogout(){
       '</div>';
     }).join('');
 
-    document.getElementById('edit-flight-grid').innerHTML = WORKSHEET_GRID_CELLS.map(function(cell) {
+    document.getElementById('edit-flight-grid').innerHTML = WORKSHEET_GRID_CELLS.slice().sort(function(a,b){ return a.label.localeCompare(b.label,'fr',{sensitivity:'base'}); }).map(function(cell) {
       const checked = ov.grid && ov.grid[cell.key] === true;
       return '<label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--t1);background:var(--bg2);border:1px solid var(--b2);border-radius:6px;padding:6px 8px;cursor:pointer">' +
         '<input type="checkbox" id="edit-grid-' + cell.key + '" ' + (checked ? 'checked' : '') + ' style="accent-color:#ffb400;flex-shrink:0">' +
@@ -3875,15 +3924,17 @@ async function woLggLogout(){
       // l'intitule visible est le nom/immat renseigne dans l'Edit Mode, puis le N° de vol.
       const displayFlight = (ov.reg && ov.reg.trim()) ? ov.reg.trim() : ((ov.flight && ov.flight.trim() && ov.flight !== b.key) ? ov.flight.trim() : 'Worksheet');
       const displayReg = (ov.flight && ov.flight !== b.key) ? ov.flight : '—';
-      return '<div class="flight-card" style="border-color:rgba(255,180,0,.3)">' +
+      return '<div class="flight-card blank-list-card">' +
         '<div class="flight-info">' +
           '<span class="flight-reg" style="background:linear-gradient(90deg,#ffb400,#ff7a00);-webkit-background-clip:text;-webkit-text-fill-color:transparent">' + displayReg + '</span>' +
           '<span class="flight-num">' + displayFlight + '</span>' +
           '<span class="flight-stand">vierge</span>' +
         '</div>' +
-        '<button onclick="openEditFlightModal(&quot;' + b.key + '&quot;)" title="Modifier" style="flex-shrink:0;background:linear-gradient(135deg,#ffb400,#ff7a00);border:none;border-radius:6px;color:#000;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;margin-right:6px">&#9998; Editer</button>' +
-        '<button onclick="printBlankWorksheet(&quot;' + b.key + '&quot;)" title="Imprimer cette worksheet uniquement" style="flex-shrink:0;background:linear-gradient(135deg,#22c1c3,#0d8ab0);border:none;border-radius:6px;color:#000;font-size:11px;font-weight:800;padding:5px 10px;cursor:pointer;margin-right:6px">&#128424; Imprimer</button>' +
-        '<button onclick="deleteBlankWorksheet(&quot;' + b.key + '&quot;)" title="Supprimer" style="flex-shrink:0;background:none;border:1px solid var(--red);border-radius:6px;color:var(--red);font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer">&#128465;</button>' +
+        '<div class="wo-blank-actions">' +
+        '<button class="wo-blank-action edit" onclick="openEditFlightModal(&quot;' + b.key + '&quot;)" title="Modifier">&#9998; Éditer</button>' +
+        '<button class="wo-blank-action print" onclick="printBlankWorksheet(&quot;' + b.key + '&quot;)" title="Imprimer cette worksheet uniquement">&#128424; Imprimer</button>' +
+        '<button class="wo-blank-action delete" onclick="deleteBlankWorksheet(&quot;' + b.key + '&quot;)" title="Supprimer">&#128465;</button>' +
+        '</div>' +
       '</div>';
     }).join('');
   }
