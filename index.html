@@ -1106,6 +1106,41 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:1
 [data-layout="orbit"] .theme-dots .tdot.active{
   box-shadow:0 0 0 2px var(--bg0),0 0 0 4px var(--a1),0 0 16px rgba(143,168,255,.38);
 }
+/* V46 — badge « nouvel avion » compact et discret */
+@keyframes newAircraftStarPulse{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 1px rgba(255,77,136,.18),0 4px 12px rgba(255,45,115,.16)}
+  50%{transform:scale(1.04);box-shadow:0 0 0 1px rgba(255,77,136,.28),0 5px 16px rgba(255,45,115,.22)}
+}
+button[aria-label="Ajouter à la flotte connue"]{transition:transform .16s ease,filter .16s ease,box-shadow .16s ease}
+button[aria-label="Ajouter à la flotte connue"]:hover{filter:brightness(1.08);transform:translateY(-1px) scale(1.03)}
+button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
+@media(max-width:760px){
+  button[aria-label="Ajouter à la flotte connue"]{width:30px;height:30px;font-size:15px}
+}
+
+@keyframes orbitAmbientGlow{
+  0%,100%{filter:brightness(1)}
+  50%{filter:brightness(1.025)}
+}
+@keyframes orbitPanelEdge{
+  0%,100%{box-shadow:0 12px 34px rgba(0,0,0,.16),0 0 0 1px rgba(143,168,255,.035)}
+  50%{box-shadow:0 14px 38px rgba(0,0,0,.19),0 0 18px rgba(143,168,255,.055)}
+}
+[data-layout="orbit"] .app-wrap{animation:orbitAmbientGlow 9s ease-in-out infinite}
+[data-layout="orbit"] .panel,
+[data-layout="orbit"] .stat-card{
+  animation:orbitPanelEdge 8.5s ease-in-out infinite;
+}
+[data-layout="orbit"] .flight-card{
+  box-shadow:0 8px 24px rgba(0,0,0,.10);
+}
+[data-layout="orbit"] .flight-card:hover{
+  box-shadow:0 10px 30px rgba(0,0,0,.18),0 0 16px rgba(143,168,255,.07);
+}
+[data-layout="orbit"] .progress-bar .prog-step.active .prog-num{
+  transform:translateY(-1px);
+}
+
 @media(max-width:760px){
   [data-layout="orbit"] header{
     background:linear-gradient(180deg,rgba(8,14,28,.985),rgba(7,12,24,.97)) !important;
@@ -1965,6 +2000,8 @@ async function woLggLogout(){
       extraNotes:document.getElementById('extra-notes')?.value||'',
       colorTheme:document.documentElement.getAttribute('data-theme')||localStorage.getItem('lgg-theme')||'cyber',
       layoutMode:localStorage.getItem('lgg_layout_mode')||document.documentElement.getAttribute('data-layout')||'classic',
+      knownRegs:typeof knownRegs!=='undefined'?knownRegs:{},
+      fleetNotes:typeof fleetNotes!=='undefined'?fleetNotes:{},
       flightSearchTerm:typeof flightSearchTerm!=='undefined'?flightSearchTerm:'',
       editModeEnabled:typeof editModeEnabled!=='undefined'?!!editModeEnabled:false,
       scrollX:window.scrollX||0,
@@ -2003,9 +2040,21 @@ async function woLggLogout(){
         try{localStorage.setItem('lgg-theme',s.colorTheme)}catch(e){}
       }
       if(typeof applyLayoutMode==='function' && typeof s.layoutMode==='string' && s.layoutMode){
-        const lm=['classic','neo','purete','aero'].includes(s.layoutMode)?s.layoutMode:'classic';
+        const lm=['classic','neo','purete','aero','orbit'].includes(s.layoutMode)?s.layoutMode:'classic';
         applyLayoutMode(lm);
         try{localStorage.setItem('lgg_layout_mode',lm)}catch(e){}
+      }
+
+      // Flotte connue : migration des anciennes versions + synchronisation
+      // multi-appareils. Tant que le snapshot cloud ne contient pas encore
+      // ces données, on conserve le contenu local puis on le renverra au cloud.
+      if(typeof knownRegs!=='undefined' && s.knownRegs && typeof s.knownRegs==='object'){
+        knownRegs=s.knownRegs;
+        try{localStorage.setItem('lgg_known_regs',JSON.stringify(knownRegs))}catch(e){}
+      }
+      if(typeof fleetNotes!=='undefined' && s.fleetNotes && typeof s.fleetNotes==='object'){
+        fleetNotes=s.fleetNotes;
+        try{localStorage.setItem('lgg_fleet_notes',JSON.stringify(fleetNotes))}catch(e){}
       }
 
       if(typeof selectedShift!=='undefined')selectedShift=s.selectedShift||null;
@@ -2310,7 +2359,12 @@ async function woLggLogout(){
           flights:[],selectedFlights:[],caterings:[],selectedCaterings:[],
           selectedASL737:[],selectedASL737Initialized:[],flightOverrides:{},
           blankWorksheets:[],blankWorksheetCounter:0,lastDepartures:[],
-          extraNotes:'',flightSearchTerm:'',editModeEnabled:false,
+          extraNotes:'',
+          colorTheme:document.documentElement.getAttribute('data-theme')||localStorage.getItem('lgg-theme')||'cyber',
+          layoutMode:localStorage.getItem('lgg_layout_mode')||document.documentElement.getAttribute('data-layout')||'classic',
+          knownRegs:typeof knownRegs!=='undefined'?knownRegs:{},
+          fleetNotes:typeof fleetNotes!=='undefined'?fleetNotes:{},
+          flightSearchTerm:'',editModeEnabled:false,
           scrollX:0,scrollY:0,_sync:{deviceId:woLggDeviceId,reason:'fresh'}
         };
         const {data,error}=await woLggSupabase.from('work_sessions')
@@ -2337,7 +2391,45 @@ async function woLggLogout(){
     const uid=woLggUser.id;
     woLggCloudInitPromise=(async()=>{
       const remote=await woLggReadCloudSession();
-      if(remote?.state)await woLggChooseExistingSession(remote);
+      if(remote?.state){
+        // Les anciens snapshots n'ont pas encore de flotte/thème/interface :
+        // on les enrichit à partir de l'appareil courant avant la suite.
+        const rs=remote.state||{};
+        if(!rs.knownRegs || typeof rs.knownRegs!=='object'){
+          rs.knownRegs=typeof knownRegs!=='undefined'?knownRegs:{};
+          try{localStorage.setItem('lgg_known_regs',JSON.stringify(rs.knownRegs))}catch(e){}
+        }
+        if(!rs.fleetNotes || typeof rs.fleetNotes!=='object'){
+          rs.fleetNotes=typeof fleetNotes!=='undefined'?fleetNotes:{};
+          try{localStorage.setItem('lgg_fleet_notes',JSON.stringify(rs.fleetNotes))}catch(e){}
+        }
+        if(!rs.colorTheme){
+          rs.colorTheme=document.documentElement.getAttribute('data-theme')||localStorage.getItem('lgg-theme')||'cyber';
+        }
+        if(!rs.layoutMode){
+          rs.layoutMode=localStorage.getItem('lgg_layout_mode')||document.documentElement.getAttribute('data-layout')||'classic';
+        }
+        await woLggChooseExistingSession(remote);
+        // Réenregistre immédiatement les préférences/flotte si elles viennent
+        // d'être ajoutées à un vieux snapshot.
+        const latest=await woLggReadCloudSession();
+        const mergedState=latest?.state||rs;
+        if(!mergedState.knownRegs || !mergedState.fleetNotes || !mergedState.colorTheme || !mergedState.layoutMode){
+          woLggQueueSave('migration');
+        }
+      }else{
+        // Première connexion sur ce compte/appareil : publier la configuration
+        // locale pour qu'un autre ordinateur puisse la récupérer.
+        const localState=woLggBuildSessionState();
+        if(localState && (
+          Object.keys(localState.knownRegs||{}).length ||
+          Object.keys(localState.fleetNotes||{}).length ||
+          localState.colorTheme ||
+          localState.layoutMode
+        )){
+          await woLggWriteSnapshot(localState);
+        }
+      }
       woLggInitializedUserId=uid;
       woLggStartRealtime();
     })().catch(e=>console.warn('WO-LGG cloud initialization:',e))
@@ -3887,7 +3979,7 @@ function restoreActiveTextField(saved) {
       const regMissing = !f.reg;
       const isNewAircraft = !!f.reg && !f.manual && !knownRegs[f.reg];
       const fleetBadge = isNewAircraft
-        ? '<button onclick="promptAddFleet(event,' + i + ')" style="margin-left:auto;font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#000;background:linear-gradient(135deg,#ff0055,#ff4d8f);border:none;border-radius:20px;padding:5px 10px;cursor:pointer;white-space:nowrap;animation:pulseRed 1.6s infinite">&#10024; Nouvel avion</button>'
+        ? '<button onclick="promptAddFleet(event,' + i + ')" title="Ajouter à la flotte connue" aria-label="Ajouter à la flotte connue" style="margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;font-size:14px;line-height:1;color:#fff;background:linear-gradient(135deg,#ff2d73,#ff4d96);border:0;border-radius:9px;cursor:pointer;white-space:nowrap;box-shadow:0 0 0 1px rgba(255,77,136,.18),0 4px 12px rgba(255,45,115,.16);animation:newAircraftStarPulse 2.4s ease-in-out infinite">&#10024;</button>'
         : (fleetNotes[f.reg] ? '<span title="' + fleetNotes[f.reg].replace(/"/g,'&quot;') + '" style="margin-left:auto;font-size:10px;color:#00e5a0;font-family:var(--mono)">&#9989; connu</span>' : '');
       return '<div data-idx="' + i + '">' +
         '<div class="flight-card ' + (selectedFlights.has(i) ? 'selected' : '') + '" onclick="toggleFlight(' + i + ')" style="' + missingHighlight + '">' +
@@ -4014,6 +4106,9 @@ function restoreActiveTextField(saved) {
     if (note) fleetNotes[fleetModalReg] = note; else delete fleetNotes[fleetModalReg];
     localStorage.setItem('lgg_known_regs', JSON.stringify(knownRegs));
     localStorage.setItem('lgg_fleet_notes', JSON.stringify(fleetNotes));
+    if(typeof woLggMarkWorkChanged==='function' && woLggUser && !woLggVisitorMode){
+      woLggMarkWorkChanged('fleet:save:'+fleetModalReg);
+    }
     closeFleetModal();
     renderFlights();
   }
@@ -4064,6 +4159,9 @@ function restoreActiveTextField(saved) {
     delete fleetNotes[reg];
     localStorage.setItem('lgg_known_regs', JSON.stringify(knownRegs));
     localStorage.setItem('lgg_fleet_notes', JSON.stringify(fleetNotes));
+    if(typeof woLggMarkWorkChanged==='function' && woLggUser && !woLggVisitorMode){
+      woLggMarkWorkChanged('fleet:delete:'+reg);
+    }
     renderHistoryList();
     renderFlights();
   }
