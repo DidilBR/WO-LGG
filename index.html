@@ -1340,6 +1340,36 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 }
 </style>
 
+<style id="wo-lgg-v48-ui-polish">
+/* V48 — synchronisation discrète + Swissport MANHOUR en pop-up */
+#wo-lgg-save-state{display:none!important}
+.app-menu-sync-status{display:flex;align-items:center;gap:9px;margin:10px 0 12px;padding:9px 11px;border:1px solid var(--b1);border-radius:11px;background:rgba(255,255,255,.018)}
+.app-menu-sync-dot{width:9px;height:9px;border-radius:50%;background:#00e5a0;box-shadow:0 0 0 3px rgba(0,229,160,.10),0 0 12px rgba(0,229,160,.28);flex:0 0 auto;transition:background .25s,box-shadow .25s}
+.app-menu-sync-status[data-state="degraded"] .app-menu-sync-dot{background:#ffb400;box-shadow:0 0 0 3px rgba(255,180,0,.10),0 0 12px rgba(255,180,0,.22)}
+.app-menu-sync-status[data-state="offline"] .app-menu-sync-dot{background:#ff4d6d;box-shadow:0 0 0 3px rgba(255,77,109,.10),0 0 12px rgba(255,77,109,.22)}
+.app-menu-sync-copy{min-width:0}
+.app-menu-sync-title{font:800 9px/1 var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--t1)}
+.app-menu-sync-detail{font-size:9px;color:var(--t3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app-menu-item.is-disabled{opacity:.38;filter:saturate(.35);cursor:not-allowed!important;transform:none!important;background:transparent!important;border-color:transparent!important}
+.app-menu-item.is-disabled .app-menu-item-icon{color:var(--t3);}
+.swp-manhour-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(7px);opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:9996}
+.swp-manhour-backdrop.open{opacity:1;pointer-events:auto}
+#swissport-manhour-form{position:fixed;z-index:9997;left:50%;top:50%;transform:translate(-50%,-46%) scale(.985);width:min(480px,calc(100vw - 28px));max-height:min(82vh,700px);overflow:auto;margin:0!important;padding:20px!important;border:1px solid var(--b2)!important;border-radius:17px!important;background:linear-gradient(180deg,rgba(12,17,34,.985),rgba(8,12,25,.985))!important;box-shadow:0 28px 90px rgba(0,0,0,.62),0 0 0 1px rgba(255,255,255,.025) inset!important;backdrop-filter:blur(24px);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .22s ease}
+#swissport-manhour-form.swp-modal-open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+#swissport-manhour-form .manual-form-title{font-size:17px!important;margin-bottom:3px!important;color:var(--t1)!important}
+#swissport-manhour-form .manual-form-title:before{content:'⏱ ';color:var(--a1)}
+.swp-modal-subtitle{font-size:10px;color:var(--t3);margin-bottom:17px;line-height:1.5}
+.swp-modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:2px}
+.swp-modal-close{width:30px;height:30px;border-radius:9px;background:transparent;border:1px solid var(--b1);color:var(--t2);font-size:18px;line-height:1;cursor:pointer}
+.swp-modal-close:hover{border-color:var(--a1);color:var(--t1);background:rgba(255,255,255,.035)}
+.swp-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+@media(max-width:760px){
+  #swissport-manhour-form{width:calc(100vw - 20px);padding:17px!important;max-height:84vh}
+}
+@media(prefers-reduced-motion:reduce){
+  .swp-manhour-backdrop,#swissport-manhour-form{transition:none!important}
+}
+</style>
 <style id="wo-lgg-v47-clean-header">
 /* V47 — Header professionnel + menu lateral compact */
 #app-header{position:sticky;top:0;z-index:200;background:rgba(5,5,15,.82);backdrop-filter:blur(26px) saturate(130%);border-bottom:1px solid var(--b1)}
@@ -1477,6 +1507,14 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       </div>
     </div>
 
+    <div class="app-menu-sync-status" id="app-menu-sync-status" data-state="degraded">
+      <span class="app-menu-sync-dot" id="app-menu-sync-dot"></span>
+      <div class="app-menu-sync-copy">
+        <div class="app-menu-sync-title" id="app-menu-sync-title">Synchronisation</div>
+        <div class="app-menu-sync-detail" id="app-menu-sync-detail">Vérification de la connexion…</div>
+      </div>
+    </div>
+
     <div class="app-menu-list">
       <button type="button" class="app-menu-item" onclick="closeAppHeaderMenu();openShiftSettings()">
         <span class="app-menu-item-icon">&#9881;</span><span><b>Paramètres de shift</b><small>Horaires et fenêtres FIDS</small></span>
@@ -1486,6 +1524,9 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       </button>
       <button type="button" class="app-menu-item" onclick="closeAppHeaderMenu();openRefreshSettings()">
         <span class="app-menu-item-icon">&#8635;</span><span><b>Actualisation FIDS</b><small>Fréquence et activation automatique</small></span>
+      </button>
+      <button type="button" class="app-menu-item" onclick="closeAppHeaderMenu();toggleSwissportManhour()">
+        <span class="app-menu-item-icon">&#9201;</span><span><b>Swissport MANHOUR</b><small>Créer la worksheet manhour</small></span>
       </button>
       <button type="button" class="app-menu-item" id="app-menu-edit-item" onclick="closeAppHeaderMenu();toggleEditMode()">
         <span class="app-menu-item-icon">&#9998;</span><span><b>Mode édition</b><small>Modifier manuellement un vol</small></span>
@@ -1857,11 +1898,18 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       <div class="flights-list" id="blank-worksheets-list"></div>
     </div>
     <button id="create-blank-worksheet-btn" class="hidden" onclick="createBlankWorksheet()" style="width:100%;padding:11px;background:linear-gradient(135deg,#ffb400,#ff7a00);border:none;border-radius:var(--r2);color:#000;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-bottom:10px">&#9998; + Creer une worksheet vierge</button>
-    <button class="add-manual-toggle" onclick="toggleSwissportManhour()" style="margin-top:8px;border-color:rgba(167,139,250,.45);color:#c4b5fd">⏱ Swissport MANHOUR</button>
+    <button class="add-manual-toggle" onclick="toggleSwissportManhour()" style="display:none;margin-top:8px;border-color:rgba(167,139,250,.45);color:#c4b5fd">⏱ Swissport MANHOUR</button>
     <button class="add-manual-toggle" onclick="toggleManualForm()">+ Ajouter un vol manuellement</button>
     
-    <div class="manual-form hidden" id="swissport-manhour-form">
-      <div class="manual-form-title">Swissport MANHOUR</div>
+    <div id="swp-manhour-backdrop" class="swp-manhour-backdrop" aria-hidden="true"></div>
+    <div class="manual-form hidden" id="swissport-manhour-form" role="dialog" aria-modal="true" aria-labelledby="swp-manhour-title">
+      <div class="swp-modal-head">
+        <div>
+          <div class="manual-form-title" id="swp-manhour-title">Swissport MANHOUR</div>
+          <div class="swp-modal-subtitle">Préparez les informations de la prestation. La worksheet actuelle sera générée à l’impression.</div>
+        </div>
+        <button type="button" class="swp-modal-close" onclick="toggleSwissportManhour()" title="Fermer">&times;</button>
+      </div>
       <div style="display:grid;gap:12px">
         <div>
           <label class="field-label">AS workers ?</label>
@@ -1876,7 +1924,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
           <label class="field-label">Heure de fin prévue initialement</label>
           <input type="time" id="swp-end" step="60">
         </div>
-        <div style="display:flex;gap:8px;justify-content:flex-end">
+        <div class="swp-modal-actions">
           <button type="button" class="btn-secondary" onclick="toggleSwissportManhour()">Annuler</button>
           <button type="button" class="btn-primary" onclick="printSwissportManhour()">🖨 Générer & imprimer</button>
         </div>
@@ -2004,6 +2052,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     if (n) n.textContent = 'Visiteur';
     if (r) r.textContent = 'VISITEUR';
     if (b) b.style.display = 'inline-flex';
+    woLggSetSyncIndicator('degraded','Mode visiteur — synchronisation cloud désactivée');
   }
 
 async function woLggLogout(){
@@ -2084,15 +2133,29 @@ async function woLggLogout(){
     }catch(e){ return String(Date.now())+'-'+Math.random().toString(36).slice(2); }
   })();
 
+  function woLggSetSyncIndicator(state, detail){
+    const box=document.getElementById('app-menu-sync-status');
+    const title=document.getElementById('app-menu-sync-title');
+    const text=document.getElementById('app-menu-sync-detail');
+    if(!box||!title||!text)return;
+    const cfg={
+      ok:{label:'Système opérationnel',detail:detail||'Synchronisation active'},
+      degraded:{label:'Système dégradé',detail:detail||'Synchronisation en attente'},
+      offline:{label:'Système indisponible',detail:detail||'Synchronisation impossible'}
+    }[state]||null;
+    const c=cfg||{label:'Synchronisation',detail:detail||''};
+    box.dataset.state=state||'degraded';
+    title.textContent=c.label;
+    text.textContent=c.detail;
+  }
+
   function woLggUpdateSaveState(ok, serverTime){
-    let el=document.getElementById('wo-lgg-save-state');
-    if(!el){
-      el=document.createElement('span'); el.id='wo-lgg-save-state';
-      const host=document.querySelector('.header-right')||document.body;
-      host.appendChild(el);
-    }
-    el.className=ok?'ok':'err';
-    el.textContent=ok?'✓ '+(serverTime||'ENREGISTRÉ'):'⚠ SAUVEGARDE ÉCHOUÉE';
+    /* V48 : l'heure exacte n'est plus affichée dans l'interface.
+       Le menu fournit uniquement l'état global de la synchronisation. */
+    const pending=!!woLggPendingSave;
+    if(ok) woLggSetSyncIndicator('ok','Données enregistrées et synchronisées');
+    else if(pending) woLggSetSyncIndicator('degraded','Enregistrement en attente…');
+    else woLggSetSyncIndicator('offline','La dernière sauvegarde a échoué');
   }
 
   function woLggBuildSessionState(){
@@ -2139,7 +2202,7 @@ async function woLggLogout(){
       .order('updated_at',{ascending:false})
       .limit(1)
       .maybeSingle();
-    if(error){console.warn('WO-LGG session read:',error.message);return null}
+    if(error){console.warn('WO-LGG session read:',error.message);woLggSetSyncIndicator('offline','Impossible de lire la session cloud');return null}
     return data||null;
   }
 
@@ -2258,6 +2321,7 @@ async function woLggLogout(){
     if(!snapshot)return;
     snapshot._sync.reason=reason;
     woLggPendingSave=true;
+    woLggSetSyncIndicator('degraded','Modification en cours de synchronisation…');
 
     // Les snapshots gardent strictement l'ordre des actions.
     woLggSaveQueue=woLggSaveQueue
@@ -2387,7 +2451,12 @@ async function woLggLogout(){
         }
         woLggApplyCloudState(row);
       })
-      .subscribe(status=>console.log('WO-LGG Realtime:',status));
+      .subscribe(status=>{
+        console.log('WO-LGG Realtime:',status);
+        if(status==='SUBSCRIBED') woLggSetSyncIndicator('ok','Synchronisation temps réel active');
+        else if(status==='CHANNEL_ERROR') woLggSetSyncIndicator('offline','Canal temps réel indisponible');
+        else if(status==='TIMED_OUT') woLggSetSyncIndicator('degraded','Connexion temps réel en attente');
+      });
   }
 
   window.woLggDeferredRemoteRow=null;
@@ -2639,6 +2708,12 @@ async function woLggLogout(){
 
   function goToStep(n) {
     currentStep = n;
+    if (n !== 3 && editModeEnabled) {
+      editModeEnabled = false;
+      const blankBtn=document.getElementById('create-blank-worksheet-btn');
+      if(blankBtn)blankBtn.classList.add('hidden');
+    }
+    updateEditModeButtonUI();
     if (n !== 3) hideRefreshBadge();
     [1,2,3].forEach(i => document.getElementById('step-'+i).classList.add('hidden'));
     document.getElementById('step-'+n).classList.remove('hidden');
@@ -3418,8 +3493,22 @@ async function woLggLogout(){
     startAutoRefresh();
   }
 
-  // ── Edit Mode : bascule + reflet visuel du bouton dans le header ──────
+  // ── Edit Mode : disponible uniquement à l'étape 3 ─────────────────────
+  function updateEditModeButtonUI() {
+    const item=document.getElementById('app-menu-edit-item');
+    const allowed=(currentStep===3);
+    if(item){
+      item.disabled=!allowed;
+      item.classList.toggle('is-disabled',!allowed);
+      item.setAttribute('aria-disabled',allowed?'false':'true');
+      item.title=allowed?'Modifier manuellement un vol':'Disponible uniquement à l’étape 3';
+    }
+    const btn=document.getElementById('edit-mode-toggle-btn');
+    if(btn)btn.disabled=!allowed;
+  }
+
   function toggleEditMode() {
+    if (currentStep !== 3) { updateEditModeButtonUI(); return; }
     editModeEnabled = !editModeEnabled;
     const btn = document.getElementById('edit-mode-toggle-btn');
     if (btn) {
@@ -3429,8 +3518,10 @@ async function woLggLogout(){
     }
     const blankBtn = document.getElementById('create-blank-worksheet-btn');
     if (blankBtn) blankBtn.classList.toggle('hidden', !editModeEnabled);
+    updateEditModeButtonUI();
     if (currentStep === 3) renderFlights();
     renderBlankWorksheetsList();
+    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('editMode:'+editModeEnabled);
   }
 
   // ── Modale d'edition complete d'un vol ──────────────────────────────
@@ -4984,16 +5075,25 @@ ${(function(){
 
   function toggleSwissportManhour() {
     var form = document.getElementById('swissport-manhour-form');
+    var back = document.getElementById('swp-manhour-backdrop');
     if (!form) return;
     var opening = form.classList.contains('hidden');
-    form.classList.toggle('hidden');
     if (opening) {
+      form.classList.remove('hidden');
+      requestAnimationFrame(function(){form.classList.add('swp-modal-open');});
+      if(back){back.classList.add('open');back.setAttribute('aria-hidden','false');}
+      document.body.style.overflow='hidden';
       var list = document.getElementById('swp-workers-list');
       if (list && list.children.length === 0) addSwissportWorker();
       var start = document.getElementById('swp-start');
       var end = document.getElementById('swp-end');
       if (start) start.value = '';
       if (end) end.value = '';
+    } else {
+      form.classList.remove('swp-modal-open');
+      if(back){back.classList.remove('open');back.setAttribute('aria-hidden','true');}
+      setTimeout(function(){form.classList.add('hidden');},210);
+      document.body.style.overflow='';
     }
   }
 
@@ -5701,6 +5801,7 @@ ${(function(){
 
     initAutoRefreshUI();
     applyLayoutMode(localStorage.getItem('lgg_layout_mode') || 'classic');
+    if(typeof updateEditModeButtonUI==='function')updateEditModeButtonUI();
   })();
 
 </script>
@@ -5735,7 +5836,7 @@ ${(function(){
   else initFidsManualToggle();
 })();
 </script>
-<script id="wo-lgg-v47-header-menu">
+<script id="wo-lgg-v48-header-menu">
 (function(){
   function syncProfileMenu(){
     var n=document.getElementById('app-menu-profile-name');
@@ -5744,6 +5845,7 @@ ${(function(){
     var sr=document.getElementById('wo-lgg-user-role');
     if(n&&sn) n.textContent=sn.textContent||'Utilisateur';
     if(r&&sr) r.textContent=sr.textContent||'MEMBRE';
+    if(typeof updateEditModeButtonUI==='function') updateEditModeButtonUI();
   }
   window.toggleAppHeaderMenu=function(){
     var panel=document.getElementById('app-menu-panel');
@@ -5768,11 +5870,21 @@ ${(function(){
     if(back){back.classList.remove('open');back.setAttribute('aria-hidden','true');}
     if(trigger)trigger.setAttribute('aria-expanded','false');
   };
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAppHeaderMenu();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAppHeaderMenu();var f=document.getElementById('swissport-manhour-form');if(f&&!f.classList.contains('hidden'))toggleSwissportManhour();}});
+  document.addEventListener('pointerdown',function(e){
+    var panel=document.getElementById('app-menu-panel');
+    var trigger=document.getElementById('app-menu-trigger');
+    if(!panel||!panel.classList.contains('open'))return;
+    if(panel.contains(e.target)||trigger?.contains(e.target))return;
+    closeAppHeaderMenu();
+  },true);
   document.addEventListener('DOMContentLoaded',function(){
     var back=document.getElementById('app-menu-backdrop');
     if(back)back.addEventListener('click',closeAppHeaderMenu);
+    var swpBack=document.getElementById('swp-manhour-backdrop');
+    if(swpBack)swpBack.addEventListener('click',toggleSwissportManhour);
     syncProfileMenu();
+    if(typeof woLggUser==='undefined'||!woLggUser)woLggSetSyncIndicator('degraded','Connexion cloud en cours…');
   });
 })();
 </script>
