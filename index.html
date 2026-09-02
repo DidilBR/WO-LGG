@@ -1463,6 +1463,75 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   .app-header-menu,.app-menu-backdrop,.app-menu-item,.fleet-menu-btn,.app-menu-trigger{transition:none!important}
 }
 </style>
+
+<style id="wo-lgg-v51-session-notice">
+/* V51 — reprise de shift non bloquante, dans le même langage visuel que le menu */
+#wo-lgg-session-notice{
+  position:fixed;
+  top:74px;
+  right:22px;
+  z-index:99990;
+  width:min(390px,calc(100vw - 28px));
+  pointer-events:none;
+  animation:woSnIn .42s cubic-bezier(.2,.8,.2,1) both;
+}
+#wo-lgg-session-notice.is-closing{animation:woSnOut .18s ease forwards}
+#wo-lgg-session-notice .wo-sn-shell{
+  pointer-events:auto;
+  position:relative;
+  overflow:hidden;
+  padding:16px;
+  border:1px solid var(--b3);
+  border-radius:16px;
+  background:linear-gradient(145deg,rgba(10,16,32,.96),rgba(12,20,40,.92));
+  box-shadow:0 18px 55px rgba(0,0,0,.34),0 0 28px rgba(143,168,255,.08),inset 0 1px 0 rgba(255,255,255,.05);
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+  color:var(--t1);
+}
+#wo-lgg-session-notice .wo-sn-shell::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(120deg,transparent 0%,rgba(143,168,255,.05) 45%,transparent 72%);
+  transform:translateX(-100%);animation:woSnSheen 5.5s ease-in-out infinite;
+}
+#wo-lgg-session-notice .wo-sn-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#wo-lgg-session-notice .wo-sn-status{display:flex;align-items:center;gap:8px;font:700 9px/1 var(--mono);letter-spacing:1.7px;color:var(--a1)}
+#wo-lgg-session-notice .wo-sn-dot{width:7px;height:7px;border-radius:50%;background:#27e69a;box-shadow:0 0 12px rgba(39,230,154,.75)}
+#wo-lgg-session-notice .wo-sn-close{width:28px;height:28px;border:1px solid var(--b2);border-radius:8px;background:rgba(255,255,255,.025);color:var(--t2);cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center}
+#wo-lgg-session-notice .wo-sn-close:hover{color:var(--t1);border-color:var(--b3);background:rgba(255,255,255,.05)}
+#wo-lgg-session-notice .wo-sn-title{margin-top:10px;font-size:16px;font-weight:800;letter-spacing:-.2px}
+#wo-lgg-session-notice .wo-sn-copy{margin-top:5px;color:var(--t2);font-size:12px;line-height:1.5}
+#wo-lgg-session-notice .wo-sn-copy b{color:var(--t1)}
+#wo-lgg-session-notice .wo-sn-meta{margin-top:7px;font:500 9px/1.4 var(--mono);color:var(--t3);letter-spacing:.5px}
+#wo-lgg-session-notice .wo-sn-actions{display:grid;grid-template-columns:1.15fr .85fr;gap:8px;margin-top:13px}
+#wo-lgg-session-notice .wo-sn-actions button{min-height:40px;border-radius:10px;font:700 10px/1 var(--sans);letter-spacing:.7px;cursor:pointer;transition:transform .16s,box-shadow .16s,border-color .16s,opacity .16s}
+#wo-lgg-session-notice .wo-sn-resume{border:0;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;box-shadow:0 8px 20px rgba(111,105,255,.18)}
+#wo-lgg-session-notice .wo-sn-resume:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(111,105,255,.26)}
+#wo-lgg-session-notice .wo-sn-fresh{border:1px solid var(--b2);background:rgba(255,255,255,.02);color:var(--t2)}
+#wo-lgg-session-notice .wo-sn-fresh:hover{color:var(--t1);border-color:var(--b3);background:rgba(255,255,255,.045)}
+#wo-lgg-session-notice button:disabled{cursor:wait;opacity:.8;transform:none}
+#wo-lgg-session-notice.is-loading .wo-sn-shell{box-shadow:0 18px 55px rgba(0,0,0,.38),0 0 32px rgba(143,168,255,.13),inset 0 1px 0 rgba(255,255,255,.05)}
+#wo-lgg-session-notice.is-success .wo-sn-dot{background:#27e69a;box-shadow:0 0 15px rgba(39,230,154,.9)}
+#wo-lgg-session-notice.is-success .wo-sn-status{color:#27e69a}
+.wo-sn-spinner{display:inline-block;width:11px;height:11px;border:1.5px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;vertical-align:-2px;margin-right:5px;animation:woSnSpin .7s linear infinite}
+@keyframes woSnIn{from{opacity:0;transform:translate3d(18px,-8px,0) scale(.97)}to{opacity:1;transform:none}}
+@keyframes woSnOut{to{opacity:0;transform:translate3d(18px,-8px,0) scale(.98)}}
+@keyframes woSnSheen{0%,55%{transform:translateX(-100%)}70%,100%{transform:translateX(100%)}}
+@keyframes woSnSpin{to{transform:rotate(360deg)}}
+.wo-lgg-shift-reveal{animation:woShiftReveal .62s cubic-bezier(.2,.8,.2,1) both}
+@keyframes woShiftReveal{from{opacity:.32;transform:translateY(11px)}to{opacity:1;transform:none}}
+@media(max-width:760px){
+  #wo-lgg-session-notice{top:76px;right:10px;width:min(390px,calc(100vw - 20px))}
+  #wo-lgg-session-notice .wo-sn-shell{padding:14px;border-radius:14px}
+  #wo-lgg-session-notice .wo-sn-title{font-size:15px}
+  #wo-lgg-session-notice .wo-sn-copy{font-size:11px}
+  #wo-lgg-session-notice .wo-sn-actions button{min-height:42px;font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  #wo-lgg-session-notice,.wo-lgg-shift-reveal,#wo-lgg-session-notice .wo-sn-shell::after,* .wo-sn-spinner{animation:none!important}
+}
+</style>
+
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -2467,6 +2536,13 @@ async function woLggLogout(){
         // encore en attente. Le changement distant est traité après focusout.
         const active=document.activeElement;
         const editing=!!active&&active.matches?.('input[type="text"],textarea,input[type="time"],input[type="date"]');
+        if(window.woLggAwaitingSessionChoice){
+          const prev=window.woLggDeferredRemoteRow;
+          const prevTs=prev?.updated_at?Date.parse(prev.updated_at):0;
+          if(!prev||incomingTs>=prevTs)window.woLggDeferredRemoteRow=row;
+          return;
+        }
+
         if(editing||woLggPendingSave){
           const prev=window.woLggDeferredRemoteRow;
           const prevTs=prev?.updated_at?Date.parse(prev.updated_at):0;
@@ -2486,6 +2562,7 @@ async function woLggLogout(){
   window.woLggDeferredRemoteRow=null;
 
   async function woLggFlushDeferredRemote(){
+    if(window.woLggAwaitingSessionChoice)return;
     const row=window.woLggDeferredRemoteRow;
     if(!row||woLggPendingSave)return;
     const active=document.activeElement;
@@ -2498,102 +2575,100 @@ async function woLggLogout(){
   }
 
   async function woLggChooseExistingSession(row){
-    if(!row?.state)return true;
+    if(!row?.state)return false;
 
-    // Relecture juste avant le popup : il affiche la ligne réellement présente.
+    // V51 : on arrive directement sur l'accueil. La reprise n'est plus bloquante.
+    // La sauvegarde est proposée dans une notification compacte en haut à droite.
     const latest=await woLggReadCloudSession();
     if(latest?.state)row=latest;
 
-    const when=row.updated_at?new Date(row.updated_at).toLocaleString('fr-BE',{dateStyle:'full',timeStyle:'short'}):'date inconnue';
     const s=row.state||{};
     const count=Array.isArray(s.flights)?s.flights.length:0;
     const step=Math.max(1,Math.min(3,Number(s.currentStep)||1));
     const shift=s.selectedShift?.name||s.selectedShift?.label||'';
+    const hasWork=!!(
+      s.shiftDate||s.shiftAgent||s.selectedShift||count||
+      (Array.isArray(s.caterings)&&s.caterings.length)||
+      (Array.isArray(s.lastDepartures)&&s.lastDepartures.length)||
+      s.extraNotes||Object.keys(s.knownRegs||{}).length
+    );
+    if(!hasWork)return false;
 
-    return await new Promise(resolve=>{
-      const old=document.getElementById('wo-lgg-resume-modal');if(old)old.remove();
-      const o=document.createElement('div');
-      o.id='wo-lgg-resume-modal';
-      o.innerHTML=`
-        <style>
-          #wo-lgg-resume-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;background:rgba(7,18,32,.74);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-          #wo-lgg-resume-modal .wo-card{width:min(520px,100%);max-height:calc(100vh - 36px);overflow:auto;background:linear-gradient(180deg,#fff 0%,#f5f8fc 100%);border:1px solid rgba(255,255,255,.8);border-radius:24px;box-shadow:0 28px 90px rgba(0,0,0,.42);font-family:inherit;color:#122033}
-          #wo-lgg-resume-modal .wo-head{padding:24px 24px 18px;background:linear-gradient(135deg,#071a2d,#123d62);color:#fff;border-radius:24px 24px 0 0}
-          #wo-lgg-resume-modal .wo-logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.08em;font-size:14px;text-transform:uppercase;opacity:.95}
-          #wo-lgg-resume-modal .wo-dot{width:10px;height:10px;border-radius:50%;background:#42a5ff;box-shadow:0 0 18px rgba(66,165,255,.8)}
-          #wo-lgg-resume-modal h2{margin:14px 0 6px;font-size:25px;line-height:1.15}
-          #wo-lgg-resume-modal .wo-sub{margin:0;color:rgba(255,255,255,.82);line-height:1.45}
-          #wo-lgg-resume-modal .wo-body{padding:20px 24px 24px}
-          #wo-lgg-resume-modal .wo-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
-          #wo-lgg-resume-modal .wo-info div{background:#fff;border:1px solid #e3eaf2;border-radius:14px;padding:12px 13px}
-          #wo-lgg-resume-modal .wo-info small{display:block;color:#718096;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
-          #wo-lgg-resume-modal .wo-info strong{font-size:14px}
-          #wo-lgg-resume-modal .wo-actions{display:flex;flex-direction:column;gap:10px}
-          #wo-lgg-resume-modal button{width:100%;min-height:50px;border-radius:14px;font:inherit;font-weight:800;font-size:15px;cursor:pointer;transition:transform .12s,box-shadow .12s}
-          #wo-lgg-resume-modal button:active{transform:scale(.985)}
-          #wo-lgg-resume-modal #wo-resume{border:0;background:linear-gradient(135deg,#1479d1,#0d5da8);color:#fff;box-shadow:0 9px 22px rgba(13,93,168,.28)}
-          #wo-lgg-resume-modal #wo-fresh{border:1px solid #ccd7e3;background:#fff;color:#17324b}
-          @media(max-width:520px){#wo-lgg-resume-modal{padding:12px}#wo-lgg-resume-modal .wo-head{padding:20px 19px 16px}#wo-lgg-resume-modal .wo-body{padding:17px 19px 20px}#wo-lgg-resume-modal .wo-info{grid-template-columns:1fr}#wo-lgg-resume-modal h2{font-size:22px}}
-        </style>
-        <div class="wo-card" role="dialog" aria-modal="true" aria-labelledby="wo-lgg-title">
-          <div class="wo-head">
-            <div class="wo-logo"><span class="wo-dot"></span>WO-LGG · Session</div>
-            <h2 id="wo-lgg-title">Une sauvegarde a été détectée</h2>
-            <p class="wo-sub">Souhaitez-vous reprendre votre dernier travail ou commencer un nouveau shift ?</p>
-          </div>
-          <div class="wo-body">
-            <div class="wo-info">
-              <div><small>Dernière sauvegarde</small><strong>${when}</strong></div>
-              <div><small>Étape</small><strong>${step}</strong></div>
-              <div><small>Vols enregistrés</small><strong>${count}</strong></div>
-              <div><small>Shift</small><strong>${shift||'Non défini'}</strong></div>
-            </div>
-            <div class="wo-actions">
-              <button id="wo-resume">↩︎ Reprendre à la dernière sauvegarde</button>
-              <button id="wo-fresh">＋ Recommencer à zéro</button>
-            </div>
-          </div>
-        </div>`;
+    window.woLggAwaitingSessionChoice=true;
+    window.woLggDeferredRemoteRow=null;
 
-      document.body.appendChild(o);
+    const old=document.getElementById('wo-lgg-session-notice');
+    if(old)old.remove();
 
-      o.querySelector('#wo-resume').onclick=async()=>{
-        o.remove();
-        const latestNow=await woLggReadCloudSession();
-        woLggApplyCloudState(latestNow?.state?latestNow:row);
-        resolve(true);
-      };
+    const notice=document.createElement('div');
+    notice.id='wo-lgg-session-notice';
+    notice.setAttribute('role','status');
+    notice.innerHTML=`
+      <div class="wo-sn-shell">
+        <div class="wo-sn-top">
+          <div class="wo-sn-status"><span class="wo-sn-dot"></span><span>SHIFT EN COURS</span></div>
+          <button type="button" class="wo-sn-close" id="wo-sn-close" aria-label="Fermer">&times;</button>
+        </div>
+        <div class="wo-sn-title">Une sauvegarde est disponible</div>
+        <div class="wo-sn-copy">${shift?`Shift <b>${String(shift).replace(/</g,'&lt;')}</b>`:'Un travail précédent'} · étape ${step} · ${count} vol${count>1?'s':''}</div>
+        <div class="wo-sn-meta">${s.shiftDate?`<span>${String(s.shiftDate).replace(/</g,'&lt;')}</span>`:'Dernier travail enregistré dans le cloud'}</div>
+        <div class="wo-sn-actions">
+          <button type="button" class="wo-sn-resume" id="wo-sn-resume">↩ Charger le shift</button>
+          <button type="button" class="wo-sn-fresh" id="wo-sn-fresh">Commencer à zéro</button>
+        </div>
+      </div>`;
+    document.body.appendChild(notice);
 
-      o.querySelector('#wo-fresh').onclick=async()=>{
-        o.remove();
-        const fresh={
-          version:5,currentStep:1,shiftDate:'',shiftAgent:'',selectedShift:null,
-          flights:[],selectedFlights:[],caterings:[],selectedCaterings:[],
-          selectedASL737:[],selectedASL737Initialized:[],flightOverrides:{},
-          blankWorksheets:[],blankWorksheetCounter:0,lastDepartures:[],
-          extraNotes:'',
-          colorTheme:document.documentElement.getAttribute('data-theme')||localStorage.getItem('lgg-theme')||'cyber',
-          layoutMode:localStorage.getItem('lgg_layout_mode')||document.documentElement.getAttribute('data-layout')||'classic',
-          knownRegs:typeof knownRegs!=='undefined'?knownRegs:{},
-          fleetNotes:typeof fleetNotes!=='undefined'?fleetNotes:{},
-          flightSearchTerm:'',editModeEnabled:false,
-          scrollX:0,scrollY:0,_sync:{deviceId:woLggDeviceId,reason:'fresh'}
-        };
-        const {data,error}=await woLggSupabase.from('work_sessions')
-          .upsert({user_id:woLggUser.id,state:fresh},{onConflict:'user_id'})
-          .select('state,updated_at').single();
+    const removeNotice=()=>{
+      if(notice._autoClose){clearTimeout(notice._autoClose);notice._autoClose=null;}
+      const el=document.getElementById('wo-lgg-session-notice');
+      if(el){el.classList.add('is-closing');setTimeout(()=>el.remove(),180)}
+      window.woLggAwaitingSessionChoice=false;
+      window.woLggDeferredRemoteRow=null;
+    };
 
-        if(error)console.warn('WO-LGG fresh session:',error.message);
-        else{
-          woLggLastSavedFingerprint=woLggFingerprint(data.state);
-          woLggLastCloudUpdatedAt=data.updated_at||null;
-          woLggPendingSave=false;
-          woLggApplyCloudState(data);
+    notice.querySelector('#wo-sn-close').onclick=()=>removeNotice();
+
+    notice.querySelector('#wo-sn-resume').onclick=async()=>{
+      const btn=notice.querySelector('#wo-sn-resume');
+      if(!btn||btn.disabled)return;
+      btn.disabled=true;
+      notice.classList.add('is-loading');
+      btn.innerHTML='<span class="wo-sn-spinner"></span> Rechargement du shift…';
+      const freshCopy=await woLggReadCloudSession();
+      const target=freshCopy?.state?freshCopy:row;
+      window.woLggAwaitingSessionChoice=false;
+      window.woLggDeferredRemoteRow=null;
+      notice.querySelector('.wo-sn-title').textContent='Chargement terminé';
+      notice.querySelector('.wo-sn-copy').textContent='Le shift va maintenant être restauré.';
+      await new Promise(r=>setTimeout(r,280));
+      try{
+        woLggApplyCloudState(target);
+        const wrap=document.querySelector('.app-wrap');
+        if(wrap){
+          wrap.classList.remove('wo-lgg-shift-reveal');
+          void wrap.offsetWidth;
+          wrap.classList.add('wo-lgg-shift-reveal');
+          setTimeout(()=>wrap.classList.remove('wo-lgg-shift-reveal'),700);
         }
-        window.scrollTo(0,0);
-        resolve(false);
-      };
-    });
+      }finally{
+        if(notice._autoClose){clearTimeout(notice._autoClose);notice._autoClose=null;}
+        notice.classList.add('is-success');
+        setTimeout(()=>notice.remove(),1050);
+      }
+    };
+
+    notice.querySelector('#wo-sn-fresh').onclick=()=>{
+      // L'écran d'accueil est déjà neuf : on ferme simplement la suggestion.
+      removeNotice();
+    };
+
+    // Fermeture automatique très discrète après 30 s, sans toucher au shift cloud.
+    notice._autoClose=setTimeout(()=>{
+      if(document.body.contains(notice)&&!notice.classList.contains('is-loading'))removeNotice();
+    },30000);
+
+    return false;
   }
 
   async function woLggInitializeCloudSession(){
