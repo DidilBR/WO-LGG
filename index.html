@@ -3903,130 +3903,7 @@ async function woLggLogout(){
     const page = makeSheet(f);
     const html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheet ' +
       ((f.reg || f.flight || 'Worksheet').replace(/[<>]/g,'')) +
-      '</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:avoid;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}</style></head><body>' + page + '
-<style id="wo-lgg-v53-scroll-isolation">
-/* V53 — isolation du scroll : lorsqu'un menu/modal est ouvert, seul son contenu peut défiler. */
-html.wo-lgg-scroll-locked,
-body.wo-lgg-scroll-locked{
-  overflow:hidden!important;
-  overscroll-behavior:none!important;
-}
-/* Les panneaux qui contiennent réellement une liste restent défilables. */
-.app-header-menu{
-  max-height:calc(100dvh - 86px);
-  overflow-y:auto;
-  overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-gutter:stable;
-}
-#history-modal-overlay,
-#fleet-modal-overlay,
-#settings-modal-overlay,
-#refresh-settings-overlay,
-#crewbus-password-overlay,
-#layout-settings-overlay,
-#edit-flight-overlay,
-#fids-change-details-overlay,
-#swp-manhour-backdrop,
-#wo-lgg-resume-modal,
-#wo-lgg-auth-overlay{
-  overscroll-behavior:contain;
-}
-#history-modal-overlay > div,
-#fleet-modal-overlay > div,
-#settings-modal-overlay > div,
-#refresh-settings-overlay > div,
-#crewbus-password-overlay > div,
-#layout-settings-overlay > div,
-#edit-flight-overlay > div,
-#fids-change-details-overlay > div,
-#swissport-manhour-form{
-  overscroll-behavior:contain;
-}
-#history-list{
-  overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch;
-}
-</style>
-<style id="wo-lgg-v54-smooth-overlays">
-/* V54 — animations harmonisées avec Swissport MANHOUR */
-#fids-change-details-overlay{background:rgba(2,4,12,.74)!important;backdrop-filter:blur(12px) saturate(120%)!important}
-#fids-change-details-overlay:not(.hidden){animation:woOverlayFadeIn .28s cubic-bezier(.16,1,.3,1) both}
-#fids-change-details-overlay > div{border:1px solid rgba(143,168,255,.24)!important;border-radius:20px!important;background:radial-gradient(circle at 90% 0%,rgba(143,168,255,.11),transparent 34%),linear-gradient(180deg,rgba(13,18,37,.985),rgba(6,10,23,.985))!important;box-shadow:0 34px 110px rgba(0,0,0,.62),0 0 38px rgba(143,168,255,.07)!important;animation:woOverlayPanelIn .42s cubic-bezier(.16,1,.3,1) both;transform-origin:center}
-#wo-lgg-session-notice{will-change:transform,opacity,filter}
-#wo-lgg-session-notice .wo-sn-shell{will-change:transform,box-shadow}
-@keyframes woOverlayFadeIn{from{opacity:0}to{opacity:1}}
-@keyframes woOverlayPanelIn{0%{opacity:0;transform:translateY(10px) scale(.975);filter:blur(1.5px)}65%{opacity:1;transform:translateY(-1px) scale(1.003);filter:blur(0)}100%{opacity:1;transform:none;filter:none}}
-@media(prefers-reduced-motion:reduce){#fids-change-details-overlay:not(.hidden),#fids-change-details-overlay > div{animation:none!important}}
-</style>
-<script id="wo-lgg-v53-scroll-isolation">
-(function(){
-  'use strict';
-
-  var overlayIds=[
-    'wo-lgg-auth-overlay','settings-modal-overlay','refresh-settings-overlay',
-    'crewbus-password-overlay','layout-settings-overlay','history-modal-overlay',
-    'fleet-modal-overlay','edit-flight-overlay','fids-change-details-overlay',
-    'swissport-manhour-form','swp-manhour-backdrop','print-overlay','wo-lgg-resume-modal'
-  ];
-
-  function isVisible(el){
-    if(!el) return false;
-    if(el.classList && el.classList.contains('hidden')) return false;
-    var cs=getComputedStyle(el);
-    return cs.display!=='none' && cs.visibility!=='hidden' && cs.opacity!=='0' ||
-           (el.id==='swissport-manhour-form' && el.classList.contains('swp-modal-open'));
-  }
-
-  function updateScrollIsolation(){
-    var menu=document.getElementById('app-menu-panel');
-    var menuOpen=!!menu && menu.classList.contains('open');
-    var modalOpen=overlayIds.some(function(id){return isVisible(document.getElementById(id));});
-    var locked=menuOpen||modalOpen;
-    document.documentElement.classList.toggle('wo-lgg-scroll-locked',locked);
-    document.body.classList.toggle('wo-lgg-scroll-locked',locked);
-  }
-
-  function init(){
-    updateScrollIsolation();
-
-    /* Toute ouverture/fermeture d'un overlay ou du menu met à jour l'isolation. */
-    var observer=new MutationObserver(function(){ updateScrollIsolation(); });
-    observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
-
-    /* Sécurité supplémentaire : un wheel/touch sur le backdrop ne doit jamais
-       être propagé au document derrière le panneau. Le panneau/liste conserve
-       son propre scroll natif. */
-    document.addEventListener('wheel',function(e){
-      var target=e.target;
-      var menu=document.getElementById('app-menu-panel');
-      var insideMenu=menu && menu.classList.contains('open') && menu.contains(target);
-      var modal=target && target.closest && target.closest(
-        '#history-modal-overlay,#fleet-modal-overlay,#settings-modal-overlay,#refresh-settings-overlay,#crewbus-password-overlay,#layout-settings-overlay,#edit-flight-overlay,#fids-change-details-overlay,#swissport-manhour-form,#print-overlay,#wo-lgg-resume-modal,#wo-lgg-auth-overlay'
-      );
-      if(!insideMenu && !modal && (document.body.classList.contains('wo-lgg-scroll-locked'))){
-        e.preventDefault();
-      }
-    },{passive:false,capture:true});
-
-    document.addEventListener('touchmove',function(e){
-      var target=e.target;
-      var menu=document.getElementById('app-menu-panel');
-      var insideMenu=menu && menu.classList.contains('open') && menu.contains(target);
-      var modal=target && target.closest && target.closest(
-        '#history-modal-overlay,#fleet-modal-overlay,#settings-modal-overlay,#refresh-settings-overlay,#crewbus-password-overlay,#layout-settings-overlay,#edit-flight-overlay,#fids-change-details-overlay,#swissport-manhour-form,#print-overlay,#wo-lgg-resume-modal,#wo-lgg-auth-overlay'
-      );
-      if(!insideMenu && !modal && document.body.classList.contains('wo-lgg-scroll-locked')){
-        e.preventDefault();
-      }
-    },{passive:false,capture:true});
-  }
-
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
-  else init();
-})();
-</script>
-</body></html>';
+      '</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:avoid;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}</style></head><body>' + page + '</body></html>';
     const w = window.open('', '_blank');
     if (w) { printHtmlWhenReady(w, html); }
     else { alert('Autorise les popups pour imprimer la worksheet.'); }
@@ -6261,5 +6138,127 @@ ${(function(){
   });
 })();
 </script>
+<style id="wo-lgg-v53-scroll-isolation">
+/* V53 — isolation du scroll : lorsqu'un menu/modal est ouvert, seul son contenu peut défiler. */
+html.wo-lgg-scroll-locked,
+body.wo-lgg-scroll-locked{
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+}
+/* Les panneaux qui contiennent réellement une liste restent défilables. */
+.app-header-menu{
+  max-height:calc(100dvh - 86px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-gutter:stable;
+}
+#history-modal-overlay,
+#fleet-modal-overlay,
+#settings-modal-overlay,
+#refresh-settings-overlay,
+#crewbus-password-overlay,
+#layout-settings-overlay,
+#edit-flight-overlay,
+#fids-change-details-overlay,
+#swp-manhour-backdrop,
+#wo-lgg-resume-modal,
+#wo-lgg-auth-overlay{
+  overscroll-behavior:contain;
+}
+#history-modal-overlay > div,
+#fleet-modal-overlay > div,
+#settings-modal-overlay > div,
+#refresh-settings-overlay > div,
+#crewbus-password-overlay > div,
+#layout-settings-overlay > div,
+#edit-flight-overlay > div,
+#fids-change-details-overlay > div,
+#swissport-manhour-form{
+  overscroll-behavior:contain;
+}
+#history-list{
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+</style>
+<style id="wo-lgg-v54-smooth-overlays">
+/* V54 — animations harmonisées avec Swissport MANHOUR */
+#fids-change-details-overlay{background:rgba(2,4,12,.74)!important;backdrop-filter:blur(12px) saturate(120%)!important}
+#fids-change-details-overlay:not(.hidden){animation:woOverlayFadeIn .28s cubic-bezier(.16,1,.3,1) both}
+#fids-change-details-overlay > div{border:1px solid rgba(143,168,255,.24)!important;border-radius:20px!important;background:radial-gradient(circle at 90% 0%,rgba(143,168,255,.11),transparent 34%),linear-gradient(180deg,rgba(13,18,37,.985),rgba(6,10,23,.985))!important;box-shadow:0 34px 110px rgba(0,0,0,.62),0 0 38px rgba(143,168,255,.07)!important;animation:woOverlayPanelIn .42s cubic-bezier(.16,1,.3,1) both;transform-origin:center}
+#wo-lgg-session-notice{will-change:transform,opacity,filter}
+#wo-lgg-session-notice .wo-sn-shell{will-change:transform,box-shadow}
+@keyframes woOverlayFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes woOverlayPanelIn{0%{opacity:0;transform:translateY(10px) scale(.975);filter:blur(1.5px)}65%{opacity:1;transform:translateY(-1px) scale(1.003);filter:blur(0)}100%{opacity:1;transform:none;filter:none}}
+@media(prefers-reduced-motion:reduce){#fids-change-details-overlay:not(.hidden),#fids-change-details-overlay > div{animation:none!important}}
+</style>
+<script id="wo-lgg-v53-scroll-isolation">
+(function(){
+  'use strict';
+
+  var overlayIds=[
+    'wo-lgg-auth-overlay','settings-modal-overlay','refresh-settings-overlay',
+    'crewbus-password-overlay','layout-settings-overlay','history-modal-overlay',
+    'fleet-modal-overlay','edit-flight-overlay','fids-change-details-overlay',
+    'swissport-manhour-form','swp-manhour-backdrop','print-overlay','wo-lgg-resume-modal'
+  ];
+
+  function isVisible(el){
+    if(!el) return false;
+    if(el.classList && el.classList.contains('hidden')) return false;
+    var cs=getComputedStyle(el);
+    return cs.display!=='none' && cs.visibility!=='hidden' && cs.opacity!=='0' ||
+           (el.id==='swissport-manhour-form' && el.classList.contains('swp-modal-open'));
+  }
+
+  function updateScrollIsolation(){
+    var menu=document.getElementById('app-menu-panel');
+    var menuOpen=!!menu && menu.classList.contains('open');
+    var modalOpen=overlayIds.some(function(id){return isVisible(document.getElementById(id));});
+    var locked=menuOpen||modalOpen;
+    document.documentElement.classList.toggle('wo-lgg-scroll-locked',locked);
+    document.body.classList.toggle('wo-lgg-scroll-locked',locked);
+  }
+
+  function init(){
+    updateScrollIsolation();
+
+    /* Toute ouverture/fermeture d'un overlay ou du menu met à jour l'isolation. */
+    var observer=new MutationObserver(function(){ updateScrollIsolation(); });
+    observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
+
+    /* Sécurité supplémentaire : un wheel/touch sur le backdrop ne doit jamais
+       être propagé au document derrière le panneau. Le panneau/liste conserve
+       son propre scroll natif. */
+    document.addEventListener('wheel',function(e){
+      var target=e.target;
+      var menu=document.getElementById('app-menu-panel');
+      var insideMenu=menu && menu.classList.contains('open') && menu.contains(target);
+      var modal=target && target.closest && target.closest(
+        '#history-modal-overlay,#fleet-modal-overlay,#settings-modal-overlay,#refresh-settings-overlay,#crewbus-password-overlay,#layout-settings-overlay,#edit-flight-overlay,#fids-change-details-overlay,#swissport-manhour-form,#print-overlay,#wo-lgg-resume-modal,#wo-lgg-auth-overlay'
+      );
+      if(!insideMenu && !modal && (document.body.classList.contains('wo-lgg-scroll-locked'))){
+        e.preventDefault();
+      }
+    },{passive:false,capture:true});
+
+    document.addEventListener('touchmove',function(e){
+      var target=e.target;
+      var menu=document.getElementById('app-menu-panel');
+      var insideMenu=menu && menu.classList.contains('open') && menu.contains(target);
+      var modal=target && target.closest && target.closest(
+        '#history-modal-overlay,#fleet-modal-overlay,#settings-modal-overlay,#refresh-settings-overlay,#crewbus-password-overlay,#layout-settings-overlay,#edit-flight-overlay,#fids-change-details-overlay,#swissport-manhour-form,#print-overlay,#wo-lgg-resume-modal,#wo-lgg-auth-overlay'
+      );
+      if(!insideMenu && !modal && document.body.classList.contains('wo-lgg-scroll-locked')){
+        e.preventDefault();
+      }
+    },{passive:false,capture:true});
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
+})();
+
 </body>
 </html>
