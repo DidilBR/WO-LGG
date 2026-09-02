@@ -1340,6 +1340,75 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 }
 </style>
 
+<style id="wo-lgg-v47-clean-header">
+/* V47 — Header professionnel + menu lateral compact */
+#app-header{position:sticky;top:0;z-index:200;background:rgba(5,5,15,.82);backdrop-filter:blur(26px) saturate(130%);border-bottom:1px solid var(--b1)}
+.app-header-clean{position:relative;max-width:680px;height:64px;padding:0 18px;display:flex;align-items:center;justify-content:space-between}
+.fleet-menu-btn,.app-menu-trigger{appearance:none;border:1px solid var(--b2);background:rgba(15,20,40,.52);color:var(--t1);border-radius:11px;cursor:pointer;transition:transform .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease}
+.fleet-menu-btn{display:inline-flex;align-items:center;gap:9px;padding:8px 12px;font:700 10px/1 var(--mono);letter-spacing:.7px;text-transform:uppercase;min-width:118px}
+.fleet-menu-icon{font-size:15px;line-height:1;color:var(--a1)}
+.fleet-menu-label{white-space:nowrap}
+.fleet-menu-btn:hover,.app-menu-trigger:hover{transform:translateY(-1px);border-color:var(--a1);background:rgba(24,32,58,.7);box-shadow:0 8px 24px rgba(0,0,0,.18),0 0 18px rgba(120,150,255,.08)}
+.app-brand-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;gap:10px;pointer-events:none;min-width:0}
+.app-brand-mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--a1),var(--a2));display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;box-shadow:0 5px 18px rgba(0,200,255,.22);flex-shrink:0}
+.app-brand-copy{text-align:left;white-space:nowrap}
+.app-brand-copy .logo-text{font-size:14px;letter-spacing:.15px}
+.app-brand-copy .logo-sub{font-size:8px;letter-spacing:2.3px;margin-top:2px}
+.app-menu-trigger{display:inline-flex;align-items:center;gap:7px;padding:8px 10px 8px 12px;font:800 9px/1 var(--mono);letter-spacing:1px;text-transform:uppercase}
+.menu-trigger-label{color:var(--t2)}
+.menu-trigger-icon{font-size:18px;line-height:10px;color:var(--a1);transform:translateY(-1px);transition:transform .22s ease}.app-menu-trigger[aria-expanded="true"] .menu-trigger-icon{transform:rotate(90deg) translateX(1px)}
+.app-menu-backdrop{position:fixed;inset:64px 0 0;background:rgba(0,0,0,.18);opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:198}
+.app-menu-backdrop.open{opacity:1;pointer-events:auto}
+.app-header-menu{position:fixed;top:72px;right:max(18px,calc((100vw - 680px)/2 + 18px));width:min(338px,calc(100vw - 24px));padding:14px;background:linear-gradient(180deg,rgba(11,16,31,.98),rgba(8,12,24,.98));border:1px solid var(--b2);border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.48),0 0 0 1px rgba(255,255,255,.02) inset;backdrop-filter:blur(24px);opacity:0;transform:translateY(-8px) scale(.985);transform-origin:top right;pointer-events:none;transition:opacity .18s ease,transform .22s ease;z-index:201}
+.app-header-menu.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.app-menu-topline{display:flex;align-items:flex-start;justify-content:space-between;padding:4px 2px 12px}
+.app-menu-kicker{font:700 8px/1 var(--mono);letter-spacing:2px;color:var(--t3)}
+.app-menu-title{font-size:18px;font-weight:800;color:var(--t1);margin-top:4px}
+.app-menu-close{width:28px;height:28px;border-radius:8px;background:transparent;border:1px solid var(--b1);color:var(--t2);font-size:20px;line-height:1;cursor:pointer;transition:.18s}
+.app-menu-close:hover{color:var(--t1);border-color:var(--b2);background:rgba(255,255,255,.04)}
+.app-menu-profile{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--b1);border-radius:12px;background:rgba(255,255,255,.018);margin-bottom:10px}
+.app-menu-profile-avatar{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-size:9px;box-shadow:0 0 14px rgba(120,150,255,.18)}
+.app-menu-section-label{font:700 8px/1 var(--mono);letter-spacing:1.7px;text-transform:uppercase;color:var(--t3);margin-bottom:4px}
+.app-menu-profile-name{font-size:12px;font-weight:800;color:var(--t1)}
+.app-menu-profile-role{font:700 8px/1 var(--mono);letter-spacing:1px;color:var(--a1);margin-top:3px}
+.app-menu-list{display:grid;gap:6px}
+.app-menu-item{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:10px 11px;border-radius:11px;border:1px solid transparent;background:transparent;color:var(--t1);cursor:pointer;transition:transform .18s ease,border-color .18s ease,background .18s ease}
+.app-menu-item:hover{transform:translateX(2px);background:rgba(255,255,255,.035);border-color:var(--b1)}
+.app-menu-item-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid var(--b1);color:var(--a1);background:rgba(255,255,255,.02);font-size:13px;flex-shrink:0}
+.app-menu-item b{display:block;font-size:11px;font-weight:800;line-height:1.2}
+.app-menu-item small{display:block;margin-top:2px;font-size:9px;color:var(--t3);line-height:1.25}
+.app-menu-color-block{margin-top:10px;padding:11px 12px 12px;border-top:1px solid var(--b1);border-bottom:1px solid var(--b1)}
+.app-menu-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:10px;font-weight:800;color:var(--t2)}
+.app-menu-section-meta{font:700 8px/1 var(--mono);color:var(--t3);letter-spacing:1px;text-transform:uppercase}
+.app-menu-themes{display:flex;align-items:center;gap:10px}
+.app-menu-themes .tdot{width:15px;height:15px;min-width:15px;border-radius:50%;border:2px solid transparent;padding:0;cursor:pointer;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.app-menu-themes .tdot:hover{transform:scale(1.2)}
+.app-menu-themes .tdot.active{border-color:rgba(255,255,255,.92);box-shadow:0 0 0 3px rgba(255,255,255,.10),0 0 15px rgba(255,255,255,.06);transform:scale(1.12)}
+.app-menu-footer{padding-top:10px}
+.app-menu-logout{width:100%;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(255,92,120,.2);background:rgba(255,92,120,.04);color:#ff91a8;border-radius:10px;padding:10px 12px;font:800 10px/1 var(--mono);letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:.18s}
+.app-menu-logout:hover{border-color:rgba(255,92,120,.46);background:rgba(255,92,120,.08);transform:translateY(-1px)}
+/* Anciennes commandes du header : conservees pour compatibilite JS, jamais visibles. */
+#app-header #wo-lgg-identity,#app-header #wo-lgg-logout-btn,#app-header #step-indicator,#app-header #refresh-toggle-btn,#app-header #edit-mode-toggle-btn{display:none!important}
+@media (max-width:760px){
+  #app-header{z-index:400}
+  .app-header-clean{height:60px;padding:0 12px}
+  .fleet-menu-btn{min-width:0;width:42px;height:38px;padding:0;justify-content:center;border-radius:10px}
+  .fleet-menu-label{display:none}
+  .fleet-menu-icon{font-size:17px}
+  .app-brand-center{gap:7px;max-width:58%;}
+  .app-brand-mark{width:27px;height:27px;border-radius:8px;font-size:14px}
+  .app-brand-copy .logo-text{font-size:12px}
+  .app-brand-copy .logo-sub{font-size:7px;letter-spacing:1.8px}
+  .app-menu-trigger{height:38px;min-width:42px;justify-content:center;padding:0;border-radius:10px}
+  .menu-trigger-label{display:none}
+  .menu-trigger-icon{font-size:20px}
+  .app-menu-backdrop{inset:60px 0 0}
+  .app-header-menu{top:68px;right:12px;width:min(336px,calc(100vw - 24px));}
+}
+@media (prefers-reduced-motion: reduce){
+  .app-header-menu,.app-menu-backdrop,.app-menu-item,.fleet-menu-btn,.app-menu-trigger{transition:none!important}
+}
+</style>
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -1363,33 +1432,83 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   </div>
 </div>
 
-<header>
-<div class="header-inner">
-  <div class="logo-wrap">
-    <button onclick="openHistoryModal()" title="Menu / Historique des avions" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t1);font-size:16px;cursor:pointer;padding:7px 10px;line-height:1;margin-right:2px">&#9776;</button>
-    <div class="logo-icon">&#9992;</div>
-    <div>
-      <div class="logo-text">LGG &middot; Cleaning Ops</div>
-      <div class="logo-sub">Liege Airport</div>
+<header id="app-header">
+  <div class="header-inner app-header-clean">
+    <button class="fleet-menu-btn" type="button" onclick="openHistoryModal()" title="Flotte connue">
+      <span class="fleet-menu-icon">&#9776;</span><span class="fleet-menu-label">Flotte connue</span>
+    </button>
+
+    <div class="app-brand-center" aria-label="LGG Cleaning Ops">
+      <div class="app-brand-mark">&#9992;</div>
+      <div class="app-brand-copy">
+        <div class="logo-text">LGG &middot; Cleaning Ops</div>
+        <div class="logo-sub">Liège Airport</div>
+      </div>
     </div>
+
+    <button class="app-menu-trigger" id="app-menu-trigger" type="button" aria-expanded="false" aria-controls="app-menu-panel" onclick="toggleAppHeaderMenu()" title="Menu principal">
+      <span class="menu-trigger-label">Menu</span><span class="menu-trigger-icon">&#8942;</span>
+    </button>
+
+    <!-- Elements gardés dans le DOM pour préserver les fonctions existantes -->
+    <div id="wo-lgg-identity" style="display:none"><span id="wo-lgg-user-name">Adil</span><span id="wo-lgg-user-role">ADMIN</span></div>
+    <button id="wo-lgg-logout-btn" type="button" onclick="woLggLogout()" style="display:none">DÉCONNEXION</button>
+    <div class="step-pill" id="step-indicator" style="display:none">ETAPE 1 / 3</div>
+    <button id="refresh-toggle-btn" type="button" onclick="openRefreshSettings()" style="display:none">&#128260;</button>
+    <button id="edit-mode-toggle-btn" type="button" onclick="toggleEditMode()" style="display:none">&#9998;</button>
   </div>
-  <div class="header-right">
-    <div class="theme-dots">
-      <button class="tdot active" data-theme="cyber"   title="🌌 Cyber"   style="background:linear-gradient(135deg,#00d4ff,#8b5cf6)"></button>
-      <button class="tdot"        data-theme="aurora"  title="💜 Aurora"  style="background:linear-gradient(135deg,#dd55ff,#ff4488)"></button>
-      <button class="tdot"        data-theme="ocean"   title="🌊 Ocean"   style="background:linear-gradient(135deg,#00c8ff,#0088cc)"></button>
-      <button class="tdot"        data-theme="forest"  title="🌿 Forest"  style="background:linear-gradient(135deg,#00ee66,#00aa44)"></button>
-      <button class="tdot"        data-theme="sunset"  title="🌅 Sunset"  style="background:linear-gradient(135deg,#ff9900,#ff5500)"></button>
+
+  <div id="app-menu-backdrop" class="app-menu-backdrop" aria-hidden="true"></div>
+  <aside id="app-menu-panel" class="app-header-menu" aria-hidden="true">
+    <div class="app-menu-topline">
+      <div>
+        <div class="app-menu-kicker">LGG CLEANING OPS</div>
+        <div class="app-menu-title">Menu</div>
+      </div>
+      <button type="button" class="app-menu-close" onclick="closeAppHeaderMenu()" title="Fermer">&times;</button>
     </div>
-    <div id="wo-lgg-identity" style="display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--b2);border-radius:20px;padding:5px 10px;font-family:var(--mono);font-size:9px;line-height:1.1"><span style="color:var(--a1);font-weight:800">●</span><span id="wo-lgg-user-name">Adil</span><span style="color:var(--t3)">·</span><span id="wo-lgg-user-role" style="color:var(--t2)">ADMIN</span></div>
-    <button id="wo-lgg-logout-btn" type="button" onclick="woLggLogout()" title="Se déconnecter" style="display:none;margin-left:6px;background:transparent;border:1px solid var(--b2);border-radius:9px;color:var(--t2);padding:7px 9px;font-family:var(--mono);font-size:9px;font-weight:800;cursor:pointer;transition:.2s" onmouseenter="this.style.borderColor='var(--a1)';this.style.color='var(--a1)'" onmouseleave="this.style.borderColor='var(--b2)';this.style.color='var(--t2)'">⎋ DÉCONNEXION</button>
-    <div class="step-pill" id="step-indicator">ETAPE 1 / 3</div>
-    <button onclick="openLayoutSettings()" title="Changer l'interface" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:14px;cursor:pointer;padding:6px 9px;line-height:1">&#10024;</button>
-    <button onclick="openShiftSettings()" title="Regler les horaires de shift" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:15px;cursor:pointer;padding:6px 9px;line-height:1">&#9881;</button>
-    <button id="refresh-toggle-btn" onclick="openRefreshSettings()" title="Reglages de l'actualisation automatique" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:14px;cursor:pointer;padding:6px 9px;line-height:1">&#128260;</button>
-    <button id="edit-mode-toggle-btn" onclick="toggleEditMode()" title="Edit Mode : modifier manuellement n'importe quel vol" style="background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t2);font-size:14px;cursor:pointer;padding:6px 9px;line-height:1;font-weight:700">&#9998;</button>
-  </div>
-</div>
+
+    <div class="app-menu-profile">
+      <div class="app-menu-profile-avatar">&#9679;</div>
+      <div class="app-menu-profile-copy">
+        <div class="app-menu-section-label">Profil</div>
+        <div class="app-menu-profile-name" id="app-menu-profile-name">Adil</div>
+        <div class="app-menu-profile-role" id="app-menu-profile-role">ADMIN</div>
+      </div>
+    </div>
+
+    <div class="app-menu-list">
+      <button type="button" class="app-menu-item" onclick="closeAppHeaderMenu();openShiftSettings()">
+        <span class="app-menu-item-icon">&#9881;</span><span><b>Paramètres de shift</b><small>Horaires et fenêtres FIDS</small></span>
+      </button>
+      <button type="button" class="app-menu-item" onclick="closeAppHeaderMenu();openLayoutSettings()">
+        <span class="app-menu-item-icon">&#10024;</span><span><b>Interface &amp; thème</b><small>Choisir l'interface de travail</small></span>
+      </button>
+      <button type="button" class="app-menu-item" onclick="closeAppHeaderMenu();openRefreshSettings()">
+        <span class="app-menu-item-icon">&#8635;</span><span><b>Actualisation FIDS</b><small>Fréquence et activation automatique</small></span>
+      </button>
+      <button type="button" class="app-menu-item" id="app-menu-edit-item" onclick="closeAppHeaderMenu();toggleEditMode()">
+        <span class="app-menu-item-icon">&#9998;</span><span><b>Mode édition</b><small>Modifier manuellement un vol</small></span>
+      </button>
+    </div>
+
+    <div class="app-menu-color-block">
+      <div class="app-menu-section-head"><span>Couleurs d'interface</span><span class="app-menu-section-meta">5 thèmes</span></div>
+      <div class="app-menu-themes">
+        <button class="tdot active" data-theme="cyber" title="&#127756; Cyber" style="background:linear-gradient(135deg,#00d4ff,#8b5cf6)"></button>
+        <button class="tdot" data-theme="aurora" title="&#128156; Aurora" style="background:linear-gradient(135deg,#dd55ff,#ff4488)"></button>
+        <button class="tdot" data-theme="ocean" title="&#127754; Ocean" style="background:linear-gradient(135deg,#00c8ff,#0088cc)"></button>
+        <button class="tdot" data-theme="forest" title="&#127807; Forest" style="background:linear-gradient(135deg,#00ee66,#00aa44)"></button>
+        <button class="tdot" data-theme="sunset" title="&#127749; Sunset" style="background:linear-gradient(135deg,#ff9900,#ff5500)"></button>
+      </div>
+    </div>
+
+    <div class="app-menu-footer">
+      <button type="button" class="app-menu-logout" onclick="closeAppHeaderMenu();woLggLogout()">
+        <span>&#9099;</span> Déconnexion
+      </button>
+    </div>
+  </aside>
 </header>
 
 <div id="settings-modal-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -5614,6 +5733,47 @@ ${(function(){
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initFidsManualToggle);
   else initFidsManualToggle();
+})();
+</script>
+<script id="wo-lgg-v47-header-menu">
+(function(){
+  function syncProfileMenu(){
+    var n=document.getElementById('app-menu-profile-name');
+    var r=document.getElementById('app-menu-profile-role');
+    var sn=document.getElementById('wo-lgg-user-name');
+    var sr=document.getElementById('wo-lgg-user-role');
+    if(n&&sn) n.textContent=sn.textContent||'Utilisateur';
+    if(r&&sr) r.textContent=sr.textContent||'MEMBRE';
+  }
+  window.toggleAppHeaderMenu=function(){
+    var panel=document.getElementById('app-menu-panel');
+    var back=document.getElementById('app-menu-backdrop');
+    var trigger=document.getElementById('app-menu-trigger');
+    if(!panel)return;
+    var open=panel.classList.contains('open');
+    if(open) closeAppHeaderMenu();
+    else {
+      syncProfileMenu();
+      panel.classList.add('open');
+      panel.setAttribute('aria-hidden','false');
+      if(back){back.classList.add('open');back.setAttribute('aria-hidden','false');}
+      if(trigger)trigger.setAttribute('aria-expanded','true');
+    }
+  };
+  window.closeAppHeaderMenu=function(){
+    var panel=document.getElementById('app-menu-panel');
+    var back=document.getElementById('app-menu-backdrop');
+    var trigger=document.getElementById('app-menu-trigger');
+    if(panel){panel.classList.remove('open');panel.setAttribute('aria-hidden','true');}
+    if(back){back.classList.remove('open');back.setAttribute('aria-hidden','true');}
+    if(trigger)trigger.setAttribute('aria-expanded','false');
+  };
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAppHeaderMenu();});
+  document.addEventListener('DOMContentLoaded',function(){
+    var back=document.getElementById('app-menu-backdrop');
+    if(back)back.addEventListener('click',closeAppHeaderMenu);
+    syncProfileMenu();
+  });
 })();
 </script>
 </body>
