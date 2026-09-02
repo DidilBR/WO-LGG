@@ -1558,7 +1558,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 }
 #wo-lgg-session-notice .wo-sn-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 #wo-lgg-session-notice .wo-sn-status{display:flex;align-items:center;gap:8px;font:700 9px/1 var(--mono);letter-spacing:1.7px;color:var(--a1)}
-#wo-lgg-session-notice .wo-sn-dot{width:7px;height:7px;border-radius:50%;background:#27e69a;box-shadow:0 0 12px rgba(39,230,154,.75)}
+#wo-lgg-session-notice .wo-sn-dot{width:7px;height:7px;border-radius:50%;background:#27e69a;box-shadow:0 0 12px rgba(39,230,154,.75);animation:woSnDotBreath 2.2s ease-in-out infinite}
 #wo-lgg-session-notice .wo-sn-close{width:28px;height:28px;border:1px solid var(--b2);border-radius:8px;background:rgba(255,255,255,.025);color:var(--t2);cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center}
 #wo-lgg-session-notice .wo-sn-close:hover{color:var(--t1);border-color:var(--b3);background:rgba(255,255,255,.05)}
 #wo-lgg-session-notice .wo-sn-title{margin-top:10px;font-size:16px;font-weight:800;letter-spacing:-.2px}
@@ -1576,12 +1576,34 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 #wo-lgg-session-notice.is-success .wo-sn-dot{background:#27e69a;box-shadow:0 0 15px rgba(39,230,154,.9)}
 #wo-lgg-session-notice.is-success .wo-sn-status{color:#27e69a}
 .wo-sn-spinner{display:inline-block;width:11px;height:11px;border:1.5px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;vertical-align:-2px;margin-right:5px;animation:woSnSpin .7s linear infinite}
-@keyframes woSnIn{from{opacity:0;transform:translate3d(18px,-8px,0) scale(.97)}to{opacity:1;transform:none}}
-@keyframes woSnOut{to{opacity:0;transform:translate3d(18px,-8px,0) scale(.98)}}
-@keyframes woSnSheen{0%,55%{transform:translateX(-100%)}70%,100%{transform:translateX(100%)}}
+@keyframes woSnIn{0%{opacity:0;transform:translate3d(20px,-10px,0) scale(.965);filter:blur(2px)}55%{opacity:1;transform:translate3d(-2px,1px,0) scale(1.008);filter:blur(0)}100%{opacity:1;transform:none;filter:none}}
+@keyframes woSnOut{0%{opacity:1;transform:none;filter:blur(0)}100%{opacity:0;transform:translate3d(14px,-6px,0) scale(.985);filter:blur(1px)}}
+@keyframes woSnSheen{0%,52%{transform:translateX(-110%);opacity:0}60%{opacity:1}72%,100%{transform:translateX(110%);opacity:0}}
 @keyframes woSnSpin{to{transform:rotate(360deg)}}
-.wo-lgg-shift-reveal{animation:woShiftReveal .62s cubic-bezier(.2,.8,.2,1) both}
-@keyframes woShiftReveal{from{opacity:.32;transform:translateY(11px)}to{opacity:1;transform:none}}
+@keyframes woSnDotBreath{0%,100%{transform:scale(.88);opacity:.72}50%{transform:scale(1.16);opacity:1}}
+.wo-lgg-shift-reveal{animation:woShiftReveal .72s cubic-bezier(.16,1,.3,1) both}
+@keyframes woShiftReveal{0%{opacity:.15;transform:translateY(14px) scale(.992);filter:blur(1px)}55%{opacity:1;transform:translateY(-2px) scale(1.002);filter:blur(0)}100%{opacity:1;transform:none}}
+
+/* V53.1 — langage d'animation partagé avec le Swissport MANHOUR */
+#refresh-badge{position:relative;overflow:hidden;transform-origin:top center;will-change:transform,opacity;box-shadow:0 12px 34px rgba(0,0,0,.16),0 0 22px rgba(143,168,255,.055)}
+#refresh-badge-details-btn{margin-left:auto;position:relative;z-index:1;background:rgba(143,168,255,.09);border:1px solid rgba(143,168,255,.25);border-radius:9px;color:var(--a1);padding:6px 10px;font:800 10px/1 var(--sans);cursor:pointer;transition:transform .18s ease,background .18s ease,border-color .18s ease,box-shadow .18s ease}
+#refresh-badge-details-btn:hover{transform:translateY(-1px);background:rgba(143,168,255,.15);border-color:rgba(143,168,255,.42);box-shadow:0 5px 16px rgba(0,0,0,.14)}
+#refresh-badge.wo-refresh-active{border-color:rgba(143,168,255,.30)!important}
+#refresh-badge.wo-refresh-active .fids-refresh-badge-icon{color:var(--a1);filter:drop-shadow(0 0 6px rgba(143,168,255,.28))}
+#refresh-badge.wo-refresh-success .fids-refresh-badge-icon{font-weight:900}
+#refresh-badge::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,transparent 0%,rgba(255,255,255,.055) 44%,transparent 66%);transform:translateX(-115%);opacity:0}
+#refresh-badge.wo-refresh-enter{animation:woRefreshIn .46s cubic-bezier(.16,1,.3,1) both}
+#refresh-badge.wo-refresh-active::after{animation:woRefreshSheen 2.8s ease-in-out infinite}
+#refresh-badge.wo-refresh-active .fids-refresh-badge-icon{animation:woRefreshFloat 1.8s ease-in-out infinite}
+#refresh-badge.wo-refresh-success{animation:woRefreshSuccess .48s cubic-bezier(.16,1,.3,1) both}
+#refresh-badge.wo-refresh-leave{animation:woRefreshOut .3s cubic-bezier(.4,0,.8,1) both}
+.fids-refresh-badge-icon{display:inline-block;position:relative;z-index:1}
+#refresh-badge-text,#refresh-badge-details-btn{position:relative;z-index:1}
+@keyframes woRefreshIn{0%{opacity:0;transform:translateY(-8px) scale(.975);filter:blur(1.5px)}65%{opacity:1;transform:translateY(1px) scale(1.005);filter:blur(0)}100%{opacity:1;transform:none}}
+@keyframes woRefreshOut{to{opacity:0;transform:translateY(-5px) scale(.985)}}
+@keyframes woRefreshSuccess{0%{opacity:.55;transform:translateY(5px) scale(.99)}65%{opacity:1;transform:translateY(-1px) scale(1.003)}100%{opacity:1;transform:none}}
+@keyframes woRefreshSheen{0%,45%{transform:translateX(-115%);opacity:0}55%{opacity:1}72%,100%{transform:translateX(115%);opacity:0}}
+@keyframes woRefreshFloat{0%,100%{transform:rotate(0deg) translateY(0)}50%{transform:rotate(12deg) translateY(-1px)}}
 @media(max-width:760px){
   #wo-lgg-session-notice{top:76px;right:10px;width:min(390px,calc(100vw - 20px))}
   #wo-lgg-session-notice .wo-sn-shell{padding:14px;border-radius:14px}
@@ -1590,7 +1612,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   #wo-lgg-session-notice .wo-sn-actions button{min-height:42px;font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){
-  #wo-lgg-session-notice,.wo-lgg-shift-reveal,#wo-lgg-session-notice .wo-sn-shell::after,* .wo-sn-spinner{animation:none!important}
+  #wo-lgg-session-notice,.wo-lgg-shift-reveal,#wo-lgg-session-notice .wo-sn-shell::after,* .wo-sn-spinner,#refresh-badge,#refresh-badge::after,#refresh-badge .fids-refresh-badge-icon{animation:none!important}
 }
 </style>
 
@@ -1992,7 +2014,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 
     <!-- Statut de l'auto-refresh / détails des changements -->
     <div id="refresh-badge" style="display:none;align-items:center;gap:8px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.35);border-radius:10px;padding:10px 14px;margin:12px 0;font-size:12px;color:#00e5a0;font-weight:600">
-      <span style="animation:spin 1.5s linear infinite;display:inline-block">&#128260;</span>
+      <span class="fids-refresh-badge-icon">⟳</span>
       <span id="refresh-badge-text">A jour</span>
     </div>
 
@@ -3388,6 +3410,31 @@ async function woLggLogout(){
   let currentStep = 1;
   let autoRefreshBadgeTimer = null;
 
+  function showRefreshProgress(){
+    const el=document.getElementById('refresh-badge');
+    const txt=document.getElementById('refresh-badge-text');
+    if(!el||!txt)return;
+    let detailBtn=document.getElementById('refresh-badge-details-btn');
+    if(!detailBtn){
+      detailBtn=document.createElement('button');
+      detailBtn.id='refresh-badge-details-btn';
+      detailBtn.type='button';
+      detailBtn.textContent='Voir les détails';
+      el.appendChild(detailBtn);
+    }
+    detailBtn.style.display='none';
+    el.style.borderColor='rgba(143,168,255,.28)';
+    el.style.background='linear-gradient(135deg,rgba(143,168,255,.10),rgba(201,85,255,.06))';
+    el.style.color='var(--a1)';
+    txt.textContent='Actualisation des vols en cours…';
+    const icon=el.querySelector('.fids-refresh-badge-icon');
+    if(icon)icon.textContent='⟳';
+    el.style.display='flex';
+    el.classList.remove('wo-refresh-leave','wo-refresh-success');
+    void el.offsetWidth;
+    el.classList.add('wo-refresh-enter','wo-refresh-active');
+  }
+
   async function checkForFlightUpdates(manual=false) {
     if (!manual && currentStep !== 3) return;
     if (!manual && (!flights || flights.length === 0)) return;
@@ -3402,6 +3449,7 @@ async function woLggLogout(){
     // reessaiera simplement au prochain cycle d'actualisation automatique.
     const active = document.activeElement;
     if (active && active.matches && active.matches('input[type=\"text\"],textarea,input[type=\"time\"],input[type=\"date\"]')) return;
+    showRefreshProgress();
     try {
       const [arrivals, departures] = await Promise.all([
         fetchJsonWithFallback(FIDS_ARRIVALS_URL),
@@ -3554,32 +3602,46 @@ async function woLggLogout(){
     const el=document.getElementById('refresh-badge');
     const txt=document.getElementById('refresh-badge-text');
     if(!el||!txt)return;
-    const now=new Date().toLocaleTimeString('fr-BE',{hour:'2-digit',minute:'2-digit'});
     let detailBtn=document.getElementById('refresh-badge-details-btn');
     if(!detailBtn){
       detailBtn=document.createElement('button');
       detailBtn.id='refresh-badge-details-btn';
       detailBtn.type='button';
       detailBtn.textContent='Voir les détails';
-      detailBtn.style.cssText='margin-left:auto;background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.35);border-radius:7px;color:#00e5a0;padding:5px 9px;font-size:11px;font-weight:800;cursor:pointer';
       el.appendChild(detailBtn);
     }
+    el.classList.remove('wo-refresh-enter','wo-refresh-active','wo-refresh-leave');
     if(n===null){
-      el.style.borderColor='rgba(255,77,109,.35)';el.style.background='rgba(255,77,109,.1)';el.style.color='#ff4d6d';
-      txt.textContent='Échec de la mise à jour automatique ('+now+')'; detailBtn.style.display='none';
+      el.style.borderColor='rgba(255,77,109,.35)';
+      el.style.background='rgba(255,77,109,.10)';
+      el.style.color='#ff4d6d';
+      txt.textContent='Échec de la mise à jour';
+      detailBtn.style.display='none';
     }else if(n>0){
-      el.style.borderColor='rgba(0,229,160,.35)';el.style.background='rgba(0,229,160,.1)';el.style.color='#00e5a0';
-      txt.textContent='Mis à jour automatiquement ('+now+') — '+n+' changement'+(n>1?'s':'');
+      el.style.borderColor='rgba(0,229,160,.35)';
+      el.style.background='rgba(0,229,160,.10)';
+      el.style.color='#00e5a0';
+      txt.textContent='Vols mis à jour — '+n+' changement'+(n>1?'s':'');
       detailBtn.style.display='inline-block';
       const safe=Array.isArray(details)?details:[];
       detailBtn.onclick=()=>showFidsChangeDetails(safe);
     }else{
-      el.style.borderColor='rgba(0,229,160,.35)';el.style.background='rgba(0,229,160,.1)';el.style.color='#00e5a0';
-      txt.textContent='À jour ('+now+') — aucun changement'; detailBtn.style.display='none';
+      el.style.borderColor='rgba(0,229,160,.35)';
+      el.style.background='rgba(0,229,160,.10)';
+      el.style.color='#00e5a0';
+      txt.textContent='Vols à jour — aucun changement';
+      detailBtn.style.display='none';
     }
+    const icon=el.querySelector('.fids-refresh-badge-icon');
+    if(icon)icon.textContent=n===null?'!':'✓';
     el.style.display='flex';
+    el.classList.add('wo-refresh-success');
     if(autoRefreshBadgeTimer)clearTimeout(autoRefreshBadgeTimer);
-    autoRefreshBadgeTimer=setTimeout(()=>{el.style.display='none';},8000);
+    autoRefreshBadgeTimer=setTimeout(()=>{
+      el.classList.remove('wo-refresh-success','wo-refresh-active');
+      el.classList.add('wo-refresh-leave');
+      setTimeout(()=>{if(el&&!el.classList.contains('wo-refresh-success'))el.style.display='none';},320);
+    },5200);
   }
 
   function showFidsChangeDetails(details){
@@ -3841,7 +3903,130 @@ async function woLggLogout(){
     const page = makeSheet(f);
     const html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheet ' +
       ((f.reg || f.flight || 'Worksheet').replace(/[<>]/g,'')) +
-      '</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:avoid;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}</style></head><body>' + page + '</body></html>';
+      '</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:avoid;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}</style></head><body>' + page + '
+<style id="wo-lgg-v53-scroll-isolation">
+/* V53 — isolation du scroll : lorsqu'un menu/modal est ouvert, seul son contenu peut défiler. */
+html.wo-lgg-scroll-locked,
+body.wo-lgg-scroll-locked{
+  overflow:hidden!important;
+  overscroll-behavior:none!important;
+}
+/* Les panneaux qui contiennent réellement une liste restent défilables. */
+.app-header-menu{
+  max-height:calc(100dvh - 86px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-gutter:stable;
+}
+#history-modal-overlay,
+#fleet-modal-overlay,
+#settings-modal-overlay,
+#refresh-settings-overlay,
+#crewbus-password-overlay,
+#layout-settings-overlay,
+#edit-flight-overlay,
+#fids-change-details-overlay,
+#swp-manhour-backdrop,
+#wo-lgg-resume-modal,
+#wo-lgg-auth-overlay{
+  overscroll-behavior:contain;
+}
+#history-modal-overlay > div,
+#fleet-modal-overlay > div,
+#settings-modal-overlay > div,
+#refresh-settings-overlay > div,
+#crewbus-password-overlay > div,
+#layout-settings-overlay > div,
+#edit-flight-overlay > div,
+#fids-change-details-overlay > div,
+#swissport-manhour-form{
+  overscroll-behavior:contain;
+}
+#history-list{
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+</style>
+<style id="wo-lgg-v54-smooth-overlays">
+/* V54 — animations harmonisées avec Swissport MANHOUR */
+#fids-change-details-overlay{background:rgba(2,4,12,.74)!important;backdrop-filter:blur(12px) saturate(120%)!important}
+#fids-change-details-overlay:not(.hidden){animation:woOverlayFadeIn .28s cubic-bezier(.16,1,.3,1) both}
+#fids-change-details-overlay > div{border:1px solid rgba(143,168,255,.24)!important;border-radius:20px!important;background:radial-gradient(circle at 90% 0%,rgba(143,168,255,.11),transparent 34%),linear-gradient(180deg,rgba(13,18,37,.985),rgba(6,10,23,.985))!important;box-shadow:0 34px 110px rgba(0,0,0,.62),0 0 38px rgba(143,168,255,.07)!important;animation:woOverlayPanelIn .42s cubic-bezier(.16,1,.3,1) both;transform-origin:center}
+#wo-lgg-session-notice{will-change:transform,opacity,filter}
+#wo-lgg-session-notice .wo-sn-shell{will-change:transform,box-shadow}
+@keyframes woOverlayFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes woOverlayPanelIn{0%{opacity:0;transform:translateY(10px) scale(.975);filter:blur(1.5px)}65%{opacity:1;transform:translateY(-1px) scale(1.003);filter:blur(0)}100%{opacity:1;transform:none;filter:none}}
+@media(prefers-reduced-motion:reduce){#fids-change-details-overlay:not(.hidden),#fids-change-details-overlay > div{animation:none!important}}
+</style>
+<script id="wo-lgg-v53-scroll-isolation">
+(function(){
+  'use strict';
+
+  var overlayIds=[
+    'wo-lgg-auth-overlay','settings-modal-overlay','refresh-settings-overlay',
+    'crewbus-password-overlay','layout-settings-overlay','history-modal-overlay',
+    'fleet-modal-overlay','edit-flight-overlay','fids-change-details-overlay',
+    'swissport-manhour-form','swp-manhour-backdrop','print-overlay','wo-lgg-resume-modal'
+  ];
+
+  function isVisible(el){
+    if(!el) return false;
+    if(el.classList && el.classList.contains('hidden')) return false;
+    var cs=getComputedStyle(el);
+    return cs.display!=='none' && cs.visibility!=='hidden' && cs.opacity!=='0' ||
+           (el.id==='swissport-manhour-form' && el.classList.contains('swp-modal-open'));
+  }
+
+  function updateScrollIsolation(){
+    var menu=document.getElementById('app-menu-panel');
+    var menuOpen=!!menu && menu.classList.contains('open');
+    var modalOpen=overlayIds.some(function(id){return isVisible(document.getElementById(id));});
+    var locked=menuOpen||modalOpen;
+    document.documentElement.classList.toggle('wo-lgg-scroll-locked',locked);
+    document.body.classList.toggle('wo-lgg-scroll-locked',locked);
+  }
+
+  function init(){
+    updateScrollIsolation();
+
+    /* Toute ouverture/fermeture d'un overlay ou du menu met à jour l'isolation. */
+    var observer=new MutationObserver(function(){ updateScrollIsolation(); });
+    observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
+
+    /* Sécurité supplémentaire : un wheel/touch sur le backdrop ne doit jamais
+       être propagé au document derrière le panneau. Le panneau/liste conserve
+       son propre scroll natif. */
+    document.addEventListener('wheel',function(e){
+      var target=e.target;
+      var menu=document.getElementById('app-menu-panel');
+      var insideMenu=menu && menu.classList.contains('open') && menu.contains(target);
+      var modal=target && target.closest && target.closest(
+        '#history-modal-overlay,#fleet-modal-overlay,#settings-modal-overlay,#refresh-settings-overlay,#crewbus-password-overlay,#layout-settings-overlay,#edit-flight-overlay,#fids-change-details-overlay,#swissport-manhour-form,#print-overlay,#wo-lgg-resume-modal,#wo-lgg-auth-overlay'
+      );
+      if(!insideMenu && !modal && (document.body.classList.contains('wo-lgg-scroll-locked'))){
+        e.preventDefault();
+      }
+    },{passive:false,capture:true});
+
+    document.addEventListener('touchmove',function(e){
+      var target=e.target;
+      var menu=document.getElementById('app-menu-panel');
+      var insideMenu=menu && menu.classList.contains('open') && menu.contains(target);
+      var modal=target && target.closest && target.closest(
+        '#history-modal-overlay,#fleet-modal-overlay,#settings-modal-overlay,#refresh-settings-overlay,#crewbus-password-overlay,#layout-settings-overlay,#edit-flight-overlay,#fids-change-details-overlay,#swissport-manhour-form,#print-overlay,#wo-lgg-resume-modal,#wo-lgg-auth-overlay'
+      );
+      if(!insideMenu && !modal && document.body.classList.contains('wo-lgg-scroll-locked')){
+        e.preventDefault();
+      }
+    },{passive:false,capture:true});
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true});
+  else init();
+})();
+</script>
+</body></html>';
     const w = window.open('', '_blank');
     if (w) { printHtmlWhenReady(w, html); }
     else { alert('Autorise les popups pour imprimer la worksheet.'); }
@@ -5991,7 +6176,7 @@ ${(function(){
   })();
 
 </script>
-<!-- V52 — V51 conservée + Swissport MANHOUR moderne restauré (modal indépendant de l’étape). -->
+<!-- V54 — V53 conservée + animations FIDS/session harmonisées avec Swissport MANHOUR. -->
 <!-- Service worker désactivé : source réseau directe pour éviter les sessions HTML obsolètes. -->
 <div id="fids-change-details-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(7px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px">
   <div style="width:100%;max-width:620px;max-height:80vh;overflow:auto;background:var(--bg1);border:1px solid rgba(0,229,160,.35);border-radius:16px;box-shadow:0 20px 70px rgba(0,0,0,.6);padding:22px">
