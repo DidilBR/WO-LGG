@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr" data-theme="cyber">
 <head>
-<!-- WO-LGG CACHE GUARD v22 -->
+<!-- WO-LGG V62 CACHE GUARD v22 -->
 <script>
 (function(){
   try{
@@ -2663,6 +2663,8 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       try{await woLggSupabase.auth.signOut({scope:'local'});}catch(e){}
       return;
     }
+    window.woLggAwaitingSessionChoice=false;
+    window.woLggDeferredRemoteRow=null;
     woLggHideLogin(); woLggShowIdentity(); woLggUpdateCrewBusAccessUI(); await woLggInitializeCloudSession();
   }
   function woLggShowLogin(message){
@@ -2807,7 +2809,7 @@ async function woLggLogout(){
 
 </script>
 <script>
-  // ── WO-LGG : session de travail persistante ───────────────────────
+  // ── WO-LGG V62 : session de travail persistante ────────────────────
   // Une seule sauvegarde par utilisateur. Le timestamp updated_at est
   // fourni par PostgreSQL. Les mutations sont sauvegardées, le scroll/lecture
   // et les refreshs automatiques ne le sont pas.
@@ -3382,21 +3384,55 @@ async function woLggLogout(){
 
     notice.querySelector('#wo-sn-close').onclick=()=>removeNotice();
 
+    // Reprise explicite du snapshot : on conserve toujours un fallback local
+    // vers le snapshot qui a déclenché la notification. Cela évite qu'une
+    // lecture cloud transitoirement vide/échouée au moment du clic empêche
+    // le rechargement du shift.
+    async function woLggResumeSavedShift(notificationRow){
+      if(!notificationRow?.state)return false;
+      let targetRow=notificationRow;
+      try{
+        const freshCopy=await woLggReadCloudSession();
+        if(freshCopy?.state)targetRow=freshCopy;
+      }catch(e){
+        console.warn('WO-LGG resume: lecture cloud indisponible, fallback notification',e);
+      }
+
+      window.woLggAwaitingSessionChoice=false;
+      window.woLggDeferredRemoteRow=null;
+      const applied=woLggApplyCloudState(targetRow);
+      if(!applied){
+        console.warn('WO-LGG resume: snapshot invalide ou impossible à appliquer');
+        return false;
+      }
+
+      // Après l'hydratation, on force l'affichage de l'étape restaurée et
+      // des listes concernées. Aucun changement n'est sauvegardé ici :
+      // l'hydratation reste protégée par woLggSessionHydrating.
+      const savedStep=Math.max(1,Math.min(4,Number(targetRow.state.currentStep)||1));
+      if(typeof goToStep==='function')goToStep(savedStep);
+      if(savedStep===3){
+        if(typeof renderFlights==='function')renderFlights();
+        if(typeof renderCaterings==='function')renderCaterings();
+      }else if(savedStep===4){
+        if(typeof renderCrewBusFlights==='function')renderCrewBusFlights();
+      }
+      return true;
+    }
+
     notice.querySelector('#wo-sn-resume').onclick=async()=>{
       const btn=notice.querySelector('#wo-sn-resume');
       if(!btn||btn.disabled)return;
       btn.disabled=true;
       notice.classList.add('is-loading');
       btn.innerHTML='<span class="wo-sn-spinner"></span> Rechargement du shift…';
-      const freshCopy=await woLggReadCloudSession();
-      const target=freshCopy?.state?freshCopy:row;
-      window.woLggAwaitingSessionChoice=false;
-      window.woLggDeferredRemoteRow=null;
-      notice.querySelector('.wo-sn-title').textContent='Chargement terminé';
-      notice.querySelector('.wo-sn-copy').textContent='Le shift va maintenant être restauré.';
-      await new Promise(r=>setTimeout(r,280));
+      await new Promise(r=>setTimeout(r,220));
       try{
-        woLggApplyCloudState(target);
+        const ok=await woLggResumeSavedShift(row);
+        if(!ok)throw new Error('Le snapshot du shift n’a pas pu être restauré.');
+
+        notice.querySelector('.wo-sn-title').textContent='Shift rechargé';
+        notice.querySelector('.wo-sn-copy').textContent='Ton dernier état de travail a été restauré.';
         const wrap=document.querySelector('.app-wrap');
         if(wrap){
           wrap.classList.remove('wo-lgg-shift-reveal');
@@ -3404,10 +3440,16 @@ async function woLggLogout(){
           wrap.classList.add('wo-lgg-shift-reveal');
           setTimeout(()=>wrap.classList.remove('wo-lgg-shift-reveal'),700);
         }
-      }finally{
         if(notice._autoClose){clearTimeout(notice._autoClose);notice._autoClose=null;}
         notice.classList.add('is-success');
         setTimeout(()=>notice.remove(),1050);
+      }catch(e){
+        console.warn('WO-LGG resume:',e);
+        notice.classList.remove('is-loading');
+        btn.disabled=false;
+        btn.innerHTML='↩ Réessayer le chargement';
+        notice.querySelector('.wo-sn-title').textContent='Impossible de recharger le shift';
+        notice.querySelector('.wo-sn-copy').textContent='La sauvegarde existe toujours. Réessaie dans un instant.';
       }
     };
 
