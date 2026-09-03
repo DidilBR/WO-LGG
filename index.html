@@ -5803,6 +5803,94 @@ ${(function(){
 .crewbus-mode-btn:active,.crewbus-hs-btn:active{transform:scale(.97)}
 @media(max-width:760px){.crewbus-card-actions{justify-content:flex-start;width:100%;padding-left:38px}.crewbus-mode-btn,.crewbus-hs-btn{min-height:38px}}
 </style>
+<script id="wo-lgg-v69-exact-crewbus-sheet">
+/* V69 — Feuille Crew Bus : reproduction fidèle du modèle papier fourni.
+   Structure: Registration | Time (Local: ARR / Pick up) | Flight Number | Crew | Stand
+   puis Headset (Registration / Flt # / Depart) et Handling (Registration / Flt # / Dep // Arr / Handling WFS).
+*/
+window.generateCrewBusSheet=function(){
+  const selected=(window.crewBusFlights||[]).filter(f=>f && f.selected);
+  if(!selected.length){alert('Sélectionnez au moins un vol pour générer la feuille Crew Bus.');return;}
+  const dateVal=document.getElementById('shift-date')?.value||'';
+  const shift=window.selectedShift?.name || (typeof selectedShift!=='undefined' && selectedShift ? selectedShift.name : '—');
+  const dl=dateVal?dateVal.split('-').reverse().join('/'):'—';
+  const esc=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const chrono=v=>{
+    const m=String(v||'').match(/^(\d{1,2}):(\d{2})$/);if(!m)return 99999;
+    let n=+m[1]*60 + +m[2];
+    if(shift==='NIGHT' && +m[1]<12)n+=1440;
+    return n;
+  };
+  const arr=selected.filter(f=>f.type==='arr').sort((a,b)=>chrono(a.time)-chrono(b.time));
+  const dep=selected.filter(f=>f.type==='dep').sort((a,b)=>chrono(a.time)-chrono(b.time));
+  const MAIN_ROWS=19, SUB_ROWS=7;
+  const MAIN_ROW_H='9.4mm', SUB_ROW_H='8.8mm';
+  const TD='border:0.6pt solid #000;padding:1.5pt 4pt;font-size:9pt;vertical-align:middle';
+  const TDH=TD+';font-weight:700;background:#f0f0f0;text-align:center';
+  const TD_REG='border:0.6pt solid #000;padding:1.5pt 4pt;font-size:9pt;width:14%';
+  const TD_LABEL='border:0.6pt solid #000;padding:1.5pt 4pt;font-size:9pt;width:13%;font-weight:700';
+  function mainRow(f,isDep){
+    const arrCell=isDep?'ARR':('ARR&nbsp;&nbsp;'+esc(f.time||''));
+    const pupCell=isDep?('Pick up&nbsp;&nbsp;'+esc(f.time||'')):'Pick up';
+    return '<tr style="height:'+MAIN_ROW_H+'">'
+      +'<td style="'+TD_REG+';font-weight:700">'+esc(f.reg||'')+'</td>'
+      +'<td style="'+TD_LABEL+'">'+arrCell+'</td>'
+      +'<td style="'+TD_LABEL+'">'+pupCell+'</td>'
+      +'<td style="'+TD+';font-weight:700">'+esc(f.flight||'')+'</td>'
+      +'<td style="'+TD+'"></td>'
+      +'<td style="'+TD+';text-align:center">'+esc(f.stand||'')+'</td></tr>';
+  }
+  function emptyRow(){return '<tr style="height:'+MAIN_ROW_H+'">'
+    +'<td style="'+TD_REG+'">&nbsp;</td><td style="'+TD_LABEL+'">ARR</td><td style="'+TD_LABEL+'">Pick up</td>'
+    +'<td style="'+TD+'">&nbsp;</td><td style="'+TD+'">&nbsp;</td><td style="'+TD+'">&nbsp;</td></tr>';}
+  function separatorRow(){return '<tr style="height:'+MAIN_ROW_H+'">'
+    +'<td style="'+TD_REG+'"></td><td style="'+TD_LABEL+'">ARR</td><td style="'+TD_LABEL+'">Pick up</td>'
+    +'<td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';}
+  let mainRows='';
+  arr.forEach(f=>mainRows+=mainRow(f,false));
+  if(arr.length&&dep.length)mainRows+=separatorRow();
+  dep.forEach(f=>mainRows+=mainRow(f,true));
+  let mainCount=arr.length+dep.length+(arr.length&&dep.length?1:0);
+  for(let i=mainCount;i<MAIN_ROWS;i++)mainRows+=emptyRow();
+
+  // Headset: uniquement les départs marqués Headset, avec l'heure réelle du départ (ETD), pas le pick-up.
+  const headsetRows=dep.filter(f=>f.headset===true).sort((a,b)=>chrono(a.eta||a.time)-chrono(b.eta||b.time));
+  // Handling: uniquement les vols marqués Handling, avec ARR ou DEP + l'heure correspondante.
+  const handlingRows=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS' && f.wfsMode==='handling')
+    .sort((a,b)=>chrono(a.type==='dep'?(a.eta||a.time):a.time)-chrono(b.type==='dep'?(b.eta||b.time):b.time));
+  let subRows='';
+  for(let i=0;i<SUB_ROWS;i++){
+    const hs=headsetRows[i], hd=handlingRows[i];
+    const hsDepart=hs ? (hs.eta||'') : '';
+    const hdTime=hd ? ((hd.type==='dep'?'DEP ':'ARR ')+(hd.type==='dep'?(hd.eta||hd.time||''):(hd.eta||hd.time||''))) : '';
+    subRows+='<tr style="height:'+SUB_ROW_H+'">'
+      +'<td style="'+TD+'">'+esc(hs?.reg||'')+'</td>'
+      +'<td style="'+TD+'">'+esc(hs?.flight||'')+'</td>'
+      +'<td style="'+TD+';border-right:3pt solid #000">'+esc(hsDepart)+'</td>'
+      +'<td style="'+TD+'">'+esc(hd?.reg||'')+'</td>'
+      +'<td style="'+TD+'">'+esc(hd?.flight||'')+'</td>'
+      +'<td style="'+TD+'">'+esc(hdTime)+'</td>'
+      +'<td style="'+TD+'">'+(hd?'WFS':'')+'</td></tr>';
+  }
+  const html='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crew Bus - LGG</title>'
+    +'<style>@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff}table{width:100%;border-collapse:collapse;table-layout:fixed}td{vertical-align:middle}.main-table{margin-bottom:14pt}.main-table td,.main-table th{border:0.6pt solid #000}.bottom-table td,.bottom-table th{border:0.6pt solid #000}.crew-head{font-size:11pt;font-weight:700;padding:4pt}.bottom-group{font-weight:700;background:#f0f0f0;text-align:center;font-size:9pt;padding:4pt}.bottom-head{font-weight:700;background:#f0f0f0;text-align:center;font-size:8pt;padding:4pt}.bottom-table{font-size:9pt}</style></head><body>'
+    +'<table class="main-table">'
+    +'<colgroup><col style="width:22%"><col style="width:8%"><col style="width:10%"><col style="width:22%"><col style="width:12%"><col style="width:26%"></colgroup>'
+    +'<tr><td class="crew-head" colspan="6">Crew bus service&nbsp;&nbsp; '+esc(dl)+'&nbsp;&nbsp; '+esc(shift)+'</td></tr>'
+    +'<tr><td class="'+TDH+'">Registration</td><td class="'+TDH+'" colspan="2">Time (Local)</td><td class="'+TDH+'">Flight Number</td><td class="'+TDH+'">Crew</td><td class="'+TDH+'">Stand</td></tr>'
+    +mainRows+'</table>'
+    +'<table class="bottom-table">'
+    +'<colgroup><col style="width:16%"><col style="width:14%"><col style="width:14%"><col style="width:16%"><col style="width:14%"><col style="width:13%"><col style="width:13%"></colgroup>'
+    +'<tr><td class="bottom-group" colspan="3" style="border-right:3pt solid #000">Headset</td><td class="bottom-group" colspan="4">Handling</td></tr>'
+    +'<tr><td class="bottom-head">Registration</td><td class="bottom-head">Flt #</td><td class="bottom-head" style="border-right:3pt solid #000">Depart</td><td class="bottom-head">Registration</td><td class="bottom-head">Flt #</td><td class="bottom-head">Dep // Arr</td><td class="bottom-head">Handling WFS</td></tr>'
+    +subRows+'</table></body></html>';
+  const w=window.open('','_blank');
+  if(w){
+    if(typeof printHtmlWhenReady==='function')printHtmlWhenReady(w,html);
+    else {w.document.open();w.document.write(html);w.document.close();w.focus();w.print();}
+  }else alert('Autorisez les popups pour imprimer la feuille Crew Bus.');
+};
+</script>
 </body>
 </html>`;
 
@@ -6842,45 +6930,129 @@ ${(function(){
   function generateCrewBusSheet(){
     const selected=(crewBusFlights||[]).filter(f=>f.selected);
     if(!selected.length){alert('Sélectionnez au moins un vol pour générer la feuille Crew Bus.');return;}
+
     const dateVal=document.getElementById('shift-date')?.value||'';
     const shift=selectedShift?.name||'—';
     const dl=dateVal?dateVal.split('-').reverse().join('/'):'—';
     const arr=selected.filter(f=>f.type==='arr').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
     const dep=selected.filter(f=>f.type==='dep').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
     const esc=crewBusEscape;
-    const TD='border:1pt solid #000;padding:7pt 3pt;font-size:13pt';
+
+    // ── Tableau Crew Bus principal ───────────────────────────────────────
+    // Le modèle papier comporte 19 lignes minimum. S'il y a plus de 19 vols
+    // sélectionnés, une ligne supplémentaire est créée pour chaque vol en plus.
+    // Le séparateur ARR/DEP reste une ligne visuelle supplémentaire.
+    const TD='border:1pt solid #000;padding:6pt 3pt;font-size:11pt';
     const TDH=TD+';font-weight:700;background:#f0f0f0;text-align:center';
-    const TDREG='border:1pt solid #000;padding:4pt 2pt;font-size:12pt;width:11%';
-    const TDBADGE='border:1pt solid #000;padding:4pt 2pt;font-size:11pt;width:11%';
-    const BADGEARR='<span style="display:inline-block;border:1.5pt solid #2d7a2d;border-radius:3pt;padding:1pt 4pt;font-size:10pt;font-weight:700;background:#d4edda;color:#1a5c1a">ARR</span>';
-    const BADGEPUP='<span style="display:inline-block;border:1.5pt solid #c0392b;border-radius:3pt;padding:1pt 4pt;font-size:10pt;font-weight:600;background:#fde8e8;color:#7b1010;white-space:nowrap">Pick up</span>';
-    function row(f,depRow){return '<tr>'+
-      '<td style="'+TDREG+';font-weight:700">'+esc(f.reg||'')+'</td>'+ 
-      '<td style="'+TDBADGE+';text-align:center">'+(depRow?'ARR':BADGEARR)+'</td>'+ 
-      '<td style="'+TDBADGE+';text-align:center">'+(depRow?BADGEPUP:'Pick up')+'</td>'+ 
-      '<td style="'+TD+';font-size:16pt;text-align:center;letter-spacing:.5pt">'+esc(f.time||'')+'</td>'+ 
-      '<td style="'+TD+';font-weight:700;padding-top:3pt;padding-bottom:3pt">'+esc(f.flight||'')+'</td>'+ 
-      '<td style="'+TD+';text-align:center">'+esc(f.stand||'')+'</td></tr>';}
-    function emptyRow(){return '<tr><td style="'+TDREG+'">&nbsp;</td><td style="'+TDBADGE+';text-align:center;font-size:9pt;font-weight:700">ARR</td><td style="'+TDBADGE+';text-align:center;font-size:9pt;font-weight:700">Pick up</td><td style="'+TD+'">&nbsp;</td><td style="'+TD+'">&nbsp;</td><td style="'+TD+'">&nbsp;</td></tr>';}
-    function sepRow(){return '<tr><td style="'+TDREG+'"></td><td style="'+TDBADGE+';text-align:center;font-size:9pt;font-weight:700">ARR</td><td style="'+TDBADGE+';text-align:center;font-size:9pt;font-weight:700">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';}
-    let rows='';arr.forEach(f=>rows+=row(f,false));if(arr.length&&dep.length)rows+=sepRow();dep.forEach(f=>rows+=row(f,true));
-    const dataCount=arr.length+dep.length+(arr.length&&dep.length?1:0);for(let i=dataCount;i<19;i++)rows+=emptyRow();
-    const hs=dep.filter(f=>f.headset);
-    const handling=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='handling');
-    const renting=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='renting');
-    const rentSeen=new Set(),rentDedup=renting.filter(f=>{const k=f.reg?'reg:'+f.reg:'flt:'+f.flight;if(rentSeen.has(k))return false;rentSeen.add(k);return true;});
-    const hMap={};handling.forEach(f=>{const k=f.reg||f.flight;if(!hMap[k])hMap[k]={reg:f.reg,arr:null,dep:null};if(f.type==='arr')hMap[k].arr=f;else hMap[k].dep=f;});
-    const hg=Object.values(hMap), bottomCount=Math.max(hs.length,hg.length,rentDedup.length,3);let sub='';
-    for(let i=0;i<bottomCount;i++){
-      const h=hg[i],x=hs[i],r=rentDedup[i];
-      sub+='<tr><td>'+esc(x?.reg||'')+'</td><td>'+esc(x?.flight||'')+'</td><td style="border-right:4pt solid black">'+esc(x?.eta||'')+'</td>'+ 
-        '<td>'+esc(h?.reg||'')+'</td><td>'+esc(h?.arr?.flight||h?.dep?.flight||'')+'</td><td>'+esc(h?.arr?.eta||'')+'</td><td style="border-right:4pt solid black">'+esc(h?.dep?.eta||'')+'</td><td>'+esc(r?.reg||r?.flight||'')+'</td></tr>';
+    const TDREG='border:1pt solid #000;padding:4pt 2pt;font-size:11pt;width:20%';
+    const TDLABEL='border:1pt solid #000;padding:4pt 2pt;font-size:10pt;width:7%;font-weight:700;text-align:center';
+    const TD_TIME='border:1pt solid #000;padding:4pt 2pt;font-size:11pt;width:10%;text-align:center';
+    const BADGEARR='<span style="font-weight:700">ARR</span>';
+    const BADGEPUP='<span style="font-weight:700">Pick up</span>';
+
+    function mainRow(f,isDep){
+      return '<tr>'+
+        '<td style="'+TDREG+';font-weight:700">'+esc(f.reg||'')+'</td>'+ 
+        '<td style="'+TDLABEL+'">'+(isDep?'ARR':BADGEARR)+'</td>'+ 
+        '<td style="'+TDLABEL+'">'+(isDep?BADGEPUP:'Pick up')+'</td>'+ 
+        '<td style="'+TD_TIME+'">'+esc(f.time||'')+'</td>'+ 
+        '<td style="'+TD+';font-weight:700;text-align:center">'+esc(f.flight||'')+'</td>'+ 
+        '<td style="'+TD+';text-align:center">'+esc(f.stand||'')+'</td></tr>';
     }
-    const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Crew Bus - LGG</title><style>@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff}table{width:100%;border-collapse:collapse;margin-bottom:14pt;font-size:10pt}.title{font-size:15pt;font-weight:700}.subhead{font-size:8pt;font-weight:700}</style></head><body>'+ 
-      '<table><tr><td style="'+TD+';font-weight:700;font-size:15pt" colspan="6">Crew bus service &nbsp;&nbsp; '+esc(dl)+' &nbsp;&nbsp; '+esc(shift)+'</td></tr><tr><td style="'+TDH+'">Registration</td><td style="'+TDH+'">ARR</td><td style="'+TDH+'">Pick up</td><td style="'+TDH+'">Time</td><td style="'+TDH+'">Flight number</td><td style="'+TDH+'">Stand</td></tr>'+rows+'</table>'+ 
-      '<table><tr><td style="'+TDH+'" colspan="3">Headset</td><td style="'+TDH+'" colspan="4">Handling</td><td style="'+TDH+'">Renting</td></tr><tr><td style="'+TDH+'">Registration</td><td style="'+TDH+'">Flt #</td><td style="'+TDH+'">Depart</td><td style="'+TDH+'">Registration</td><td style="'+TDH+'">Flt #</td><td style="'+TDH+'">ARR</td><td style="'+TDH+'">DEP</td><td style="'+TDH+'">Registration</td></tr>'+sub+'</table></body></html>';
+    function emptyMainRow(){
+      return '<tr><td style="'+TDREG+'">&nbsp;</td><td style="'+TDLABEL+'">ARR</td><td style="'+TDLABEL+'">Pick up</td><td style="'+TD_TIME+'">&nbsp;</td><td style="'+TD+'">&nbsp;</td><td style="'+TD+'">&nbsp;</td></tr>';
+    }
+    function separatorRow(){
+      return '<tr><td style="'+TDREG+'"></td><td style="'+TDLABEL+'">ARR</td><td style="'+TDLABEL+'">Pick up</td><td style="'+TD_TIME+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
+    }
+
+    let mainRows='';
+    arr.forEach(f=>mainRows+=mainRow(f,false));
+    if(arr.length&&dep.length)mainRows+=separatorRow();
+    dep.forEach(f=>mainRows+=mainRow(f,true));
+
+    const flightCount=selected.length;
+    const minimumRows=Math.max(19,flightCount);
+    for(let i=flightCount;i<minimumRows;i++)mainRows+=emptyMainRow();
+
+    // ── Headset / Handling / Renting ────────────────────────────────────
+    // Headset : uniquement les départs explicitement cochés Headset.
+    // La feuille de référence demande Registration / Flt # / Depart.
+    const headsetRows=dep.filter(f=>f.headset===true).map(f=>({
+      reg:f.reg||'', flt:f.flight||'', depart:f.eta||f.departureTime||f.time||''
+    }));
+
+    // Handling : uniquement le mode Handling explicitement choisi.
+    // Une arrivée et un départ d'une même immatriculation restent deux
+    // informations distinctes : ARR avec l'heure d'arrivée et DEP avec
+    // l'heure de départ réelle.
+    const handlingRows=[];
+    selected.filter(f=>f.wfsMode==='handling').forEach(f=>{
+      handlingRows.push({
+        reg:f.reg||'',
+        flt:f.flight||'',
+        depArr:(f.type==='dep'?'DEP':'ARR')+' '+(f.type==='dep'?(f.eta||f.departureTime||f.time||''):(f.eta||f.time||'')),
+        handler:String(f.handler||'').toUpperCase().includes('WFS')?'WFS':''
+      });
+    });
+
+    // Renting : nouveau bloc, alimenté uniquement par les vols WFS
+    // explicitement passés en mode Renting.
+    const rentingRows=[];
+    selected.filter(f=>String(f.handler||'').toUpperCase().includes('WFS')&&f.wfsMode==='renting').forEach(f=>{
+      rentingRows.push({
+        reg:f.reg||'',
+        flt:f.flight||'',
+        depArr:(f.type==='dep'?'DEP':'ARR')+' '+(f.type==='dep'?(f.eta||f.departureTime||f.time||''):(f.eta||f.time||'')),
+        handler:'WFS'
+      });
+    });
+
+    // On garde plusieurs lignes libres, comme sur la feuille papier, mais
+    // on agrandit automatiquement la zone dès qu'il y a davantage de tâches.
+    const bottomCount=Math.max(7,headsetRows.length,handlingRows.length,rentingRows.length);
+    let bottomRows='';
+    for(let i=0;i<bottomCount;i++){
+      const h=headsetRows[i]||{};
+      const g=handlingRows[i]||{};
+      const r=rentingRows[i]||{};
+      bottomRows+='<tr>'+
+        '<td>'+esc(h.reg||'')+'</td><td>'+esc(h.flt||'')+'</td><td style="border-right:3pt solid #000">'+esc(h.depart||'')+'</td>'+ 
+        '<td>'+esc(g.reg||'')+'</td><td>'+esc(g.flt||'')+'</td><td>'+esc(g.depArr||'')+'</td><td style="border-right:3pt solid #000">'+esc(g.handler||'')+'</td>'+ 
+        '<td>'+esc(r.reg||'')+'</td><td>'+esc(r.flt||'')+'</td><td>'+esc(r.depArr||'')+'</td><td>'+esc(r.handler||'')+'</td>'+ 
+      '</tr>';
+    }
+
+    const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Crew Bus - LGG</title><style>'+ 
+      '@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'+
+      'body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff}'+
+      'table{width:100%;border-collapse:collapse;margin-bottom:14pt;font-size:9pt;table-layout:fixed}'+
+      'tr{page-break-inside:avoid;break-inside:avoid}'+
+      'td{vertical-align:middle;text-align:center;word-wrap:break-word}'+
+      '</style></head><body>'+ 
+      '<table>'+ 
+        '<tr><td style="'+TD+';font-weight:700;font-size:13pt" colspan="6">Crew bus service &nbsp;&nbsp; '+esc(dl)+' &nbsp;&nbsp; '+esc(shift)+'</td></tr>'+ 
+        '<tr><td style="'+TDH+'">Registration</td><td style="'+TDH+'" colspan="3">TIME (LOCAL)</td><td style="'+TDH+'">FLIGHT NUMBER</td><td style="'+TDH+'">CREW / STAND</td></tr>'+ 
+        '<tr><td style="'+TDH+'"></td><td style="'+TDH+'">ARR</td><td style="'+TDH+'">Pick up</td><td style="'+TDH+'">&nbsp;</td><td style="'+TDH+'"></td><td style="'+TDH+'">STAND</td></tr>'+ 
+        mainRows+ 
+      '</table>'+ 
+      '<table>'+ 
+        '<tr>'+ 
+          '<td style="'+TDH+'" colspan="3">Headset</td>'+ 
+          '<td style="'+TDH+'" colspan="4">Handling</td>'+ 
+          '<td style="'+TDH+'" colspan="4">Renting</td>'+ 
+        '</tr>'+ 
+        '<tr>'+ 
+          '<td style="'+TDH+'">Registration</td><td style="'+TDH+'">Flt #</td><td style="'+TDH+'">Depart</td>'+ 
+          '<td style="'+TDH+'">Registration</td><td style="'+TDH+'">Flt #</td><td style="'+TDH+'">Dep // Arr</td><td style="'+TDH+'">Handling WFS</td>'+ 
+          '<td style="'+TDH+'">Registration</td><td style="'+TDH+'">Flt #</td><td style="'+TDH+'">Dep // Arr</td><td style="'+TDH+'">Renting WFS</td>'+ 
+        '</tr>'+ 
+        bottomRows+ 
+      '</table>'+ 
+      '</body></html>';
+
     const w=window.open('','_blank');
-    if(w)printHtmlWhenReady(w,htmlOut);else alert('Autorisez les popups pour imprimer la feuille Crew Bus.');
+    if(w)printHtmlWhenReady(w,htmlOut);else alert('Autorisez les popups pour générer la feuille Crew Bus.');
   }
 
   function generateASL737Only() {
