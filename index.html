@@ -2583,8 +2583,15 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     </div>
   </div>
 
-  <div id="crewbus-flight-list" class="crewbus-flight-list">
-    <div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement du Crew Bus…</strong><span>Récupération des arrivées et départs FIDS.</span></div>
+  <div id="crewbus-flight-list" class="crewbus-flight-list crewbus-flight-columns">
+    <section class="crewbus-flight-column" id="crewbus-arr-column">
+      <div class="crewbus-column-head"><div><span class="crewbus-column-kicker">ARRIVÉES</span><span class="crewbus-column-count" id="crewbus-arr-visible-count">0</span></div><span class="crewbus-column-sub">ETA · FIDS</span></div>
+      <div id="crewbus-arr-list" class="crewbus-column-list"><div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des arrivées FIDS.</span></div></div>
+    </section>
+    <section class="crewbus-flight-column" id="crewbus-dep-column">
+      <div class="crewbus-column-head"><div><span class="crewbus-column-kicker">DÉPARTS</span><span class="crewbus-column-count" id="crewbus-dep-visible-count">0</span></div><span class="crewbus-column-sub">PICK UP · FIDS</span></div>
+      <div id="crewbus-dep-list" class="crewbus-column-list"><div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des départs FIDS.</span></div></div>
+    </section>
   </div>
 
   <div class="crewbus-add-panel">
@@ -2696,6 +2703,46 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     woLggSetSyncIndicator('degraded','Mode visiteur — synchronisation cloud désactivée');
   }
 
+function woLggResetVisitorState(){
+  try{
+    window.woLggCloudSwissportSelections={};
+    if(typeof flights!=='undefined')flights=[];
+    if(typeof selectedFlights!=='undefined')selectedFlights=new Set();
+    if(typeof caterings!=='undefined')caterings=[];
+    if(typeof selectedCaterings!=='undefined')selectedCaterings=new Set();
+    if(typeof selectedASL737!=='undefined')selectedASL737=new Set();
+    if(typeof selectedASL737Initialized!=='undefined')selectedASL737Initialized=new Set();
+    if(typeof selectedShift!=='undefined')selectedShift=null;
+    if(typeof crewBusFlights!=='undefined')crewBusFlights=[];
+    if(typeof crewBusSelected!=='undefined')crewBusSelected=new Set();
+    if(typeof crewBusLoaded!=='undefined')crewBusLoaded=false;
+    if(typeof lastArrivals!=='undefined')lastArrivals=[];
+    if(typeof lastDepartures!=='undefined')lastDepartures=[];
+    if(typeof flightOverrides!=='undefined')flightOverrides={};
+    if(typeof blankWorksheets!=='undefined')blankWorksheets=[];
+    if(typeof blankWorksheetCounter!=='undefined')blankWorksheetCounter=0;
+    ['fids-text','catering-text','extra-notes','shift-agent'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    localStorage.removeItem('lgg_extra_notes');
+    const date=document.getElementById('shift-date');if(date)date.value=todayBrusselsDateStr();
+    document.querySelectorAll('.shift-btn').forEach(b=>b.classList.remove('active'));
+    if(typeof autoDetectShift==='function')autoDetectShift();
+    if(typeof closeAppHeaderMenu==='function')closeAppHeaderMenu();
+    if(typeof closeConnectedDevices==='function')closeConnectedDevices();
+    if(typeof closeEditModeLauncher==='function')closeEditModeLauncher();
+    const swp=document.getElementById('swissport-manhour-form');if(swp&&!swp.classList.contains('hidden')&&typeof toggleSwissportManhour==='function')toggleSwissportManhour();
+    [1,2,3,4].forEach(i=>{const el=document.getElementById('step-'+i);if(el)el.classList.add('hidden');});
+    const step1=document.getElementById('step-1');if(step1)step1.classList.remove('hidden');
+    if(typeof currentStep!=='undefined')currentStep=1;
+    const ind=document.getElementById('step-indicator');if(ind)ind.textContent='ETAPE 1 / 4';
+    [1,2,3,4].forEach(i=>{const el=document.getElementById('prog-'+i);if(el){el.classList.toggle('active',i===1);el.classList.remove('done');}});
+    if(typeof renderCaterings==='function')renderCaterings();
+    if(typeof updateCateringCount==='function')updateCateringCount();
+    if(typeof renderCrewBusFlights==='function')renderCrewBusFlights();
+    if(typeof updateEditModeButtonUI==='function')updateEditModeButtonUI();
+    window.scrollTo(0,0);
+  }catch(e){console.warn('WO-LGG visitor reset:',e)}
+}
+
 async function woLggLogout(){
     const b=document.getElementById('wo-lgg-logout-btn');
     const clearLogin=()=>{
@@ -2727,6 +2774,7 @@ async function woLggLogout(){
       woLggPendingSave=false;
       woLggLastCloudUpdatedAt=null;
 
+      if(woLggVisitorMode)woLggResetVisitorState();
       woLggUser=null;
       woLggProfile=null;
       woLggVisitorMode=false;
@@ -2775,8 +2823,9 @@ async function woLggLogout(){
   const woLggDeviceId=(()=>{
     try{
       const k='wo_lgg_device_id';
-      let v=sessionStorage.getItem(k);
-      if(!v){ v=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2)); sessionStorage.setItem(k,v); }
+      let v=localStorage.getItem(k)||sessionStorage.getItem(k);
+      if(!v) v=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random().toString(36).slice(2));
+      localStorage.setItem(k,v); sessionStorage.setItem(k,v);
       return v;
     }catch(e){ return String(Date.now())+'-'+Math.random().toString(36).slice(2); }
   })();
@@ -2788,8 +2837,8 @@ async function woLggLogout(){
 
   function woLggDeviceLabel(){
     const ua=navigator.userAgent||'';
-    let platform=/iPhone|iPad|iPod/i.test(ua)?'iPhone / iPad':(/Android/i.test(ua)?'Android':(/Macintosh|Mac OS X/i.test(ua)?'Mac':(/Windows/i.test(ua)?'Windows':'Navigateur')));
-    let browser=/Edg\//i.test(ua)?'Edge':(/Chrome\//i.test(ua)?'Chrome':(/Safari\//i.test(ua)&&!/Chrome\//i.test(ua)?'Safari':(/Firefox\//i.test(ua)?'Firefox':'Navigateur')));
+    let platform=/iPhone/i.test(ua)?'iPhone':(/iPad/i.test(ua)?'iPad':(/Android/i.test(ua)?'Android':(/Macintosh|Mac OS X/i.test(ua)?'Mac':(/Windows/i.test(ua)?'PC Windows':'Navigateur'))));
+    let browser=/Edg\//i.test(ua)?'Edge':(/CriOS\//i.test(ua)?'Chrome':(/FxiOS\//i.test(ua)?'Firefox':(/Chrome\//i.test(ua)?'Chrome':(/Safari\//i.test(ua)&&!/Chrome\//i.test(ua)?'Safari':(/Firefox\//i.test(ua)?'Firefox':'Navigateur')))));
     return platform+' · '+browser;
   }
   function woLggDeviceIcon(label){return /iPhone|iPad|Android/i.test(label)?'▣':'▤'}
@@ -2901,22 +2950,28 @@ async function woLggLogout(){
         const current=d.device_id===woLggDeviceId;
         const when=d.last_seen_at?new Date(d.last_seen_at).toLocaleString('fr-BE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
         const safeLabel=String(d.device_label||'Appareil').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-        return '<div class="wo-device-row '+(current?'current':'')+'"><div class="wo-device-icon">'+woLggDeviceIcon(safeLabel)+'</div><div class="wo-device-copy"><div class="wo-device-name">'+safeLabel+(current?' <span style="color:#27e69a;font-size:8px">· CET APPAREIL</span>':'')+'</div><div class="wo-device-meta">Dernière activité · '+when+'</div>'+(current?'<div class="wo-device-status">Session active</div>':'')+'</div>'+(current?'':'<button class="wo-device-kick" type="button" onclick="disconnectConnectedDevice(\''+String(d.device_id).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">Déconnecter</button>')+'</div>';
+        const safeId=String(d.device_id).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+        return '<div class="wo-device-row '+(current?'current':'')+'" data-device-id="'+safeId+'"><div class="wo-device-icon">'+woLggDeviceIcon(safeLabel)+'</div><div class="wo-device-copy"><div class="wo-device-name">'+safeLabel+(current?' <span style="color:#27e69a;font-size:8px">· CET APPAREIL</span>':'')+'</div><div class="wo-device-meta">Dernière activité · '+when+'</div>'+(current?'<div class="wo-device-status">Session active</div>':'')+'</div>'+(current?'':'<button class="wo-device-kick" type="button" onclick="disconnectConnectedDevice(\''+String(d.device_id).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">Déconnecter</button>')+'</div>';
       }).join('');
     }catch(e){list.innerHTML='<div class="wo-devices-empty">Impossible de charger les appareils pour le moment.</div>';console.warn(e)}
   }
   window.disconnectConnectedDevice=async function(deviceId){
     if(!woLggUser||woLggVisitorMode||!deviceId||deviceId===woLggDeviceId)return;
-    const ok=confirm('Déconnecter cet appareil ? Il sera renvoyé vers l’écran de connexion.');
-    if(!ok)return;
+    const row=document.querySelector('[data-device-id="'+CSS.escape(String(deviceId))+'"]');
+    const btn=row?.querySelector('.wo-device-kick');
+    if(btn){btn.disabled=true;btn.textContent='Déconnexion…';}
     try{
       const {data,error}=await woLggSupabase.from('active_devices').select('session_version').eq('user_id',woLggUser.id).eq('device_id',deviceId).maybeSingle();
-      if(error)throw error; if(!data)return;
+      if(error)throw error; if(!data)throw new Error('Appareil introuvable');
       const nextVersion=Number(data.session_version||1)+1;
       const {error:updateError}=await woLggSupabase.from('active_devices').update({session_version:nextVersion,last_seen_at:new Date().toISOString()}).eq('user_id',woLggUser.id).eq('device_id',deviceId);
       if(updateError)throw updateError;
-      await woLggRenderConnectedDevices();
-    }catch(e){alert('Impossible de déconnecter cet appareil pour le moment.');console.warn('WO-LGG remote disconnect:',e)}
+      if(row){row.classList.add('revoked');const meta=row.querySelector('.wo-device-meta');if(meta)meta.textContent='Déconnexion demandée · en attente de confirmation';}
+      setTimeout(woLggRenderConnectedDevices,900);
+    }catch(e){
+      if(btn){btn.disabled=false;btn.textContent='Déconnecter';}
+      alert('Impossible de déconnecter cet appareil pour le moment.');console.warn('WO-LGG remote disconnect:',e);
+    }
   };
 
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeConnectedDevices()});
@@ -6631,41 +6686,35 @@ ${(function(){
     if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('crewBusManualAdd');
   }
   function renderCrewBusFlights(){
-    const list=document.getElementById('crewbus-flight-list');if(!list)return;
-    const visible=crewBusVisibleFlights();
-    const total=(crewBusFlights||[]).length;
-    const selected=(crewBusFlights||[]).filter(f=>f.selected).length;
-    const arr=(crewBusFlights||[]).filter(f=>f.type==='arr').length;
-    const dep=(crewBusFlights||[]).filter(f=>f.type==='dep').length;
+    const root=document.getElementById('crewbus-flight-list');if(!root)return;
+    const arrList=document.getElementById('crewbus-arr-list'),depList=document.getElementById('crewbus-dep-list');
+    const arrCol=document.getElementById('crewbus-arr-column'),depCol=document.getElementById('crewbus-dep-column');
+    const visible=crewBusVisibleFlights(),visibleArr=visible.filter(f=>f.type==='arr'),visibleDep=visible.filter(f=>f.type==='dep');
+    const total=(crewBusFlights||[]).length,selected=(crewBusFlights||[]).filter(f=>f.selected).length;
+    const arr=(crewBusFlights||[]).filter(f=>f.type==='arr').length,dep=(crewBusFlights||[]).filter(f=>f.type==='dep').length;
     const s=document.getElementById('crewbus-selected-count'),a=document.getElementById('crewbus-arr-count'),d=document.getElementById('crewbus-dep-count');
     if(s)s.textContent=selected;if(a)a.textContent=arr;if(d)d.textContent=dep;
+    const ac=document.getElementById('crewbus-arr-visible-count'),dc=document.getElementById('crewbus-dep-visible-count');if(ac)ac.textContent=visibleArr.length;if(dc)dc.textContent=visibleDep.length;
     const hint=document.getElementById('crewbus-selection-hint');if(hint)hint.textContent=selected+' sélectionné(s) · '+total+' vol(s) disponibles';
-    if(!visible.length){list.innerHTML='<div class="crewbus-empty"><div class="crewbus-empty-icon">⌕</div><strong>Aucun vol trouvé</strong><span>Modifiez le filtre ou la recherche, ou ajoutez un vol manuellement.</span></div>';return;}
-    list.innerHTML=visible.map(f=>{
-      const sel=!!f.selected;
-      const isWfs=String(f.handler||'').toUpperCase()==='WFS';
-      const modeHtml=isWfs?('<div class="crewbus-wfs-mode">'+
-        '<button type="button" class="crewbus-mode-btn '+(f.wfsMode==='renting'?'active rent':'')+'" onclick="toggleCrewBusWfs('+JSON.stringify(f.key)+',\'renting\',event)">🚙 Renting</button>'+
-        '<button type="button" class="crewbus-mode-btn '+(f.wfsMode==='handling'?'active hand':'')+'" onclick="toggleCrewBusWfs('+JSON.stringify(f.key)+',\'handling\',event)">✈ Handling</button>'+
-        '</div>'):'';
-      const hsHtml=f.type==='dep'?'<button type="button" class="crewbus-hs-btn '+(f.headset?'active':'')+'" onclick="toggleCrewBusHeadset('+JSON.stringify(f.key)+',event)">🎧 '+(f.headset?'Headset ✓':'Headset')+'</button>':'';
-      const source=f.manual?'ADD':'FIDS';
-      return '<div class="crewbus-flight-card '+(sel?'selected':'')+'" onclick="toggleCrewBusFlight('+JSON.stringify(f.key)+')">'+
-        '<div class="crewbus-check">'+(sel?'✓':'')+'</div>'+
-        '<div class="crewbus-flight-main">'+
-          '<div class="crewbus-time">'+crewBusEscape(f.time)+'<small>'+ (f.type==='dep'?'pick up':'ETA') +'</small></div>'+
-          '<div class="crewbus-flight-info"><div class="crewbus-flight-number">'+crewBusEscape(f.flight)+'</div>'+ 
-          '<div class="crewbus-flight-meta">'+
-            '<span class="crewbus-direction '+(f.type==='arr'?'arr':'dep')+'">'+(f.type==='arr'?'ARR':'DEP')+'</span>'+ 
-            '<span class="crewbus-meta-chip">'+crewBusEscape(f.reg||'—')+'</span>'+ 
-            '<span class="crewbus-meta-chip">'+crewBusEscape(f.handler||'—')+'</span>'+ 
-            (f.stand?'<span class="crewbus-meta-chip">Stand '+crewBusEscape(f.stand)+'</span>':'')+
-            '<span class="crewbus-meta-chip">'+source+'</span>'+ 
-          '</div></div></div>'+ 
-        '<div class="crewbus-card-actions">'+modeHtml+hsHtml+'</div>'+
-      '</div>';
-    }).join('');
+    if(arrCol)arrCol.style.display=crewBusFilter==='dep'?'none':'';if(depCol)depCol.style.display=crewBusFilter==='arr'?'none':'';
+    const empty='<div class="crewbus-empty"><div class="crewbus-empty-icon">⌕</div><strong>Aucun vol trouvé</strong><span>Modifiez le filtre ou la recherche.</span></div>';
+    if(arrList)arrList.innerHTML=visibleArr.length?visibleArr.map(crewBusFlightCardHtml).join(''):empty;
+    if(depList)depList.innerHTML=visibleDep.length?visibleDep.map(crewBusFlightCardHtml).join(''):empty;
   }
+  function crewBusFlightCardHtml(f){
+    const sel=!!f.selected,isWfs=String(f.handler||'').toUpperCase()==='WFS';
+    const modeHtml=isWfs?('<div class="crewbus-wfs-mode"><button type="button" class="crewbus-mode-btn '+(f.wfsMode==='renting'?'active rent':'')+'" onclick="toggleCrewBusWfs('+JSON.stringify(f.key)+',\'renting\',event)">🚙 Renting</button><button type="button" class="crewbus-mode-btn '+(f.wfsMode==='handling'?'active hand':'')+'" onclick="toggleCrewBusWfs('+JSON.stringify(f.key)+',\'handling\',event)">✈ Handling</button></div>'):'';
+    const hsHtml=f.type==='dep'?'<button type="button" class="crewbus-hs-btn '+(f.headset?'active':'')+'" onclick="toggleCrewBusHeadset('+JSON.stringify(f.key)+',event)">🎧 '+(f.headset?'Headset ✓':'Headset')+'</button>':'';
+    const source=f.manual?'ADD':'FIDS';
+    const key=JSON.stringify(f.key);
+    return '<article class="crewbus-flight-card '+(sel?'selected':'')+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" onclick="toggleCrewBusFlight('+key+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleCrewBusFlight('+key+')}" >'+
+      '<div class="crewbus-check">'+(sel?'✓':'')+'</div><div class="crewbus-flight-main">'+
+      '<div class="crewbus-time">'+crewBusEscape(f.time)+'<small>'+(f.type==='dep'?'PICK UP':'ETA')+'</small></div>'+ 
+      '<div class="crewbus-flight-info"><div class="crewbus-flight-number">'+crewBusEscape(f.flight)+'</div><div class="crewbus-flight-meta">'+
+      '<span class="crewbus-direction '+(f.type==='arr'?'arr':'dep')+'">'+(f.type==='arr'?'ARR':'DEP')+'</span><span class="crewbus-meta-chip">'+crewBusEscape(f.reg||'—')+'</span><span class="crewbus-meta-chip">'+crewBusEscape(f.handler||'—')+'</span>'+(f.stand?'<span class="crewbus-meta-chip">Stand '+crewBusEscape(f.stand)+'</span>':'')+'<span class="crewbus-meta-chip">'+source+'</span></div></div></div>'+ 
+      '<div class="crewbus-card-actions">'+modeHtml+hsHtml+'</div></article>';
+  }
+
   function buildCrewBusSnapshot(){
     return {flights:crewBusFlights||[],selected:Array.from(crewBusSelected||[]),filter:crewBusFilter,sort:crewBusSort,loaded:!!crewBusLoaded};
   }
@@ -6839,7 +6888,7 @@ ${(function(){
   })();
 
 </script>
-<!-- V60 — multi-device session management + Crew Bus beta access gate. -->
+<!-- V61 — multi-device session management + visitor reset + Crew Bus two-column interface. -->
 <!-- V54 — V53 conservée + animations FIDS/session harmonisées avec Swissport MANHOUR. -->
 <!-- Service worker désactivé : source réseau directe pour éviter les sessions HTML obsolètes. -->
 <div id="fids-change-details-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(7px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px">
@@ -6926,6 +6975,22 @@ ${(function(){
   });
 })();
 </script>
+<style id="wo-lgg-v60-crewbus-modern-columns">
+.crewbus-flight-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+.crewbus-flight-column{min-width:0;border:1px solid rgba(143,168,255,.15);border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.022),rgba(255,255,255,.008));overflow:hidden;box-shadow:0 14px 35px rgba(0,0,0,.12)}
+.crewbus-column-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px;border-bottom:1px solid rgba(143,168,255,.12);background:linear-gradient(135deg,rgba(143,168,255,.06),rgba(201,85,255,.025))}
+.crewbus-column-head>div{display:flex;align-items:center;gap:8px;min-width:0}.crewbus-column-kicker{font:900 9px/1 var(--mono);letter-spacing:1.6px;color:var(--t1)}
+.crewbus-column-count{min-width:22px;height:22px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:rgba(143,168,255,.1);border:1px solid rgba(143,168,255,.2);font:900 8px var(--mono);color:var(--a1)}
+.crewbus-column-sub{font:700 7px var(--mono);letter-spacing:.9px;text-transform:uppercase;color:var(--t3);white-space:nowrap}
+.crewbus-column-list{display:grid;gap:7px;padding:9px;max-height:62vh;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.crewbus-flight-card{min-height:76px;grid-template-columns:25px minmax(0,1fr);gap:9px;padding:10px;border-radius:13px;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-tap-highlight-color:transparent}
+.crewbus-flight-card .crewbus-card-actions{grid-column:2;justify-content:flex-start;margin-top:1px;min-width:0;display:flex;flex-wrap:wrap;gap:5px}.crewbus-flight-card .crewbus-flight-main{min-width:0}
+.crewbus-flight-card:focus-visible{outline:2px solid rgba(143,168,255,.55);outline-offset:2px}.crewbus-flight-card:hover{transform:translateY(-1px) translateX(0)}.crewbus-flight-card.selected{transform:translateY(-1px)}
+.crewbus-flight-card .crewbus-check{width:25px;height:25px;border-radius:8px;font-size:13px}.crewbus-flight-card .crewbus-time{font-size:17px}.crewbus-flight-card .crewbus-time small{font-size:6px;margin-left:6px}.crewbus-flight-card .crewbus-flight-number{font-size:11px}
+.crewbus-flight-card .crewbus-flight-meta{gap:4px;margin-top:4px}.crewbus-flight-card .crewbus-meta-chip,.crewbus-flight-card .crewbus-direction{font-size:7px;padding:3px 5px}.crewbus-flight-card .crewbus-mode-btn,.crewbus-flight-card .crewbus-hs-btn{min-height:27px;padding:5px 7px;font-size:7px}.crewbus-flight-card .crewbus-wfs-mode{display:flex;gap:4px;flex-wrap:wrap}
+@media(max-width:900px){.crewbus-flight-columns{grid-template-columns:1fr}.crewbus-column-list{max-height:none}.crewbus-flight-column{display:block!important}}
+@media(max-width:600px){.crewbus-column-head{padding:11px}.crewbus-column-list{padding:7px}.crewbus-flight-card{min-height:82px;padding:10px}.crewbus-flight-card .crewbus-flight-meta{max-width:100%}}
+</style>
 <style id="wo-lgg-v60-devices">
 #wo-lgg-devices-overlay{position:fixed;inset:0;z-index:10020;display:flex;align-items:flex-start;justify-content:flex-end;padding:76px 18px 18px;background:rgba(2,4,12,.38);backdrop-filter:blur(7px);opacity:0;pointer-events:none;transition:opacity .22s ease}
 #wo-lgg-devices-overlay.open{opacity:1;pointer-events:auto}
@@ -6944,7 +7009,7 @@ ${(function(){
 .wo-device-name{font-size:11px;font-weight:850;color:var(--t1)}
 .wo-device-meta{font:700 8px/1.4 var(--mono);letter-spacing:.5px;color:var(--t3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wo-device-status{font:800 7px/1 var(--mono);letter-spacing:1px;color:#27e69a;text-transform:uppercase;margin-top:4px}
-.wo-device-kick{border:1px solid rgba(255,92,120,.22);background:rgba(255,92,120,.04);color:#ff91a8;border-radius:9px;padding:8px 9px;font:800 8px/1 var(--mono);cursor:pointer;white-space:nowrap}
+.wo-device-row.revoked{opacity:.7}.wo-device-kick:disabled{opacity:.55;cursor:wait}.wo-device-kick{border:1px solid rgba(255,92,120,.22);background:rgba(255,92,120,.04);color:#ff91a8;border-radius:9px;padding:8px 9px;font:800 8px/1 var(--mono);cursor:pointer;white-space:nowrap}
 .wo-device-kick:hover{border-color:rgba(255,92,120,.5);background:rgba(255,92,120,.08)}
 .wo-devices-empty{padding:20px;text-align:center;color:var(--t3);font-size:10px}
 .wo-devices-foot{padding:11px 16px 15px;border-top:1px solid var(--b1);font:600 8px/1.5 var(--mono);color:var(--t3)}
