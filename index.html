@@ -1661,6 +1661,64 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 }
 </style>
 
+<style id="wo-lgg-v58-edit-mode-modern">
+/* V58 — Edit Mode / Worksheets : interface premium + recherche des tâches */
+#edit-flight-overlay{background:rgba(2,5,14,.78)!important;backdrop-filter:blur(16px) saturate(125%)!important;}
+#edit-flight-overlay .wo-edit-shell{
+  position:relative;overflow:hidden!important;padding:0!important;width:min(760px,calc(100vw - 24px))!important;max-width:760px!important;
+  max-height:min(90vh,860px)!important;border-radius:24px!important;
+  border:1px solid rgba(143,168,255,.30)!important;
+  background:radial-gradient(circle at 92% 0%,rgba(0,212,255,.10),transparent 28%),radial-gradient(circle at 0% 100%,rgba(201,85,255,.08),transparent 30%),linear-gradient(180deg,rgba(11,17,36,.985),rgba(5,9,21,.99))!important;
+  box-shadow:0 34px 110px rgba(0,0,0,.70),0 0 0 1px rgba(255,255,255,.025) inset,0 0 50px rgba(91,126,255,.08)!important;
+  backdrop-filter:blur(28px) saturate(135%);
+}
+#edit-flight-overlay .wo-edit-shell:before{content:"";position:absolute;left:10%;right:10%;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--a1),var(--a2),transparent);opacity:.9;pointer-events:none}
+.wo-edit-modern-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:24px 26px 18px;border-bottom:1px solid rgba(143,168,255,.12);background:rgba(255,255,255,.012)}
+.wo-edit-modern-kicker{font:800 8px/1 var(--mono);letter-spacing:2.1px;text-transform:uppercase;color:var(--a1);opacity:.92}
+.wo-edit-modern-title{display:flex;align-items:center;gap:10px;margin-top:7px;font-size:21px;font-weight:900;line-height:1.15;color:var(--t1)}
+.wo-edit-modern-title-icon{width:38px;height:38px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(0,212,255,.18),rgba(201,85,255,.18));border:1px solid rgba(143,168,255,.25);box-shadow:0 10px 25px rgba(0,0,0,.18);font-size:18px;flex:0 0 auto}
+.wo-edit-modern-copy{padding:14px 26px 0;margin:0!important;font-size:11px!important;line-height:1.55;color:var(--t2)!important}
+.wo-edit-modern-body{padding:18px 26px 24px;overflow:auto;max-height:calc(min(90vh,860px) - 92px);overscroll-behavior:contain}
+.wo-edit-fields-modern{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 20px}
+.wo-edit-field-card{padding:11px;border:1px solid rgba(143,168,255,.13);border-radius:13px;background:rgba(255,255,255,.018);transition:border-color .18s,background .18s,transform .18s}
+.wo-edit-field-card:focus-within{border-color:rgba(143,168,255,.38);background:rgba(143,168,255,.035);transform:translateY(-1px)}
+.wo-edit-field-card input{height:40px!important;margin:0!important;width:100%!important;box-sizing:border-box;border:1px solid rgba(143,168,255,.12)!important;border-radius:10px!important;background:rgba(3,7,18,.68)!important;color:var(--t1)!important;padding:0 11px!important;font-size:11px!important;outline:none!important}
+.wo-edit-field-card input:focus{border-color:rgba(143,168,255,.42)!important;box-shadow:0 0 0 3px rgba(143,168,255,.07)!important}
+.wo-edit-grid-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:2px 0 10px}
+.wo-edit-grid-heading{font-size:11px;font-weight:900;letter-spacing:1.35px;text-transform:uppercase;color:var(--t1)}
+.wo-edit-grid-sub{margin-top:4px;font-size:9px;color:var(--t3);line-height:1.4}
+.wo-edit-task-search{display:flex;align-items:center;gap:9px;height:40px;padding:0 11px;border:1px solid rgba(143,168,255,.16);border-radius:12px;background:rgba(2,6,17,.62);margin-bottom:10px;transition:border-color .18s,box-shadow .18s,background .18s}
+.wo-edit-task-search:focus-within{border-color:rgba(143,168,255,.44);box-shadow:0 0 0 3px rgba(143,168,255,.06);background:rgba(5,10,25,.82)}
+.wo-edit-task-search .search-icon{font-size:16px;color:var(--a1);line-height:1}
+.wo-edit-task-search input{flex:1;min-width:0;border:0!important;outline:0!important;background:transparent!important;color:var(--t1)!important;padding:0!important;font:600 10px var(--sans)!important;box-shadow:none!important}
+.wo-edit-task-search input::placeholder{color:var(--t3)}
+.wo-edit-task-count{font:700 8px var(--mono);letter-spacing:.7px;color:var(--t3);white-space:nowrap}
+.wo-edit-grid-modern{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px!important;margin-bottom:20px!important}
+.wo-edit-task{position:relative;display:flex;align-items:center;gap:8px;min-height:42px!important;padding:8px 9px!important;border:1px solid rgba(143,168,255,.14)!important;border-radius:11px!important;background:linear-gradient(180deg,rgba(255,255,255,.028),rgba(255,255,255,.014))!important;cursor:pointer;transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease!important}
+.wo-edit-task:hover{transform:translateY(-1px);border-color:rgba(143,168,255,.38)!important;background:rgba(143,168,255,.055)!important;box-shadow:0 8px 20px rgba(0,0,0,.12)}
+.wo-edit-task input{width:15px;height:15px;margin:0!important;accent-color:#ffb400;flex:0 0 auto}
+.wo-edit-task span{font-size:9px!important;line-height:1.25;color:var(--t1)!important}
+.wo-edit-task.is-hidden{display:none!important}
+.wo-edit-no-results{grid-column:1/-1;padding:22px 14px;border:1px dashed rgba(143,168,255,.17);border-radius:13px;text-align:center;color:var(--t3);font-size:10px}
+.wo-edit-modern-actions{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:9px;margin-top:2px}
+.wo-edit-modern-actions .btn{min-height:44px!important;border-radius:12px!important;font-size:10px!important;font-weight:900!important}
+.wo-edit-modern-danger{margin-top:12px;padding-top:12px;border-top:1px solid rgba(143,168,255,.10)}
+.wo-edit-modern-danger .btn{width:100%;min-height:40px!important;border-radius:11px!important;background:rgba(255,77,109,.035)!important;border:1px solid rgba(255,77,109,.24)!important;color:#ff7187!important;font-size:9px!important;font-weight:900!important}
+.wo-edit-blank-badge{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:5px 8px;border-radius:999px;border:1px solid rgba(255,180,0,.22);background:rgba(255,180,0,.055);color:#ffcb57;font:800 8px var(--mono);letter-spacing:.7px;text-transform:uppercase}
+@media(max-width:760px){
+  #edit-flight-overlay{padding:10px!important}
+  #edit-flight-overlay .wo-edit-shell{width:calc(100vw - 20px)!important;border-radius:21px!important;max-height:91vh!important}
+  .wo-edit-modern-head{padding:18px 17px 15px}
+  .wo-edit-modern-title{font-size:17px}.wo-edit-modern-title-icon{width:34px;height:34px;border-radius:10px;font-size:16px}
+  .wo-edit-modern-copy{padding:12px 17px 0;font-size:10px!important}
+  .wo-edit-modern-body{padding:15px 17px 18px;max-height:calc(91vh - 82px)}
+  .wo-edit-fields-modern{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:17px}
+  .wo-edit-grid-modern{grid-template-columns:1fr 1fr!important;gap:6px!important}
+  .wo-edit-grid-head{display:block}.wo-edit-task-search{margin-top:9px}
+  .wo-edit-modern-actions{grid-template-columns:1fr 1fr}.wo-edit-modern-actions .btn:last-child{grid-column:1/-1}
+}
+@media(max-width:430px){.wo-edit-fields-modern{grid-template-columns:1fr}.wo-edit-task span{font-size:8.5px!important}}
+</style>
 <style id="wo-lgg-v57-edit-launcher">
 /* V57 — Edit Mode centralisé : petit panneau discret, même langage visuel que Swissport/menu */
 #edit-mode-launcher{
@@ -1717,6 +1775,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 @media(prefers-reduced-motion:reduce){#edit-mode-launcher,#edit-mode-launcher *{transition:none!important;animation:none!important}}
 </style>
 
+<!-- V58 — Edit Mode premium + recherche tâches + ETH exclus du FIDS automatique -->
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -1910,25 +1969,41 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 </div>
 
 <div id="edit-flight-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px">
-  <div class="wo-edit-shell" style="padding:22px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:2px">
-      <div><div class="wo-edit-kicker">WORKSHEET / ÉDITION</div><div class="wo-edit-title">&#9998; <span id="edit-flight-title"></span></div></div>
-      <button onclick="closeEditFlightModal()" style="background:rgba(255,255,255,.03);border:1px solid var(--b2);border-radius:9px;color:var(--t2);font-size:18px;cursor:pointer;line-height:1;width:34px;height:34px">&times;</button>
+  <div class="wo-edit-shell" role="dialog" aria-modal="true" aria-labelledby="edit-flight-title">
+    <div class="wo-edit-modern-head">
+      <div>
+        <div class="wo-edit-modern-kicker" id="edit-flight-kicker">WORKSHEET / ÉDITION</div>
+        <div class="wo-edit-modern-title"><span class="wo-edit-modern-title-icon" id="edit-flight-title-icon">✎</span><span id="edit-flight-title"></span></div>
+        <div id="edit-flight-blank-badge" class="wo-edit-blank-badge hidden">＋ Nouvelle worksheet</div>
+      </div>
+      <button type="button" onclick="closeEditFlightModal()" aria-label="Fermer" style="width:34px;height:34px;flex:0 0 34px;border-radius:10px;border:1px solid var(--b1);background:rgba(255,255,255,.025);color:var(--t2);font-size:18px;cursor:pointer;transition:.18s">&times;</button>
     </div>
-    <div class="wo-edit-copy">Ces modifications restent actives pendant que le site est ouvert et survivent aux actualisations FIDS automatiques.</div>
+    <div class="wo-edit-modern-copy" id="edit-flight-copy">Ces modifications restent actives pendant que le site est ouvert et survivent aux actualisations FIDS automatiques.</div>
+    <div class="wo-edit-modern-body">
+      <div id="edit-flight-fields" class="wo-edit-fields-modern"></div>
 
-    <div id="edit-flight-fields" class="wo-edit-fields" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px"></div>
+      <div class="wo-edit-grid-head">
+        <div>
+          <div class="wo-edit-grid-heading">Services de la worksheet</div>
+          <div class="wo-edit-grid-sub">Cochez les tâches à intégrer / surligner à l'impression.</div>
+        </div>
+        <div class="wo-edit-task-count" id="edit-task-count">0 TÂCHE(S)</div>
+      </div>
+      <div class="wo-edit-task-search">
+        <span class="search-icon">⌕</span>
+        <input id="edit-task-search" type="search" placeholder="Rechercher une tâche…" autocomplete="off" oninput="filterEditTasks(this.value)">
+        <span class="wo-edit-task-count" id="edit-task-visible-count"></span>
+      </div>
+      <div id="edit-flight-grid" class="wo-edit-grid-modern"></div>
 
-    <div class="wo-edit-grid-label">Services de la worksheet — coche = surlignage jaune à l'impression</div>
-    <div id="edit-flight-grid" class="wo-edit-grid"></div>
-
-    <div style="display:flex;gap:9px;flex-wrap:wrap">
-      <button class="btn btn-ghost" style="flex:1;min-width:150px" onclick="resetEditFlightOverride()">Réinitialiser ce vol</button>
-      <button class="btn btn-ghost" style="flex:1;min-width:150px" onclick="closeEditFlightModal()">Fermer sans sauver</button>
-      <button class="btn btn-primary" style="flex:1;min-width:150px" onclick="saveEditFlightOverride()">&#128190; Sauvegarder</button>
-    </div>
-    <div style="border-top:1px solid var(--b2);margin-top:16px;padding-top:12px">
-      <button class="btn" style="width:100%;background:transparent;border:1px solid var(--red);color:var(--red)" onclick="resetAllEditOverrides()">&#9888; Annuler toutes les modifications</button>
+      <div class="wo-edit-modern-actions">
+        <button id="edit-reset-btn" class="btn btn-ghost" type="button" onclick="resetEditFlightOverride()">Réinitialiser</button>
+        <button class="btn btn-ghost" type="button" onclick="closeEditFlightModal()">Fermer sans sauver</button>
+        <button id="edit-save-btn" class="btn btn-primary" type="button" onclick="saveEditFlightOverride()">&#128190; Sauvegarder</button>
+      </div>
+      <div class="wo-edit-modern-danger">
+        <button class="btn" type="button" onclick="resetAllEditOverrides()">&#9888; Annuler toutes les modifications</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3395,20 +3470,6 @@ async function woLggLogout(){
       return inDateWindow(dt, win || fallbackWin);
     }
 
-    const ethDepartures = {};
-    departures.forEach(d => {
-      // Meme correctif que pour les arrivees plus bas : on evalue la fenetre sur l'horaire
-      // reel (UTC), pas sur le champ "date" separe qui ne reflete pas forcement le bon
-      // jour civil une fois converti en heure locale (voir commentaire detaille ci-dessous).
-      if (!inWindow(d.aTx || d.eTx || d.sTx || d.date)) return;
-      const flt = (d.flightNumber || '').toUpperCase();
-      const hnd = (d.handler || '').toUpperCase();
-      const reg = (d.aircraftRegistration || '').toUpperCase();
-      if (flt.startsWith('ETH') && hnd.includes('AVIAPARTNER') && reg) {
-        ethDepartures[reg] = flt;
-      }
-    });
-
     const HANDLERS_OK2 = ['CHALLENGE', 'WFS', 'SWISSPORT'];
     let newFlights = [];
 
@@ -3433,13 +3494,6 @@ async function woLggLogout(){
       const time = isoToHHMM(a.aTx) || isoToHHMM(a.eTx) || isoToHHMM(a.sTx) || '—';
       const flightUp = flight.toUpperCase();
       const regUp = reg.toUpperCase();
-
-      const isETHFlight = flightUp.startsWith('ETH') && handler.includes('AVIAPARTNER');
-      if (isETHFlight) {
-        if (!ethDepartures[regUp]) return;
-        newFlights.push({ time, flight: ethDepartures[regUp], reg, stand, handler, manual: false, isETH: true });
-        return;
-      }
 
       const isTAYFedex   = flightUp.startsWith('TAY') && handler.includes('FEDEX');
       const isOEIMDFedex = regUp === 'OEIMD' && handler.includes('FEDEX');
@@ -3954,17 +4008,64 @@ async function woLggLogout(){
   }
 
   // ── Modale d'edition complete d'un vol ──────────────────────────────
+  // Clic sur le voile = fermer ; le contenu de la modale reste interactif.
+  (function bindEditModalBackdrop(){
+    const overlay=document.getElementById('edit-flight-overlay');
+    if(!overlay || overlay.dataset.bound==='1') return;
+    overlay.dataset.bound='1';
+    overlay.addEventListener('click',function(e){ if(e.target===overlay) closeEditFlightModal(); });
+  })();
+
   let __editFlightKey = null; // numero de vol ORIGINAL en cours d’edition (cle stable de flightOverrides)
+
+  let __editIsBlank = false;
+
+  function filterEditTasks(query) {
+    const q = String(query || '').trim().toLocaleUpperCase('fr');
+    const grid = document.getElementById('edit-flight-grid');
+    if (!grid) return;
+    const items = Array.from(grid.querySelectorAll('.wo-edit-task'));
+    let visible = 0;
+    items.forEach(function(item){
+      const label = String(item.getAttribute('data-task-label') || '').toLocaleUpperCase('fr');
+      const show = !q || label.includes(q);
+      item.classList.toggle('is-hidden', !show);
+      if (show) visible++;
+    });
+    const count = document.getElementById('edit-task-visible-count');
+    if (count) count.textContent = q ? (visible + ' résultat' + (visible>1?'s':'')) : '';
+    if (!visible) {
+      if (!grid.querySelector('.wo-edit-no-results')) {
+        const empty=document.createElement('div'); empty.className='wo-edit-no-results'; empty.textContent='Aucune tâche ne correspond à votre recherche.'; grid.appendChild(empty);
+      }
+    } else {
+      const empty=grid.querySelector('.wo-edit-no-results'); if(empty)empty.remove();
+    }
+  }
 
   function openEditFlightModal(flightKey) {
     __editFlightKey = flightKey;
+    __editIsBlank = String(flightKey || '').toUpperCase().startsWith('BLANK-');
     const f = flights.find(fl => (fl.flight || '') === flightKey) || {};
     const ov = flightOverrides[flightKey.toUpperCase()] || {};
 
-    document.getElementById('edit-flight-title').textContent = flightKey;
+    const titleEl=document.getElementById('edit-flight-title');
+    const kickerEl=document.getElementById('edit-flight-kicker');
+    const copyEl=document.getElementById('edit-flight-copy');
+    const iconEl=document.getElementById('edit-flight-title-icon');
+    const badgeEl=document.getElementById('edit-flight-blank-badge');
+    const saveEl=document.getElementById('edit-save-btn');
+    const resetEl=document.getElementById('edit-reset-btn');
+    if(titleEl) titleEl.textContent = __editIsBlank ? 'Nouvelle worksheet' : (flightKey || 'Avion');
+    if(kickerEl) kickerEl.textContent = __editIsBlank ? 'WORKSHEET / CRÉATION' : 'WORKSHEET / ÉDITION';
+    if(iconEl) iconEl.textContent = __editIsBlank ? '＋' : '✎';
+    if(copyEl) copyEl.textContent = __editIsBlank ? 'Créez une fiche personnalisée et choisissez uniquement les services nécessaires. Elle sera indépendante des vols détectés.' : 'Modifiez les informations de ce vol et choisissez les services à intégrer à sa worksheet. Les changements restent actifs pendant la session.';
+    if(badgeEl) badgeEl.classList.toggle('hidden', !__editIsBlank);
+    if(saveEl) saveEl.innerHTML = __editIsBlank ? '&#128190; Créer la worksheet' : '&#128190; Sauvegarder';
+    if(resetEl) resetEl.textContent = __editIsBlank ? 'Réinitialiser' : 'Réinitialiser le vol';
 
     const fieldDefs = [
-      { key:'flight',  label:'N° de vol',   base:f.flight },
+      { key:'flight',  label:'N° de vol',   base:__editIsBlank ? '' : f.flight },
       { key:'reg',     label:'Immat.',      base:f.reg },
       { key:'time',    label:'Heure ETA',   base:f.time },
       { key:'stand',   label:'Stand',       base:f.stand },
@@ -3973,8 +4074,8 @@ async function woLggLogout(){
     ];
     document.getElementById('edit-flight-fields').innerHTML = fieldDefs.map(function(fd) {
       const val = ov[fd.key] !== undefined ? ov[fd.key] : '';
-      const ph = fd.base ? ('actuel : ' + fd.base) : '';
-      return '<div>' +
+      const ph = fd.base ? ('Actuel : ' + fd.base) : (fd.key==='flight' && __editIsBlank ? 'Ex. Worksheet Catering' : '');
+      return '<div class="wo-edit-field-card">' +
         '<label class="field-label">' + fd.label + '</label>' +
         '<input type="text" id="edit-field-' + fd.key + '" placeholder="' + (ph||'').replace(/"/g,'&quot;') + '" value="' + (val||'').replace(/"/g,'&quot;') + '">' +
       '</div>';
@@ -3982,18 +4083,26 @@ async function woLggLogout(){
 
     document.getElementById('edit-flight-grid').innerHTML = WORKSHEET_GRID_CELLS.slice().sort(function(a,b){ return a.label.localeCompare(b.label,'fr',{sensitivity:'base'}); }).map(function(cell) {
       const checked = ov.grid && ov.grid[cell.key] === true;
-      return '<label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--t1);background:var(--bg2);border:1px solid var(--b2);border-radius:6px;padding:6px 8px;cursor:pointer">' +
-        '<input type="checkbox" id="edit-grid-' + cell.key + '" ' + (checked ? 'checked' : '') + ' style="accent-color:#ffb400;flex-shrink:0">' +
-        '<span style="line-height:1.2">' + cell.label + '</span>' +
+      return '<label class="wo-edit-task" data-task-label="' + String(cell.label).replace(/"/g,'&quot;') + '">' +
+        '<input type="checkbox" id="edit-grid-' + cell.key + '" ' + (checked ? 'checked' : '') + '>' +
+        '<span>' + cell.label + '</span>' +
       '</label>';
     }).join('');
-
+    const totalEl=document.getElementById('edit-task-count');
+    if(totalEl) totalEl.textContent=WORKSHEET_GRID_CELLS.length + ' TÂCHE(S)';
+    const search=document.getElementById('edit-task-search');
+    if(search) search.value='';
+    filterEditTasks('');
     document.getElementById('edit-flight-overlay').classList.remove('hidden');
+    requestAnimationFrame(function(){ if(search) search.focus({preventScroll:true}); });
   }
 
   function closeEditFlightModal() {
     document.getElementById('edit-flight-overlay').classList.add('hidden');
     __editFlightKey = null;
+    __editIsBlank = false;
+    const search=document.getElementById('edit-task-search');
+    if(search) search.value='';
   }
 
   function saveEditFlightOverride() {
@@ -4073,7 +4182,6 @@ async function woLggLogout(){
           '<span class="flight-stand">vierge</span>' +
         '</div>' +
         '<div class="wo-blank-actions">' +
-        '<button class="wo-blank-action edit" onclick="openEditFlightModal(&quot;' + b.key + '&quot;)" title="Modifier">&#9998; Éditer</button>' +
         '<button class="wo-blank-action print" onclick="printBlankWorksheet(&quot;' + b.key + '&quot;)" title="Imprimer cette worksheet uniquement">&#128424; Imprimer</button>' +
         '<button class="wo-blank-action delete" onclick="deleteBlankWorksheet(&quot;' + b.key + '&quot;)" title="Supprimer">&#128465;</button>' +
         '</div>' +
@@ -4192,23 +4300,7 @@ async function woLggLogout(){
       const lines = raw.split('\n');
       const HANDLERS_OK = ['CHALLENGE', 'WFS', 'SWISSPORT'];
 
-      // First pass: collect ALL ETH departures indexed by registration
-      const ethDepartures = {}; // reg -> flight number
-      lines.forEach(line => {
-        const trimmed = line.trim();
-        if (!trimmed.includes('Departures')) return;
-        const cols = trimmed.replace(/\t/g, '  ').split(/  +/).map(c => c.trim()).filter(c => c);
-        const dirIdx = cols.findIndex(c => c === 'Departures');
-        if (dirIdx === -1) return;
-        const flt = (cols[dirIdx + 2] || '').toUpperCase();
-        const reg = (cols[dirIdx + 3] || '').toUpperCase();
-        const hnd = (cols[dirIdx + 9] || '').toUpperCase();
-        if (flt.startsWith('ETH') && hnd.includes('AVIAPARTNER') && reg) {
-          ethDepartures[reg] = flt; // store departure flight number by reg
-        }
-      });
-
-      // Second pass: process arrivals + ETH arrivals that have a matching departure
+      // Process arrivals. ETH flights are intentionally ignored by the automatic FIDS detector.
       lines.forEach(line => {
         const trimmed = line.trim();
         if (!trimmed.includes('Arrivals')) return;
@@ -4250,23 +4342,9 @@ async function woLggLogout(){
         const handler = (beforeTimes.length >= 1 ? beforeTimes[beforeTimes.length - 1] : '').toUpperCase();
 
         const flightUp    = (flight || '').toUpperCase();
-        const isETHFlight = flightUp.startsWith('ETH') && handler.includes('AVIAPARTNER');
-
-        // For ETH: only include if there's a matching departure for this registration
-        if (isETHFlight) {
-          const regUp = reg.toUpperCase();
-          if (!ethDepartures[regUp]) return; // no departure found, skip
-          // Use the departure flight number for the worksheet
-          const depFlightNum = ethDepartures[regUp];
-          const sched    = after[firstTimeIdx]     || '';
-          const rawEst2  = after[firstTimeIdx + 1] || '';
-          const rawAct2  = after[firstTimeIdx + 2] || '';
-          const est    = timePattern.test(rawEst2) ? rawEst2 : '';
-          const actual = timePattern.test(rawAct2) ? rawAct2 : '';
-          const time   = actual || est || sched || '—';
-          flights.push({ time, flight: depFlightNum, reg, stand, handler, manual: false, isETH: true });
-          return;
-        }
+        // ETH is never accepted by automatic FIDS detection. It can only enter
+        // the workflow through the Catering section filled manually by the user.
+        if (flightUp.startsWith('ETH')) return;
 
         // Normal handlers filter
         const HANDLERS_OK2 = ['CHALLENGE', 'WFS', 'SWISSPORT'];
@@ -4614,8 +4692,8 @@ function restoreActiveTextField(saved) {
       // ASL 737: appears in the normal cleaning list only when its ASL checkbox is checked.
       // It remains visible in the dedicated ASL 737 list regardless.
       if (isASL737) return '';
-      // Les vols ETH ne s'affichent plus dans la liste "avions a nettoyer" (charges via l'API) :
-      // ils gardent quand meme leur worksheet Catering si selectionnes.
+      // Les vols ETH ne sont jamais ajoutés à la liste des vols détectés automatiquement.
+      // Ils restent acceptés uniquement dans la section Caterings remplie manuellement.
       if (f.isETH === true) return '';
       const regMissing = !f.reg;
       const isNewAircraft = !!f.reg && !f.manual && !knownRegs[f.reg];
@@ -4959,6 +5037,10 @@ function restoreActiveTextField(saved) {
     const stand  = document.getElementById('m-stand').value.trim().toUpperCase();
     const handlingChecked = document.getElementById('m-handling') ? document.getElementById('m-handling').checked : false;
     if (!flight || !time) { alert('N° de vol et heure requis.'); return; }
+    if (flight.startsWith('ETH')) {
+      alert('Les vols ETH ne sont pas acceptés ici. Ils peuvent uniquement être ajoutés via la section Caterings.');
+      return;
+    }
     var detected = detectCompany(flight, reg);
     var manualCompany = (document.getElementById('m-company')?.value || '').trim();
     var handler  = detected.company;
@@ -5209,18 +5291,13 @@ ${(function(){
 
   // Worksheet rules
   function needsFullTransit(f) {
-    // Edit Mode : un vol explicitement edite manuellement doit toujours pouvoir
-    // generer sa worksheet, meme si son numero de vol change (l'override peut
-    // aussi porter sur un vol ETH normalement exclu — voir plus bas — c'est un
-    // choix delibere de l'utilisateur en editant le vol).
+    // Edit Mode : un vol explicitement édité manuellement peut générer sa worksheet.
+    // Les vols ETH restent toutefois exclus du circuit FIDS automatique et ne sont
+    // acceptés que dans la section Caterings remplie manuellement.
     var __ovKey = (f.flight || '').toUpperCase();
     if (flightOverrides[__ovKey]) return true;
-    // Exclusion prioritaire et absolue : un vol ETH ne doit JAMAIS obtenir de
-    // worksheet ici, meme si son numero de vol affiche (celui du DEPART, pas
-    // l'ETH lui-meme — voir buildFlightsFromApiData/analyzeFids) correspond par
-    // coincidence a un prefixe ou un handler couvert par les regles ci-dessous
-    // (TAY, CHALLENGE, WFS, SWISSPORT...). Seule la section "Caterings" dediee
-    // peut generer une worksheet pour ces vols (sauf override explicite ci-dessus).
+    // Exclusion prioritaire : un vol ETH ne doit pas entrer dans le circuit normal.
+    // Les ETH sont traités uniquement par la section Caterings remplie manuellement.
     if (f.isETH === true) return false;
     if (f.manual === true) return true; // un vol ajoute a la main doit toujours pouvoir etre imprime
     var flight  = (f.flight  || '').toUpperCase();
