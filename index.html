@@ -6841,146 +6841,161 @@ ${(function(){
   }
   function generateCrewBusSheet(){
     const selected=(crewBusFlights||[]).filter(f=>f.selected);
-    if(!selected.length){alert('Sélectionnez au moins un vol pour générer la feuille Crew Bus.');return;}
+    if(!selected.length){
+      alert('Sélectionnez au moins un vol pour générer la feuille Crew Bus.');
+      return;
+    }
 
-    const dateVal=document.getElementById('shift-date')?.value||'';
     const shift=selectedShift?.name||'—';
-    const dl=dateVal?dateVal.split('-').reverse().join('/'):'—';
-    const arr=selected.filter(f=>f.type==='arr').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const dep=selected.filter(f=>f.type==='dep').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
     const esc=crewBusEscape;
 
-    // V73 — Crew Bus worksheet rebuilt from the supplied paper reference.
-    // IMPORTANT: this is intentionally a separate print template. It does
-    // not reuse the generic worksheet engine and does not alter Crew Bus
-    // selection/FIDS logic.
-    // Reference layout:
-    //   7 columns in the main table:
-    //   Registration | ARR | Pick up | Time | Flight Number | Crew | Stand
-    //   2 grouped blocks below:
-    //   Headset (3 cols) | Handling (4 cols)
-    // No Renting block is printed: the paper reference has none.
-    const BORDER='1px solid #222';
-    const TH='border:'+BORDER+';font-weight:700;background:#f1f1f1;text-align:center;vertical-align:middle;padding:0 3pt;font-size:9pt;line-height:1.05';
-    const TD='border:'+BORDER+';text-align:center;vertical-align:middle;padding:0 3pt;font-size:9.5pt;line-height:1.05';
+    /*
+      V73 — CREW BUS MASTER TEMPLATE
+      Source of truth: crewbus_template_spec.json / crewbus_template_prompt.txt
 
-    function mainRow(f,isDep){
-      return '<tr style="height:8.2mm">'+
-        '<td style="'+TD+';font-weight:700">'+esc(f.reg||'')+'</td>'+
-        '<td style="'+TD+';font-weight:700">ARR</td>'+
-        '<td style="'+TD+';font-weight:700">Pick up</td>'+
-        '<td style="'+TD+';font-weight:700">'+esc(f.time||'')+'</td>'+
-        '<td style="'+TD+';font-weight:700">'+esc(f.flight||'')+'</td>'+
-        '<td style="'+TD+'"></td>'+
-        '<td style="'+TD+'">'+esc(f.stand||'')+'</td>'+
-      '</tr>';
-    }
-    function emptyMainRow(){
-      return '<tr style="height:8.2mm">'+
-        '<td style="'+TD+'"></td><td style="'+TD+';font-weight:700">ARR</td><td style="'+TD+';font-weight:700">Pick up</td>'+
-        '<td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td>'+
-      '</tr>';
-    }
+      Clean vector/grid recreation. No scanned image is used.
+      Reference canvas: 4816 × 6876 px @ 600 DPI.
+      Main grid: 170 | 1180 | 1475 | 1825 | 2775 | 3720 | 4135 | 4745
+      Main: title 155px + header 240px + 12 data rows × 240px.
+      Lower: group 220px + header 220px + 5 data rows × 220px.
+    */
+
+    const rows=(crewBusFlights||[])
+      .filter(f=>f.selected)
+      .sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time))
+      .slice(0,12);
+
+    const headsetRows=(crewBusFlights||[])
+      .filter(f=>f.selected && f.type==='dep' && f.headset===true)
+      .slice(0,5)
+      .map(f=>({
+        reg:f.reg||'',
+        flt:f.flight||'',
+        depart:f.eta||f.departureTime||f.time||''
+      }));
+
+    const handlingRows=(crewBusFlights||[])
+      .filter(f=>f.selected && f.wfsMode==='handling')
+      .slice(0,5)
+      .map(f=>({
+        reg:f.reg||'',
+        flt:f.flight||'',
+        depArr:(f.type==='dep' ? 'DEP ' : 'ARR ') + (f.eta||f.departureTime||f.time||''),
+        wfs:'WFS'
+      }));
+
+    const COLS=[1010,295,350,950,945,415,610];
+    const colgroup=COLS.map(w=>'<col style="width:'+w+'px">').join('');
+
+    const text=(v)=>esc(v||'');
 
     let mainRows='';
-    arr.forEach(f=>mainRows+=mainRow(f,false));
-    dep.forEach(f=>mainRows+=mainRow(f,true));
-
-    // The reference sheet has exactly 19 working lines below the headers.
-    // If more than 19 flights are selected, add rows rather than breaking
-    // the template; normal shifts remain visually identical to the paper.
-    const minimumRows=19;
-    const renderedRows=selected.length;
-    for(let i=renderedRows;i<minimumRows;i++)mainRows+=emptyMainRow();
-
-    const headsetRows=dep.filter(f=>f.headset===true).map(f=>({
-      reg:f.reg||'', flt:f.flight||'', depart:f.eta||f.departureTime||f.time||''
-    }));
-
-    const handlingRows=selected.filter(f=>f.wfsMode==='handling').map(f=>({
-      reg:f.reg||'',
-      flt:f.flight||'',
-      depArr:(f.type==='dep'?'DEP ':'ARR ')+(f.type==='dep'?(f.eta||f.departureTime||f.time||''):(f.eta||f.time||'')),
-      handler:String(f.handler||'').toUpperCase().includes('WFS')?'WFS':''
-    }));
-
-    // The physical reference contains 4 blank Handling lines and 3 Headset
-    // columns. Keep the lower block compact and let it grow only when needed.
-    const bottomCount=Math.max(4,headsetRows.length,handlingRows.length);
-    let bottomRows='';
-    for(let i=0;i<bottomCount;i++){
-      const h=headsetRows[i]||{};
-      const g=handlingRows[i]||{};
-      bottomRows+='<tr style="height:8.2mm">'+
-        '<td style="'+TD+'">'+esc(h.reg||'')+'</td>'+ 
-        '<td style="'+TD+'">'+esc(h.flt||'')+'</td>'+ 
-        '<td style="'+TD+';border-right:2px solid #111">'+esc(h.depart||'')+'</td>'+ 
-        '<td style="'+TD+'">'+esc(g.reg||'')+'</td>'+ 
-        '<td style="'+TD+'">'+esc(g.flt||'')+'</td>'+ 
-        '<td style="'+TD+'">'+esc(g.depArr||'')+'</td>'+ 
-        '<td style="'+TD+'">'+esc(g.handler||'')+'</td>'+ 
-      '</tr>';
+    for(let i=0;i<12;i++){
+      const f=rows[i];
+      mainRows +=
+        '<tr class="main-data-row">'+
+          '<td class="main-data reg">'+text(f?.reg)+'</td>'+
+          '<td class="main-data fixed-label">ARR</td>'+
+          '<td class="main-data fixed-label pickup">Pick up</td>'+
+          '<td class="main-data value">'+text(f?.time)+'</td>'+
+          '<td class="main-data flight">'+text(f?.flight)+'</td>'+
+          '<td class="main-data crew"></td>'+
+          '<td class="main-data stand">'+text(f?.stand)+'</td>'+
+        '</tr>';
     }
 
-    const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Crew Bus - LGG</title><style>'+ 
-      '@page{size:A4 portrait;margin:10mm}'+
-      '*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'+
-      'html,body{width:100%;min-height:100%;background:#fff;color:#000}'+
-      'body{font-family:Arial,Helvetica,sans-serif}'+
-      '.crewbus-sheet{width:100%;margin:0 auto}'+
-      'table{width:100%;border-collapse:collapse;table-layout:fixed;margin:0}'+
-      'td{overflow:hidden;white-space:nowrap}'+
-      '.main-table{margin-bottom:7mm}'+
-      '.main-title{height:9mm;font-size:10.5pt;font-weight:700;text-align:left;padding-left:3pt!important}'+
-      '.main-title-shift{text-align:center!important;font-size:10.5pt;font-weight:700}'+
-      '.group-title{height:8mm;font-size:9pt}'+
-      '.sub-head{height:9mm;font-size:8pt}'+
-      '</style></head><body><div class="crewbus-sheet">'+
-      '<table class="main-table">'+
-        '<colgroup><col style="width:21%"><col style="width:6%"><col style="width:7%"><col style="width:20%"><col style="width:18%"><col style="width:8%"><col style="width:20%"></colgroup>'+
-        '<tr>'+ 
-          '<td class="main-title" style="'+TH+'" colspan="3">Crew bus service</td>'+ 
-          '<td class="main-title-shift" style="'+TH+'" colspan="4">'+esc(shift)+'</td>'+ 
-        '</tr>'+ 
-        '<tr>'+ 
-          '<td style="'+TH+'">REGISTRATION</td>'+ 
-          '<td style="'+TH+'" colspan="3">TIME (LOCAL)</td>'+ 
-          '<td style="'+TH+'">FLIGHT NUMBER</td>'+ 
-          '<td style="'+TH+'">CREW</td>'+ 
-          '<td style="'+TH+'">STAND</td>'+ 
-        '</tr>'+ 
-        '<tr>'+ 
-          '<td style="'+TH+'"></td>'+ 
-          '<td style="'+TH+'">ARR</td>'+ 
-          '<td style="'+TH+'">Pick up</td>'+ 
-          '<td style="'+TH+'"></td>'+ 
-          '<td style="'+TH+'"></td>'+ 
-          '<td style="'+TH+'"></td>'+ 
-          '<td style="'+TH+'">STAND</td>'+ 
-        '</tr>'+ 
-        mainRows+ 
-      '</table>'+ 
-      '<table class="bottom-table">'+ 
-        '<colgroup><col style="width:14.2857%"><col style="width:14.2857%"><col style="width:14.2857%"><col style="width:14.2857%"><col style="width:14.2857%"><col style="width:14.2857%"><col style="width:14.2858%"></colgroup>'+ 
-        '<tr>'+ 
-          '<td class="group-title" style="'+TH+'" colspan="3">Headset</td>'+ 
-          '<td class="group-title" style="'+TH+'" colspan="4">Handling</td>'+ 
-        '</tr>'+ 
-        '<tr>'+ 
-          '<td class="sub-head" style="'+TH+'">REGISTRATION</td>'+ 
-          '<td class="sub-head" style="'+TH+'">FLT #</td>'+ 
-          '<td class="sub-head" style="'+TH+';border-right:2px solid #111">DEPART</td>'+ 
-          '<td class="sub-head" style="'+TH+'">REGISTRATION</td>'+ 
-          '<td class="sub-head" style="'+TH+'">FLT #</td>'+ 
-          '<td class="sub-head" style="'+TH+'">DEP // ARR</td>'+ 
-          '<td class="sub-head" style="'+TH+'">HANDLING WFS</td>'+ 
-        '</tr>'+ 
-        bottomRows+ 
-      '</table>'+ 
+    let lowerRows='';
+    for(let i=0;i<5;i++){
+      const h=headsetRows[i]||{};
+      const g=handlingRows[i]||{};
+      lowerRows +=
+        '<tr class="lower-data-row">'+
+          '<td class="lower-data">'+text(h.reg)+'</td>'+
+          '<td class="lower-data">'+text(h.flt)+'</td>'+
+          '<td class="lower-data">'+text(h.depart)+'</td>'+
+          '<td class="lower-data">'+text(g.reg)+'</td>'+
+          '<td class="lower-data">'+text(g.flt)+'</td>'+
+          '<td class="lower-data">'+text(g.depArr)+'</td>'+
+          '<td class="lower-data">'+text(g.wfs)+'</td>'+
+        '</tr>';
+    }
+
+    const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">'+
+      '<title>Crew Bus - LGG</title>'+
+      '<style>'+
+      '@page{size:203.88mm 291.08mm;margin:0}'+
+      '*{box-sizing:border-box;margin:0;padding:0}'+
+      'html,body{width:203.88mm;height:291.08mm;background:#fff;color:#111}'+
+      'body{font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'+
+      '.crewbus-sheet{position:relative;width:4816px;height:6876px;background:#fff;overflow:hidden}'+
+      '.crewbus-table{position:absolute;table-layout:fixed;border-collapse:collapse;border-spacing:0;font-family:Arial,Helvetica,sans-serif;color:#111}'+
+      '.crewbus-table td{border:3px solid #222;overflow:hidden}'+
+
+      /* MAIN TABLE — x=170..4745, y=85..3330 */
+      '.main-table{left:170px;top:85px;width:4575px;height:3245px}'+
+      '.main-title-row{height:155px}'+
+      '.main-title-cell{height:155px;font-size:45px;font-weight:700;text-align:left;vertical-align:middle;padding-left:24px}'+
+      '.main-title-shift{height:155px;font-size:45px;font-weight:700;text-align:center;vertical-align:middle}'+
+      '.main-header-row{height:240px}'+
+      '.main-header{height:240px;font-size:43px;font-weight:700;text-align:center;vertical-align:middle;padding:0 8px;line-height:1.05}'+
+      '.main-data-row{height:240px}'+
+      '.main-data{height:240px;font-size:44px;font-weight:400;text-align:center;vertical-align:middle;padding:0 10px;line-height:1}'+
+      '.main-data.reg,.main-data.flight,.main-data.stand{font-weight:700}'+
+      '.main-data.fixed-label{font-weight:700;text-align:center}'+
+      '.main-data.pickup{text-align:left;padding-left:24px}'+
+
+      /* LOWER TABLE — x=195..4750, y=3530..5060 */
+      '.lower-table{left:195px;top:3530px;width:4555px;height:1530px}'+
+      '.lower-group-row{height:220px}'+
+      '.lower-group{height:220px;font-size:45px;font-weight:700;text-align:center;vertical-align:middle;position:relative}'+
+      '.lower-group.headset{border-right:3px solid #222}'+
+      '.lower-group.headset:after{content:"|";position:absolute;right:-21px;top:50%;transform:translateY(-50%);background:#fff;padding:0 4px;font-weight:700}'+
+      '.lower-header-row{height:220px}'+
+      '.lower-header{height:220px;font-size:38px;font-weight:700;text-align:center;vertical-align:middle;padding:0 8px;line-height:1.02;white-space:normal}'+
+      '.lower-data-row{height:220px}'+
+      '.lower-data{height:220px;font-size:40px;font-weight:400;text-align:center;vertical-align:middle;padding:0 8px;line-height:1}'+
+      '.crewbus-table td{background:#fff!important}'+
+      '</style></head><body>'+
+      '<div class="crewbus-sheet">'+
+
+      '<table class="crewbus-table main-table">'+
+        '<colgroup>'+colgroup+'</colgroup>'+
+        '<tr class="main-title-row">'+
+          '<td class="main-title-cell" colspan="3">Crew bus service</td>'+
+          '<td class="main-title-shift" colspan="4">'+text(shift)+'</td>'+
+        '</tr>'+
+        '<tr class="main-header-row">'+
+          '<td class="main-header">REGISTRATION</td>'+
+          '<td class="main-header" colspan="3">TIME (LOCAL)</td>'+
+          '<td class="main-header">FLIGHT NUMBER</td>'+
+          '<td class="main-header">CREW</td>'+
+          '<td class="main-header">STAND</td>'+
+        '</tr>'+
+        mainRows+
+      '</table>'+
+
+      '<table class="crewbus-table lower-table">'+
+        '<colgroup>'+colgroup+'</colgroup>'+
+        '<tr class="lower-group-row">'+
+          '<td class="lower-group headset" colspan="3">Headset</td>'+
+          '<td class="lower-group" colspan="4">Handling</td>'+
+        '</tr>'+
+        '<tr class="lower-header-row">'+
+          '<td class="lower-header">REGISTRATION</td>'+
+          '<td class="lower-header">FLT #</td>'+
+          '<td class="lower-header">DEPART</td>'+
+          '<td class="lower-header">REGISTRATION</td>'+
+          '<td class="lower-header">FLT #</td>'+
+          '<td class="lower-header">DEP // ARR</td>'+
+          '<td class="lower-header">HANDLING WFS</td>'+
+        '</tr>'+
+        lowerRows+
+      '</table>'+
       '</div></body></html>';
 
     const w=window.open('','_blank');
-    if(w)printHtmlWhenReady(w,htmlOut);else alert('Autorisez les popups pour générer la feuille Crew Bus.');
+    if(w)printHtmlWhenReady(w,htmlOut);
+    else alert('Autorisez les popups pour générer la feuille Crew Bus.');
   }
 
   function generateASL737Only() {
