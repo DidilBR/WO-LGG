@@ -4301,6 +4301,7 @@ async function woLggLogout(){
   }
 
   function showRefreshBadge(n, details) {
+    window.__woLastOperationRefresh = { n: n, details: Array.isArray(details) ? details.slice() : [] };
     const el=document.getElementById('refresh-badge');
     const txt=document.getElementById('refresh-badge-text');
     if(!el||!txt)return;
@@ -4385,7 +4386,7 @@ async function woLggLogout(){
   function startAutoRefresh() {
     if (autoRefreshTimer) clearInterval(autoRefreshTimer);
     if (!autoRefreshEnabled) return;
-    autoRefreshTimer = setInterval(checkForFlightUpdates, autoRefreshMinutes * 60 * 1000);
+    autoRefreshTimer = setInterval(function(){ window.checkForFlightUpdates(false, 'auto'); }, autoRefreshMinutes * 60 * 1000);
   }
 
   function updateRefreshToggleButtonIcon() {
@@ -4723,219 +4724,7 @@ async function woLggLogout(){
     const page = makeSheet(f);
     const html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheet ' +
       ((f.reg || f.flight || 'Worksheet').replace(/[<>]/g,'')) +
-      '</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:avoid;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}</style></head><body>' + page + '
-<!-- V67 — Synchronisation FIDS Operations + Crew Bus + feuille Crew Bus modele source -->
-<script id="wo-lgg-v67-fids-sync-crewbus">
-(function(){
-  // Conserve les implementations V66 avant de les etendre sans casser les controles existants.
-  const __v66CheckForFlightUpdates = window.checkForFlightUpdates;
-  const __v66LoadCrewBusFromFids = window.loadCrewBusFromFids;
-  let __v67OperationDetails=[];
-  const __v66ShowRefreshBadge = window.showRefreshBadge;
-  window.showRefreshBadge = function(n, details){
-    __v67OperationDetails=Array.isArray(details)?details:[];
-    if(typeof __v66ShowRefreshBadge==='function')return __v66ShowRefreshBadge(n,details);
-  };
-
-  function cbDetails(oldList, newList){
-    const details=[];
-    const oldMap=new Map((oldList||[]).map(f=>[f.key,f]));
-    const newMap=new Map((newList||[]).map(f=>[f.key,f]));
-    const fields=[['Heure','time'],['ETA / ETD','eta'],['Stand','stand'],['Immatriculation','reg'],['Handler','handler']];
-    newMap.forEach((nf,key)=>{
-      const of=oldMap.get(key);
-      if(!of){
-        details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||'',field:'Nouveau vol',oldValue:'Absent',newValue:[nf.type==='dep'?'Pick up '+nf.time:'ETA '+nf.time,nf.stand].filter(Boolean).join(' · ')});
-        return;
-      }
-      fields.forEach(([label,k])=>{
-        const ov=of[k]??'', nv=nf[k]??'';
-        if(String(ov)!==String(nv)) details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||of.reg||'',field:label,oldValue:ov,newValue:nv});
-      });
-    });
-    oldMap.forEach((of,key)=>{
-      if(newMap.has(key))return;
-      details.push({source:'Crew Bus',flight:of.flight,reg:of.reg||'',field:'Vol retiré',oldValue:[of.type==='dep'?'Pick up '+of.time:'ETA '+of.time,of.stand].filter(Boolean).join(' · ')||'Présent',newValue:'Absent'});
-    });
-    return details;
-  }
-
-  function refreshCrewBusFromSharedFids(arrivals, departures, opts){
-    opts=opts||{};
-    if(!Array.isArray(arrivals)||!Array.isArray(departures))return [];
-    const oldList=Array.isArray(window.crewBusFlights)?window.crewBusFlights:[];
-    const oldByKey=new Map(oldList.map(f=>[f.key,f]));
-    const oldManual=oldList.filter(f=>f.manual);
-    let next=[];
-    try{ next=crewBusNormalizeList(arrivals,departures); }catch(e){ console.warn('Crew Bus normalize error',e); return []; }
-    next.forEach(f=>{
-      const old=oldByKey.get(f.key);
-      if(old){
-        f.selected=!!old.selected;
-        f.headset=!!old.headset;
-        f.wfsMode=(old.wfsModeUserSet===true)?(old.wfsMode||null):null;
-        f.wfsModeUserSet=old.wfsModeUserSet===true;
-        f.reg=f.reg||old.reg;
-        f.stand=f.stand||old.stand;
-      }else if(f.eligible){
-        f.selected=true;
-      }
-    });
-    oldManual.forEach(f=>{ if(!next.some(x=>x.key===f.key)) next.push(f); });
-    const details=cbDetails(oldList,next);
-    window.lastArrivals=arrivals;
-    window.lastDepartures=departures;
-    window.crewBusFlights=next;
-    window.crewBusSelected=new Set(next.filter(f=>f.selected).map(f=>f.key));
-    window.crewBusLoaded=true;
-    if(typeof renderCrewBusFlights==='function')renderCrewBusFlights();
-    if(typeof setCrewBusStatus==='function')setCrewBusStatus('ready','FIDS opérationnel');
-    if(typeof setCrewBusLoading==='function')setCrewBusLoading(next.length+' vol(s) disponibles — sélectionnez ceux à intégrer.');
-    if(typeof woLggMarkWorkChanged==='function' && !opts.silent)woLggMarkWorkChanged('crewBusFids');
-    return details;
-  }
-
-  // Le bouton Actualiser du Crew Bus rejoint le même cycle FIDS que les opérations.
-  window.loadCrewBusFromFids = async function(manual){
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      // Un seul cycle partagé : ARR + DEP servent ensuite aux deux modules.
-      await window.checkForFlightUpdates(!!manual,'crewbus');
-    }else if(typeof __v66LoadCrewBusFromFids==='function'){
-      await __v66LoadCrewBusFromFids(manual);
-    }
-  };
-
-  // Un seul fetch ARR + DEP par cycle. Les données servent simultanément aux opérations
-  // et au Crew Bus, même lorsque l'utilisateur est actuellement sur l'étape 4.
-  window.checkForFlightUpdates = async function(manual, source){
-    manual=!!manual;
-    source=source||'operations';
-    if(!manual && currentStep!==3 && currentStep!==4)return;
-    if(!manual && currentStep===3 && (!flights || flights.length===0) && !crewBusLoaded)return;
-
-    // L'ancienne routine sait déjà comparer et appliquer les changements Operations,
-    // afficher le détail, conserver les saisies manuelles, etc. On l'exécute lorsqu'on
-    // est sur l'étape 3, puis on réutilise exactement les ARR/DEP qu'elle vient de charger.
-    // Toujours passer par la routine Operations V66 avec le mode manuel interne :
-    // elle fait un unique fetch ARR + DEP, met à jour les opérations et expose le même
-    // instantané via lastArrivals/lastDepartures. Nous le réutilisons immédiatement
-    // pour le Crew Bus, y compris lorsque l'utilisateur est à l'étape 4.
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      await __v66CheckForFlightUpdates(true);
-    }
-
-    // La routine V66 a mis à jour lastArrivals/lastDepartures. Le Crew Bus reçoit donc
-    // strictement le même instantané FIDS, sans second téléchargement.
-    let crewDetails=[];
-    if(Array.isArray(lastArrivals)&&Array.isArray(lastDepartures)){
-      crewDetails=refreshCrewBusFromSharedFids(lastArrivals,lastDepartures,{silent:true});
-    }
-
-    // Si le cycle vient du Crew Bus, son bouton est remis à l'état normal.
-    const cb=document.getElementById('crewbus-refresh-btn');
-    if(cb){cb.disabled=false;cb.classList.remove('is-loading');}
-
-    // En étape 4, afficher un résumé propre du refresh partagé.
-    if(currentStep===4){
-      const combined=__v67OperationDetails.concat(crewDetails);
-      const n=combined.length;
-      showRefreshBadge(n,combined);
-    }
-    __v67OperationDetails=[];
-  };
-
-  // ── Feuille Crew Bus : même structure que le modèle source fourni ──
-  // On reprend le modèle A4 du fichier de référence : tableau principal
-  // Registration / Flight Number / ARR / Pick up / Time / Note / Stand,
-  // puis le bloc Headset / Handling / Renting sur 8 colonnes.
-  window.generateCrewBusSheet = function(){
-    const selected=(crewBusFlights||[]).filter(f=>f.selected);
-    if(!selected.length){alert('Sélectionnez au moins un vol pour générer la feuille Crew Bus.');return;}
-    const dateVal=document.getElementById('shift-date')?.value||'';
-    const shift=selectedShift?.name||'—';
-    const dl=dateVal?dateVal.split('-').reverse().join('/'):'—';
-    const arr=selected.filter(f=>f.type==='arr').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const dep=selected.filter(f=>f.type==='dep').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const esc=crewBusEscape;
-    const safe=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    const TD='border:1.5pt solid #000;padding:4pt 5pt;vertical-align:middle;height:10mm';
-    const TDH=TD+';font-weight:bold;text-align:center;font-size:8pt;font-variant:small-caps';
-    const BADGEARR='<span style="display:inline-block;border:1.5pt solid #2d7a2d;border-radius:3pt;padding:1pt 4pt;font-size:7pt;font-weight:bold;background:#d4edda;color:#1a5c1a">ARR</span>';
-    const BADGEPUP='<span style="display:inline-block;border:1.5pt solid #c0392b;border-radius:3pt;padding:1pt 5pt;font-size:8pt;font-style:italic;background:#fde8e8;color:#7b1010;white-space:nowrap">Pick up</span>';
-    function row(f,isDep){
-      return '<tr>'+
-        '<td style="'+TD+';font-size:14pt;font-weight:700">'+safe(f.reg||'')+'</td>'+
-        '<td style="'+TD+';font-size:13pt;font-weight:700">'+safe(f.flight||'')+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:8pt">'+(isDep?'ARR':BADGEARR)+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+(isDep?BADGEPUP:'Pick up')+'</td>'+
-        '<td style="'+TD+';font-size:18pt;letter-spacing:1pt;text-align:center;font-weight:700">'+safe(f.time||'')+'</td>'+
-        '<td style="'+TD+'"></td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+safe(f.stand||'')+'</td></tr>';
-    }
-    let rows='';
-    arr.forEach(f=>rows+=row(f,false));
-    if(arr.length&&dep.length)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">ARR</td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-    dep.forEach(f=>rows+=row(f,true));
-    const dataRows=arr.length+dep.length+(arr.length&&dep.length?1:0);
-    for(let i=dataRows;i<19;i++)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt">ARR</td><td style="'+TD+';text-align:center;font-size:8pt">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-
-    const hs=dep.filter(f=>f.headset);
-    const handling=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='handling');
-    const renting=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='renting');
-    const rentSeen=new Set();
-    const rentDedup=renting.filter(f=>{const k=f.reg?'reg:'+f.reg:'flt:'+f.flight;if(rentSeen.has(k))return false;rentSeen.add(k);return true;});
-    const handlingMap={};
-    handling.forEach(f=>{const k=f.reg||f.flight;if(!handlingMap[k])handlingMap[k]={reg:f.reg,arr:null,dep:null};if(f.type==='arr')handlingMap[k].arr=f;else handlingMap[k].dep=f;});
-    const handlingGroups=Object.values(handlingMap);
-    const bottomCount=Math.max(4,hs.length,handlingGroups.length,rentDedup.length);
-    let bottom='';
-    for(let i=0;i<bottomCount;i++){
-      const x=hs[i]||null,h=handlingGroups[i]||null,r=rentDedup[i]||null;
-      bottom+='<tr>'+
-        '<td style="'+TD+'">'+safe(x?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(x?.flight||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(x?.eta||'')+'</td>'+ 
-        '<td style="'+TD+'">'+safe(h?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(h?.arr?.flight||h?.dep?.flight||'')+'</td>'+ '<td style="'+TD+';text-align:center">'+safe(h?.arr?.eta||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(h?.dep?.eta||'')+'</td>'+ '<td style="'+TD+'">'+safe(r?.reg||r?.flight||'')+'</td></tr>';
-    }
-
-    const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crew Bus - LGG</title><style>'+ 
-      '@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:9pt}table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:8pt}td,th{border:1pt solid #000;vertical-align:middle}th{font-size:8pt;font-weight:bold;text-align:center;padding:4pt 3pt}.crew-head{font-size:11pt;font-weight:bold}.main-table th{height:8mm}.main-table td{height:10mm}.bottom-table tr{height:30pt}.bottom-table .group{font-size:9pt;font-weight:bold;text-align:center;padding:5pt}.bottom-table .sep{border-right:4pt solid #000!important}</style></head><body>'+ 
-      '<table class="main-table"><colgroup><col style="width:13%"><col style="width:13%"><col style="width:7%"><col style="width:8%"><col style="width:10%"><col style="width:42%"><col style="width:7%"></colgroup>'+ 
-      '<tr><td class="crew-head" colspan="7">Crew bus service&nbsp;&nbsp; '+safe(dl)+'&nbsp;&nbsp; '+safe(shift)+'</td></tr>'+ 
-      '<tr><th>Registration</th><th>Flight Number</th><th>ARR</th><th>Pick up</th><th>Time</th><th>Note</th><th>Stand</th></tr>'+rows+'</table>'+ 
-      '<table class="bottom-table"><colgroup><col style="width:15%"><col style="width:12%"><col style="width:12%"><col style="width:15%"><col style="width:12%"><col style="width:10%"><col style="width:10%"><col style="width:14%"></colgroup>'+ 
-      '<tr><td class="group sep" colspan="3">Headset</td><td class="group sep" colspan="4">Handling</td><td class="group">Renting</td></tr>'+ 
-      '<tr><th>Registration</th><th>FLT #</th><th class="sep">Depart</th><th>Registration</th><th>FLT #</th><th>ARR</th><th class="sep">DEP</th><th></th></tr>'+bottom+'</table>'+ 
-      '</body></html>';
-    const w=window.open('','_blank');
-    if(w)printHtmlWhenReady(w,htmlOut);else alert('Autorisez les popups pour imprimer la feuille Crew Bus.');
-  };
-
-  // Le réglage d'intervalle existant reste la source unique de vérité.
-  // Le timer appelle désormais le cycle partagé, donc ARR + DEP sont actualisés
-  // pour Operations et Crew Bus ensemble.
-  if(typeof startAutoRefresh==='function'){
-    const __v66StartAutoRefresh=startAutoRefresh;
-    window.startAutoRefresh=function(){
-      if(autoRefreshTimer)clearInterval(autoRefreshTimer);
-      if(!autoRefreshEnabled)return;
-      autoRefreshTimer=setInterval(function(){ window.checkForFlightUpdates(false,'auto'); },autoRefreshMinutes*60*1000);
-    };
-  }
-  if(typeof initAutoRefreshUI==='function'){
-    // Rebranche le timer avec la nouvelle fonction partagee.
-    window.initAutoRefreshUI=function(){ updateRefreshToggleButtonIcon(); startAutoRefresh(); };
-  }
-  // Le changement de page ne doit plus masquer le statut Crew Bus du refresh partagé.
-  const __origGoToStep=window.goToStep;
-  if(typeof __origGoToStep==='function'){
-    window.goToStep=function(n){
-      const result=__origGoToStep(n);
-      if(n===4 && autoRefreshEnabled && typeof startAutoRefresh==='function')startAutoRefresh();
-      return result;
-    };
-  }
-})();
-</script>
-</body></html>';
+      '</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:avoid;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}</style></head><body>' + page + '</body></html>';
     const w = window.open('', '_blank');
     if (w) { printHtmlWhenReady(w, html); }
     else { alert('Autorise les popups pour imprimer la worksheet.'); }
@@ -6014,218 +5803,6 @@ ${(function(){
 .crewbus-mode-btn:active,.crewbus-hs-btn:active{transform:scale(.97)}
 @media(max-width:760px){.crewbus-card-actions{justify-content:flex-start;width:100%;padding-left:38px}.crewbus-mode-btn,.crewbus-hs-btn{min-height:38px}}
 </style>
-
-<!-- V67 — Synchronisation FIDS Operations + Crew Bus + feuille Crew Bus modele source -->
-<script id="wo-lgg-v67-fids-sync-crewbus">
-(function(){
-  // Conserve les implementations V66 avant de les etendre sans casser les controles existants.
-  const __v66CheckForFlightUpdates = window.checkForFlightUpdates;
-  const __v66LoadCrewBusFromFids = window.loadCrewBusFromFids;
-  let __v67OperationDetails=[];
-  const __v66ShowRefreshBadge = window.showRefreshBadge;
-  window.showRefreshBadge = function(n, details){
-    __v67OperationDetails=Array.isArray(details)?details:[];
-    if(typeof __v66ShowRefreshBadge==='function')return __v66ShowRefreshBadge(n,details);
-  };
-
-  function cbDetails(oldList, newList){
-    const details=[];
-    const oldMap=new Map((oldList||[]).map(f=>[f.key,f]));
-    const newMap=new Map((newList||[]).map(f=>[f.key,f]));
-    const fields=[['Heure','time'],['ETA / ETD','eta'],['Stand','stand'],['Immatriculation','reg'],['Handler','handler']];
-    newMap.forEach((nf,key)=>{
-      const of=oldMap.get(key);
-      if(!of){
-        details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||'',field:'Nouveau vol',oldValue:'Absent',newValue:[nf.type==='dep'?'Pick up '+nf.time:'ETA '+nf.time,nf.stand].filter(Boolean).join(' · ')});
-        return;
-      }
-      fields.forEach(([label,k])=>{
-        const ov=of[k]??'', nv=nf[k]??'';
-        if(String(ov)!==String(nv)) details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||of.reg||'',field:label,oldValue:ov,newValue:nv});
-      });
-    });
-    oldMap.forEach((of,key)=>{
-      if(newMap.has(key))return;
-      details.push({source:'Crew Bus',flight:of.flight,reg:of.reg||'',field:'Vol retiré',oldValue:[of.type==='dep'?'Pick up '+of.time:'ETA '+of.time,of.stand].filter(Boolean).join(' · ')||'Présent',newValue:'Absent'});
-    });
-    return details;
-  }
-
-  function refreshCrewBusFromSharedFids(arrivals, departures, opts){
-    opts=opts||{};
-    if(!Array.isArray(arrivals)||!Array.isArray(departures))return [];
-    const oldList=Array.isArray(window.crewBusFlights)?window.crewBusFlights:[];
-    const oldByKey=new Map(oldList.map(f=>[f.key,f]));
-    const oldManual=oldList.filter(f=>f.manual);
-    let next=[];
-    try{ next=crewBusNormalizeList(arrivals,departures); }catch(e){ console.warn('Crew Bus normalize error',e); return []; }
-    next.forEach(f=>{
-      const old=oldByKey.get(f.key);
-      if(old){
-        f.selected=!!old.selected;
-        f.headset=!!old.headset;
-        f.wfsMode=(old.wfsModeUserSet===true)?(old.wfsMode||null):null;
-        f.wfsModeUserSet=old.wfsModeUserSet===true;
-        f.reg=f.reg||old.reg;
-        f.stand=f.stand||old.stand;
-      }else if(f.eligible){
-        f.selected=true;
-      }
-    });
-    oldManual.forEach(f=>{ if(!next.some(x=>x.key===f.key)) next.push(f); });
-    const details=cbDetails(oldList,next);
-    window.lastArrivals=arrivals;
-    window.lastDepartures=departures;
-    window.crewBusFlights=next;
-    window.crewBusSelected=new Set(next.filter(f=>f.selected).map(f=>f.key));
-    window.crewBusLoaded=true;
-    if(typeof renderCrewBusFlights==='function')renderCrewBusFlights();
-    if(typeof setCrewBusStatus==='function')setCrewBusStatus('ready','FIDS opérationnel');
-    if(typeof setCrewBusLoading==='function')setCrewBusLoading(next.length+' vol(s) disponibles — sélectionnez ceux à intégrer.');
-    if(typeof woLggMarkWorkChanged==='function' && !opts.silent)woLggMarkWorkChanged('crewBusFids');
-    return details;
-  }
-
-  // Le bouton Actualiser du Crew Bus rejoint le même cycle FIDS que les opérations.
-  window.loadCrewBusFromFids = async function(manual){
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      // Un seul cycle partagé : ARR + DEP servent ensuite aux deux modules.
-      await window.checkForFlightUpdates(!!manual,'crewbus');
-    }else if(typeof __v66LoadCrewBusFromFids==='function'){
-      await __v66LoadCrewBusFromFids(manual);
-    }
-  };
-
-  // Un seul fetch ARR + DEP par cycle. Les données servent simultanément aux opérations
-  // et au Crew Bus, même lorsque l'utilisateur est actuellement sur l'étape 4.
-  window.checkForFlightUpdates = async function(manual, source){
-    manual=!!manual;
-    source=source||'operations';
-    if(!manual && currentStep!==3 && currentStep!==4)return;
-    if(!manual && currentStep===3 && (!flights || flights.length===0) && !crewBusLoaded)return;
-
-    // L'ancienne routine sait déjà comparer et appliquer les changements Operations,
-    // afficher le détail, conserver les saisies manuelles, etc. On l'exécute lorsqu'on
-    // est sur l'étape 3, puis on réutilise exactement les ARR/DEP qu'elle vient de charger.
-    // Toujours passer par la routine Operations V66 avec le mode manuel interne :
-    // elle fait un unique fetch ARR + DEP, met à jour les opérations et expose le même
-    // instantané via lastArrivals/lastDepartures. Nous le réutilisons immédiatement
-    // pour le Crew Bus, y compris lorsque l'utilisateur est à l'étape 4.
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      await __v66CheckForFlightUpdates(true);
-    }
-
-    // La routine V66 a mis à jour lastArrivals/lastDepartures. Le Crew Bus reçoit donc
-    // strictement le même instantané FIDS, sans second téléchargement.
-    let crewDetails=[];
-    if(Array.isArray(lastArrivals)&&Array.isArray(lastDepartures)){
-      crewDetails=refreshCrewBusFromSharedFids(lastArrivals,lastDepartures,{silent:true});
-    }
-
-    // Si le cycle vient du Crew Bus, son bouton est remis à l'état normal.
-    const cb=document.getElementById('crewbus-refresh-btn');
-    if(cb){cb.disabled=false;cb.classList.remove('is-loading');}
-
-    // En étape 4, afficher un résumé propre du refresh partagé.
-    if(currentStep===4){
-      const combined=__v67OperationDetails.concat(crewDetails);
-      const n=combined.length;
-      showRefreshBadge(n,combined);
-    }
-    __v67OperationDetails=[];
-  };
-
-  // ── Feuille Crew Bus : même structure que le modèle source fourni ──
-  // On reprend le modèle A4 du fichier de référence : tableau principal
-  // Registration / Flight Number / ARR / Pick up / Time / Note / Stand,
-  // puis le bloc Headset / Handling / Renting sur 8 colonnes.
-  window.generateCrewBusSheet = function(){
-    const selected=(crewBusFlights||[]).filter(f=>f.selected);
-    if(!selected.length){alert('Sélectionnez au moins un vol pour générer la feuille Crew Bus.');return;}
-    const dateVal=document.getElementById('shift-date')?.value||'';
-    const shift=selectedShift?.name||'—';
-    const dl=dateVal?dateVal.split('-').reverse().join('/'):'—';
-    const arr=selected.filter(f=>f.type==='arr').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const dep=selected.filter(f=>f.type==='dep').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const esc=crewBusEscape;
-    const safe=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    const TD='border:1.5pt solid #000;padding:4pt 5pt;vertical-align:middle;height:10mm';
-    const TDH=TD+';font-weight:bold;text-align:center;font-size:8pt;font-variant:small-caps';
-    const BADGEARR='<span style="display:inline-block;border:1.5pt solid #2d7a2d;border-radius:3pt;padding:1pt 4pt;font-size:7pt;font-weight:bold;background:#d4edda;color:#1a5c1a">ARR</span>';
-    const BADGEPUP='<span style="display:inline-block;border:1.5pt solid #c0392b;border-radius:3pt;padding:1pt 5pt;font-size:8pt;font-style:italic;background:#fde8e8;color:#7b1010;white-space:nowrap">Pick up</span>';
-    function row(f,isDep){
-      return '<tr>'+
-        '<td style="'+TD+';font-size:14pt;font-weight:700">'+safe(f.reg||'')+'</td>'+
-        '<td style="'+TD+';font-size:13pt;font-weight:700">'+safe(f.flight||'')+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:8pt">'+(isDep?'ARR':BADGEARR)+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+(isDep?BADGEPUP:'Pick up')+'</td>'+
-        '<td style="'+TD+';font-size:18pt;letter-spacing:1pt;text-align:center;font-weight:700">'+safe(f.time||'')+'</td>'+
-        '<td style="'+TD+'"></td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+safe(f.stand||'')+'</td></tr>';
-    }
-    let rows='';
-    arr.forEach(f=>rows+=row(f,false));
-    if(arr.length&&dep.length)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">ARR</td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-    dep.forEach(f=>rows+=row(f,true));
-    const dataRows=arr.length+dep.length+(arr.length&&dep.length?1:0);
-    for(let i=dataRows;i<19;i++)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt">ARR</td><td style="'+TD+';text-align:center;font-size:8pt">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-
-    const hs=dep.filter(f=>f.headset);
-    const handling=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='handling');
-    const renting=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='renting');
-    const rentSeen=new Set();
-    const rentDedup=renting.filter(f=>{const k=f.reg?'reg:'+f.reg:'flt:'+f.flight;if(rentSeen.has(k))return false;rentSeen.add(k);return true;});
-    const handlingMap={};
-    handling.forEach(f=>{const k=f.reg||f.flight;if(!handlingMap[k])handlingMap[k]={reg:f.reg,arr:null,dep:null};if(f.type==='arr')handlingMap[k].arr=f;else handlingMap[k].dep=f;});
-    const handlingGroups=Object.values(handlingMap);
-    const bottomCount=Math.max(4,hs.length,handlingGroups.length,rentDedup.length);
-    let bottom='';
-    for(let i=0;i<bottomCount;i++){
-      const x=hs[i]||null,h=handlingGroups[i]||null,r=rentDedup[i]||null;
-      bottom+='<tr>'+
-        '<td style="'+TD+'">'+safe(x?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(x?.flight||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(x?.eta||'')+'</td>'+ 
-        '<td style="'+TD+'">'+safe(h?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(h?.arr?.flight||h?.dep?.flight||'')+'</td>'+ '<td style="'+TD+';text-align:center">'+safe(h?.arr?.eta||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(h?.dep?.eta||'')+'</td>'+ '<td style="'+TD+'">'+safe(r?.reg||r?.flight||'')+'</td></tr>';
-    }
-
-    const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crew Bus - LGG</title><style>'+ 
-      '@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:9pt}table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:8pt}td,th{border:1pt solid #000;vertical-align:middle}th{font-size:8pt;font-weight:bold;text-align:center;padding:4pt 3pt}.crew-head{font-size:11pt;font-weight:bold}.main-table th{height:8mm}.main-table td{height:10mm}.bottom-table tr{height:30pt}.bottom-table .group{font-size:9pt;font-weight:bold;text-align:center;padding:5pt}.bottom-table .sep{border-right:4pt solid #000!important}</style></head><body>'+ 
-      '<table class="main-table"><colgroup><col style="width:13%"><col style="width:13%"><col style="width:7%"><col style="width:8%"><col style="width:10%"><col style="width:42%"><col style="width:7%"></colgroup>'+ 
-      '<tr><td class="crew-head" colspan="7">Crew bus service&nbsp;&nbsp; '+safe(dl)+'&nbsp;&nbsp; '+safe(shift)+'</td></tr>'+ 
-      '<tr><th>Registration</th><th>Flight Number</th><th>ARR</th><th>Pick up</th><th>Time</th><th>Note</th><th>Stand</th></tr>'+rows+'</table>'+ 
-      '<table class="bottom-table"><colgroup><col style="width:15%"><col style="width:12%"><col style="width:12%"><col style="width:15%"><col style="width:12%"><col style="width:10%"><col style="width:10%"><col style="width:14%"></colgroup>'+ 
-      '<tr><td class="group sep" colspan="3">Headset</td><td class="group sep" colspan="4">Handling</td><td class="group">Renting</td></tr>'+ 
-      '<tr><th>Registration</th><th>FLT #</th><th class="sep">Depart</th><th>Registration</th><th>FLT #</th><th>ARR</th><th class="sep">DEP</th><th></th></tr>'+bottom+'</table>'+ 
-      '</body></html>';
-    const w=window.open('','_blank');
-    if(w)printHtmlWhenReady(w,htmlOut);else alert('Autorisez les popups pour imprimer la feuille Crew Bus.');
-  };
-
-  // Le réglage d'intervalle existant reste la source unique de vérité.
-  // Le timer appelle désormais le cycle partagé, donc ARR + DEP sont actualisés
-  // pour Operations et Crew Bus ensemble.
-  if(typeof startAutoRefresh==='function'){
-    const __v66StartAutoRefresh=startAutoRefresh;
-    window.startAutoRefresh=function(){
-      if(autoRefreshTimer)clearInterval(autoRefreshTimer);
-      if(!autoRefreshEnabled)return;
-      autoRefreshTimer=setInterval(function(){ window.checkForFlightUpdates(false,'auto'); },autoRefreshMinutes*60*1000);
-    };
-  }
-  if(typeof initAutoRefreshUI==='function'){
-    // Rebranche le timer avec la nouvelle fonction partagee.
-    window.initAutoRefreshUI=function(){ updateRefreshToggleButtonIcon(); startAutoRefresh(); };
-  }
-  // Le changement de page ne doit plus masquer le statut Crew Bus du refresh partagé.
-  const __origGoToStep=window.goToStep;
-  if(typeof __origGoToStep==='function'){
-    window.goToStep=function(n){
-      const result=__origGoToStep(n);
-      if(n===4 && autoRefreshEnabled && typeof startAutoRefresh==='function')startAutoRefresh();
-      return result;
-    };
-  }
-})();
-</script>
 </body>
 </html>`;
 
@@ -6768,219 +6345,7 @@ ${(function(){
 
   function openPrintWindow(page, title) {
     var safeTitle = String(title || 'Worksheet').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    var html='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>'+safeTitle+'</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}.page:last-child{page-break-after:avoid}</style></head><body>'+page+'
-<!-- V67 — Synchronisation FIDS Operations + Crew Bus + feuille Crew Bus modele source -->
-<script id="wo-lgg-v67-fids-sync-crewbus">
-(function(){
-  // Conserve les implementations V66 avant de les etendre sans casser les controles existants.
-  const __v66CheckForFlightUpdates = window.checkForFlightUpdates;
-  const __v66LoadCrewBusFromFids = window.loadCrewBusFromFids;
-  let __v67OperationDetails=[];
-  const __v66ShowRefreshBadge = window.showRefreshBadge;
-  window.showRefreshBadge = function(n, details){
-    __v67OperationDetails=Array.isArray(details)?details:[];
-    if(typeof __v66ShowRefreshBadge==='function')return __v66ShowRefreshBadge(n,details);
-  };
-
-  function cbDetails(oldList, newList){
-    const details=[];
-    const oldMap=new Map((oldList||[]).map(f=>[f.key,f]));
-    const newMap=new Map((newList||[]).map(f=>[f.key,f]));
-    const fields=[['Heure','time'],['ETA / ETD','eta'],['Stand','stand'],['Immatriculation','reg'],['Handler','handler']];
-    newMap.forEach((nf,key)=>{
-      const of=oldMap.get(key);
-      if(!of){
-        details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||'',field:'Nouveau vol',oldValue:'Absent',newValue:[nf.type==='dep'?'Pick up '+nf.time:'ETA '+nf.time,nf.stand].filter(Boolean).join(' · ')});
-        return;
-      }
-      fields.forEach(([label,k])=>{
-        const ov=of[k]??'', nv=nf[k]??'';
-        if(String(ov)!==String(nv)) details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||of.reg||'',field:label,oldValue:ov,newValue:nv});
-      });
-    });
-    oldMap.forEach((of,key)=>{
-      if(newMap.has(key))return;
-      details.push({source:'Crew Bus',flight:of.flight,reg:of.reg||'',field:'Vol retiré',oldValue:[of.type==='dep'?'Pick up '+of.time:'ETA '+of.time,of.stand].filter(Boolean).join(' · ')||'Présent',newValue:'Absent'});
-    });
-    return details;
-  }
-
-  function refreshCrewBusFromSharedFids(arrivals, departures, opts){
-    opts=opts||{};
-    if(!Array.isArray(arrivals)||!Array.isArray(departures))return [];
-    const oldList=Array.isArray(window.crewBusFlights)?window.crewBusFlights:[];
-    const oldByKey=new Map(oldList.map(f=>[f.key,f]));
-    const oldManual=oldList.filter(f=>f.manual);
-    let next=[];
-    try{ next=crewBusNormalizeList(arrivals,departures); }catch(e){ console.warn('Crew Bus normalize error',e); return []; }
-    next.forEach(f=>{
-      const old=oldByKey.get(f.key);
-      if(old){
-        f.selected=!!old.selected;
-        f.headset=!!old.headset;
-        f.wfsMode=(old.wfsModeUserSet===true)?(old.wfsMode||null):null;
-        f.wfsModeUserSet=old.wfsModeUserSet===true;
-        f.reg=f.reg||old.reg;
-        f.stand=f.stand||old.stand;
-      }else if(f.eligible){
-        f.selected=true;
-      }
-    });
-    oldManual.forEach(f=>{ if(!next.some(x=>x.key===f.key)) next.push(f); });
-    const details=cbDetails(oldList,next);
-    window.lastArrivals=arrivals;
-    window.lastDepartures=departures;
-    window.crewBusFlights=next;
-    window.crewBusSelected=new Set(next.filter(f=>f.selected).map(f=>f.key));
-    window.crewBusLoaded=true;
-    if(typeof renderCrewBusFlights==='function')renderCrewBusFlights();
-    if(typeof setCrewBusStatus==='function')setCrewBusStatus('ready','FIDS opérationnel');
-    if(typeof setCrewBusLoading==='function')setCrewBusLoading(next.length+' vol(s) disponibles — sélectionnez ceux à intégrer.');
-    if(typeof woLggMarkWorkChanged==='function' && !opts.silent)woLggMarkWorkChanged('crewBusFids');
-    return details;
-  }
-
-  // Le bouton Actualiser du Crew Bus rejoint le même cycle FIDS que les opérations.
-  window.loadCrewBusFromFids = async function(manual){
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      // Un seul cycle partagé : ARR + DEP servent ensuite aux deux modules.
-      await window.checkForFlightUpdates(!!manual,'crewbus');
-    }else if(typeof __v66LoadCrewBusFromFids==='function'){
-      await __v66LoadCrewBusFromFids(manual);
-    }
-  };
-
-  // Un seul fetch ARR + DEP par cycle. Les données servent simultanément aux opérations
-  // et au Crew Bus, même lorsque l'utilisateur est actuellement sur l'étape 4.
-  window.checkForFlightUpdates = async function(manual, source){
-    manual=!!manual;
-    source=source||'operations';
-    if(!manual && currentStep!==3 && currentStep!==4)return;
-    if(!manual && currentStep===3 && (!flights || flights.length===0) && !crewBusLoaded)return;
-
-    // L'ancienne routine sait déjà comparer et appliquer les changements Operations,
-    // afficher le détail, conserver les saisies manuelles, etc. On l'exécute lorsqu'on
-    // est sur l'étape 3, puis on réutilise exactement les ARR/DEP qu'elle vient de charger.
-    // Toujours passer par la routine Operations V66 avec le mode manuel interne :
-    // elle fait un unique fetch ARR + DEP, met à jour les opérations et expose le même
-    // instantané via lastArrivals/lastDepartures. Nous le réutilisons immédiatement
-    // pour le Crew Bus, y compris lorsque l'utilisateur est à l'étape 4.
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      await __v66CheckForFlightUpdates(true);
-    }
-
-    // La routine V66 a mis à jour lastArrivals/lastDepartures. Le Crew Bus reçoit donc
-    // strictement le même instantané FIDS, sans second téléchargement.
-    let crewDetails=[];
-    if(Array.isArray(lastArrivals)&&Array.isArray(lastDepartures)){
-      crewDetails=refreshCrewBusFromSharedFids(lastArrivals,lastDepartures,{silent:true});
-    }
-
-    // Si le cycle vient du Crew Bus, son bouton est remis à l'état normal.
-    const cb=document.getElementById('crewbus-refresh-btn');
-    if(cb){cb.disabled=false;cb.classList.remove('is-loading');}
-
-    // En étape 4, afficher un résumé propre du refresh partagé.
-    if(currentStep===4){
-      const combined=__v67OperationDetails.concat(crewDetails);
-      const n=combined.length;
-      showRefreshBadge(n,combined);
-    }
-    __v67OperationDetails=[];
-  };
-
-  // ── Feuille Crew Bus : même structure que le modèle source fourni ──
-  // On reprend le modèle A4 du fichier de référence : tableau principal
-  // Registration / Flight Number / ARR / Pick up / Time / Note / Stand,
-  // puis le bloc Headset / Handling / Renting sur 8 colonnes.
-  window.generateCrewBusSheet = function(){
-    const selected=(crewBusFlights||[]).filter(f=>f.selected);
-    if(!selected.length){alert('Sélectionnez au moins un vol pour générer la feuille Crew Bus.');return;}
-    const dateVal=document.getElementById('shift-date')?.value||'';
-    const shift=selectedShift?.name||'—';
-    const dl=dateVal?dateVal.split('-').reverse().join('/'):'—';
-    const arr=selected.filter(f=>f.type==='arr').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const dep=selected.filter(f=>f.type==='dep').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const esc=crewBusEscape;
-    const safe=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    const TD='border:1.5pt solid #000;padding:4pt 5pt;vertical-align:middle;height:10mm';
-    const TDH=TD+';font-weight:bold;text-align:center;font-size:8pt;font-variant:small-caps';
-    const BADGEARR='<span style="display:inline-block;border:1.5pt solid #2d7a2d;border-radius:3pt;padding:1pt 4pt;font-size:7pt;font-weight:bold;background:#d4edda;color:#1a5c1a">ARR</span>';
-    const BADGEPUP='<span style="display:inline-block;border:1.5pt solid #c0392b;border-radius:3pt;padding:1pt 5pt;font-size:8pt;font-style:italic;background:#fde8e8;color:#7b1010;white-space:nowrap">Pick up</span>';
-    function row(f,isDep){
-      return '<tr>'+
-        '<td style="'+TD+';font-size:14pt;font-weight:700">'+safe(f.reg||'')+'</td>'+
-        '<td style="'+TD+';font-size:13pt;font-weight:700">'+safe(f.flight||'')+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:8pt">'+(isDep?'ARR':BADGEARR)+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+(isDep?BADGEPUP:'Pick up')+'</td>'+
-        '<td style="'+TD+';font-size:18pt;letter-spacing:1pt;text-align:center;font-weight:700">'+safe(f.time||'')+'</td>'+
-        '<td style="'+TD+'"></td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+safe(f.stand||'')+'</td></tr>';
-    }
-    let rows='';
-    arr.forEach(f=>rows+=row(f,false));
-    if(arr.length&&dep.length)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">ARR</td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-    dep.forEach(f=>rows+=row(f,true));
-    const dataRows=arr.length+dep.length+(arr.length&&dep.length?1:0);
-    for(let i=dataRows;i<19;i++)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt">ARR</td><td style="'+TD+';text-align:center;font-size:8pt">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-
-    const hs=dep.filter(f=>f.headset);
-    const handling=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='handling');
-    const renting=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='renting');
-    const rentSeen=new Set();
-    const rentDedup=renting.filter(f=>{const k=f.reg?'reg:'+f.reg:'flt:'+f.flight;if(rentSeen.has(k))return false;rentSeen.add(k);return true;});
-    const handlingMap={};
-    handling.forEach(f=>{const k=f.reg||f.flight;if(!handlingMap[k])handlingMap[k]={reg:f.reg,arr:null,dep:null};if(f.type==='arr')handlingMap[k].arr=f;else handlingMap[k].dep=f;});
-    const handlingGroups=Object.values(handlingMap);
-    const bottomCount=Math.max(4,hs.length,handlingGroups.length,rentDedup.length);
-    let bottom='';
-    for(let i=0;i<bottomCount;i++){
-      const x=hs[i]||null,h=handlingGroups[i]||null,r=rentDedup[i]||null;
-      bottom+='<tr>'+
-        '<td style="'+TD+'">'+safe(x?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(x?.flight||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(x?.eta||'')+'</td>'+ 
-        '<td style="'+TD+'">'+safe(h?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(h?.arr?.flight||h?.dep?.flight||'')+'</td>'+ '<td style="'+TD+';text-align:center">'+safe(h?.arr?.eta||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(h?.dep?.eta||'')+'</td>'+ '<td style="'+TD+'">'+safe(r?.reg||r?.flight||'')+'</td></tr>';
-    }
-
-    const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crew Bus - LGG</title><style>'+ 
-      '@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:9pt}table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:8pt}td,th{border:1pt solid #000;vertical-align:middle}th{font-size:8pt;font-weight:bold;text-align:center;padding:4pt 3pt}.crew-head{font-size:11pt;font-weight:bold}.main-table th{height:8mm}.main-table td{height:10mm}.bottom-table tr{height:30pt}.bottom-table .group{font-size:9pt;font-weight:bold;text-align:center;padding:5pt}.bottom-table .sep{border-right:4pt solid #000!important}</style></head><body>'+ 
-      '<table class="main-table"><colgroup><col style="width:13%"><col style="width:13%"><col style="width:7%"><col style="width:8%"><col style="width:10%"><col style="width:42%"><col style="width:7%"></colgroup>'+ 
-      '<tr><td class="crew-head" colspan="7">Crew bus service&nbsp;&nbsp; '+safe(dl)+'&nbsp;&nbsp; '+safe(shift)+'</td></tr>'+ 
-      '<tr><th>Registration</th><th>Flight Number</th><th>ARR</th><th>Pick up</th><th>Time</th><th>Note</th><th>Stand</th></tr>'+rows+'</table>'+ 
-      '<table class="bottom-table"><colgroup><col style="width:15%"><col style="width:12%"><col style="width:12%"><col style="width:15%"><col style="width:12%"><col style="width:10%"><col style="width:10%"><col style="width:14%"></colgroup>'+ 
-      '<tr><td class="group sep" colspan="3">Headset</td><td class="group sep" colspan="4">Handling</td><td class="group">Renting</td></tr>'+ 
-      '<tr><th>Registration</th><th>FLT #</th><th class="sep">Depart</th><th>Registration</th><th>FLT #</th><th>ARR</th><th class="sep">DEP</th><th></th></tr>'+bottom+'</table>'+ 
-      '</body></html>';
-    const w=window.open('','_blank');
-    if(w)printHtmlWhenReady(w,htmlOut);else alert('Autorisez les popups pour imprimer la feuille Crew Bus.');
-  };
-
-  // Le réglage d'intervalle existant reste la source unique de vérité.
-  // Le timer appelle désormais le cycle partagé, donc ARR + DEP sont actualisés
-  // pour Operations et Crew Bus ensemble.
-  if(typeof startAutoRefresh==='function'){
-    const __v66StartAutoRefresh=startAutoRefresh;
-    window.startAutoRefresh=function(){
-      if(autoRefreshTimer)clearInterval(autoRefreshTimer);
-      if(!autoRefreshEnabled)return;
-      autoRefreshTimer=setInterval(function(){ window.checkForFlightUpdates(false,'auto'); },autoRefreshMinutes*60*1000);
-    };
-  }
-  if(typeof initAutoRefreshUI==='function'){
-    // Rebranche le timer avec la nouvelle fonction partagee.
-    window.initAutoRefreshUI=function(){ updateRefreshToggleButtonIcon(); startAutoRefresh(); };
-  }
-  // Le changement de page ne doit plus masquer le statut Crew Bus du refresh partagé.
-  const __origGoToStep=window.goToStep;
-  if(typeof __origGoToStep==='function'){
-    window.goToStep=function(n){
-      const result=__origGoToStep(n);
-      if(n===4 && autoRefreshEnabled && typeof startAutoRefresh==='function')startAutoRefresh();
-      return result;
-    };
-  }
-})();
-</script>
-</body></html>';
+    var html='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>'+safeTitle+'</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}.page:last-child{page-break-after:avoid}</style></head><body>'+page+'</body></html>';
     var w=window.open('','_blank');
     if(w) printHtmlWhenReady(w,html);
     else alert('Autorise les popups pour imprimer.');
@@ -7157,219 +6522,7 @@ ${(function(){
       + 'body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}'
       + '.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}'
       + '.page:last-child{page-break-after:avoid}'
-      + '</style></head><body>' + pages + '
-<!-- V67 — Synchronisation FIDS Operations + Crew Bus + feuille Crew Bus modele source -->
-<script id="wo-lgg-v67-fids-sync-crewbus">
-(function(){
-  // Conserve les implementations V66 avant de les etendre sans casser les controles existants.
-  const __v66CheckForFlightUpdates = window.checkForFlightUpdates;
-  const __v66LoadCrewBusFromFids = window.loadCrewBusFromFids;
-  let __v67OperationDetails=[];
-  const __v66ShowRefreshBadge = window.showRefreshBadge;
-  window.showRefreshBadge = function(n, details){
-    __v67OperationDetails=Array.isArray(details)?details:[];
-    if(typeof __v66ShowRefreshBadge==='function')return __v66ShowRefreshBadge(n,details);
-  };
-
-  function cbDetails(oldList, newList){
-    const details=[];
-    const oldMap=new Map((oldList||[]).map(f=>[f.key,f]));
-    const newMap=new Map((newList||[]).map(f=>[f.key,f]));
-    const fields=[['Heure','time'],['ETA / ETD','eta'],['Stand','stand'],['Immatriculation','reg'],['Handler','handler']];
-    newMap.forEach((nf,key)=>{
-      const of=oldMap.get(key);
-      if(!of){
-        details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||'',field:'Nouveau vol',oldValue:'Absent',newValue:[nf.type==='dep'?'Pick up '+nf.time:'ETA '+nf.time,nf.stand].filter(Boolean).join(' · ')});
-        return;
-      }
-      fields.forEach(([label,k])=>{
-        const ov=of[k]??'', nv=nf[k]??'';
-        if(String(ov)!==String(nv)) details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||of.reg||'',field:label,oldValue:ov,newValue:nv});
-      });
-    });
-    oldMap.forEach((of,key)=>{
-      if(newMap.has(key))return;
-      details.push({source:'Crew Bus',flight:of.flight,reg:of.reg||'',field:'Vol retiré',oldValue:[of.type==='dep'?'Pick up '+of.time:'ETA '+of.time,of.stand].filter(Boolean).join(' · ')||'Présent',newValue:'Absent'});
-    });
-    return details;
-  }
-
-  function refreshCrewBusFromSharedFids(arrivals, departures, opts){
-    opts=opts||{};
-    if(!Array.isArray(arrivals)||!Array.isArray(departures))return [];
-    const oldList=Array.isArray(window.crewBusFlights)?window.crewBusFlights:[];
-    const oldByKey=new Map(oldList.map(f=>[f.key,f]));
-    const oldManual=oldList.filter(f=>f.manual);
-    let next=[];
-    try{ next=crewBusNormalizeList(arrivals,departures); }catch(e){ console.warn('Crew Bus normalize error',e); return []; }
-    next.forEach(f=>{
-      const old=oldByKey.get(f.key);
-      if(old){
-        f.selected=!!old.selected;
-        f.headset=!!old.headset;
-        f.wfsMode=(old.wfsModeUserSet===true)?(old.wfsMode||null):null;
-        f.wfsModeUserSet=old.wfsModeUserSet===true;
-        f.reg=f.reg||old.reg;
-        f.stand=f.stand||old.stand;
-      }else if(f.eligible){
-        f.selected=true;
-      }
-    });
-    oldManual.forEach(f=>{ if(!next.some(x=>x.key===f.key)) next.push(f); });
-    const details=cbDetails(oldList,next);
-    window.lastArrivals=arrivals;
-    window.lastDepartures=departures;
-    window.crewBusFlights=next;
-    window.crewBusSelected=new Set(next.filter(f=>f.selected).map(f=>f.key));
-    window.crewBusLoaded=true;
-    if(typeof renderCrewBusFlights==='function')renderCrewBusFlights();
-    if(typeof setCrewBusStatus==='function')setCrewBusStatus('ready','FIDS opérationnel');
-    if(typeof setCrewBusLoading==='function')setCrewBusLoading(next.length+' vol(s) disponibles — sélectionnez ceux à intégrer.');
-    if(typeof woLggMarkWorkChanged==='function' && !opts.silent)woLggMarkWorkChanged('crewBusFids');
-    return details;
-  }
-
-  // Le bouton Actualiser du Crew Bus rejoint le même cycle FIDS que les opérations.
-  window.loadCrewBusFromFids = async function(manual){
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      // Un seul cycle partagé : ARR + DEP servent ensuite aux deux modules.
-      await window.checkForFlightUpdates(!!manual,'crewbus');
-    }else if(typeof __v66LoadCrewBusFromFids==='function'){
-      await __v66LoadCrewBusFromFids(manual);
-    }
-  };
-
-  // Un seul fetch ARR + DEP par cycle. Les données servent simultanément aux opérations
-  // et au Crew Bus, même lorsque l'utilisateur est actuellement sur l'étape 4.
-  window.checkForFlightUpdates = async function(manual, source){
-    manual=!!manual;
-    source=source||'operations';
-    if(!manual && currentStep!==3 && currentStep!==4)return;
-    if(!manual && currentStep===3 && (!flights || flights.length===0) && !crewBusLoaded)return;
-
-    // L'ancienne routine sait déjà comparer et appliquer les changements Operations,
-    // afficher le détail, conserver les saisies manuelles, etc. On l'exécute lorsqu'on
-    // est sur l'étape 3, puis on réutilise exactement les ARR/DEP qu'elle vient de charger.
-    // Toujours passer par la routine Operations V66 avec le mode manuel interne :
-    // elle fait un unique fetch ARR + DEP, met à jour les opérations et expose le même
-    // instantané via lastArrivals/lastDepartures. Nous le réutilisons immédiatement
-    // pour le Crew Bus, y compris lorsque l'utilisateur est à l'étape 4.
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      await __v66CheckForFlightUpdates(true);
-    }
-
-    // La routine V66 a mis à jour lastArrivals/lastDepartures. Le Crew Bus reçoit donc
-    // strictement le même instantané FIDS, sans second téléchargement.
-    let crewDetails=[];
-    if(Array.isArray(lastArrivals)&&Array.isArray(lastDepartures)){
-      crewDetails=refreshCrewBusFromSharedFids(lastArrivals,lastDepartures,{silent:true});
-    }
-
-    // Si le cycle vient du Crew Bus, son bouton est remis à l'état normal.
-    const cb=document.getElementById('crewbus-refresh-btn');
-    if(cb){cb.disabled=false;cb.classList.remove('is-loading');}
-
-    // En étape 4, afficher un résumé propre du refresh partagé.
-    if(currentStep===4){
-      const combined=__v67OperationDetails.concat(crewDetails);
-      const n=combined.length;
-      showRefreshBadge(n,combined);
-    }
-    __v67OperationDetails=[];
-  };
-
-  // ── Feuille Crew Bus : même structure que le modèle source fourni ──
-  // On reprend le modèle A4 du fichier de référence : tableau principal
-  // Registration / Flight Number / ARR / Pick up / Time / Note / Stand,
-  // puis le bloc Headset / Handling / Renting sur 8 colonnes.
-  window.generateCrewBusSheet = function(){
-    const selected=(crewBusFlights||[]).filter(f=>f.selected);
-    if(!selected.length){alert('Sélectionnez au moins un vol pour générer la feuille Crew Bus.');return;}
-    const dateVal=document.getElementById('shift-date')?.value||'';
-    const shift=selectedShift?.name||'—';
-    const dl=dateVal?dateVal.split('-').reverse().join('/'):'—';
-    const arr=selected.filter(f=>f.type==='arr').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const dep=selected.filter(f=>f.type==='dep').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const esc=crewBusEscape;
-    const safe=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    const TD='border:1.5pt solid #000;padding:4pt 5pt;vertical-align:middle;height:10mm';
-    const TDH=TD+';font-weight:bold;text-align:center;font-size:8pt;font-variant:small-caps';
-    const BADGEARR='<span style="display:inline-block;border:1.5pt solid #2d7a2d;border-radius:3pt;padding:1pt 4pt;font-size:7pt;font-weight:bold;background:#d4edda;color:#1a5c1a">ARR</span>';
-    const BADGEPUP='<span style="display:inline-block;border:1.5pt solid #c0392b;border-radius:3pt;padding:1pt 5pt;font-size:8pt;font-style:italic;background:#fde8e8;color:#7b1010;white-space:nowrap">Pick up</span>';
-    function row(f,isDep){
-      return '<tr>'+
-        '<td style="'+TD+';font-size:14pt;font-weight:700">'+safe(f.reg||'')+'</td>'+
-        '<td style="'+TD+';font-size:13pt;font-weight:700">'+safe(f.flight||'')+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:8pt">'+(isDep?'ARR':BADGEARR)+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+(isDep?BADGEPUP:'Pick up')+'</td>'+
-        '<td style="'+TD+';font-size:18pt;letter-spacing:1pt;text-align:center;font-weight:700">'+safe(f.time||'')+'</td>'+
-        '<td style="'+TD+'"></td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+safe(f.stand||'')+'</td></tr>';
-    }
-    let rows='';
-    arr.forEach(f=>rows+=row(f,false));
-    if(arr.length&&dep.length)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">ARR</td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-    dep.forEach(f=>rows+=row(f,true));
-    const dataRows=arr.length+dep.length+(arr.length&&dep.length?1:0);
-    for(let i=dataRows;i<19;i++)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt">ARR</td><td style="'+TD+';text-align:center;font-size:8pt">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-
-    const hs=dep.filter(f=>f.headset);
-    const handling=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='handling');
-    const renting=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='renting');
-    const rentSeen=new Set();
-    const rentDedup=renting.filter(f=>{const k=f.reg?'reg:'+f.reg:'flt:'+f.flight;if(rentSeen.has(k))return false;rentSeen.add(k);return true;});
-    const handlingMap={};
-    handling.forEach(f=>{const k=f.reg||f.flight;if(!handlingMap[k])handlingMap[k]={reg:f.reg,arr:null,dep:null};if(f.type==='arr')handlingMap[k].arr=f;else handlingMap[k].dep=f;});
-    const handlingGroups=Object.values(handlingMap);
-    const bottomCount=Math.max(4,hs.length,handlingGroups.length,rentDedup.length);
-    let bottom='';
-    for(let i=0;i<bottomCount;i++){
-      const x=hs[i]||null,h=handlingGroups[i]||null,r=rentDedup[i]||null;
-      bottom+='<tr>'+
-        '<td style="'+TD+'">'+safe(x?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(x?.flight||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(x?.eta||'')+'</td>'+ 
-        '<td style="'+TD+'">'+safe(h?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(h?.arr?.flight||h?.dep?.flight||'')+'</td>'+ '<td style="'+TD+';text-align:center">'+safe(h?.arr?.eta||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(h?.dep?.eta||'')+'</td>'+ '<td style="'+TD+'">'+safe(r?.reg||r?.flight||'')+'</td></tr>';
-    }
-
-    const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crew Bus - LGG</title><style>'+ 
-      '@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:9pt}table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:8pt}td,th{border:1pt solid #000;vertical-align:middle}th{font-size:8pt;font-weight:bold;text-align:center;padding:4pt 3pt}.crew-head{font-size:11pt;font-weight:bold}.main-table th{height:8mm}.main-table td{height:10mm}.bottom-table tr{height:30pt}.bottom-table .group{font-size:9pt;font-weight:bold;text-align:center;padding:5pt}.bottom-table .sep{border-right:4pt solid #000!important}</style></head><body>'+ 
-      '<table class="main-table"><colgroup><col style="width:13%"><col style="width:13%"><col style="width:7%"><col style="width:8%"><col style="width:10%"><col style="width:42%"><col style="width:7%"></colgroup>'+ 
-      '<tr><td class="crew-head" colspan="7">Crew bus service&nbsp;&nbsp; '+safe(dl)+'&nbsp;&nbsp; '+safe(shift)+'</td></tr>'+ 
-      '<tr><th>Registration</th><th>Flight Number</th><th>ARR</th><th>Pick up</th><th>Time</th><th>Note</th><th>Stand</th></tr>'+rows+'</table>'+ 
-      '<table class="bottom-table"><colgroup><col style="width:15%"><col style="width:12%"><col style="width:12%"><col style="width:15%"><col style="width:12%"><col style="width:10%"><col style="width:10%"><col style="width:14%"></colgroup>'+ 
-      '<tr><td class="group sep" colspan="3">Headset</td><td class="group sep" colspan="4">Handling</td><td class="group">Renting</td></tr>'+ 
-      '<tr><th>Registration</th><th>FLT #</th><th class="sep">Depart</th><th>Registration</th><th>FLT #</th><th>ARR</th><th class="sep">DEP</th><th></th></tr>'+bottom+'</table>'+ 
-      '</body></html>';
-    const w=window.open('','_blank');
-    if(w)printHtmlWhenReady(w,htmlOut);else alert('Autorisez les popups pour imprimer la feuille Crew Bus.');
-  };
-
-  // Le réglage d'intervalle existant reste la source unique de vérité.
-  // Le timer appelle désormais le cycle partagé, donc ARR + DEP sont actualisés
-  // pour Operations et Crew Bus ensemble.
-  if(typeof startAutoRefresh==='function'){
-    const __v66StartAutoRefresh=startAutoRefresh;
-    window.startAutoRefresh=function(){
-      if(autoRefreshTimer)clearInterval(autoRefreshTimer);
-      if(!autoRefreshEnabled)return;
-      autoRefreshTimer=setInterval(function(){ window.checkForFlightUpdates(false,'auto'); },autoRefreshMinutes*60*1000);
-    };
-  }
-  if(typeof initAutoRefreshUI==='function'){
-    // Rebranche le timer avec la nouvelle fonction partagee.
-    window.initAutoRefreshUI=function(){ updateRefreshToggleButtonIcon(); startAutoRefresh(); };
-  }
-  // Le changement de page ne doit plus masquer le statut Crew Bus du refresh partagé.
-  const __origGoToStep=window.goToStep;
-  if(typeof __origGoToStep==='function'){
-    window.goToStep=function(n){
-      const result=__origGoToStep(n);
-      if(n===4 && autoRefreshEnabled && typeof startAutoRefresh==='function')startAutoRefresh();
-      return result;
-    };
-  }
-})();
-</script>
-</body></html>';
+      + '</style></head><body>' + pages + '</body></html>';
 
     var w = window.open('', '_blank');
     if (w) {
@@ -7725,219 +6878,7 @@ ${(function(){
     }
     const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Crew Bus - LGG</title><style>@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff}table{width:100%;border-collapse:collapse;margin-bottom:14pt;font-size:10pt}.title{font-size:15pt;font-weight:700}.subhead{font-size:8pt;font-weight:700}</style></head><body>'+ 
       '<table><tr><td style="'+TD+';font-weight:700;font-size:15pt" colspan="6">Crew bus service &nbsp;&nbsp; '+esc(dl)+' &nbsp;&nbsp; '+esc(shift)+'</td></tr><tr><td style="'+TDH+'">Registration</td><td style="'+TDH+'">ARR</td><td style="'+TDH+'">Pick up</td><td style="'+TDH+'">Time</td><td style="'+TDH+'">Flight number</td><td style="'+TDH+'">Stand</td></tr>'+rows+'</table>'+ 
-      '<table><tr><td style="'+TDH+'" colspan="3">Headset</td><td style="'+TDH+'" colspan="4">Handling</td><td style="'+TDH+'">Renting</td></tr><tr><td style="'+TDH+'">Registration</td><td style="'+TDH+'">Flt #</td><td style="'+TDH+'">Depart</td><td style="'+TDH+'">Registration</td><td style="'+TDH+'">Flt #</td><td style="'+TDH+'">ARR</td><td style="'+TDH+'">DEP</td><td style="'+TDH+'">Registration</td></tr>'+sub+'</table>
-<!-- V67 — Synchronisation FIDS Operations + Crew Bus + feuille Crew Bus modele source -->
-<script id="wo-lgg-v67-fids-sync-crewbus">
-(function(){
-  // Conserve les implementations V66 avant de les etendre sans casser les controles existants.
-  const __v66CheckForFlightUpdates = window.checkForFlightUpdates;
-  const __v66LoadCrewBusFromFids = window.loadCrewBusFromFids;
-  let __v67OperationDetails=[];
-  const __v66ShowRefreshBadge = window.showRefreshBadge;
-  window.showRefreshBadge = function(n, details){
-    __v67OperationDetails=Array.isArray(details)?details:[];
-    if(typeof __v66ShowRefreshBadge==='function')return __v66ShowRefreshBadge(n,details);
-  };
-
-  function cbDetails(oldList, newList){
-    const details=[];
-    const oldMap=new Map((oldList||[]).map(f=>[f.key,f]));
-    const newMap=new Map((newList||[]).map(f=>[f.key,f]));
-    const fields=[['Heure','time'],['ETA / ETD','eta'],['Stand','stand'],['Immatriculation','reg'],['Handler','handler']];
-    newMap.forEach((nf,key)=>{
-      const of=oldMap.get(key);
-      if(!of){
-        details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||'',field:'Nouveau vol',oldValue:'Absent',newValue:[nf.type==='dep'?'Pick up '+nf.time:'ETA '+nf.time,nf.stand].filter(Boolean).join(' · ')});
-        return;
-      }
-      fields.forEach(([label,k])=>{
-        const ov=of[k]??'', nv=nf[k]??'';
-        if(String(ov)!==String(nv)) details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||of.reg||'',field:label,oldValue:ov,newValue:nv});
-      });
-    });
-    oldMap.forEach((of,key)=>{
-      if(newMap.has(key))return;
-      details.push({source:'Crew Bus',flight:of.flight,reg:of.reg||'',field:'Vol retiré',oldValue:[of.type==='dep'?'Pick up '+of.time:'ETA '+of.time,of.stand].filter(Boolean).join(' · ')||'Présent',newValue:'Absent'});
-    });
-    return details;
-  }
-
-  function refreshCrewBusFromSharedFids(arrivals, departures, opts){
-    opts=opts||{};
-    if(!Array.isArray(arrivals)||!Array.isArray(departures))return [];
-    const oldList=Array.isArray(window.crewBusFlights)?window.crewBusFlights:[];
-    const oldByKey=new Map(oldList.map(f=>[f.key,f]));
-    const oldManual=oldList.filter(f=>f.manual);
-    let next=[];
-    try{ next=crewBusNormalizeList(arrivals,departures); }catch(e){ console.warn('Crew Bus normalize error',e); return []; }
-    next.forEach(f=>{
-      const old=oldByKey.get(f.key);
-      if(old){
-        f.selected=!!old.selected;
-        f.headset=!!old.headset;
-        f.wfsMode=(old.wfsModeUserSet===true)?(old.wfsMode||null):null;
-        f.wfsModeUserSet=old.wfsModeUserSet===true;
-        f.reg=f.reg||old.reg;
-        f.stand=f.stand||old.stand;
-      }else if(f.eligible){
-        f.selected=true;
-      }
-    });
-    oldManual.forEach(f=>{ if(!next.some(x=>x.key===f.key)) next.push(f); });
-    const details=cbDetails(oldList,next);
-    window.lastArrivals=arrivals;
-    window.lastDepartures=departures;
-    window.crewBusFlights=next;
-    window.crewBusSelected=new Set(next.filter(f=>f.selected).map(f=>f.key));
-    window.crewBusLoaded=true;
-    if(typeof renderCrewBusFlights==='function')renderCrewBusFlights();
-    if(typeof setCrewBusStatus==='function')setCrewBusStatus('ready','FIDS opérationnel');
-    if(typeof setCrewBusLoading==='function')setCrewBusLoading(next.length+' vol(s) disponibles — sélectionnez ceux à intégrer.');
-    if(typeof woLggMarkWorkChanged==='function' && !opts.silent)woLggMarkWorkChanged('crewBusFids');
-    return details;
-  }
-
-  // Le bouton Actualiser du Crew Bus rejoint le même cycle FIDS que les opérations.
-  window.loadCrewBusFromFids = async function(manual){
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      // Un seul cycle partagé : ARR + DEP servent ensuite aux deux modules.
-      await window.checkForFlightUpdates(!!manual,'crewbus');
-    }else if(typeof __v66LoadCrewBusFromFids==='function'){
-      await __v66LoadCrewBusFromFids(manual);
-    }
-  };
-
-  // Un seul fetch ARR + DEP par cycle. Les données servent simultanément aux opérations
-  // et au Crew Bus, même lorsque l'utilisateur est actuellement sur l'étape 4.
-  window.checkForFlightUpdates = async function(manual, source){
-    manual=!!manual;
-    source=source||'operations';
-    if(!manual && currentStep!==3 && currentStep!==4)return;
-    if(!manual && currentStep===3 && (!flights || flights.length===0) && !crewBusLoaded)return;
-
-    // L'ancienne routine sait déjà comparer et appliquer les changements Operations,
-    // afficher le détail, conserver les saisies manuelles, etc. On l'exécute lorsqu'on
-    // est sur l'étape 3, puis on réutilise exactement les ARR/DEP qu'elle vient de charger.
-    // Toujours passer par la routine Operations V66 avec le mode manuel interne :
-    // elle fait un unique fetch ARR + DEP, met à jour les opérations et expose le même
-    // instantané via lastArrivals/lastDepartures. Nous le réutilisons immédiatement
-    // pour le Crew Bus, y compris lorsque l'utilisateur est à l'étape 4.
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      await __v66CheckForFlightUpdates(true);
-    }
-
-    // La routine V66 a mis à jour lastArrivals/lastDepartures. Le Crew Bus reçoit donc
-    // strictement le même instantané FIDS, sans second téléchargement.
-    let crewDetails=[];
-    if(Array.isArray(lastArrivals)&&Array.isArray(lastDepartures)){
-      crewDetails=refreshCrewBusFromSharedFids(lastArrivals,lastDepartures,{silent:true});
-    }
-
-    // Si le cycle vient du Crew Bus, son bouton est remis à l'état normal.
-    const cb=document.getElementById('crewbus-refresh-btn');
-    if(cb){cb.disabled=false;cb.classList.remove('is-loading');}
-
-    // En étape 4, afficher un résumé propre du refresh partagé.
-    if(currentStep===4){
-      const combined=__v67OperationDetails.concat(crewDetails);
-      const n=combined.length;
-      showRefreshBadge(n,combined);
-    }
-    __v67OperationDetails=[];
-  };
-
-  // ── Feuille Crew Bus : même structure que le modèle source fourni ──
-  // On reprend le modèle A4 du fichier de référence : tableau principal
-  // Registration / Flight Number / ARR / Pick up / Time / Note / Stand,
-  // puis le bloc Headset / Handling / Renting sur 8 colonnes.
-  window.generateCrewBusSheet = function(){
-    const selected=(crewBusFlights||[]).filter(f=>f.selected);
-    if(!selected.length){alert('Sélectionnez au moins un vol pour générer la feuille Crew Bus.');return;}
-    const dateVal=document.getElementById('shift-date')?.value||'';
-    const shift=selectedShift?.name||'—';
-    const dl=dateVal?dateVal.split('-').reverse().join('/'):'—';
-    const arr=selected.filter(f=>f.type==='arr').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const dep=selected.filter(f=>f.type==='dep').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const esc=crewBusEscape;
-    const safe=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    const TD='border:1.5pt solid #000;padding:4pt 5pt;vertical-align:middle;height:10mm';
-    const TDH=TD+';font-weight:bold;text-align:center;font-size:8pt;font-variant:small-caps';
-    const BADGEARR='<span style="display:inline-block;border:1.5pt solid #2d7a2d;border-radius:3pt;padding:1pt 4pt;font-size:7pt;font-weight:bold;background:#d4edda;color:#1a5c1a">ARR</span>';
-    const BADGEPUP='<span style="display:inline-block;border:1.5pt solid #c0392b;border-radius:3pt;padding:1pt 5pt;font-size:8pt;font-style:italic;background:#fde8e8;color:#7b1010;white-space:nowrap">Pick up</span>';
-    function row(f,isDep){
-      return '<tr>'+
-        '<td style="'+TD+';font-size:14pt;font-weight:700">'+safe(f.reg||'')+'</td>'+
-        '<td style="'+TD+';font-size:13pt;font-weight:700">'+safe(f.flight||'')+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:8pt">'+(isDep?'ARR':BADGEARR)+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+(isDep?BADGEPUP:'Pick up')+'</td>'+
-        '<td style="'+TD+';font-size:18pt;letter-spacing:1pt;text-align:center;font-weight:700">'+safe(f.time||'')+'</td>'+
-        '<td style="'+TD+'"></td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+safe(f.stand||'')+'</td></tr>';
-    }
-    let rows='';
-    arr.forEach(f=>rows+=row(f,false));
-    if(arr.length&&dep.length)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">ARR</td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-    dep.forEach(f=>rows+=row(f,true));
-    const dataRows=arr.length+dep.length+(arr.length&&dep.length?1:0);
-    for(let i=dataRows;i<19;i++)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt">ARR</td><td style="'+TD+';text-align:center;font-size:8pt">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-
-    const hs=dep.filter(f=>f.headset);
-    const handling=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='handling');
-    const renting=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='renting');
-    const rentSeen=new Set();
-    const rentDedup=renting.filter(f=>{const k=f.reg?'reg:'+f.reg:'flt:'+f.flight;if(rentSeen.has(k))return false;rentSeen.add(k);return true;});
-    const handlingMap={};
-    handling.forEach(f=>{const k=f.reg||f.flight;if(!handlingMap[k])handlingMap[k]={reg:f.reg,arr:null,dep:null};if(f.type==='arr')handlingMap[k].arr=f;else handlingMap[k].dep=f;});
-    const handlingGroups=Object.values(handlingMap);
-    const bottomCount=Math.max(4,hs.length,handlingGroups.length,rentDedup.length);
-    let bottom='';
-    for(let i=0;i<bottomCount;i++){
-      const x=hs[i]||null,h=handlingGroups[i]||null,r=rentDedup[i]||null;
-      bottom+='<tr>'+
-        '<td style="'+TD+'">'+safe(x?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(x?.flight||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(x?.eta||'')+'</td>'+ 
-        '<td style="'+TD+'">'+safe(h?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(h?.arr?.flight||h?.dep?.flight||'')+'</td>'+ '<td style="'+TD+';text-align:center">'+safe(h?.arr?.eta||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(h?.dep?.eta||'')+'</td>'+ '<td style="'+TD+'">'+safe(r?.reg||r?.flight||'')+'</td></tr>';
-    }
-
-    const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crew Bus - LGG</title><style>'+ 
-      '@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:9pt}table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:8pt}td,th{border:1pt solid #000;vertical-align:middle}th{font-size:8pt;font-weight:bold;text-align:center;padding:4pt 3pt}.crew-head{font-size:11pt;font-weight:bold}.main-table th{height:8mm}.main-table td{height:10mm}.bottom-table tr{height:30pt}.bottom-table .group{font-size:9pt;font-weight:bold;text-align:center;padding:5pt}.bottom-table .sep{border-right:4pt solid #000!important}</style></head><body>'+ 
-      '<table class="main-table"><colgroup><col style="width:13%"><col style="width:13%"><col style="width:7%"><col style="width:8%"><col style="width:10%"><col style="width:42%"><col style="width:7%"></colgroup>'+ 
-      '<tr><td class="crew-head" colspan="7">Crew bus service&nbsp;&nbsp; '+safe(dl)+'&nbsp;&nbsp; '+safe(shift)+'</td></tr>'+ 
-      '<tr><th>Registration</th><th>Flight Number</th><th>ARR</th><th>Pick up</th><th>Time</th><th>Note</th><th>Stand</th></tr>'+rows+'</table>'+ 
-      '<table class="bottom-table"><colgroup><col style="width:15%"><col style="width:12%"><col style="width:12%"><col style="width:15%"><col style="width:12%"><col style="width:10%"><col style="width:10%"><col style="width:14%"></colgroup>'+ 
-      '<tr><td class="group sep" colspan="3">Headset</td><td class="group sep" colspan="4">Handling</td><td class="group">Renting</td></tr>'+ 
-      '<tr><th>Registration</th><th>FLT #</th><th class="sep">Depart</th><th>Registration</th><th>FLT #</th><th>ARR</th><th class="sep">DEP</th><th></th></tr>'+bottom+'</table>'+ 
-      '</body></html>';
-    const w=window.open('','_blank');
-    if(w)printHtmlWhenReady(w,htmlOut);else alert('Autorisez les popups pour imprimer la feuille Crew Bus.');
-  };
-
-  // Le réglage d'intervalle existant reste la source unique de vérité.
-  // Le timer appelle désormais le cycle partagé, donc ARR + DEP sont actualisés
-  // pour Operations et Crew Bus ensemble.
-  if(typeof startAutoRefresh==='function'){
-    const __v66StartAutoRefresh=startAutoRefresh;
-    window.startAutoRefresh=function(){
-      if(autoRefreshTimer)clearInterval(autoRefreshTimer);
-      if(!autoRefreshEnabled)return;
-      autoRefreshTimer=setInterval(function(){ window.checkForFlightUpdates(false,'auto'); },autoRefreshMinutes*60*1000);
-    };
-  }
-  if(typeof initAutoRefreshUI==='function'){
-    // Rebranche le timer avec la nouvelle fonction partagee.
-    window.initAutoRefreshUI=function(){ updateRefreshToggleButtonIcon(); startAutoRefresh(); };
-  }
-  // Le changement de page ne doit plus masquer le statut Crew Bus du refresh partagé.
-  const __origGoToStep=window.goToStep;
-  if(typeof __origGoToStep==='function'){
-    window.goToStep=function(n){
-      const result=__origGoToStep(n);
-      if(n===4 && autoRefreshEnabled && typeof startAutoRefresh==='function')startAutoRefresh();
-      return result;
-    };
-  }
-})();
-</script>
-</body></html>';
+      '<table><tr><td style="'+TDH+'" colspan="3">Headset</td><td style="'+TDH+'" colspan="4">Handling</td><td style="'+TDH+'">Renting</td></tr><tr><td style="'+TDH+'">Registration</td><td style="'+TDH+'">Flt #</td><td style="'+TDH+'">Depart</td><td style="'+TDH+'">Registration</td><td style="'+TDH+'">Flt #</td><td style="'+TDH+'">ARR</td><td style="'+TDH+'">DEP</td><td style="'+TDH+'">Registration</td></tr>'+sub+'</table></body></html>';
     const w=window.open('','_blank');
     if(w)printHtmlWhenReady(w,htmlOut);else alert('Autorisez les popups pour imprimer la feuille Crew Bus.');
   }
@@ -7980,219 +6921,7 @@ ${(function(){
       + 'html,body{height:100%}'
       + 'body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}'
       + '.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}.page:last-child{page-break-after:avoid}</style></head>'
-      + '<body>' + pagesOnly + '
-<!-- V67 — Synchronisation FIDS Operations + Crew Bus + feuille Crew Bus modele source -->
-<script id="wo-lgg-v67-fids-sync-crewbus">
-(function(){
-  // Conserve les implementations V66 avant de les etendre sans casser les controles existants.
-  const __v66CheckForFlightUpdates = window.checkForFlightUpdates;
-  const __v66LoadCrewBusFromFids = window.loadCrewBusFromFids;
-  let __v67OperationDetails=[];
-  const __v66ShowRefreshBadge = window.showRefreshBadge;
-  window.showRefreshBadge = function(n, details){
-    __v67OperationDetails=Array.isArray(details)?details:[];
-    if(typeof __v66ShowRefreshBadge==='function')return __v66ShowRefreshBadge(n,details);
-  };
-
-  function cbDetails(oldList, newList){
-    const details=[];
-    const oldMap=new Map((oldList||[]).map(f=>[f.key,f]));
-    const newMap=new Map((newList||[]).map(f=>[f.key,f]));
-    const fields=[['Heure','time'],['ETA / ETD','eta'],['Stand','stand'],['Immatriculation','reg'],['Handler','handler']];
-    newMap.forEach((nf,key)=>{
-      const of=oldMap.get(key);
-      if(!of){
-        details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||'',field:'Nouveau vol',oldValue:'Absent',newValue:[nf.type==='dep'?'Pick up '+nf.time:'ETA '+nf.time,nf.stand].filter(Boolean).join(' · ')});
-        return;
-      }
-      fields.forEach(([label,k])=>{
-        const ov=of[k]??'', nv=nf[k]??'';
-        if(String(ov)!==String(nv)) details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||of.reg||'',field:label,oldValue:ov,newValue:nv});
-      });
-    });
-    oldMap.forEach((of,key)=>{
-      if(newMap.has(key))return;
-      details.push({source:'Crew Bus',flight:of.flight,reg:of.reg||'',field:'Vol retiré',oldValue:[of.type==='dep'?'Pick up '+of.time:'ETA '+of.time,of.stand].filter(Boolean).join(' · ')||'Présent',newValue:'Absent'});
-    });
-    return details;
-  }
-
-  function refreshCrewBusFromSharedFids(arrivals, departures, opts){
-    opts=opts||{};
-    if(!Array.isArray(arrivals)||!Array.isArray(departures))return [];
-    const oldList=Array.isArray(window.crewBusFlights)?window.crewBusFlights:[];
-    const oldByKey=new Map(oldList.map(f=>[f.key,f]));
-    const oldManual=oldList.filter(f=>f.manual);
-    let next=[];
-    try{ next=crewBusNormalizeList(arrivals,departures); }catch(e){ console.warn('Crew Bus normalize error',e); return []; }
-    next.forEach(f=>{
-      const old=oldByKey.get(f.key);
-      if(old){
-        f.selected=!!old.selected;
-        f.headset=!!old.headset;
-        f.wfsMode=(old.wfsModeUserSet===true)?(old.wfsMode||null):null;
-        f.wfsModeUserSet=old.wfsModeUserSet===true;
-        f.reg=f.reg||old.reg;
-        f.stand=f.stand||old.stand;
-      }else if(f.eligible){
-        f.selected=true;
-      }
-    });
-    oldManual.forEach(f=>{ if(!next.some(x=>x.key===f.key)) next.push(f); });
-    const details=cbDetails(oldList,next);
-    window.lastArrivals=arrivals;
-    window.lastDepartures=departures;
-    window.crewBusFlights=next;
-    window.crewBusSelected=new Set(next.filter(f=>f.selected).map(f=>f.key));
-    window.crewBusLoaded=true;
-    if(typeof renderCrewBusFlights==='function')renderCrewBusFlights();
-    if(typeof setCrewBusStatus==='function')setCrewBusStatus('ready','FIDS opérationnel');
-    if(typeof setCrewBusLoading==='function')setCrewBusLoading(next.length+' vol(s) disponibles — sélectionnez ceux à intégrer.');
-    if(typeof woLggMarkWorkChanged==='function' && !opts.silent)woLggMarkWorkChanged('crewBusFids');
-    return details;
-  }
-
-  // Le bouton Actualiser du Crew Bus rejoint le même cycle FIDS que les opérations.
-  window.loadCrewBusFromFids = async function(manual){
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      // Un seul cycle partagé : ARR + DEP servent ensuite aux deux modules.
-      await window.checkForFlightUpdates(!!manual,'crewbus');
-    }else if(typeof __v66LoadCrewBusFromFids==='function'){
-      await __v66LoadCrewBusFromFids(manual);
-    }
-  };
-
-  // Un seul fetch ARR + DEP par cycle. Les données servent simultanément aux opérations
-  // et au Crew Bus, même lorsque l'utilisateur est actuellement sur l'étape 4.
-  window.checkForFlightUpdates = async function(manual, source){
-    manual=!!manual;
-    source=source||'operations';
-    if(!manual && currentStep!==3 && currentStep!==4)return;
-    if(!manual && currentStep===3 && (!flights || flights.length===0) && !crewBusLoaded)return;
-
-    // L'ancienne routine sait déjà comparer et appliquer les changements Operations,
-    // afficher le détail, conserver les saisies manuelles, etc. On l'exécute lorsqu'on
-    // est sur l'étape 3, puis on réutilise exactement les ARR/DEP qu'elle vient de charger.
-    // Toujours passer par la routine Operations V66 avec le mode manuel interne :
-    // elle fait un unique fetch ARR + DEP, met à jour les opérations et expose le même
-    // instantané via lastArrivals/lastDepartures. Nous le réutilisons immédiatement
-    // pour le Crew Bus, y compris lorsque l'utilisateur est à l'étape 4.
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      await __v66CheckForFlightUpdates(true);
-    }
-
-    // La routine V66 a mis à jour lastArrivals/lastDepartures. Le Crew Bus reçoit donc
-    // strictement le même instantané FIDS, sans second téléchargement.
-    let crewDetails=[];
-    if(Array.isArray(lastArrivals)&&Array.isArray(lastDepartures)){
-      crewDetails=refreshCrewBusFromSharedFids(lastArrivals,lastDepartures,{silent:true});
-    }
-
-    // Si le cycle vient du Crew Bus, son bouton est remis à l'état normal.
-    const cb=document.getElementById('crewbus-refresh-btn');
-    if(cb){cb.disabled=false;cb.classList.remove('is-loading');}
-
-    // En étape 4, afficher un résumé propre du refresh partagé.
-    if(currentStep===4){
-      const combined=__v67OperationDetails.concat(crewDetails);
-      const n=combined.length;
-      showRefreshBadge(n,combined);
-    }
-    __v67OperationDetails=[];
-  };
-
-  // ── Feuille Crew Bus : même structure que le modèle source fourni ──
-  // On reprend le modèle A4 du fichier de référence : tableau principal
-  // Registration / Flight Number / ARR / Pick up / Time / Note / Stand,
-  // puis le bloc Headset / Handling / Renting sur 8 colonnes.
-  window.generateCrewBusSheet = function(){
-    const selected=(crewBusFlights||[]).filter(f=>f.selected);
-    if(!selected.length){alert('Sélectionnez au moins un vol pour générer la feuille Crew Bus.');return;}
-    const dateVal=document.getElementById('shift-date')?.value||'';
-    const shift=selectedShift?.name||'—';
-    const dl=dateVal?dateVal.split('-').reverse().join('/'):'—';
-    const arr=selected.filter(f=>f.type==='arr').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const dep=selected.filter(f=>f.type==='dep').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const esc=crewBusEscape;
-    const safe=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    const TD='border:1.5pt solid #000;padding:4pt 5pt;vertical-align:middle;height:10mm';
-    const TDH=TD+';font-weight:bold;text-align:center;font-size:8pt;font-variant:small-caps';
-    const BADGEARR='<span style="display:inline-block;border:1.5pt solid #2d7a2d;border-radius:3pt;padding:1pt 4pt;font-size:7pt;font-weight:bold;background:#d4edda;color:#1a5c1a">ARR</span>';
-    const BADGEPUP='<span style="display:inline-block;border:1.5pt solid #c0392b;border-radius:3pt;padding:1pt 5pt;font-size:8pt;font-style:italic;background:#fde8e8;color:#7b1010;white-space:nowrap">Pick up</span>';
-    function row(f,isDep){
-      return '<tr>'+
-        '<td style="'+TD+';font-size:14pt;font-weight:700">'+safe(f.reg||'')+'</td>'+
-        '<td style="'+TD+';font-size:13pt;font-weight:700">'+safe(f.flight||'')+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:8pt">'+(isDep?'ARR':BADGEARR)+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+(isDep?BADGEPUP:'Pick up')+'</td>'+
-        '<td style="'+TD+';font-size:18pt;letter-spacing:1pt;text-align:center;font-weight:700">'+safe(f.time||'')+'</td>'+
-        '<td style="'+TD+'"></td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+safe(f.stand||'')+'</td></tr>';
-    }
-    let rows='';
-    arr.forEach(f=>rows+=row(f,false));
-    if(arr.length&&dep.length)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">ARR</td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-    dep.forEach(f=>rows+=row(f,true));
-    const dataRows=arr.length+dep.length+(arr.length&&dep.length?1:0);
-    for(let i=dataRows;i<19;i++)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt">ARR</td><td style="'+TD+';text-align:center;font-size:8pt">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-
-    const hs=dep.filter(f=>f.headset);
-    const handling=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='handling');
-    const renting=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='renting');
-    const rentSeen=new Set();
-    const rentDedup=renting.filter(f=>{const k=f.reg?'reg:'+f.reg:'flt:'+f.flight;if(rentSeen.has(k))return false;rentSeen.add(k);return true;});
-    const handlingMap={};
-    handling.forEach(f=>{const k=f.reg||f.flight;if(!handlingMap[k])handlingMap[k]={reg:f.reg,arr:null,dep:null};if(f.type==='arr')handlingMap[k].arr=f;else handlingMap[k].dep=f;});
-    const handlingGroups=Object.values(handlingMap);
-    const bottomCount=Math.max(4,hs.length,handlingGroups.length,rentDedup.length);
-    let bottom='';
-    for(let i=0;i<bottomCount;i++){
-      const x=hs[i]||null,h=handlingGroups[i]||null,r=rentDedup[i]||null;
-      bottom+='<tr>'+
-        '<td style="'+TD+'">'+safe(x?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(x?.flight||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(x?.eta||'')+'</td>'+ 
-        '<td style="'+TD+'">'+safe(h?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(h?.arr?.flight||h?.dep?.flight||'')+'</td>'+ '<td style="'+TD+';text-align:center">'+safe(h?.arr?.eta||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(h?.dep?.eta||'')+'</td>'+ '<td style="'+TD+'">'+safe(r?.reg||r?.flight||'')+'</td></tr>';
-    }
-
-    const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crew Bus - LGG</title><style>'+ 
-      '@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:9pt}table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:8pt}td,th{border:1pt solid #000;vertical-align:middle}th{font-size:8pt;font-weight:bold;text-align:center;padding:4pt 3pt}.crew-head{font-size:11pt;font-weight:bold}.main-table th{height:8mm}.main-table td{height:10mm}.bottom-table tr{height:30pt}.bottom-table .group{font-size:9pt;font-weight:bold;text-align:center;padding:5pt}.bottom-table .sep{border-right:4pt solid #000!important}</style></head><body>'+ 
-      '<table class="main-table"><colgroup><col style="width:13%"><col style="width:13%"><col style="width:7%"><col style="width:8%"><col style="width:10%"><col style="width:42%"><col style="width:7%"></colgroup>'+ 
-      '<tr><td class="crew-head" colspan="7">Crew bus service&nbsp;&nbsp; '+safe(dl)+'&nbsp;&nbsp; '+safe(shift)+'</td></tr>'+ 
-      '<tr><th>Registration</th><th>Flight Number</th><th>ARR</th><th>Pick up</th><th>Time</th><th>Note</th><th>Stand</th></tr>'+rows+'</table>'+ 
-      '<table class="bottom-table"><colgroup><col style="width:15%"><col style="width:12%"><col style="width:12%"><col style="width:15%"><col style="width:12%"><col style="width:10%"><col style="width:10%"><col style="width:14%"></colgroup>'+ 
-      '<tr><td class="group sep" colspan="3">Headset</td><td class="group sep" colspan="4">Handling</td><td class="group">Renting</td></tr>'+ 
-      '<tr><th>Registration</th><th>FLT #</th><th class="sep">Depart</th><th>Registration</th><th>FLT #</th><th>ARR</th><th class="sep">DEP</th><th></th></tr>'+bottom+'</table>'+ 
-      '</body></html>';
-    const w=window.open('','_blank');
-    if(w)printHtmlWhenReady(w,htmlOut);else alert('Autorisez les popups pour imprimer la feuille Crew Bus.');
-  };
-
-  // Le réglage d'intervalle existant reste la source unique de vérité.
-  // Le timer appelle désormais le cycle partagé, donc ARR + DEP sont actualisés
-  // pour Operations et Crew Bus ensemble.
-  if(typeof startAutoRefresh==='function'){
-    const __v66StartAutoRefresh=startAutoRefresh;
-    window.startAutoRefresh=function(){
-      if(autoRefreshTimer)clearInterval(autoRefreshTimer);
-      if(!autoRefreshEnabled)return;
-      autoRefreshTimer=setInterval(function(){ window.checkForFlightUpdates(false,'auto'); },autoRefreshMinutes*60*1000);
-    };
-  }
-  if(typeof initAutoRefreshUI==='function'){
-    // Rebranche le timer avec la nouvelle fonction partagee.
-    window.initAutoRefreshUI=function(){ updateRefreshToggleButtonIcon(); startAutoRefresh(); };
-  }
-  // Le changement de page ne doit plus masquer le statut Crew Bus du refresh partagé.
-  const __origGoToStep=window.goToStep;
-  if(typeof __origGoToStep==='function'){
-    window.goToStep=function(n){
-      const result=__origGoToStep(n);
-      if(n===4 && autoRefreshEnabled && typeof startAutoRefresh==='function')startAutoRefresh();
-      return result;
-    };
-  }
-})();
-</script>
-</body></html>';
+      + '<body>' + pagesOnly + '</body></html>';
 
     var w = window.open('', '_blank');
     if (w) { printHtmlWhenReady(w, html); }
@@ -8632,21 +7361,20 @@ body.wo-lgg-scroll-locked{
 .crewbus-mode-btn:active,.crewbus-hs-btn:active{transform:scale(.97)}
 @media(max-width:760px){.crewbus-card-actions{justify-content:flex-start;width:100%;padding-left:38px}.crewbus-mode-btn,.crewbus-hs-btn{min-height:38px}}
 </style>
-
-<!-- V67 — Synchronisation FIDS Operations + Crew Bus + feuille Crew Bus modele source -->
-<script id="wo-lgg-v67-fids-sync-crewbus">
+<!-- V67 CLEAN PATCH — FIDS partagé Operations + Crew Bus -->
+<script id="wo-lgg-v67-clean-sync">
 (function(){
-  // Conserve les implementations V66 avant de les etendre sans casser les controles existants.
-  const __v66CheckForFlightUpdates = window.checkForFlightUpdates;
-  const __v66LoadCrewBusFromFids = window.loadCrewBusFromFids;
-  let __v67OperationDetails=[];
-  const __v66ShowRefreshBadge = window.showRefreshBadge;
-  window.showRefreshBadge = function(n, details){
-    __v67OperationDetails=Array.isArray(details)?details:[];
-    if(typeof __v66ShowRefreshBadge==='function')return __v66ShowRefreshBadge(n,details);
-  };
+  'use strict';
+  if(window.__woLggV67CleanSyncInstalled)return;
+  window.__woLggV67CleanSyncInstalled=true;
 
-  function cbDetails(oldList, newList){
+  const originalCheckForFlightUpdates = window.checkForFlightUpdates;
+  if(typeof originalCheckForFlightUpdates !== 'function'){
+    console.error('WO-LGG V67: checkForFlightUpdates introuvable.');
+    return;
+  }
+
+  function crewDetails(oldList,newList){
     const details=[];
     const oldMap=new Map((oldList||[]).map(f=>[f.key,f]));
     const newMap=new Map((newList||[]).map(f=>[f.key,f]));
@@ -8654,12 +7382,12 @@ body.wo-lgg-scroll-locked{
     newMap.forEach((nf,key)=>{
       const of=oldMap.get(key);
       if(!of){
-        details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||'',field:'Nouveau vol',oldValue:'Absent',newValue:[nf.type==='dep'?'Pick up '+nf.time:'ETA '+nf.time,nf.stand].filter(Boolean).join(' · ')});
+        details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||'',field:'Nouveau vol',oldValue:'Absent',newValue:[nf.type==='dep'?'Pick up '+nf.time:'ETA '+nf.time,nf.stand].filter(Boolean).join(' · ')||'Présent'});
         return;
       }
       fields.forEach(([label,k])=>{
-        const ov=of[k]??'', nv=nf[k]??'';
-        if(String(ov)!==String(nv)) details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||of.reg||'',field:label,oldValue:ov,newValue:nv});
+        const ov=of[k]??'',nv=nf[k]??'';
+        if(String(ov)!==String(nv))details.push({source:'Crew Bus',flight:nf.flight,reg:nf.reg||of.reg||'',field:label,oldValue:ov,newValue:nv});
       });
     });
     oldMap.forEach((of,key)=>{
@@ -8669,29 +7397,29 @@ body.wo-lgg-scroll-locked{
     return details;
   }
 
-  function refreshCrewBusFromSharedFids(arrivals, departures, opts){
-    opts=opts||{};
+  function refreshCrewBusFromSharedFids(arrivals,departures){
     if(!Array.isArray(arrivals)||!Array.isArray(departures))return [];
+    if(typeof crewBusNormalizeList!=='function')return [];
     const oldList=Array.isArray(window.crewBusFlights)?window.crewBusFlights:[];
     const oldByKey=new Map(oldList.map(f=>[f.key,f]));
-    const oldManual=oldList.filter(f=>f.manual);
-    let next=[];
-    try{ next=crewBusNormalizeList(arrivals,departures); }catch(e){ console.warn('Crew Bus normalize error',e); return []; }
+    const next=crewBusNormalizeList(arrivals,departures);
     next.forEach(f=>{
       const old=oldByKey.get(f.key);
       if(old){
         f.selected=!!old.selected;
         f.headset=!!old.headset;
-        f.wfsMode=(old.wfsModeUserSet===true)?(old.wfsMode||null):null;
         f.wfsModeUserSet=old.wfsModeUserSet===true;
+        f.wfsMode=f.wfsModeUserSet?(old.wfsMode||null):null;
         f.reg=f.reg||old.reg;
         f.stand=f.stand||old.stand;
       }else if(f.eligible){
         f.selected=true;
       }
     });
-    oldManual.forEach(f=>{ if(!next.some(x=>x.key===f.key)) next.push(f); });
-    const details=cbDetails(oldList,next);
+    oldList.filter(f=>f.manual).forEach(f=>{
+      if(!next.some(x=>x.key===f.key))next.push(f);
+    });
+    const details=crewDetails(oldList,next);
     window.lastArrivals=arrivals;
     window.lastDepartures=departures;
     window.crewBusFlights=next;
@@ -8700,145 +7428,63 @@ body.wo-lgg-scroll-locked{
     if(typeof renderCrewBusFlights==='function')renderCrewBusFlights();
     if(typeof setCrewBusStatus==='function')setCrewBusStatus('ready','FIDS opérationnel');
     if(typeof setCrewBusLoading==='function')setCrewBusLoading(next.length+' vol(s) disponibles — sélectionnez ceux à intégrer.');
-    if(typeof woLggMarkWorkChanged==='function' && !opts.silent)woLggMarkWorkChanged('crewBusFids');
     return details;
   }
 
-  // Le bouton Actualiser du Crew Bus rejoint le même cycle FIDS que les opérations.
-  window.loadCrewBusFromFids = async function(manual){
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      // Un seul cycle partagé : ARR + DEP servent ensuite aux deux modules.
-      await window.checkForFlightUpdates(!!manual,'crewbus');
-    }else if(typeof __v66LoadCrewBusFromFids==='function'){
-      await __v66LoadCrewBusFromFids(manual);
-    }
-  };
-
-  // Un seul fetch ARR + DEP par cycle. Les données servent simultanément aux opérations
-  // et au Crew Bus, même lorsque l'utilisateur est actuellement sur l'étape 4.
-  window.checkForFlightUpdates = async function(manual, source){
+  window.checkForFlightUpdates = async function(manual,source){
     manual=!!manual;
-    source=source||'operations';
+    source=source||'shared';
     if(!manual && currentStep!==3 && currentStep!==4)return;
-    if(!manual && currentStep===3 && (!flights || flights.length===0) && !crewBusLoaded)return;
-
-    // L'ancienne routine sait déjà comparer et appliquer les changements Operations,
-    // afficher le détail, conserver les saisies manuelles, etc. On l'exécute lorsqu'on
-    // est sur l'étape 3, puis on réutilise exactement les ARR/DEP qu'elle vient de charger.
-    // Toujours passer par la routine Operations V66 avec le mode manuel interne :
-    // elle fait un unique fetch ARR + DEP, met à jour les opérations et expose le même
-    // instantané via lastArrivals/lastDepartures. Nous le réutilisons immédiatement
-    // pour le Crew Bus, y compris lorsque l'utilisateur est à l'étape 4.
-    if(typeof __v66CheckForFlightUpdates==='function'){
-      await __v66CheckForFlightUpdates(true);
+    const oldArr=window.lastArrivals;
+    const oldDep=window.lastDepartures;
+    const oldOperation=window.__woLastOperationRefresh||null;
+    try{
+      await originalCheckForFlightUpdates(true);
+      const arrivals=window.lastArrivals;
+      const departures=window.lastDepartures;
+      const fetched=arrivals!==oldArr || departures!==oldDep;
+      let cbDetails=[];
+      if(fetched && Array.isArray(arrivals) && Array.isArray(departures)){
+        cbDetails=refreshCrewBusFromSharedFids(arrivals,departures);
+      }
+      if(fetched && cbDetails.length){
+        const op=window.__woLastOperationRefresh;
+        const opDetails=(op&&Array.isArray(op.details))?op.details:[];
+        if(typeof showRefreshBadge==='function')showRefreshBadge(opDetails.length+cbDetails.length,opDetails.concat(cbDetails));
+      }else if(currentStep===4 && fetched && oldOperation && typeof showRefreshBadge==='function'){
+        showRefreshBadge(oldOperation.n,oldOperation.details||[]);
+      }
+    }catch(e){
+      console.warn('WO-LGG shared FIDS refresh failed',e);
+    }finally{
+      const btn=document.getElementById('crewbus-refresh-btn');
+      if(btn){btn.disabled=false;btn.classList.remove('is-loading');}
     }
-
-    // La routine V66 a mis à jour lastArrivals/lastDepartures. Le Crew Bus reçoit donc
-    // strictement le même instantané FIDS, sans second téléchargement.
-    let crewDetails=[];
-    if(Array.isArray(lastArrivals)&&Array.isArray(lastDepartures)){
-      crewDetails=refreshCrewBusFromSharedFids(lastArrivals,lastDepartures,{silent:true});
-    }
-
-    // Si le cycle vient du Crew Bus, son bouton est remis à l'état normal.
-    const cb=document.getElementById('crewbus-refresh-btn');
-    if(cb){cb.disabled=false;cb.classList.remove('is-loading');}
-
-    // En étape 4, afficher un résumé propre du refresh partagé.
-    if(currentStep===4){
-      const combined=__v67OperationDetails.concat(crewDetails);
-      const n=combined.length;
-      showRefreshBadge(n,combined);
-    }
-    __v67OperationDetails=[];
   };
 
-  // ── Feuille Crew Bus : même structure que le modèle source fourni ──
-  // On reprend le modèle A4 du fichier de référence : tableau principal
-  // Registration / Flight Number / ARR / Pick up / Time / Note / Stand,
-  // puis le bloc Headset / Handling / Renting sur 8 colonnes.
-  window.generateCrewBusSheet = function(){
-    const selected=(crewBusFlights||[]).filter(f=>f.selected);
-    if(!selected.length){alert('Sélectionnez au moins un vol pour générer la feuille Crew Bus.');return;}
-    const dateVal=document.getElementById('shift-date')?.value||'';
-    const shift=selectedShift?.name||'—';
-    const dl=dateVal?dateVal.split('-').reverse().join('/'):'—';
-    const arr=selected.filter(f=>f.type==='arr').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const dep=selected.filter(f=>f.type==='dep').sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const esc=crewBusEscape;
-    const safe=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    const TD='border:1.5pt solid #000;padding:4pt 5pt;vertical-align:middle;height:10mm';
-    const TDH=TD+';font-weight:bold;text-align:center;font-size:8pt;font-variant:small-caps';
-    const BADGEARR='<span style="display:inline-block;border:1.5pt solid #2d7a2d;border-radius:3pt;padding:1pt 4pt;font-size:7pt;font-weight:bold;background:#d4edda;color:#1a5c1a">ARR</span>';
-    const BADGEPUP='<span style="display:inline-block;border:1.5pt solid #c0392b;border-radius:3pt;padding:1pt 5pt;font-size:8pt;font-style:italic;background:#fde8e8;color:#7b1010;white-space:nowrap">Pick up</span>';
-    function row(f,isDep){
-      return '<tr>'+
-        '<td style="'+TD+';font-size:14pt;font-weight:700">'+safe(f.reg||'')+'</td>'+
-        '<td style="'+TD+';font-size:13pt;font-weight:700">'+safe(f.flight||'')+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:8pt">'+(isDep?'ARR':BADGEARR)+'</td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+(isDep?BADGEPUP:'Pick up')+'</td>'+
-        '<td style="'+TD+';font-size:18pt;letter-spacing:1pt;text-align:center;font-weight:700">'+safe(f.time||'')+'</td>'+
-        '<td style="'+TD+'"></td>'+
-        '<td style="'+TD+';text-align:center;font-size:9pt">'+safe(f.stand||'')+'</td></tr>';
+  window.loadCrewBusFromFids = async function(manual){
+    const btn=document.getElementById('crewbus-refresh-btn');
+    if(btn){btn.disabled=true;btn.classList.add('is-loading');}
+    try{
+      if((typeof selectedShift==='undefined' || !selectedShift) && typeof autoDetectShift==='function')autoDetectShift();
+      await window.checkForFlightUpdates(true,'crewbus');
+    }finally{
+      if(btn){btn.disabled=false;btn.classList.remove('is-loading');}
     }
-    let rows='';
-    arr.forEach(f=>rows+=row(f,false));
-    if(arr.length&&dep.length)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">ARR</td><td style="'+TD+';text-align:center;font-size:8pt;font-weight:bold">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-    dep.forEach(f=>rows+=row(f,true));
-    const dataRows=arr.length+dep.length+(arr.length&&dep.length?1:0);
-    for(let i=dataRows;i<19;i++)rows+='<tr><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+';text-align:center;font-size:8pt">ARR</td><td style="'+TD+';text-align:center;font-size:8pt">Pick up</td><td style="'+TD+'"></td><td style="'+TD+'"></td><td style="'+TD+'"></td></tr>';
-
-    const hs=dep.filter(f=>f.headset);
-    const handling=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='handling');
-    const renting=selected.filter(f=>String(f.handler||'').toUpperCase()==='WFS'&&f.wfsMode==='renting');
-    const rentSeen=new Set();
-    const rentDedup=renting.filter(f=>{const k=f.reg?'reg:'+f.reg:'flt:'+f.flight;if(rentSeen.has(k))return false;rentSeen.add(k);return true;});
-    const handlingMap={};
-    handling.forEach(f=>{const k=f.reg||f.flight;if(!handlingMap[k])handlingMap[k]={reg:f.reg,arr:null,dep:null};if(f.type==='arr')handlingMap[k].arr=f;else handlingMap[k].dep=f;});
-    const handlingGroups=Object.values(handlingMap);
-    const bottomCount=Math.max(4,hs.length,handlingGroups.length,rentDedup.length);
-    let bottom='';
-    for(let i=0;i<bottomCount;i++){
-      const x=hs[i]||null,h=handlingGroups[i]||null,r=rentDedup[i]||null;
-      bottom+='<tr>'+
-        '<td style="'+TD+'">'+safe(x?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(x?.flight||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(x?.eta||'')+'</td>'+ 
-        '<td style="'+TD+'">'+safe(h?.reg||'')+'</td>'+ '<td style="'+TD+'">'+safe(h?.arr?.flight||h?.dep?.flight||'')+'</td>'+ '<td style="'+TD+';text-align:center">'+safe(h?.arr?.eta||'')+'</td>'+ '<td style="'+TD+';border-right:4pt solid #000;text-align:center">'+safe(h?.dep?.eta||'')+'</td>'+ '<td style="'+TD+'">'+safe(r?.reg||r?.flight||'')+'</td></tr>';
-    }
-
-    const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crew Bus - LGG</title><style>'+ 
-      '@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:9pt}table{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:8pt}td,th{border:1pt solid #000;vertical-align:middle}th{font-size:8pt;font-weight:bold;text-align:center;padding:4pt 3pt}.crew-head{font-size:11pt;font-weight:bold}.main-table th{height:8mm}.main-table td{height:10mm}.bottom-table tr{height:30pt}.bottom-table .group{font-size:9pt;font-weight:bold;text-align:center;padding:5pt}.bottom-table .sep{border-right:4pt solid #000!important}</style></head><body>'+ 
-      '<table class="main-table"><colgroup><col style="width:13%"><col style="width:13%"><col style="width:7%"><col style="width:8%"><col style="width:10%"><col style="width:42%"><col style="width:7%"></colgroup>'+ 
-      '<tr><td class="crew-head" colspan="7">Crew bus service&nbsp;&nbsp; '+safe(dl)+'&nbsp;&nbsp; '+safe(shift)+'</td></tr>'+ 
-      '<tr><th>Registration</th><th>Flight Number</th><th>ARR</th><th>Pick up</th><th>Time</th><th>Note</th><th>Stand</th></tr>'+rows+'</table>'+ 
-      '<table class="bottom-table"><colgroup><col style="width:15%"><col style="width:12%"><col style="width:12%"><col style="width:15%"><col style="width:12%"><col style="width:10%"><col style="width:10%"><col style="width:14%"></colgroup>'+ 
-      '<tr><td class="group sep" colspan="3">Headset</td><td class="group sep" colspan="4">Handling</td><td class="group">Renting</td></tr>'+ 
-      '<tr><th>Registration</th><th>FLT #</th><th class="sep">Depart</th><th>Registration</th><th>FLT #</th><th>ARR</th><th class="sep">DEP</th><th></th></tr>'+bottom+'</table>'+ 
-      '</body></html>';
-    const w=window.open('','_blank');
-    if(w)printHtmlWhenReady(w,htmlOut);else alert('Autorisez les popups pour imprimer la feuille Crew Bus.');
   };
 
-  // Le réglage d'intervalle existant reste la source unique de vérité.
-  // Le timer appelle désormais le cycle partagé, donc ARR + DEP sont actualisés
-  // pour Operations et Crew Bus ensemble.
-  if(typeof startAutoRefresh==='function'){
-    const __v66StartAutoRefresh=startAutoRefresh;
-    window.startAutoRefresh=function(){
-      if(autoRefreshTimer)clearInterval(autoRefreshTimer);
-      if(!autoRefreshEnabled)return;
-      autoRefreshTimer=setInterval(function(){ window.checkForFlightUpdates(false,'auto'); },autoRefreshMinutes*60*1000);
-    };
-  }
-  if(typeof initAutoRefreshUI==='function'){
-    // Rebranche le timer avec la nouvelle fonction partagee.
-    window.initAutoRefreshUI=function(){ updateRefreshToggleButtonIcon(); startAutoRefresh(); };
-  }
-  // Le changement de page ne doit plus masquer le statut Crew Bus du refresh partagé.
-  const __origGoToStep=window.goToStep;
-  if(typeof __origGoToStep==='function'){
+  window.startAutoRefresh=function(){
+    if(autoRefreshTimer)clearInterval(autoRefreshTimer);
+    if(!autoRefreshEnabled)return;
+    autoRefreshTimer=setInterval(function(){window.checkForFlightUpdates(false,'auto');},autoRefreshMinutes*60*1000);
+  };
+
+  if(typeof window.goToStep==='function' && !window.__woLggV67GoToStepWrapped){
+    const originalGoToStep=window.goToStep;
+    window.__woLggV67GoToStepWrapped=true;
     window.goToStep=function(n){
-      const result=__origGoToStep(n);
-      if(n===4 && autoRefreshEnabled && typeof startAutoRefresh==='function')startAutoRefresh();
+      const result=originalGoToStep.apply(this,arguments);
+      if(n===4 && typeof startAutoRefresh==='function')startAutoRefresh();
       return result;
     };
   }
