@@ -6637,9 +6637,13 @@ ${(function(){
         const active=document.querySelector('.shift-btn.active');
         if(active)selectShift(active); else autoDetectShift();
       }
+      const fidsTimeout=(promise,label)=>Promise.race([
+        promise,
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error('Délai dépassé pour '+label)),15000))
+      ]);
       const [arrivals,departures]=await Promise.all([
-        fetchJsonWithFallback(FIDS_ARRIVALS_URL),
-        fetchJsonWithFallback(FIDS_DEPARTURES_URL)
+        fidsTimeout(fetchJsonWithFallback(FIDS_ARRIVALS_URL),'les arrivées FIDS'),
+        fidsTimeout(fetchJsonWithFallback(FIDS_DEPARTURES_URL),'les départs FIDS')
       ]);
       lastArrivals=Array.isArray(arrivals)?arrivals:[];
       lastDepartures=Array.isArray(departures)?departures:[];
@@ -6840,130 +6844,161 @@ ${(function(){
     setTimeout(()=>{const q=document.getElementById('crewbus-sort');if(q)q.value=crewBusSort;document.querySelectorAll('.crewbus-filter').forEach(b=>b.classList.toggle('active',b.dataset.filter===crewBusFilter));renderCrewBusFlights();},0);
   }
   function generateCrewBusSheet(){
-    const selected=(crewBusFlights||[]).filter(f=>f.selected);
+    const selected=(crewBusFlights||[]).filter(f=>f && f.selected);
     if(!selected.length){
       alert('Sélectionnez au moins un vol pour générer la feuille Crew Bus.');
       return;
     }
 
     const shift=selectedShift?.name||'—';
+    const dateVal=document.getElementById('shift-date')?.value||'';
     const esc=crewBusEscape;
 
-    /* V73 — CREW BUS MASTER TEMPLATE
-       Source: crewbus_template_spec.json / crewbus_template_prompt.txt
-       4816 × 6876 px @ 600 DPI, converted to physical mm for print.
-       The page is deliberately kept to ONE physical page. */
+    /*
+      V74 — CREW BUS MASTER TEMPLATE
+      Source hierarchy:
+        1. Existing application / Crew Bus logic
+        2. Previous Crew Bus versions (V67/V69/V70/V72)
+        3. crewbus_template_spec.json / crewbus_template_prompt.txt
+      The last item is the authoritative geometry for the printable sheet.
 
-    const rows=(crewBusFlights||[])
-      .filter(f=>f.selected)
-      .sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time))
-      .slice(0,12);
+      IMPORTANT:
+      - clean vector/grid, never a scanned background
+      - exact 7-column grid
+      - 12 main data rows
+      - 5 lower data rows
+      - one physical page
+    */
 
-    const headsetRows=(crewBusFlights||[])
-      .filter(f=>f.selected && f.type==='dep' && f.headset===true)
-      .slice(0,5)
-      .map(f=>({reg:f.reg||'',flt:f.flight||'',depart:f.eta||f.departureTime||f.time||''}));
+    const PX_TO_MM=n=>(n*25.4/600).toFixed(4)+'mm';
+    const PAGE_W=PX_TO_MM(4816);   // 203.8787 mm
+    const PAGE_H=PX_TO_MM(6876);   // 291.0840 mm
 
-    const handlingRows=(crewBusFlights||[])
-      .filter(f=>f.selected && f.wfsMode==='handling')
-      .slice(0,5)
-      .map(f=>({
-        reg:f.reg||'',
-        flt:f.flight||'',
-        depArr:(f.type==='dep'?'DEP ':'ARR ')+(f.eta||f.departureTime||f.time||''),
-        wfs:'WFS'
-      }));
+    // Exact master coordinates, expressed in physical millimetres.
+    const MAIN_X=PX_TO_MM(170);
+    const MAIN_Y=PX_TO_MM(85);
+    const MAIN_W=PX_TO_MM(4575);
+    const MAIN_H=PX_TO_MM(3245);
 
-    /* A4 is used explicitly because iOS print preview is unreliable with
-       custom @page sizes. The reference is fitted inside A4 with zero margins,
-       guaranteeing a single physical page. */
-    const PAGE_W='210mm', PAGE_H='297mm';
-    const MAIN_L='6.5mm', MAIN_T='3.5mm', MAIN_W='197mm';
-    const MAIN_TITLE_H='6.4mm', MAIN_HEADER_H='9.6mm', MAIN_ROW_H='10.2mm';
-    const MAIN_H='138.4mm';
-    const LOWER_L='7.5mm', LOWER_T='151.8mm', LOWER_W='195mm';
-    const LOWER_GROUP_H='8.0mm', LOWER_HEADER_H='8.0mm', LOWER_ROW_H='8.7mm';
-    const LOWER_H='59.5mm';
+    const LOWER_X=PX_TO_MM(195);
+    const LOWER_Y=PX_TO_MM(3530);
+    const LOWER_W=PX_TO_MM(4555);
+    const LOWER_H=PX_TO_MM(1530);
 
     const COLS=[1010,295,350,950,945,415,610];
-    const total=COLS.reduce((a,b)=>a+b,0);
-    const colgroup=COLS.map(w=>'<col style="width:'+((w/total)*100).toFixed(6)+'%">').join('');
-    const text=v=>esc(v||'');
+    const totalCols=COLS.reduce((a,b)=>a+b,0);
+    const colgroup=COLS.map(w=>'<col style="width:'+((w/totalCols)*100).toFixed(6)+'%">').join('');
+
+    const arr=selected
+      .filter(f=>f.type==='arr')
+      .sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
+    const dep=selected
+      .filter(f=>f.type==='dep')
+      .sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
+
+    // The master paper has 12 rows. Arrivals and departures are placed in
+    // chronological order, while the fixed ARR / Pick up labels remain in
+    // every row exactly as on the source.
+    const ordered=[...arr,...dep].slice(0,12);
+
+    const isArrival=(f)=>f && f.type==='arr';
+    const isDeparture=(f)=>f && f.type==='dep';
 
     let mainRows='';
     for(let i=0;i<12;i++){
-      const f=rows[i];
-      const isArr=f?.type==='arr';
-      const isDep=f?.type==='dep';
+      const f=ordered[i];
+      const arrClass=isArrival(f)?' arrival-highlight':'';
+      const depClass=isDeparture(f)?' pickup-highlight':'';
 
       mainRows +=
         '<tr class="main-data-row">'+
-          '<td class="main-data reg">'+text(f?.reg)+'</td>'+
-          '<td class="main-data fixed-label '+(isArr?'arrival-highlight':'')+'">ARR</td>'+
-          '<td class="main-data fixed-label pickup '+(isDep?'pickup-highlight':'')+'">Pick up</td>'+
-          '<td class="main-data value">'+text(f?.time)+'</td>'+
-          '<td class="main-data flight">'+text(f?.flight)+'</td>'+
+          '<td class="main-data reg">'+esc(f?.reg||'')+'</td>'+
+          '<td class="main-data fixed-label'+arrClass+'">ARR</td>'+
+          '<td class="main-data fixed-label pickup'+depClass+'">Pick up</td>'+
+          '<td class="main-data value">'+esc(f?.time||'')+'</td>'+
+          '<td class="main-data flight">'+esc(f?.flight||'')+'</td>'+
           '<td class="main-data crew"></td>'+
-          '<td class="main-data stand">'+text(f?.stand)+'</td>'+
+          '<td class="main-data stand">'+esc(f?.stand||'')+'</td>'+
         '</tr>';
     }
 
+    // Headset = only departures explicitly marked Headset.
+    const headsetRows=dep
+      .filter(f=>f.headset===true)
+      .slice(0,5);
+
+    // Handling = only WFS flights explicitly marked Handling.
+    const handlingRows=selected
+      .filter(f=>String(f.handler||'').toUpperCase().includes('WFS') && f.wfsMode==='handling')
+      .sort((a,b)=>crewBusChrono(a.type==='dep'?(a.eta||a.time):(a.eta||a.time))-crewBusChrono(b.type==='dep'?(b.eta||b.time):(b.eta||b.time)))
+      .slice(0,5);
+
     let lowerRows='';
     for(let i=0;i<5;i++){
-      const h=headsetRows[i]||{};
-      const g=handlingRows[i]||{};
+      const h=headsetRows[i];
+      const g=handlingRows[i];
+
+      const hDepart=h ? (h.eta||h.time||'') : '';
+      const gTime=g ? ((g.type==='dep'?'DEP ':'ARR ')+(g.eta||g.time||'')) : '';
+
       lowerRows +=
         '<tr class="lower-data-row">'+
-          '<td class="lower-data">'+text(h.reg)+'</td>'+
-          '<td class="lower-data">'+text(h.flt)+'</td>'+
-          '<td class="lower-data">'+text(h.depart)+'</td>'+
-          '<td class="lower-data">'+text(g.reg)+'</td>'+
-          '<td class="lower-data">'+text(g.flt)+'</td>'+
-          '<td class="lower-data">'+text(g.depArr)+'</td>'+
-          '<td class="lower-data">'+text(g.wfs)+'</td>'+
+          '<td class="lower-data">'+esc(h?.reg||'')+'</td>'+
+          '<td class="lower-data">'+esc(h?.flight||'')+'</td>'+
+          '<td class="lower-data">'+esc(hDepart)+'</td>'+
+          '<td class="lower-data">'+esc(g?.reg||'')+'</td>'+
+          '<td class="lower-data">'+esc(g?.flight||'')+'</td>'+
+          '<td class="lower-data">'+esc(gTime)+'</td>'+
+          '<td class="lower-data">'+(g?'WFS':'')+'</td>'+
         '</tr>';
     }
 
     const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">'+
+      '<meta name="viewport" content="width=device-width,initial-scale=1">'+
       '<title>Crew Bus - LGG</title>'+
       '<style>'+
       '@page{size:A4 portrait;margin:0}'+
-      'html,body{width:210mm;height:297mm;margin:0;padding:0;background:#fff;color:#111}'+
-      'body{font-family:Arial,Helvetica,sans-serif;overflow:hidden;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'+
-      '.crewbus-sheet{position:relative;width:210mm;height:297mm;background:#fff;overflow:hidden;page-break-after:avoid;break-after:avoid}'+
-      '.crewbus-table{position:absolute;table-layout:fixed;border-collapse:collapse;border-spacing:0;font-family:Arial,Helvetica,sans-serif;color:#111}'+
-      '.crewbus-table td{border:0.35mm solid #222;overflow:hidden;background:#fff!important}'+
+      'html,body{margin:0!important;padding:0!important;width:210mm;height:297mm;background:#fff;color:#111}'+
+      'body{font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;overflow:hidden}'+
+      '.crewbus-page{position:relative;width:'+PAGE_W+';height:'+PAGE_H+';margin:0;overflow:hidden;background:#fff}'+
+      '.crewbus-table{position:absolute;table-layout:fixed;border-collapse:collapse;border-spacing:0;width:'+MAIN_W+';font-family:Arial,Helvetica,sans-serif;color:#111}'+
+      '.crewbus-table td{border:0.35mm solid #222;overflow:hidden;background:#fff;box-sizing:border-box}'+
 
-      '.main-table{left:'+MAIN_L+';top:'+MAIN_T+';width:'+MAIN_W+';height:'+MAIN_H+'}'+
-      '.main-title-row{height:'+MAIN_TITLE_H+'}'+
-      '.main-title-cell{height:'+MAIN_TITLE_H+';font-size:4.9mm;font-weight:700;text-align:left;vertical-align:middle;padding-left:1.1mm}'+
-      '.main-title-shift{height:'+MAIN_TITLE_H+';font-size:4.9mm;font-weight:700;text-align:center;vertical-align:middle}'+
-      '.main-header-row{height:'+MAIN_HEADER_H+'}'+
-      '.main-header{height:'+MAIN_HEADER_H+';font-size:4.5mm;font-weight:700;text-align:center;vertical-align:middle;padding:0 0.7mm;line-height:1.05}'+
-      '.main-data-row{height:'+MAIN_ROW_H+'}'+
-      '.main-data{height:'+MAIN_ROW_H+';font-size:4.4mm;font-weight:400;text-align:center;vertical-align:middle;padding:0 0.9mm;line-height:1}'+
+      '.main-table{left:'+MAIN_X+';top:'+MAIN_Y+';height:'+MAIN_H+'}'+
+      '.main-title-row{height:'+PX_TO_MM(155)+'}'+
+      '.main-title-cell{height:'+PX_TO_MM(155)+';font-size:4.9mm;font-weight:700;text-align:left;vertical-align:middle;padding-left:1.0mm}'+
+      '.main-title-shift{height:'+PX_TO_MM(155)+';font-size:4.9mm;font-weight:700;text-align:center;vertical-align:middle}'+
+      '.main-header-row{height:'+PX_TO_MM(240)+'}'+
+      '.main-header{height:'+PX_TO_MM(240)+';font-size:4.25mm;font-weight:700;text-align:center;vertical-align:middle;padding:0 0.7mm;line-height:1.05}'+
+      '.main-data-row{height:'+PX_TO_MM(240)+'}'+
+      '.main-data{height:'+PX_TO_MM(240)+';font-size:4.15mm;text-align:center;vertical-align:middle;padding:0 0.8mm;line-height:1}'+
       '.main-data.reg,.main-data.flight,.main-data.stand{font-weight:700}'+
-      '.main-data.fixed-label{font-weight:700;text-align:center}'+
-      '.main-data.pickup{text-align:left;padding-left:1.2mm}'+
-      '.arrival-highlight{background:#f3b1b1!important}'+
+      '.main-data.fixed-label{font-weight:700}'+
+      '.main-data.pickup{text-align:left;padding-left:1.1mm}'+
+      '.arrival-highlight{background:#f2b0b0!important}'+
       '.pickup-highlight{background:#f3d48a!important}'+
 
-      '.lower-table{left:'+LOWER_L+';top:'+LOWER_T+';width:'+LOWER_W+';height:'+LOWER_H+'}'+
-      '.lower-group-row{height:'+LOWER_GROUP_H+'}'+
-      '.lower-group{height:'+LOWER_GROUP_H+';font-size:4.7mm;font-weight:700;text-align:center;vertical-align:middle;position:relative}'+
+      '.lower-table{left:'+LOWER_X+';top:'+LOWER_Y+';width:'+LOWER_W+';height:'+LOWER_H+'}'+
+      '.lower-group-row{height:'+PX_TO_MM(220)+'}'+
+      '.lower-group{height:'+PX_TO_MM(220)+';font-size:4.6mm;font-weight:700;text-align:center;vertical-align:middle;position:relative}'+
       '.lower-group.headset{border-right:0.35mm solid #222}'+
-      '.lower-group.headset:after{content:"|";position:absolute;right:-2.6mm;top:50%;transform:translateY(-50%);background:#fff;padding:0 0.5mm;font-weight:700}'+
-      '.lower-header-row{height:'+LOWER_HEADER_H+'}'+
-      '.lower-header{height:'+LOWER_HEADER_H+';font-size:4mm;font-weight:700;text-align:center;vertical-align:middle;padding:0 0.7mm;line-height:1.02;white-space:normal}'+
-      '.lower-data-row{height:'+LOWER_ROW_H+'}'+
-      '.lower-data{height:'+LOWER_ROW_H+';font-size:4.1mm;font-weight:400;text-align:center;vertical-align:middle;padding:0 0.7mm;line-height:1}'+
+      '.lower-group.headset:after{content:"|";position:absolute;right:-2.6mm;top:50%;transform:translateY(-50%);background:#fff;padding:0 0.45mm;font-weight:700}'+
+      '.lower-header-row{height:'+PX_TO_MM(220)+'}'+
+      '.lower-header{height:'+PX_TO_MM(220)+';font-size:3.65mm;font-weight:700;text-align:center;vertical-align:middle;padding:0 0.6mm;line-height:1.02;white-space:normal}'+
+      '.lower-data-row{height:'+PX_TO_MM(220)+'}'+
+      '.lower-data{height:'+PX_TO_MM(220)+';font-size:3.8mm;text-align:center;vertical-align:middle;padding:0 0.6mm;line-height:1}'+
+
+      '@media print{html,body{width:210mm!important;height:297mm!important}'+
+      '.crewbus-page{break-after:avoid!important;page-break-after:avoid!important;break-inside:avoid!important;page-break-inside:avoid!important}'+
+      '}'+
       '</style></head><body>'+
-      '<div class="crewbus-sheet">'+
+      '<div class="crewbus-page">'+
+
       '<table class="crewbus-table main-table">'+
         '<colgroup>'+colgroup+'</colgroup>'+
         '<tr class="main-title-row">'+
           '<td class="main-title-cell" colspan="3">Crew bus service</td>'+
-          '<td class="main-title-shift" colspan="4">'+text(shift)+'</td>'+
+          '<td class="main-title-shift" colspan="4">'+esc(shift)+'</td>'+
         '</tr>'+
         '<tr class="main-header-row">'+
           '<td class="main-header">REGISTRATION</td>'+
@@ -6974,6 +7009,7 @@ ${(function(){
         '</tr>'+
         mainRows+
       '</table>'+
+
       '<table class="crewbus-table lower-table">'+
         '<colgroup>'+colgroup+'</colgroup>'+
         '<tr class="lower-group-row">'+
@@ -6991,6 +7027,7 @@ ${(function(){
         '</tr>'+
         lowerRows+
       '</table>'+
+
       '</div></body></html>';
 
     const w=window.open('','_blank');
@@ -7573,17 +7610,6 @@ body.wo-lgg-scroll-locked{
       console.warn('WO-LGG shared FIDS refresh failed',e);
     }finally{
       const btn=document.getElementById('crewbus-refresh-btn');
-      if(btn){btn.disabled=false;btn.classList.remove('is-loading');}
-    }
-  };
-
-  window.loadCrewBusFromFids = async function(manual){
-    const btn=document.getElementById('crewbus-refresh-btn');
-    if(btn){btn.disabled=true;btn.classList.add('is-loading');}
-    try{
-      if((typeof selectedShift==='undefined' || !selectedShift) && typeof autoDetectShift==='function')autoDetectShift();
-      await window.checkForFlightUpdates(true,'crewbus');
-    }finally{
       if(btn){btn.disabled=false;btn.classList.remove('is-loading');}
     }
   };
