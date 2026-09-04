@@ -6851,104 +6851,126 @@ ${(function(){
     }
 
     const shift=selectedShift?.name||'—';
-    const dateVal=document.getElementById('shift-date')?.value||'';
     const esc=crewBusEscape;
 
     /*
-      V74 — CREW BUS MASTER TEMPLATE
-      Source hierarchy:
-        1. Existing application / Crew Bus logic
-        2. Previous Crew Bus versions (V67/V69/V70/V72)
-        3. crewbus_template_spec.json / crewbus_template_prompt.txt
-      The last item is the authoritative geometry for the printable sheet.
-
-      IMPORTANT:
-      - clean vector/grid, never a scanned background
-      - exact 7-column grid
-      - 12 main data rows
-      - 5 lower data rows
-      - one physical page
+      V75 — CREW BUS FINAL LAYOUT
+      Base logic kept from the existing application / friend's index.
+      Printable geometry is based on the supplied Crew Bus master template,
+      with the requested V75 additions:
+        • selected Crew Bus flights = main column group
+        • unselected FIDS flights = dedicated "Autre Crew-Bus" column
+        • Flight number / Registration positions swapped
+        • 19 rows minimum, auto-expanding if necessary
+        • ARR / Pick up columns slightly wider
+        • Headset / Handling column proportions refined
+        • ONE physical A4 page
     */
 
     const PX_TO_MM=n=>(n*25.4/600).toFixed(4)+'mm';
-    const PAGE_W=PX_TO_MM(4816);   // 203.8787 mm
-    const PAGE_H=PX_TO_MM(6876);   // 291.0840 mm
+    const PAGE_W=PX_TO_MM(4816);
+    const PAGE_H=PX_TO_MM(6876);
 
-    // Exact master coordinates, expressed in physical millimetres.
-    const MAIN_X=PX_TO_MM(170);
-    const MAIN_Y=PX_TO_MM(85);
-    const MAIN_W=PX_TO_MM(4575);
-    const MAIN_H=PX_TO_MM(3245);
+    const PAGE_LEFT=170;
+    const PAGE_RIGHT=4745;
+    const TABLE_W=PAGE_RIGHT-PAGE_LEFT;
 
-    const LOWER_X=PX_TO_MM(195);
-    const LOWER_Y=PX_TO_MM(3530);
-    const LOWER_W=PX_TO_MM(4555);
-    const LOWER_H=PX_TO_MM(1530);
-
-    const COLS=[1010,295,350,950,945,415,610];
-    const totalCols=COLS.reduce((a,b)=>a+b,0);
-    const colgroup=COLS.map(w=>'<col style="width:'+((w/totalCols)*100).toFixed(6)+'%">').join('');
-
-    const arr=selected
-      .filter(f=>f.type==='arr')
-      .sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-    const dep=selected
-      .filter(f=>f.type==='dep')
+    const minRows=19;
+    const otherFlights=(crewBusFlights||[])
+      .filter(f=>f && !f.selected && !f.manual)
       .sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
 
-    // The master paper has 12 rows. Arrivals and departures are placed in
-    // chronological order, while the fixed ARR / Pick up labels remain in
-    // every row exactly as on the source.
-    const ordered=[...arr,...dep].slice(0,12);
+    const mainRows=[...selected].sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
+    const rowCount=Math.max(minRows,mainRows.length,otherFlights.length);
 
-    const isArrival=(f)=>f && f.type==='arr';
-    const isDeparture=(f)=>f && f.type==='dep';
+    /* The lower block is kept safely above the physical page bottom. We use
+       the free vertical space to keep 19+ lines readable and shrink gradually
+       only when a very large number of Crew Bus rows has to fit on one page. */
+    const mainTop=85;
+    const titleH=155;
+    const headerH=240;
+    const lowerTop=5120;
+    const gapBeforeLower=70;
+    const maxMainDataPx=Math.max(1,lowerTop-gapBeforeLower-mainTop-titleH-headerH);
+    const rowPx=Math.max(112,Math.min(240,Math.floor(maxMainDataPx/rowCount)));
 
-    let mainRows='';
-    for(let i=0;i<12;i++){
-      const f=ordered[i];
-      const arrClass=isArrival(f)?' arrival-highlight':'';
-      const depClass=isDeparture(f)?' pickup-highlight':'';
+    const mainHeight=titleH+headerH+rowPx*rowCount;
 
-      mainRows +=
+    // Main 8-column grid: 7 source columns + requested "Autre Crew-Bus" column.
+    // ARR / Pick up are intentionally a little wider than the master source.
+    const MAIN_COLS=[780,315,370,720,820,335,510,625];
+    const mainTotal=MAIN_COLS.reduce((a,b)=>a+b,0);
+    const mainColgroup=MAIN_COLS.map(w=>'<col style="width:'+((w/mainTotal)*100).toFixed(6)+'%">').join('');
+
+    // Lower table: Headset FLT# wider, Registration smaller, Depart slightly wider;
+    // Handling FLT# a little smaller, DEP // ARR wider.
+    const LOWER_COLS=[640,735,485,790,535,765,525];
+    const lowerTotal=LOWER_COLS.reduce((a,b)=>a+b,0);
+    const lowerColgroup=LOWER_COLS.map(w=>'<col style="width:'+((w/lowerTotal)*100).toFixed(6)+'%">').join('');
+
+    const mainTime=(f)=>f?.time||'';
+    const mainFlight=(f)=>f?.flight||'';
+    const mainReg=(f)=>f?.reg||'';
+    const mainStand=(f)=>f?.stand||'';
+
+    let mainRowsHtml='';
+    for(let i=0;i<rowCount;i++){
+      const f=mainRows[i];
+      const other=otherFlights[i];
+      const arrClass=f?.type==='arr'?' arrival-highlight':'';
+      const depClass=f?.type==='dep'?' pickup-highlight':'';
+
+      const otherText=other
+        ? '<strong>'+esc(other.flight||'')+'</strong><span class="other-sep"> · </span>'+
+          '<b>'+esc(other.reg||'—')+'</b><span class="other-sep"> · </span>'+
+          '<span>'+esc(other.time||'')+'</span>'+
+          (other.handler?'<small>'+esc(other.handler)+'</small>':'')
+        : '';
+
+      mainRowsHtml+=
         '<tr class="main-data-row">'+
-          '<td class="main-data reg">'+esc(f?.reg||'')+'</td>'+
+          '<td class="main-data flight-number-cell">'+esc(mainFlight(f))+'</td>'+
           '<td class="main-data fixed-label'+arrClass+'">ARR</td>'+
           '<td class="main-data fixed-label pickup'+depClass+'">Pick up</td>'+
-          '<td class="main-data value">'+esc(f?.time||'')+'</td>'+
-          '<td class="main-data flight">'+esc(f?.flight||'')+'</td>'+
-          '<td class="main-data crew"></td>'+
-          '<td class="main-data stand">'+esc(f?.stand||'')+'</td>'+
+          '<td class="main-data value">'+esc(mainTime(f))+'</td>'+
+          '<td class="main-data registration-cell">'+esc(mainReg(f))+'</td>'+
+          '<td class="main-data crew"></td>'+ 
+          '<td class="main-data stand">'+esc(mainStand(f))+'</td>'+ 
+          '<td class="main-data other-crew-cell">'+otherText+'</td>'+ 
         '</tr>';
     }
 
-    // Headset = only departures explicitly marked Headset.
-    const headsetRows=dep
-      .filter(f=>f.headset===true)
-      .slice(0,5);
+    const headsetRows=mainRows
+      .filter(f=>f.type==='dep' && f.headset===true)
+      .slice(0,Math.max(5,rowCount));
 
-    // Handling = only WFS flights explicitly marked Handling.
-    const handlingRows=selected
-      .filter(f=>String(f.handler||'').toUpperCase().includes('WFS') && f.wfsMode==='handling')
-      .sort((a,b)=>crewBusChrono(a.type==='dep'?(a.eta||a.time):(a.eta||a.time))-crewBusChrono(b.type==='dep'?(b.eta||b.time):(b.eta||b.time)))
-      .slice(0,5);
+    const handlingRows=(crewBusFlights||[])
+      .filter(f=>f && String(f.handler||'').toUpperCase().includes('WFS') && f.wfsMode==='handling')
+      .sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time))
+      .slice(0,Math.max(5,rowCount));
+
+    const lowerRowsCount=Math.max(5,headsetRows.length,handlingRows.length);
+    // Use the same visual row rhythm as the source for the normal case,
+    // and only compact the lower block if the number of rows becomes unusually high.
+    const lowerGroupPx=220;
+    const lowerHeaderPx=220;
+    const lowerAvailablePx=Math.max(900,Math.floor((6876-lowerTop-80)-lowerGroupPx-lowerHeaderPx));
+    const lowerRowPx=Math.max(120,Math.min(220,Math.floor(lowerAvailablePx/lowerRowsCount)));
 
     let lowerRows='';
-    for(let i=0;i<5;i++){
+    for(let i=0;i<lowerRowsCount;i++){
       const h=headsetRows[i];
       const g=handlingRows[i];
-
-      const hDepart=h ? (h.eta||h.time||'') : '';
-      const gTime=g ? ((g.type==='dep'?'DEP ':'ARR ')+(g.eta||g.time||'')) : '';
-
-      lowerRows +=
+      const hDepart=h?(h.eta||h.time||''):'';
+      const gTime=g?((g.type==='dep'?'DEP ':'ARR ')+(g.eta||g.time||'')):'';
+      lowerRows+=
         '<tr class="lower-data-row">'+
           '<td class="lower-data">'+esc(h?.reg||'')+'</td>'+
-          '<td class="lower-data">'+esc(h?.flight||'')+'</td>'+
-          '<td class="lower-data">'+esc(hDepart)+'</td>'+
+          '<td class="lower-data headset-flt">'+esc(h?.flight||'')+'</td>'+
+          '<td class="lower-data headset-depart">'+esc(hDepart)+'</td>'+
           '<td class="lower-data">'+esc(g?.reg||'')+'</td>'+
-          '<td class="lower-data">'+esc(g?.flight||'')+'</td>'+
-          '<td class="lower-data">'+esc(gTime)+'</td>'+
+          '<td class="lower-data handling-flt">'+esc(g?.flight||'')+'</td>'+
+          '<td class="lower-data handling-deparr">'+esc(gTime)+'</td>'+
           '<td class="lower-data">'+(g?'WFS':'')+'</td>'+
         '</tr>';
     }
@@ -6959,59 +6981,67 @@ ${(function(){
       '<style>'+
       '@page{size:A4 portrait;margin:0}'+
       'html,body{margin:0!important;padding:0!important;width:210mm;height:297mm;background:#fff;color:#111}'+
-      'body{font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important;overflow:hidden}'+
-      '.crewbus-page{position:relative;width:'+PAGE_W+';height:'+PAGE_H+';margin:0;overflow:hidden;background:#fff}'+
-      '.crewbus-table{position:absolute;table-layout:fixed;border-collapse:collapse;border-spacing:0;width:'+MAIN_W+';font-family:Arial,Helvetica,sans-serif;color:#111}'+
-      '.crewbus-table td{border:0.35mm solid #222;overflow:hidden;background:#fff;box-sizing:border-box}'+
+      'body{font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;overflow:hidden}'+
+      '.crewbus-page{position:relative;width:'+PAGE_W+';height:'+PAGE_H+';background:#fff;overflow:hidden}'+
+      '.crewbus-table{position:absolute;table-layout:fixed;border-collapse:collapse;border-spacing:0;font-family:Arial,Helvetica,sans-serif;color:#111}'+
+      '.crewbus-table td{border:0.35mm solid #222;overflow:hidden;background:#fff!important;box-sizing:border-box}'+
 
-      '.main-table{left:'+MAIN_X+';top:'+MAIN_Y+';height:'+MAIN_H+'}'+
-      '.main-title-row{height:'+PX_TO_MM(155)+'}'+
-      '.main-title-cell{height:'+PX_TO_MM(155)+';font-size:4.9mm;font-weight:700;text-align:left;vertical-align:middle;padding-left:1.0mm}'+
-      '.main-title-shift{height:'+PX_TO_MM(155)+';font-size:4.9mm;font-weight:700;text-align:center;vertical-align:middle}'+
-      '.main-header-row{height:'+PX_TO_MM(240)+'}'+
-      '.main-header{height:'+PX_TO_MM(240)+';font-size:4.25mm;font-weight:700;text-align:center;vertical-align:middle;padding:0 0.7mm;line-height:1.05}'+
-      '.main-data-row{height:'+PX_TO_MM(240)+'}'+
-      '.main-data{height:'+PX_TO_MM(240)+';font-size:4.15mm;text-align:center;vertical-align:middle;padding:0 0.8mm;line-height:1}'+
-      '.main-data.reg,.main-data.flight,.main-data.stand{font-weight:700}'+
-      '.main-data.fixed-label{font-weight:700}'+
-      '.main-data.pickup{text-align:left;padding-left:1.1mm}'+
+      '.main-table{left:'+PX_TO_MM(PAGE_LEFT)+';top:'+PX_TO_MM(mainTop)+';width:'+PX_TO_MM(TABLE_W)+'}'+
+      '.main-title-row{height:'+PX_TO_MM(titleH)+'}'+
+      '.main-title-cell{height:'+PX_TO_MM(titleH)+';font-size:4.65mm;font-weight:700;text-align:left;vertical-align:middle;padding-left:1.1mm;white-space:nowrap}'+
+      '.main-title-shift{height:'+PX_TO_MM(titleH)+';font-size:4.65mm;font-weight:700;text-align:center;vertical-align:middle}'+
+      '.main-title-other{height:'+PX_TO_MM(titleH)+';font-size:4.2mm;font-weight:700;text-align:center;vertical-align:middle;white-space:nowrap}'+
+      '.main-header-row{height:'+PX_TO_MM(headerH)+'}'+
+      '.main-header{height:'+PX_TO_MM(headerH)+';font-size:4.15mm;font-weight:700;text-align:center;vertical-align:middle;padding:0 .7mm;line-height:1.04}'+
+      '.main-data-row{height:'+PX_TO_MM(rowPx)+'}'+
+      '.main-data{height:'+PX_TO_MM(rowPx)+';font-size:'+Math.max(3.25,Math.min(4.15,rowPx*0.0175)).toFixed(2)+'mm;vertical-align:middle;padding:0 .8mm;line-height:1}'+
+      '.flight-number-cell{text-align:center;font-weight:900;letter-spacing:.12mm}'+
+      '.registration-cell{text-align:center;font-weight:800;letter-spacing:.08mm}'+
+      '.main-data.fixed-label{font-weight:700;text-align:center}'+
+      '.main-data.pickup{text-align:left;padding-left:1.0mm}'+
+      '.main-data.crew,.main-data.stand{text-align:center}'+
       '.arrival-highlight{background:#f2b0b0!important}'+
       '.pickup-highlight{background:#f3d48a!important}'+
+      '.other-crew-cell{text-align:left;padding:0 1.1mm!important;line-height:1.08!important}'+
+      '.other-crew-cell strong{font-size:1em;font-weight:900}'+
+      '.other-crew-cell b{font-weight:800}'+
+      '.other-sep{opacity:.55}'+
+      '.other-crew-cell small{display:block;font-size:.72em;font-weight:600;margin-top:.3mm;opacity:.72;text-transform:uppercase}'+
 
-      '.lower-table{left:'+LOWER_X+';top:'+LOWER_Y+';width:'+LOWER_W+';height:'+LOWER_H+'}'+
-      '.lower-group-row{height:'+PX_TO_MM(220)+'}'+
-      '.lower-group{height:'+PX_TO_MM(220)+';font-size:4.6mm;font-weight:700;text-align:center;vertical-align:middle;position:relative}'+
-      '.lower-group.headset{border-right:0.35mm solid #222}'+
-      '.lower-group.headset:after{content:"|";position:absolute;right:-2.6mm;top:50%;transform:translateY(-50%);background:#fff;padding:0 0.45mm;font-weight:700}'+
-      '.lower-header-row{height:'+PX_TO_MM(220)+'}'+
-      '.lower-header{height:'+PX_TO_MM(220)+';font-size:3.65mm;font-weight:700;text-align:center;vertical-align:middle;padding:0 0.6mm;line-height:1.02;white-space:normal}'+
-      '.lower-data-row{height:'+PX_TO_MM(220)+'}'+
-      '.lower-data{height:'+PX_TO_MM(220)+';font-size:3.8mm;text-align:center;vertical-align:middle;padding:0 0.6mm;line-height:1}'+
-
-      '@media print{html,body{width:210mm!important;height:297mm!important}'+
-      '.crewbus-page{break-after:avoid!important;page-break-after:avoid!important;break-inside:avoid!important;page-break-inside:avoid!important}'+
-      '}'+
+      '.lower-table{left:'+PX_TO_MM(PAGE_LEFT)+';top:'+PX_TO_MM(lowerTop)+';width:'+PX_TO_MM(TABLE_W)+'}'+
+      '.lower-group-row{height:'+PX_TO_MM(lowerGroupPx)+'}'+
+      '.lower-group{height:'+PX_TO_MM(lowerGroupPx)+';font-size:4.5mm;font-weight:700;text-align:center;vertical-align:middle;position:relative}'+
+      '.lower-group.headset{border-right:.35mm solid #222}'+
+      '.lower-group.headset:after{content:"|";position:absolute;right:-2.6mm;top:50%;transform:translateY(-50%);background:#fff;padding:0 .45mm;font-weight:700}'+
+      '.lower-header-row{height:'+PX_TO_MM(lowerHeaderPx)+'}'+
+      '.lower-header{height:'+PX_TO_MM(lowerHeaderPx)+';font-size:3.55mm;font-weight:700;text-align:center;vertical-align:middle;padding:0 .55mm;line-height:1.02;white-space:normal}'+
+      '.lower-data-row{height:'+PX_TO_MM(lowerRowPx)+'}'+
+      '.lower-data{height:'+PX_TO_MM(lowerRowPx)+';font-size:'+Math.max(3.05,Math.min(3.8,lowerRowPx*0.017)).toFixed(2)+'mm;text-align:center;vertical-align:middle;padding:0 .55mm;line-height:1}'+
+      '@media print{html,body{width:210mm!important;height:297mm!important}.crewbus-page{break-after:avoid!important;page-break-after:avoid!important;break-inside:avoid!important;page-break-inside:avoid!important}}'+
       '</style></head><body>'+
       '<div class="crewbus-page">'+
-
       '<table class="crewbus-table main-table">'+
-        '<colgroup>'+colgroup+'</colgroup>'+
+        '<colgroup>'+mainColgroup+'</colgroup>'+
         '<tr class="main-title-row">'+
-          '<td class="main-title-cell" colspan="3">Crew bus service</td>'+
-          '<td class="main-title-shift" colspan="4">'+esc(shift)+'</td>'+
+          '<td class="main-title-cell" colspan="4">Crew bus service</td>'+
+          '<td class="main-title-shift" colspan="3">'+esc(shift)+'</td>'+
+          '<td class="main-title-other">Autre Crew-Bus</td>'+
         '</tr>'+
         '<tr class="main-header-row">'+
-          '<td class="main-header">REGISTRATION</td>'+
-          '<td class="main-header" colspan="3">TIME (LOCAL)</td>'+
           '<td class="main-header">FLIGHT NUMBER</td>'+
+          '<td class="main-header">ARR</td>'+
+          '<td class="main-header">Pick up</td>'+
+          '<td class="main-header">TIME (LOCAL)</td>'+
+          '<td class="main-header">REGISTRATION</td>'+
           '<td class="main-header">CREW</td>'+
           '<td class="main-header">STAND</td>'+
+          '<td class="main-header">AUTRE CREW-BUS</td>'+
         '</tr>'+
-        mainRows+
-      '</table>'+
+        mainRowsHtml+
+      '</table>'+ 
 
       '<table class="crewbus-table lower-table">'+
-        '<colgroup>'+colgroup+'</colgroup>'+
+        '<colgroup>'+lowerColgroup+'</colgroup>'+
         '<tr class="lower-group-row">'+
           '<td class="lower-group headset" colspan="3">Headset</td>'+
           '<td class="lower-group" colspan="4">Handling</td>'+
@@ -7023,11 +7053,10 @@ ${(function(){
           '<td class="lower-header">REGISTRATION</td>'+
           '<td class="lower-header">FLT #</td>'+
           '<td class="lower-header">DEP // ARR</td>'+
-          '<td class="lower-header">HANDLING WFS</td>'+
-        '</tr>'+
-        lowerRows+
-      '</table>'+
-
+          '<td class="lower-header">HANDLING WFS</td>'+ 
+        '</tr>'+ 
+        lowerRows+ 
+      '</table>'+ 
       '</div></body></html>';
 
     const w=window.open('','_blank');
