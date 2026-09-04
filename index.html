@@ -6849,16 +6849,10 @@ ${(function(){
     const shift=selectedShift?.name||'—';
     const esc=crewBusEscape;
 
-    /*
-      V73 — CREW BUS MASTER TEMPLATE
-      Source of truth: crewbus_template_spec.json / crewbus_template_prompt.txt
-
-      Clean vector/grid recreation. No scanned image is used.
-      Reference canvas: 4816 × 6876 px @ 600 DPI.
-      Main grid: 170 | 1180 | 1475 | 1825 | 2775 | 3720 | 4135 | 4745
-      Main: title 155px + header 240px + 12 data rows × 240px.
-      Lower: group 220px + header 220px + 5 data rows × 220px.
-    */
+    /* V73 — CREW BUS MASTER TEMPLATE
+       Source: crewbus_template_spec.json / crewbus_template_prompt.txt
+       4816 × 6876 px @ 600 DPI, converted to physical mm for print.
+       The page is deliberately kept to ONE physical page. */
 
     const rows=(crewBusFlights||[])
       .filter(f=>f.selected)
@@ -6868,11 +6862,7 @@ ${(function(){
     const headsetRows=(crewBusFlights||[])
       .filter(f=>f.selected && f.type==='dep' && f.headset===true)
       .slice(0,5)
-      .map(f=>({
-        reg:f.reg||'',
-        flt:f.flight||'',
-        depart:f.eta||f.departureTime||f.time||''
-      }));
+      .map(f=>({reg:f.reg||'',flt:f.flight||'',depart:f.eta||f.departureTime||f.time||''}));
 
     const handlingRows=(crewBusFlights||[])
       .filter(f=>f.selected && f.wfsMode==='handling')
@@ -6880,23 +6870,40 @@ ${(function(){
       .map(f=>({
         reg:f.reg||'',
         flt:f.flight||'',
-        depArr:(f.type==='dep' ? 'DEP ' : 'ARR ') + (f.eta||f.departureTime||f.time||''),
+        depArr:(f.type==='dep'?'DEP ':'ARR ')+(f.eta||f.departureTime||f.time||''),
         wfs:'WFS'
       }));
 
-    const COLS=[1010,295,350,950,945,415,610];
-    const colgroup=COLS.map(w=>'<col style="width:'+w+'px">').join('');
+    const MM=n=>(n*25.4/600).toFixed(4)+'mm';
 
-    const text=(v)=>esc(v||'');
+    const PAGE_W=MM(4816), PAGE_H=MM(6876);
+
+    /* Slightly narrower than the previous V73, with taller rows.
+       Still based on the supplied master proportions and remains one page. */
+    const MAIN_L=MM(235), MAIN_T=MM(85), MAIN_W=MM(4346);
+    const MAIN_TITLE_H=MM(155), MAIN_HEADER_H=MM(240), MAIN_ROW_H=MM(255);
+    const MAIN_H=MM(155+240+12*255);
+
+    const LOWER_L=MM(260), LOWER_T=MM(3530), LOWER_W=MM(4295);
+    const LOWER_GROUP_H=MM(220), LOWER_HEADER_H=MM(220), LOWER_ROW_H=MM(235);
+    const LOWER_H=MM(220+220+5*235);
+
+    const COLS=[1010,295,350,950,945,415,610];
+    const total=COLS.reduce((a,b)=>a+b,0);
+    const colgroup=COLS.map(w=>'<col style="width:'+((w/total)*100).toFixed(6)+'%">').join('');
+    const text=v=>esc(v||'');
 
     let mainRows='';
     for(let i=0;i<12;i++){
       const f=rows[i];
+      const isArr=f?.type==='arr';
+      const isDep=f?.type==='dep';
+
       mainRows +=
         '<tr class="main-data-row">'+
           '<td class="main-data reg">'+text(f?.reg)+'</td>'+
-          '<td class="main-data fixed-label">ARR</td>'+
-          '<td class="main-data fixed-label pickup">Pick up</td>'+
+          '<td class="main-data fixed-label '+(isArr?'arrival-highlight':'')+'">ARR</td>'+
+          '<td class="main-data fixed-label pickup '+(isDep?'pickup-highlight':'')+'">Pick up</td>'+
           '<td class="main-data value">'+text(f?.time)+'</td>'+
           '<td class="main-data flight">'+text(f?.flight)+'</td>'+
           '<td class="main-data crew"></td>'+
@@ -6923,41 +6930,38 @@ ${(function(){
     const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">'+
       '<title>Crew Bus - LGG</title>'+
       '<style>'+
-      '@page{size:203.88mm 291.08mm;margin:0}'+
-      '*{box-sizing:border-box;margin:0;padding:0}'+
-      'html,body{width:203.88mm;height:291.08mm;background:#fff;color:#111}'+
-      'body{font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'+
-      '.crewbus-sheet{position:relative;width:4816px;height:6876px;background:#fff;overflow:hidden}'+
+      '@page{size:'+PAGE_W+' '+PAGE_H+';margin:0}'+
+      'html,body{width:'+PAGE_W+';height:'+PAGE_H+';margin:0;padding:0;background:#fff;color:#111}'+
+      'body{font-family:Arial,Helvetica,sans-serif;overflow:hidden;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'+
+      '.crewbus-sheet{position:relative;width:'+PAGE_W+';height:'+PAGE_H+';background:#fff;overflow:hidden}'+
       '.crewbus-table{position:absolute;table-layout:fixed;border-collapse:collapse;border-spacing:0;font-family:Arial,Helvetica,sans-serif;color:#111}'+
-      '.crewbus-table td{border:3px solid #222;overflow:hidden}'+
+      '.crewbus-table td{border:0.35mm solid #222;overflow:hidden;background:#fff!important}'+
 
-      /* MAIN TABLE — x=170..4745, y=85..3330 */
-      '.main-table{left:170px;top:85px;width:4575px;height:3245px}'+
-      '.main-title-row{height:155px}'+
-      '.main-title-cell{height:155px;font-size:45px;font-weight:700;text-align:left;vertical-align:middle;padding-left:24px}'+
-      '.main-title-shift{height:155px;font-size:45px;font-weight:700;text-align:center;vertical-align:middle}'+
-      '.main-header-row{height:240px}'+
-      '.main-header{height:240px;font-size:43px;font-weight:700;text-align:center;vertical-align:middle;padding:0 8px;line-height:1.05}'+
-      '.main-data-row{height:240px}'+
-      '.main-data{height:240px;font-size:44px;font-weight:400;text-align:center;vertical-align:middle;padding:0 10px;line-height:1}'+
+      '.main-table{left:'+MAIN_L+';top:'+MAIN_T+';width:'+MAIN_W+';height:'+MAIN_H+'}'+
+      '.main-title-row{height:'+MAIN_TITLE_H+'}'+
+      '.main-title-cell{height:'+MAIN_TITLE_H+';font-size:4.9mm;font-weight:700;text-align:left;vertical-align:middle;padding-left:1.1mm}'+
+      '.main-title-shift{height:'+MAIN_TITLE_H+';font-size:4.9mm;font-weight:700;text-align:center;vertical-align:middle}'+
+      '.main-header-row{height:'+MAIN_HEADER_H+'}'+
+      '.main-header{height:'+MAIN_HEADER_H+';font-size:4.5mm;font-weight:700;text-align:center;vertical-align:middle;padding:0 0.7mm;line-height:1.05}'+
+      '.main-data-row{height:'+MAIN_ROW_H+'}'+
+      '.main-data{height:'+MAIN_ROW_H+';font-size:4.4mm;font-weight:400;text-align:center;vertical-align:middle;padding:0 0.9mm;line-height:1}'+
       '.main-data.reg,.main-data.flight,.main-data.stand{font-weight:700}'+
       '.main-data.fixed-label{font-weight:700;text-align:center}'+
-      '.main-data.pickup{text-align:left;padding-left:24px}'+
+      '.main-data.pickup{text-align:left;padding-left:1.2mm}'+
+      '.arrival-highlight{background:#f3b1b1!important}'+
+      '.pickup-highlight{background:#f3d48a!important}'+
 
-      /* LOWER TABLE — x=195..4750, y=3530..5060 */
-      '.lower-table{left:195px;top:3530px;width:4555px;height:1530px}'+
-      '.lower-group-row{height:220px}'+
-      '.lower-group{height:220px;font-size:45px;font-weight:700;text-align:center;vertical-align:middle;position:relative}'+
-      '.lower-group.headset{border-right:3px solid #222}'+
-      '.lower-group.headset:after{content:"|";position:absolute;right:-21px;top:50%;transform:translateY(-50%);background:#fff;padding:0 4px;font-weight:700}'+
-      '.lower-header-row{height:220px}'+
-      '.lower-header{height:220px;font-size:38px;font-weight:700;text-align:center;vertical-align:middle;padding:0 8px;line-height:1.02;white-space:normal}'+
-      '.lower-data-row{height:220px}'+
-      '.lower-data{height:220px;font-size:40px;font-weight:400;text-align:center;vertical-align:middle;padding:0 8px;line-height:1}'+
-      '.crewbus-table td{background:#fff!important}'+
+      '.lower-table{left:'+LOWER_L+';top:'+LOWER_T+';width:'+LOWER_W+';height:'+LOWER_H+'}'+
+      '.lower-group-row{height:'+LOWER_GROUP_H+'}'+
+      '.lower-group{height:'+LOWER_GROUP_H+';font-size:4.7mm;font-weight:700;text-align:center;vertical-align:middle;position:relative}'+
+      '.lower-group.headset{border-right:0.35mm solid #222}'+
+      '.lower-group.headset:after{content:"|";position:absolute;right:-2.6mm;top:50%;transform:translateY(-50%);background:#fff;padding:0 0.5mm;font-weight:700}'+
+      '.lower-header-row{height:'+LOWER_HEADER_H+'}'+
+      '.lower-header{height:'+LOWER_HEADER_H+';font-size:4mm;font-weight:700;text-align:center;vertical-align:middle;padding:0 0.7mm;line-height:1.02;white-space:normal}'+
+      '.lower-data-row{height:'+LOWER_ROW_H+'}'+
+      '.lower-data{height:'+LOWER_ROW_H+';font-size:4.1mm;font-weight:400;text-align:center;vertical-align:middle;padding:0 0.7mm;line-height:1}'+
       '</style></head><body>'+
       '<div class="crewbus-sheet">'+
-
       '<table class="crewbus-table main-table">'+
         '<colgroup>'+colgroup+'</colgroup>'+
         '<tr class="main-title-row">'+
@@ -6973,7 +6977,6 @@ ${(function(){
         '</tr>'+
         mainRows+
       '</table>'+
-
       '<table class="crewbus-table lower-table">'+
         '<colgroup>'+colgroup+'</colgroup>'+
         '<tr class="lower-group-row">'+
@@ -7535,12 +7538,12 @@ body.wo-lgg-scroll-locked{
       if(!next.some(x=>x.key===f.key))next.push(f);
     });
     const details=crewDetails(oldList,next);
-    window.lastArrivals=arrivals;
-    window.lastDepartures=departures;
-    window.crewBusFlights=next;
-    window.crewBusSelected=new Set(next.filter(f=>f.selected).map(f=>f.key));
-    window.crewBusLoaded=true;
-    if(typeof renderCrewBusFlights==='function')renderCrewBusFlights();
+    lastArrivals=arrivals;
+    lastDepartures=departures;
+    crewBusFlights=next;
+    crewBusSelected=new Set(next.filter(f=>f.selected).map(f=>f.key));
+    crewBusLoaded=true;
+    renderCrewBusFlights();
     if(typeof setCrewBusStatus==='function')setCrewBusStatus('ready','FIDS opérationnel');
     if(typeof setCrewBusLoading==='function')setCrewBusLoading(next.length+' vol(s) disponibles — sélectionnez ceux à intégrer.');
     return details;
