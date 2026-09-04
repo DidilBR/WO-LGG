@@ -1841,6 +1841,9 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 .crewbus-time small{display:block;margin-top:3px;font:700 7px var(--mono);letter-spacing:.8px;color:var(--t3);text-transform:uppercase}
 .crewbus-flight-info{min-width:0;flex:1}
 .crewbus-flight-number{font:900 12px var(--mono);letter-spacing:.3px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crewbus-registration-primary{font-size:14px!important;font-weight:950!important;letter-spacing:.55px!important;color:var(--t1)!important;text-shadow:0 0 10px rgba(255,255,255,.07)}
+.crewbus-flight-chip{font-weight:800!important;letter-spacing:.25px}
+
 .crewbus-flight-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;font-size:9px;color:var(--t3)}
 .crewbus-meta-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border-radius:6px;border:1px solid var(--b1);background:rgba(255,255,255,.018);font:700 8px var(--mono);color:var(--t2)}
 .crewbus-direction{padding:4px 7px;border-radius:7px;font:900 8px var(--mono);letter-spacing:.8px;text-transform:uppercase}
@@ -6807,8 +6810,8 @@ ${(function(){
       +'<button type="button" class="crewbus-check" aria-label="'+(sel?'Désélectionner ':'Sélectionner ')+crewBusEscape(f.flight)+'" aria-pressed="'+(sel?'true':'false')+'" data-crewbus-action="flight">'+(sel?'✓':'')+'</button>'
       +'<div class="crewbus-flight-main">'
       +'<div class="crewbus-time">'+crewBusEscape(f.time)+'<small>'+(f.type==='dep'?'PICK UP':'ETA')+'</small></div>'
-      +'<div class="crewbus-flight-info"><div class="crewbus-flight-number">'+crewBusEscape(f.flight)+'</div><div class="crewbus-flight-meta">'
-      +'<span class="crewbus-direction '+(f.type==='arr'?'arr':'dep')+'">'+(f.type==='arr'?'ARR':'DEP')+'</span><span class="crewbus-meta-chip">'+crewBusEscape(f.reg||'—')+'</span><span class="crewbus-meta-chip">'+crewBusEscape(f.handler||'—')+'</span>'+(f.stand?'<span class="crewbus-meta-chip">Stand '+crewBusEscape(f.stand)+'</span>':'')+'<span class="crewbus-meta-chip source">'+source+'</span></div></div></div>'
+      +'<div class="crewbus-flight-info"><div class="crewbus-flight-number crewbus-registration-primary">'+crewBusEscape(f.reg||'—')+'</div><div class="crewbus-flight-meta">'
+      +'<span class="crewbus-direction '+(f.type==='arr'?'arr':'dep')+'">'+(f.type==='arr'?'ARR':'DEP')+'</span><span class="crewbus-meta-chip crewbus-flight-chip">'+crewBusEscape(f.flight||'—')+'</span><span class="crewbus-meta-chip">'+crewBusEscape(f.handler||'—')+'</span>'+(f.stand?'<span class="crewbus-meta-chip">Stand '+crewBusEscape(f.stand)+'</span>':'')+'<span class="crewbus-meta-chip source">'+source+'</span></div></div></div>'
       +'<div class="crewbus-card-actions">'+modeHtml+hsHtml+'</div></article>';
   }
 
@@ -6883,7 +6886,7 @@ ${(function(){
     const esc=crewBusEscape;
 
     /*
-      V76 — CREW BUS FINAL LAYOUT
+      V77 — CREW BUS FINAL LAYOUT
       Base logic kept from the existing application / friend's index.
       Printable geometry is based on the supplied Crew Bus master template,
       with the requested V75 additions:
