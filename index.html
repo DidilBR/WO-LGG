@@ -6886,13 +6886,13 @@ ${(function(){
     const esc=crewBusEscape;
 
     /*
-      V77 — CREW BUS FINAL LAYOUT
+      V78 — CREW BUS FINAL LAYOUT
       Base logic kept from the existing application / friend's index.
       Printable geometry is based on the supplied Crew Bus master template,
       with the requested V75 additions:
         • selected Crew Bus flights = main column group
         • unselected FIDS flights = dedicated "Autre Crew-Bus" column
-        • Flight number / Registration positions swapped
+        • Registration / Flight number columns physically swapped
         • 19 rows minimum, auto-expanding if necessary
         • ARR / Pick up columns slightly wider
         • Headset / Handling column proportions refined
@@ -6926,7 +6926,7 @@ ${(function(){
 
     // Printable sheet = original 7-column master grid; Autre Crew-Bus is Step 4 only.
     // ARR / Pick up are intentionally a little wider than the master source.
-    const MAIN_COLS=[760,330,390,735,820,325,585];
+    const MAIN_COLS=[820,330,390,735,760,325,585];
     const mainTotal=MAIN_COLS.reduce((a,b)=>a+b,0);
     const mainColgroup=MAIN_COLS.map(w=>'<col style="width:'+((w/mainTotal)*100).toFixed(6)+'%">').join('');
 
@@ -6949,11 +6949,11 @@ ${(function(){
 
       mainRowsHtml+=
         '<tr class="main-data-row">'+
-          '<td class="main-data flight-number-cell">'+esc(mainFlight(f))+'</td>'+
+          '<td class="main-data registration-cell">'+esc(mainReg(f))+'</td>'+
           '<td class="main-data fixed-label'+arrClass+'">ARR</td>'+
           '<td class="main-data fixed-label pickup'+depClass+'">Pick up</td>'+
           '<td class="main-data value">'+esc(mainTime(f))+'</td>'+
-          '<td class="main-data registration-cell">'+esc(mainReg(f))+'</td>'+
+          '<td class="main-data flight-number-cell">'+esc(mainFlight(f))+'</td>'+
           '<td class="main-data crew"></td>'+
           '<td class="main-data stand">'+esc(mainStand(f))+'</td>'+
         '</tr>';
@@ -7020,6 +7020,8 @@ ${(function(){
       '.main-data.crew,.main-data.stand{text-align:center}'+
       '.arrival-highlight{background:#f2b0b0!important}'+
       '.pickup-highlight{background:#f3d48a!important}'+
+      '.crewbus-table td.arrival-highlight{background:#f2b0b0!important}'+
+      '.crewbus-table td.pickup-highlight{background:#f3d48a!important}'+
 
       '.lower-table{left:'+PX_TO_MM(PAGE_LEFT)+';top:'+PX_TO_MM(lowerTop)+';width:'+PX_TO_MM(TABLE_W)+'}'+
       '.lower-group-row{height:'+PX_TO_MM(lowerGroupPx)+'}'+
@@ -7040,11 +7042,11 @@ ${(function(){
           '<td class="main-title-shift" colspan="3">'+esc(shift)+'</td>'+
         '</tr>'+
         '<tr class="main-header-row">'+
-          '<td class="main-header">FLIGHT NUMBER</td>'+
+          '<td class="main-header">REGISTRATION</td>'+
           '<td class="main-header">ARR</td>'+
           '<td class="main-header">Pick up</td>'+
           '<td class="main-header">TIME (LOCAL)</td>'+
-          '<td class="main-header">REGISTRATION</td>'+
+          '<td class="main-header">FLIGHT NUMBER</td>'+
           '<td class="main-header">CREW</td>'+
           '<td class="main-header">STAND</td>'+
         '</tr>'+
