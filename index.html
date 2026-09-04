@@ -6874,19 +6874,16 @@ ${(function(){
         wfs:'WFS'
       }));
 
-    const MM=n=>(n*25.4/600).toFixed(4)+'mm';
-
-    const PAGE_W=MM(4816), PAGE_H=MM(6876);
-
-    /* Slightly narrower than the previous V73, with taller rows.
-       Still based on the supplied master proportions and remains one page. */
-    const MAIN_L=MM(235), MAIN_T=MM(85), MAIN_W=MM(4346);
-    const MAIN_TITLE_H=MM(155), MAIN_HEADER_H=MM(240), MAIN_ROW_H=MM(255);
-    const MAIN_H=MM(155+240+12*255);
-
-    const LOWER_L=MM(260), LOWER_T=MM(3530), LOWER_W=MM(4295);
-    const LOWER_GROUP_H=MM(220), LOWER_HEADER_H=MM(220), LOWER_ROW_H=MM(235);
-    const LOWER_H=MM(220+220+5*235);
+    /* A4 is used explicitly because iOS print preview is unreliable with
+       custom @page sizes. The reference is fitted inside A4 with zero margins,
+       guaranteeing a single physical page. */
+    const PAGE_W='210mm', PAGE_H='297mm';
+    const MAIN_L='6.5mm', MAIN_T='3.5mm', MAIN_W='197mm';
+    const MAIN_TITLE_H='6.4mm', MAIN_HEADER_H='9.6mm', MAIN_ROW_H='10.2mm';
+    const MAIN_H='138.4mm';
+    const LOWER_L='7.5mm', LOWER_T='151.8mm', LOWER_W='195mm';
+    const LOWER_GROUP_H='8.0mm', LOWER_HEADER_H='8.0mm', LOWER_ROW_H='8.7mm';
+    const LOWER_H='59.5mm';
 
     const COLS=[1010,295,350,950,945,415,610];
     const total=COLS.reduce((a,b)=>a+b,0);
@@ -6930,10 +6927,10 @@ ${(function(){
     const htmlOut='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">'+
       '<title>Crew Bus - LGG</title>'+
       '<style>'+
-      '@page{size:'+PAGE_W+' '+PAGE_H+';margin:0}'+
-      'html,body{width:'+PAGE_W+';height:'+PAGE_H+';margin:0;padding:0;background:#fff;color:#111}'+
+      '@page{size:A4 portrait;margin:0}'+
+      'html,body{width:210mm;height:297mm;margin:0;padding:0;background:#fff;color:#111}'+
       'body{font-family:Arial,Helvetica,sans-serif;overflow:hidden;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'+
-      '.crewbus-sheet{position:relative;width:'+PAGE_W+';height:'+PAGE_H+';background:#fff;overflow:hidden}'+
+      '.crewbus-sheet{position:relative;width:210mm;height:297mm;background:#fff;overflow:hidden;page-break-after:avoid;break-after:avoid}'+
       '.crewbus-table{position:absolute;table-layout:fixed;border-collapse:collapse;border-spacing:0;font-family:Arial,Helvetica,sans-serif;color:#111}'+
       '.crewbus-table td{border:0.35mm solid #222;overflow:hidden;background:#fff!important}'+
 
@@ -7518,7 +7515,7 @@ body.wo-lgg-scroll-locked{
   function refreshCrewBusFromSharedFids(arrivals,departures){
     if(!Array.isArray(arrivals)||!Array.isArray(departures))return [];
     if(typeof crewBusNormalizeList!=='function')return [];
-    const oldList=Array.isArray(window.crewBusFlights)?window.crewBusFlights:[];
+    const oldList=Array.isArray(crewBusFlights)?crewBusFlights:[];
     const oldByKey=new Map(oldList.map(f=>[f.key,f]));
     const next=crewBusNormalizeList(arrivals,departures);
     next.forEach(f=>{
@@ -7553,13 +7550,13 @@ body.wo-lgg-scroll-locked{
     manual=!!manual;
     source=source||'shared';
     if(!manual && currentStep!==3 && currentStep!==4)return;
-    const oldArr=window.lastArrivals;
-    const oldDep=window.lastDepartures;
+    const oldArr=lastArrivals;
+    const oldDep=lastDepartures;
     const oldOperation=window.__woLastOperationRefresh||null;
     try{
       await originalCheckForFlightUpdates(true);
-      const arrivals=window.lastArrivals;
-      const departures=window.lastDepartures;
+      const arrivals=lastArrivals;
+      const departures=lastDepartures;
       const fetched=arrivals!==oldArr || departures!==oldDep;
       let cbDetails=[];
       if(fetched && Array.isArray(arrivals) && Array.isArray(departures)){
