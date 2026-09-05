@@ -1884,6 +1884,11 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 .crewbus-missing-reg-input:focus{border-color:#ffb400;box-shadow:0 0 0 3px rgba(255,180,0,.08)}
 .crewbus-reg-edit-wrap{display:flex;align-items:center;gap:7px;min-width:0}
 .crewbus-reg-edit-wrap .crewbus-registration-primary{min-width:0}
+.flight-reg-edit-wrap{display:flex;align-items:center;min-width:0;max-width:140px;position:relative;z-index:3}
+.operations-registration-input{width:120px;height:28px;box-sizing:border-box;padding:0 8px;border:1px solid rgba(255,180,0,.34);border-radius:7px;background:rgba(255,180,0,.045);color:var(--t1);font:800 10px var(--mono);text-transform:uppercase;outline:none;cursor:text;pointer-events:auto;position:relative;z-index:4}
+.operations-registration-input:focus{border-color:#ffb400;box-shadow:0 0 0 3px rgba(255,180,0,.08);background:rgba(255,180,0,.07)}
+.operations-registration-input::placeholder{color:#ffb400;opacity:.9}
+
 
 .crewbus-generate-btn{background:linear-gradient(135deg,var(--a1),var(--a2))!important;color:#fff!important;border:0!important;box-shadow:0 12px 28px rgba(120,90,255,.18)}
 .crewbus-generate-btn:hover{transform:translateY(-1px);box-shadow:0 15px 34px rgba(120,90,255,.26)}
@@ -1923,6 +1928,40 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   .crewbus-source-copy{font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){.crewbus-flight-card,.crewbus-live-dot,.crewbus-refresh-btn,.crewbus-add-btn{animation:none!important;transition:none!important}}
+<style id="wo-lgg-v79-registration-step4">
+/* V79 — Immatriculations : édition exclusivement en étape 4, synchronisée avec l'étape 3. */
+#step-4 .crewbus-registration-input{
+  width:min(125px,100%)!important;
+  height:30px!important;
+  min-height:30px!important;
+  padding:0 8px!important;
+  box-sizing:border-box!important;
+  border:1px solid rgba(255,180,0,.34)!important;
+  border-radius:8px!important;
+  background:rgba(255,180,0,.045)!important;
+  color:var(--t1)!important;
+  font:800 11px var(--mono)!important;
+  text-transform:uppercase;
+  outline:none!important;
+}
+#step-4 .crewbus-registration-input:focus{
+  border-color:#ffb400!important;
+  box-shadow:0 0 0 3px rgba(255,180,0,.08)!important;
+  background:rgba(255,180,0,.07)!important;
+}
+#step-4 .crewbus-registration-input::placeholder{
+  color:var(--t3)!important;
+  opacity:1;
+}
+@media(max-width:600px){
+  #step-4 .crewbus-registration-input{
+    width:min(100%,185px)!important;
+    height:38px!important;
+    min-height:38px!important;
+    font-size:10px!important;
+  }
+}
+</style>
 </style>
 </head>
 <body>
@@ -2357,7 +2396,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
           <span id="fids-refresh-inline-status" class="fids-refresh-inline-status" aria-live="polite"></span>
         </span>
       </div>
-      <div class="section-desc">Verifiez et ajustez avant de generer</div>
+      <div class="section-desc">Vérifiez et ajustez avant de générer. Les immatriculations se modifient à l’étape 4 et restent synchronisées ici.</div>
     </div>
     <div class="stats-row">
       <div class="stat-card"><div class="num" id="count-selected">0</div><div class="lbl">Selectionnes</div></div>
@@ -5247,8 +5286,8 @@ function restoreActiveTextField(saved) {
       // Les vols ETH ne sont jamais ajoutés à la liste des vols détectés automatiquement.
       // Ils restent acceptés uniquement dans la section Caterings remplie manuellement.
       if (f.isETH === true) return '';
-      const regMissing = !f.reg;
-      const isNewAircraft = !!f.reg && !f.manual && !knownRegs[f.reg];
+      const sharedReg = woLggGetSharedRegistration(f.flight,f.reg);
+      const isNewAircraft = !!sharedReg && !f.manual && !knownRegs[sharedReg];
       const fleetBadge = isNewAircraft
         ? '<button onclick="promptAddFleet(event,' + i + ')" title="Ajouter à la flotte connue" aria-label="Ajouter à la flotte connue" style="margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;font-size:14px;line-height:1;color:#fff;background:linear-gradient(135deg,#ff2d73,#ff4d96);border:0;border-radius:9px;cursor:pointer;white-space:nowrap;box-shadow:0 0 0 1px rgba(255,77,136,.18),0 4px 12px rgba(255,45,115,.16);animation:newAircraftStarPulse 2.4s ease-in-out infinite">&#10024;</button>'
         : (fleetNotes[f.reg] ? '<span title="' + fleetNotes[f.reg].replace(/"/g,'&quot;') + '" style="margin-left:auto;font-size:10px;color:#00e5a0;font-family:var(--mono)">&#9989; connu</span>' : '');
@@ -5256,9 +5295,13 @@ function restoreActiveTextField(saved) {
         '<div class="flight-card ' + (selectedFlights.has(i) ? 'selected' : '') + '" onclick="toggleFlight(' + i + ')" style="' + missingHighlight + '">' +
         '<div class="check">' + (selectedFlights.has(i) ? '✓' : '') + '</div>' +
         '<div class="flight-info">' +
-          (f.reg
-            ? '<span class="flight-reg">' + woLggGetSharedRegistration(f.flight,f.reg) + '</span>'
-            : '<input class="flight-reg-input" data-reg-flight="' + String(f.flight||'').replace(/"/g,'&quot;') + '" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Immat. manquante" aria-label="Immatriculation manquante pour ' + String(f.flight||'').replace(/"/g,'&quot;') + '" value="" onclick="event.stopPropagation()" onkeydown="woLggHandleRegistrationKeydown(event)" onblur="woLggHandleRegistrationBlur(event)">') +
+          '<div class="flight-reg-edit-wrap" onclick="event.stopPropagation()">' +
+            '<input type="text" class="operations-registration-input" data-reg-flight="' + (f.flight || '').replace(/"/g,'&quot;') + '"' +
+              ' value="' + (sharedReg ? sharedReg.replace(/"/g,'&quot;') : '') + '"' +
+              ' placeholder="IMMATRICULATION" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false"' +
+              ' aria-label="Immatriculation de ' + (f.flight || '').replace(/"/g,'&quot;') + '"' +
+              ' onkeydown="woLggHandleRegistrationKeydown(event)" onblur="woLggHandleRegistrationBlur(event)" />' +
+          '</div>' +
           '<span class="flight-num">' + f.flight + '</span>' +
           (f.missingTime
             ? '<span style="font-size:10px;font-weight:700;color:#000;background:#ffff00;padding:2px 8px;border-radius:20px;font-family:var(--mono)">⚠ HEURE MANQUANTE</span>'
@@ -5275,9 +5318,6 @@ function restoreActiveTextField(saved) {
         '</div>' +
         (fleetBadge && pills ? '<div onclick="event.stopPropagation()" style="padding:0 14px 4px;display:flex">' + fleetBadge + '</div>' : '') +
         '<div onclick="event.stopPropagation()" style="display:flex;gap:6px;padding:4px 14px 10px;align-items:center">' +
-          (regMissing
-            ? '<input type="text" placeholder="Immat. manquante" value="" oninput="flights[' + i + '].reg=this.value.toUpperCase()" style="width:112px;flex-shrink:0;background:var(--bg2);border:1px solid #ffb400;border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none">'
-            : '') +
           '<input type="text" class="remarks-input" data-flight-key="' + (f.flight || '').replace(/"/g,'&quot;') + '" placeholder="Remarques..." value="' + (f.remarks ? f.remarks.replace(/"/g,'&quot;') : '') + '" oninput="flights[' + i + '].remarks=this.value" style="flex:1;background:var(--bg2);border:1px solid var(--b2);border-radius:6px;color:var(--t1);font-family:var(--mono);font-size:11px;padding:5px 8px;outline:none">' +
 
         '</div>' +
@@ -6726,11 +6766,11 @@ ${(function(){
       if(crewBusFilter==='other')return crewBusIsOther(f);
       return true;
     });
-    if(q)list=list.filter(f=>[f.flight,f.reg,f.handler,f.stand,f.eta,f.time].some(v=>String(v||'').toUpperCase().includes(q)));
+    if(q)list=list.filter(f=>[f.flight,crewBusEffectiveReg(f),f.handler,f.stand,f.eta,f.time].some(v=>String(v||'').toUpperCase().includes(q)));
     const sort=crewBusSort||'time';
     list.sort((a,b)=>{
       if(sort==='flight')return String(a.flight).localeCompare(String(b.flight));
-      if(sort==='reg')return String(a.reg).localeCompare(String(b.reg));
+      if(sort==='reg')return String(crewBusEffectiveReg(a)).localeCompare(String(crewBusEffectiveReg(b)));
       if(sort==='handler')return String(a.handler).localeCompare(String(b.handler));
       return crewBusChrono(a.time)-crewBusChrono(b.time);
     });
@@ -6756,7 +6796,6 @@ ${(function(){
     if(event)event.stopPropagation();
     const f=crewBusFlights.find(x=>x.key===key);if(!f)return;
     f.headset=!f.headset;
-    if(!f.selected){f.selected=true;crewBusSelected.add(key);}
     renderCrewBusFlights();
     if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('crewBusHeadset');
   }
@@ -6868,16 +6907,12 @@ ${(function(){
   function crewBusEffectiveReg(f){
     return woLggGetSharedRegistration(f?.flight,f?.reg);
   }
-  function crewBusMissingRegHtml(f){
-    const flight=crewBusEscape(f?.flight||'');
-    return '<input class="crewbus-missing-reg-input" data-reg-flight="'+flight+'" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="IMMATRICULATION" value="'+crewBusEscape(crewBusEffectiveReg(f)||'')+'" aria-label="Immatriculation de '+flight+'" onclick="event.stopPropagation()" onkeydown="woLggHandleRegistrationKeydown(event)" onblur="woLggHandleRegistrationBlur(event)">';
-  }
-
   function crewBusFlightCardHtml(f){
     const sel=!!f.selected;
     const key=crewBusEscape(f.key);
     const source=f.manual?'MANUEL':'FIDS';
     const isWfs=String(f.handler||'').toUpperCase()==='WFS';
+    const effectiveReg=crewBusEffectiveReg(f)||'';
     const modeHtml=isWfs?('<div class="crewbus-wfs-mode">'
       +'<button type="button" class="crewbus-mode-btn '+(f.wfsMode==='renting'?'active rent':'')+'" data-crewbus-action="wfs" data-mode="renting">🚙 Renting</button>'
       +'<button type="button" class="crewbus-mode-btn '+(f.wfsMode==='handling'?'active hand':'')+'" data-crewbus-action="wfs" data-mode="handling">✈ Handling</button>'
@@ -6888,9 +6923,9 @@ ${(function(){
       +'<button type="button" class="crewbus-check" aria-label="'+(sel?'Désélectionner ':'Sélectionner ')+crewBusEscape(f.flight)+'" aria-pressed="'+(sel?'true':'false')+'" data-crewbus-action="flight">'+(sel?'✓':'')+'</button>'
       +'<div class="crewbus-flight-main">'
       +'<div class="crewbus-time">'+crewBusEscape(f.time)+'<small>'+(f.type==='dep'?'PICK UP':'ETA')+'</small></div>'
-      +'<div class="crewbus-flight-info">'+(crewBusEffectiveReg(f)
-        ? '<div class="crewbus-flight-number crewbus-registration-primary">'+crewBusEscape(crewBusEffectiveReg(f))+'</div>'
-        : '<div class="crewbus-reg-edit-wrap">'+crewBusMissingRegHtml(f)+'</div>')+'<div class="crewbus-flight-meta">'
+      +'<div class="crewbus-flight-info">'
+      +'<div class="crewbus-reg-edit-wrap"><input class="crewbus-missing-reg-input crewbus-registration-input" data-reg-flight="'+crewBusEscape(f.flight||'')+'" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="IMMATRICULATION" value="'+crewBusEscape(effectiveReg)+'" aria-label="Immatriculation de '+crewBusEscape(f.flight||'')+'" onclick="event.stopPropagation()" onkeydown="woLggHandleRegistrationKeydown(event)" onblur="woLggHandleRegistrationBlur(event)"></div>'
+      +'<div class="crewbus-flight-meta">'
       +'<span class="crewbus-direction '+(f.type==='arr'?'arr':'dep')+'">'+(f.type==='arr'?'ARR':'DEP')+'</span><span class="crewbus-meta-chip crewbus-flight-chip">'+crewBusEscape(f.flight||'—')+'</span><span class="crewbus-meta-chip">'+crewBusEscape(f.handler||'—')+'</span>'+(f.stand?'<span class="crewbus-meta-chip">Stand '+crewBusEscape(f.stand)+'</span>':'')+'<span class="crewbus-meta-chip source">'+source+'</span></div></div></div>'
       +'<div class="crewbus-card-actions">'+modeHtml+hsHtml+'</div></article>';
   }
@@ -7032,7 +7067,7 @@ ${(function(){
 
     // Printable sheet = original 7-column master grid; Autre Crew-Bus is Step 4 only.
     // ARR / Pick up are intentionally a little wider than the master source.
-    const MAIN_COLS=[820,330,390,735,760,325,585];
+    const MAIN_COLS=[720,330,390,635,760,525,585];
     const mainTotal=MAIN_COLS.reduce((a,b)=>a+b,0);
     const mainColgroup=MAIN_COLS.map(w=>'<col style="width:'+((w/mainTotal)*100).toFixed(6)+'%">').join('');
 
@@ -7060,41 +7095,42 @@ ${(function(){
           '<td class="main-data fixed-label pickup'+depClass+'">Pick up</td>'+
           '<td class="main-data value">'+esc(mainTime(f))+'</td>'+
           '<td class="main-data flight-number-cell">'+esc(mainFlight(f))+'</td>'+
-          '<td class="main-data crew"></td>'+
+          '<td class="main-data notes"></td>'+
           '<td class="main-data stand">'+esc(mainStand(f))+'</td>'+
         '</tr>';
     }
 
-    const headsetRows=mainRows
-      .filter(f=>f.type==='dep' && f.headset===true)
+    const headsetRows=(crewBusFlights||[])
+      .filter(f=>f && f.type==='dep' && f.headset===true)
+      .slice().sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time))
       .slice(0,Math.max(5,rowCount));
 
-    const handlingCandidates=(crewBusFlights||[])
-      .filter(f=>f && String(f.handler||'').toUpperCase().includes('WFS') && f.wfsMode==='handling');
+    const wfsCandidates=(crewBusFlights||[])
+      .filter(f=>f && String(f.handler||'').toUpperCase().includes('WFS') && f.wfsMode);
 
+    // Handling: one row per aircraft registration. If the same aircraft is handled
+    // on ARR and DEP, merge both times into the same DEP // ARR cell. Handling never
+    // populates HANDLING WFS.
     const handlingMap=new Map();
-    handlingCandidates.forEach(function(f){
+    wfsCandidates.filter(f=>f.wfsMode==='handling').forEach(function(f){
       const reg=crewBusEffectiveReg(f)||'';
       const flight=String(f.flight||'').toUpperCase();
-      const key=(reg||'__NO_REG__')+'|'+flight;
+      const key=reg || ('__NO_REG__'+flight);
       const item=handlingMap.get(key)||{reg,flight,pairs:[]};
+      if(!item.flight) item.flight=flight;
       item.pairs.push({time:f.time||'',type:f.type});
       handlingMap.set(key,item);
     });
-
     const handlingRows=[...handlingMap.values()].map(function(item){
-      const pairs=item.pairs.slice().sort(function(a,b){return crewBusChrono(a.time)-crewBusChrono(b.time);});
-      return {
-        reg:item.reg,
-        flight:item.flight,
-        depArr:pairs.map(function(p){return (p.type==='dep'?'DEP ':'ARR ')+p.time;}).join(' / ')
-      };
-    }).sort(function(a,b){
-      function firstTime(v){const m=String(v||'').match(/\b(\d{1,2}:\d{2})\b/);return m?m[1]:'99:99';}
-      return crewBusChrono(firstTime(a.depArr))-crewBusChrono(firstTime(b.depArr));
-    }).slice(0,Math.max(5,rowCount));
+      const pairs=item.pairs.slice().sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
+      return {reg:item.reg,flight:item.flight,depArr:pairs.map(p=>(p.type==='dep'?'DEP ':'ARR ')+p.time).join(' / '),rentingFlight:''};
+    }).sort((a,b)=>crewBusChrono(String(a.depArr).match(/\b\d{1,2}:\d{2}\b/)?.[0]||'99:99')-crewBusChrono(String(b.depArr).match(/\b\d{1,2}:\d{2}\b/)?.[0]||'99:99')).slice(0,Math.max(5,rowCount));
 
-    const lowerRowsCount=Math.max(5,headsetRows.length,handlingRows.length);
+    // Renting belongs exclusively in HANDLING WFS. Deduplicate the flight number.
+    const rentingFlights=[...new Set(wfsCandidates.filter(f=>f.wfsMode==='renting').map(f=>String(f.flight||'').toUpperCase()).filter(Boolean))]
+      .sort((a,b)=>a.localeCompare(b));
+
+    const lowerRowsCount=Math.max(5,headsetRows.length,handlingRows.length,rentingFlights.length);
     // Use the same visual row rhythm as the source for the normal case,
     // and only compact the lower block if the number of rows becomes unusually high.
     const lowerGroupPx=220;
@@ -7116,7 +7152,7 @@ ${(function(){
           '<td class="lower-data">'+esc(g?.reg||'')+'</td>'+
           '<td class="lower-data handling-flt">'+esc(g?.flight||'')+'</td>'+
           '<td class="lower-data handling-deparr">'+esc(gTime)+'</td>'+
-          '<td class="lower-data handling-wfs-reg">'+esc(g?.reg||'')+'</td>'+
+          '<td class="lower-data handling-wfs-reg">'+esc(rentingFlights[i]||'')+'</td>'+
         '</tr>';
     }
 
@@ -7139,11 +7175,12 @@ ${(function(){
       '.main-header{height:'+PX_TO_MM(headerH)+';font-size:4.15mm;font-weight:700;text-align:center;vertical-align:middle;padding:0 .7mm;line-height:1.04}'+
       '.main-data-row{height:'+PX_TO_MM(rowPx)+'}'+
       '.main-data{height:'+PX_TO_MM(rowPx)+';font-size:'+Math.max(3.25,Math.min(4.15,rowPx*0.0175)).toFixed(2)+'mm;vertical-align:middle;padding:0 .8mm;line-height:1}'+
-      '.flight-number-cell{text-align:center;font-weight:900;letter-spacing:.12mm}'+
+      '.flight-number-cell{text-align:center;font-weight:400!important;letter-spacing:.12mm}'+
       '.registration-cell{text-align:center;font-weight:800;letter-spacing:.08mm}'+
+      '.main-data.value{text-align:center;font-size:5.0mm!important;font-weight:900!important;line-height:1}'+
       '.main-data.fixed-label{font-weight:700;text-align:center}'+
       '.main-data.pickup{text-align:left;padding-left:1.0mm}'+
-      '.main-data.crew,.main-data.stand{text-align:center}'+
+      '.main-data.notes,.main-data.stand{text-align:center}'+
       '.arrival-highlight{background:#f2b0b0!important}'+
       '.pickup-highlight{background:#f3d48a!important}'+
       '.crewbus-table td.arrival-highlight{background:#f2b0b0!important}'+
@@ -7173,7 +7210,7 @@ ${(function(){
           '<td class="main-header">Pick up</td>'+
           '<td class="main-header">TIME (LOCAL)</td>'+
           '<td class="main-header">FLIGHT NUMBER</td>'+
-          '<td class="main-header">CREW</td>'+
+          '<td class="main-header">NOTES</td>'+
           '<td class="main-header">STAND</td>'+
         '</tr>'+
         mainRowsHtml+
