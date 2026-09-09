@@ -1965,6 +1965,16 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 </style>
 
 <style id="crewbus-clean-redesign-v80">
+/* V80.1 — Crew Bus : réduire l'espace vertical entre la progression et le titre. */
+#step-4.crewbus-redesigned{margin-top:0!important}
+#step-4.crewbus-redesigned .crewbus-clean-head{margin-top:0!important}
+@media(max-width:900px){
+  .progress-bar{margin-bottom:14px!important}
+}
+@media(max-width:600px){
+  .progress-bar{margin-bottom:12px!important}
+}
+
 #step-4.crewbus-redesigned{max-width:1180px;margin:0 auto;padding-bottom:28px}
 #step-4 .crewbus-clean-head{text-align:center;margin-bottom:22px}
 #step-4 .crewbus-clean-head .section-desc{max-width:760px;margin:8px auto 0}
@@ -7088,7 +7098,13 @@ ${(function(){
     const chrono=(list)=>list.slice().sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
     let mainRows;
     if(crewBusSheetOrder==='grouped'){
-      mainRows=[...chrono(selected.filter(f=>f.type==='arr')), ...chrono(selected.filter(f=>f.type==='dep'))];
+      const arrRows=chrono(selected.filter(f=>f.type==='arr'));
+      const depRows=chrono(selected.filter(f=>f.type==='dep'));
+      // En mode ARR PUIS DEP, séparer visuellement le bloc des arrivées
+      // du bloc des pick-up par une ligne entièrement blanche.
+      mainRows=arrRows.length && depRows.length
+        ? [...arrRows, {__crewBusSeparator:true}, ...depRows]
+        : [...arrRows, ...depRows];
     }else{
       mainRows=chrono(selected);
     }
@@ -7127,19 +7143,33 @@ ${(function(){
     let mainRowsHtml='';
     for(let i=0;i<rowCount;i++){
       const f=mainRows[i];
+      const isSeparator=!!(f&&f.__crewBusSeparator);
       const arrClass=f?.type==='arr'?' arrival-highlight':'';
       const depClass=f?.type==='dep'?' pickup-highlight':'';
 
-      mainRowsHtml+=
-        '<tr class="main-data-row">'+
-          '<td class="main-data registration-cell">'+esc(mainReg(f))+'</td>'+
-          '<td class="main-data fixed-label'+arrClass+'">ARR</td>'+
-          '<td class="main-data fixed-label pickup'+depClass+'">Pick up</td>'+
-          '<td class="main-data value">'+esc(mainTime(f))+'</td>'+
-          '<td class="main-data flight-number-cell">'+esc(mainFlight(f))+'</td>'+
-          '<td class="main-data notes"></td>'+
-          '<td class="main-data stand">'+esc(mainStand(f))+'</td>'+
-        '</tr>';
+      if(isSeparator){
+        mainRowsHtml+=
+          '<tr class="main-data-row crewbus-arr-dep-separator">'+
+            '<td class="main-data registration-cell"></td>'+
+            '<td class="main-data fixed-label"></td>'+
+            '<td class="main-data fixed-label pickup"></td>'+
+            '<td class="main-data value"></td>'+
+            '<td class="main-data flight-number-cell"></td>'+
+            '<td class="main-data notes"></td>'+
+            '<td class="main-data stand"></td>'+
+          '</tr>';
+      }else{
+        mainRowsHtml+=
+          '<tr class="main-data-row">'+
+            '<td class="main-data registration-cell">'+esc(mainReg(f))+'</td>'+
+            '<td class="main-data fixed-label'+arrClass+'">ARR</td>'+
+            '<td class="main-data fixed-label pickup'+depClass+'">Pick up</td>'+
+            '<td class="main-data value">'+esc(mainTime(f))+'</td>'+
+            '<td class="main-data flight-number-cell">'+esc(mainFlight(f))+'</td>'+
+            '<td class="main-data notes"></td>'+
+            '<td class="main-data stand">'+esc(mainStand(f))+'</td>'+
+          '</tr>';
+      }
     }
 
     const headsetRows=(crewBusFlights||[])
@@ -7168,9 +7198,15 @@ ${(function(){
       return {reg:item.reg,flight:item.flight,depArr:pairs.map(p=>(p.type==='dep'?'DEP ':'ARR ')+p.time).join(' / '),rentingFlight:''};
     }).sort((a,b)=>crewBusChrono(String(a.depArr).match(/\b\d{1,2}:\d{2}\b/)?.[0]||'99:99')-crewBusChrono(String(b.depArr).match(/\b\d{1,2}:\d{2}\b/)?.[0]||'99:99')).slice(0,Math.max(5,rowCount));
 
-    // Renting belongs exclusively in HANDLING WFS. Deduplicate the flight number.
-    const rentingFlights=[...new Set(wfsCandidates.filter(f=>f.wfsMode==='renting').map(f=>String(f.flight||'').toUpperCase()).filter(Boolean))]
-      .sort((a,b)=>a.localeCompare(b));
+    // Renting belongs exclusively in HANDLING WFS.
+    // La feuille doit afficher l'IMMATRICULATION de l'avion, pas son numéro de vol.
+    const rentingFlights=[...new Set(
+      wfsCandidates
+        .filter(f=>f.wfsMode==='renting')
+        .map(f=>crewBusEffectiveReg(f)||'')
+        .map(v=>String(v).trim().toUpperCase())
+        .filter(Boolean)
+    )].sort((a,b)=>a.localeCompare(b));
 
     const lowerRowsCount=Math.max(5,headsetRows.length,handlingRows.length,rentingFlights.length);
     // Use the same visual row rhythm as the source for the normal case,
@@ -7208,6 +7244,7 @@ ${(function(){
       '.crewbus-page{position:relative;width:'+PAGE_W+';height:'+PAGE_H+';background:#fff;overflow:hidden}'+
       '.crewbus-table{position:absolute;table-layout:fixed;border-collapse:collapse;border-spacing:0;font-family:Arial,Helvetica,sans-serif;color:#111}'+
       '.crewbus-table td{border:0.35mm solid #222;overflow:hidden;background:#fff!important;box-sizing:border-box}'+
+      '.crewbus-arr-dep-separator td{background:#fff!important;color:#fff!important}'+
 
       '.main-table{left:'+PX_TO_MM(PAGE_LEFT)+';top:'+PX_TO_MM(mainTop)+';width:'+PX_TO_MM(TABLE_W)+'}'+
       '.main-title-row{height:'+PX_TO_MM(titleH)+'}'+
