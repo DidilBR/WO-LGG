@@ -2681,10 +2681,34 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   <div class="crewbus-list-header">
     <span>Vol</span><span>Immatriculation</span><span>Handler</span><span>Stand</span><span>Actions</span>
   </div>
-  <div id="crewbus-flight-list" class="crewbus-unified-list">
-    <div id="crewbus-unified-list">
-      <div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des données FIDS.</span></div>
-    </div>
+  <div id="crewbus-flight-list" class="crewbus-flight-columns" aria-live="polite">
+    <section class="crewbus-flight-column" data-crewbus-column="arr">
+      <header class="crewbus-column-head">
+        <div><span class="crewbus-column-kicker">ARRIVÉES</span><span class="crewbus-column-count" id="crewbus-col-arr-count">0</span></div>
+        <span class="crewbus-column-sub">ETA · FIDS</span>
+      </header>
+      <div class="crewbus-column-list" id="crewbus-col-arr">
+        <div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des données FIDS.</span></div>
+      </div>
+    </section>
+    <section class="crewbus-flight-column" data-crewbus-column="dep">
+      <header class="crewbus-column-head">
+        <div><span class="crewbus-column-kicker">DÉPARTS</span><span class="crewbus-column-count" id="crewbus-col-dep-count">0</span></div>
+        <span class="crewbus-column-sub">PICK UP · FIDS</span>
+      </header>
+      <div class="crewbus-column-list" id="crewbus-col-dep">
+        <div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des données FIDS.</span></div>
+      </div>
+    </section>
+    <section class="crewbus-flight-column crewbus-flight-column-other" data-crewbus-column="other">
+      <header class="crewbus-column-head">
+        <div><span class="crewbus-column-kicker">AUTRE CREW-BUS</span><span class="crewbus-column-count" id="crewbus-col-other-count">0</span></div>
+        <span class="crewbus-column-sub">VOLS NON HABITUELS</span>
+      </header>
+      <div class="crewbus-column-list" id="crewbus-col-other">
+        <div class="crewbus-empty"><div class="crewbus-empty-icon">＋</div><strong>Aucun vol</strong><span>Les vols non habituels apparaîtront ici.</span></div>
+      </div>
+    </section>
   </div>
 
   <div class="crewbus-manual-clean">
@@ -6844,18 +6868,35 @@ ${(function(){
     if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('crewBusManualAdd');
   }
   function renderCrewBusFlights(){
-    const root=document.getElementById('crewbus-unified-list');
+    const root=document.getElementById('crewbus-flight-list');
     if(!root)return;
     const visible=crewBusVisibleFlights();
     const allFlights=(crewBusFlights||[]);
     const total=allFlights.length,selected=allFlights.filter(f=>f.selected).length;
-    const arr=allFlights.filter(f=>f.type==='arr' && !crewBusIsOther(f)).length;
-    const dep=allFlights.filter(f=>f.type==='dep' && !crewBusIsOther(f)).length;
-    const other=allFlights.filter(crewBusIsOther).length;
+    const arrAll=allFlights.filter(f=>f.type==='arr' && !crewBusIsOther(f)).length;
+    const depAll=allFlights.filter(f=>f.type==='dep' && !crewBusIsOther(f)).length;
+    const otherAll=allFlights.filter(crewBusIsOther).length;
     const s=document.getElementById('crewbus-selected-count'),a=document.getElementById('crewbus-arr-count'),d=document.getElementById('crewbus-dep-count');
-    if(s)s.textContent=selected;if(a)a.textContent=arr;if(d)d.textContent=dep;
-    const hint=document.getElementById('crewbus-selection-hint');if(hint)hint.textContent=selected+' sélectionné(s) · '+total+' vol(s) disponibles · '+other+' autre(s) non habituel(s)';
-    root.innerHTML=visible.length?visible.map(crewBusFlightCardHtml).join(''):'<div class="crewbus-empty"><div class="crewbus-empty-icon">⌕</div><strong>Aucun vol trouvé</strong><span>Modifiez le filtre ou la recherche.</span></div>';
+    if(s)s.textContent=selected;if(a)a.textContent=arrAll;if(d)d.textContent=depAll;
+    const ca=document.getElementById('crewbus-col-arr-count'),cd=document.getElementById('crewbus-col-dep-count'),co=document.getElementById('crewbus-col-other-count');
+    if(ca)ca.textContent=arrAll;if(cd)cd.textContent=depAll;if(co)co.textContent=otherAll;
+    const hint=document.getElementById('crewbus-selection-hint');if(hint)hint.textContent=selected+' sélectionné(s) · '+total+' vol(s) disponibles · '+otherAll+' autre(s) non habituel(s)';
+
+    const arr=visible.filter(f=>f.type==='arr' && !crewBusIsOther(f));
+    const dep=visible.filter(f=>f.type==='dep' && !crewBusIsOther(f));
+    const other=visible.filter(crewBusIsOther);
+    const fill=(id,list,label)=>{
+      const el=document.getElementById(id);
+      if(!el)return;
+      el.innerHTML=list.length?list.map(crewBusFlightCardHtml).join(''):'<div class="crewbus-empty crewbus-column-empty"><div class="crewbus-empty-icon">—</div><strong>'+label+'</strong><span>Modifiez le filtre ou la recherche.</span></div>';
+    };
+    fill('crewbus-col-arr',arr,'Aucune arrivée');
+    fill('crewbus-col-dep',dep,'Aucun départ');
+    fill('crewbus-col-other',other,'Aucun autre vol');
+
+    root.querySelector('[data-crewbus-column="arr"]')?.classList.toggle('is-muted',crewBusFilter==='dep'||crewBusFilter==='other');
+    root.querySelector('[data-crewbus-column="dep"]')?.classList.toggle('is-muted',crewBusFilter==='arr'||crewBusFilter==='other');
+    root.querySelector('[data-crewbus-column="other"]')?.classList.toggle('is-muted',crewBusFilter==='arr'||crewBusFilter==='dep');
   }
 
   // ── Immatriculation partagée Operations ↔ Crew Bus ──────────────
@@ -7843,6 +7884,171 @@ body.wo-lgg-scroll-locked{
   }
 })();
 </script>
+
+
+<style id="wo-lgg-v80-crewbus-three-columns-clean">
+/* V80.1 — Retour aux 3 colonnes, avec hiérarchie visuelle plus légère. */
+#step-4 .crewbus-flight-columns{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  width:100%;
+  max-width:960px;
+  margin:12px auto 0;
+  align-items:start;
+}
+#step-4 .crewbus-flight-column{
+  min-width:0;
+  border:1px solid rgba(143,168,255,.13);
+  border-radius:16px;
+  overflow:hidden;
+  background:rgba(255,255,255,.018);
+  box-shadow:0 10px 28px rgba(0,0,0,.10);
+  transition:opacity .18s ease,border-color .18s ease;
+}
+#step-4 .crewbus-flight-column.is-muted{opacity:.52}
+#step-4 .crewbus-flight-column-other{border-color:rgba(255,190,70,.16);background:rgba(255,180,0,.014)}
+#step-4 .crewbus-column-head{
+  position:sticky;
+  top:0;
+  z-index:4;
+  min-height:48px;
+  padding:10px 12px;
+  border-bottom:1px solid rgba(143,168,255,.10);
+  background:rgba(12,16,32,.88);
+  backdrop-filter:blur(14px);
+}
+#step-4 .crewbus-column-head>div{display:flex;align-items:center;gap:7px;min-width:0}
+#step-4 .crewbus-column-kicker{font:900 9px/1 var(--mono);letter-spacing:1.4px;color:var(--t1)}
+#step-4 .crewbus-column-sub{font:700 7px var(--mono);letter-spacing:.8px;color:var(--t3)}
+#step-4 .crewbus-column-count{
+  min-width:20px;height:20px;padding:0 5px;border-radius:999px;
+  display:inline-flex;align-items:center;justify-content:center;
+  font:900 8px var(--mono);color:var(--a1);
+  background:rgba(143,168,255,.09);border:1px solid rgba(143,168,255,.16)
+}
+#step-4 .crewbus-flight-column-other .crewbus-column-kicker{color:#ffd166}
+#step-4 .crewbus-flight-column-other .crewbus-column-count{color:#ffbf3f;background:rgba(255,180,0,.08);border-color:rgba(255,180,0,.18)}
+#step-4 .crewbus-column-list{
+  display:grid;
+  gap:6px;
+  padding:7px;
+  max-height:61vh;
+  min-height:120px;
+  overflow:auto;
+  scrollbar-width:thin;
+  overscroll-behavior:contain;
+}
+#step-4 .crewbus-flight-card{
+  display:grid!important;
+  grid-template-columns:27px 58px minmax(0,1fr)!important;
+  grid-template-rows:auto auto auto!important;
+  gap:0 8px!important;
+  min-height:0!important;
+  padding:9px 9px 8px!important;
+  border:1px solid rgba(255,255,255,.075);
+  border-radius:12px;
+  background:rgba(255,255,255,.018);
+  box-shadow:none;
+  transform:none!important;
+}
+#step-4 .crewbus-flight-card:hover{border-color:rgba(143,168,255,.22);background:rgba(255,255,255,.035)}
+#step-4 .crewbus-flight-card.selected{border-color:rgba(143,168,255,.38);background:linear-gradient(135deg,rgba(128,86,255,.10),rgba(255,255,255,.018));box-shadow:0 5px 16px rgba(70,90,180,.08)}
+#step-4 .crewbus-flight-card .crewbus-check{
+  grid-column:1!important;grid-row:1!important;
+  width:25px!important;height:25px!important;margin:0!important;
+  border-radius:8px!important;
+}
+#step-4 .crewbus-clean-flight-time{
+  grid-column:2!important;grid-row:1!important;
+  display:flex;flex-direction:column;align-items:flex-start;line-height:1;
+}
+#step-4 .crewbus-clean-flight-time strong{font-size:15px;letter-spacing:-.02em}
+#step-4 .crewbus-clean-flight-time span{font-size:6px;letter-spacing:.10em;margin-top:4px;opacity:.40}
+#step-4 .crewbus-clean-flight-main{
+  grid-column:3!important;grid-row:1!important;min-width:0;
+}
+#step-4 .crewbus-clean-flight-top{display:flex;align-items:center;gap:5px;min-width:0}
+#step-4 .crewbus-clean-flight-top>strong{font-size:11px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#step-4 .crewbus-direction{font-size:6px!important;padding:3px 4px!important}
+#step-4 .crewbus-source-pill{display:none!important}
+#step-4 .crewbus-clean-flight-sub{margin-top:5px}
+#step-4 .crewbus-registration-input{
+  width:100%;max-width:none;min-height:26px;
+  padding:4px 7px;border-radius:7px;
+  font-size:10px!important;
+  background:rgba(0,0,0,.12);
+}
+#step-4 .crewbus-clean-meta{
+  grid-column:2 / 4!important;
+  font-size:7px!important;
+  line-height:1.2;
+  opacity:.52;
+  margin-top:4px;
+  white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+#step-4 .crewbus-card-actions{
+  grid-column:1 / 4!important;grid-row:3!important;
+  display:flex!important;align-items:center;justify-content:flex-start!important;
+  flex-wrap:wrap;gap:4px!important;margin-top:5px!important;
+}
+#step-4 .crewbus-flight-card .crewbus-mode-btn,
+#step-4 .crewbus-flight-card .crewbus-hs-btn{
+  min-height:24px!important;padding:4px 6px!important;
+  border-radius:7px;font-size:6px!important;
+}
+#step-4 .crewbus-empty{padding:24px 10px;min-height:92px;justify-content:center}
+#step-4 .crewbus-column-empty{padding:20px 8px;min-height:88px}
+#step-4 .crewbus-column-empty .crewbus-empty-icon{font-size:14px}
+#step-4 .crewbus-column-empty strong{font-size:9px}
+#step-4 .crewbus-column-empty span{font-size:7px}
+
+#step-4 .crewbus-manual-clean{width:100%;max-width:960px;margin:12px auto 0}
+#step-4 .crewbus-manual-clean details{
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:13px;
+  background:rgba(255,255,255,.018);
+  overflow:hidden;
+}
+#step-4 .crewbus-manual-clean summary{
+  min-height:44px;padding:9px 12px;
+  display:flex;align-items:center;gap:9px;
+}
+#step-4 .crewbus-manual-clean summary .manual-plus{
+  width:25px;height:25px;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:7px;border:1px solid rgba(255,180,0,.24);
+  background:rgba(255,180,0,.07);color:#ffc85a;font-size:16px;line-height:1;
+}
+#step-4 .crewbus-manual-clean summary strong{font-size:11px}
+#step-4 .crewbus-manual-clean summary small{font-size:8px;opacity:.40}
+#step-4 .crewbus-manual-clean summary em{font-size:8px;letter-spacing:.10em}
+#step-4 .crewbus-manual-clean .crewbus-add-grid{
+  padding:10px 12px 12px;
+  border-top:1px solid rgba(255,255,255,.07);
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+}
+#step-4 .crewbus-manual-clean .crewbus-field{min-width:0}
+#step-4 .crewbus-manual-clean .crewbus-field>span{display:block;font-size:7px;letter-spacing:.10em;text-transform:uppercase;opacity:.48;margin:0 0 4px}
+#step-4 .crewbus-manual-clean .crewbus-field input,
+#step-4 .crewbus-manual-clean .crewbus-field select{min-height:32px;padding:6px 8px;font-size:10px;border-radius:8px}
+#step-4 .crewbus-manual-clean .crewbus-add-btn{
+  width:calc(100% - 24px);max-width:none;margin:0 12px 12px;
+  min-height:34px;border-radius:9px;font-size:9px;
+}
+@media(max-width:900px){
+  #step-4 .crewbus-flight-columns{grid-template-columns:1fr!important}
+  #step-4 .crewbus-flight-column.is-muted{display:none}
+  #step-4 .crewbus-column-list{max-height:none}
+  #step-4 .crewbus-manual-clean .crewbus-add-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  #step-4 .crewbus-flight-columns{gap:8px}
+  #step-4 .crewbus-column-head{padding:9px 10px}
+  #step-4 .crewbus-column-list{padding:6px}
+  #step-4 .crewbus-manual-clean .crewbus-add-grid{grid-template-columns:1fr}
+}
+</style>
 </body>
 </html>
 
