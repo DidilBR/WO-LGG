@@ -1963,6 +1963,65 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 }
 </style>
 </style>
+
+<style id="crewbus-clean-redesign-v80">
+#step-4.crewbus-redesigned{max-width:1180px;margin:0 auto;padding-bottom:28px}
+#step-4 .crewbus-clean-head{text-align:center;margin-bottom:22px}
+#step-4 .crewbus-clean-head .section-desc{max-width:760px;margin:8px auto 0}
+#step-4 .crewbus-clean-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 16px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.035);border-radius:14px;margin-bottom:12px}
+#step-4 .crewbus-source-clean{display:flex;align-items:center;gap:12px;min-width:0}
+#step-4 .crewbus-source-clean .crewbus-source-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:rgba(124,92,255,.15);font-size:16px;flex:none}
+#step-4 .crewbus-source-clean strong{display:block;font-size:11px;letter-spacing:.13em;text-transform:uppercase}
+#step-4 .crewbus-source-clean span:not(.crewbus-source-icon){display:block;margin-top:2px;font-size:11px;opacity:.55;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#step-4 .crewbus-refresh-btn{white-space:nowrap}
+#step-4 .crewbus-clean-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+#step-4 .crewbus-clean-summary>div{display:flex;align-items:baseline;gap:8px;padding:12px 15px;border:1px solid rgba(255,255,255,.09);border-radius:12px;background:rgba(255,255,255,.025)}
+#step-4 .crewbus-clean-summary strong{font-size:24px;line-height:1;font-weight:800}
+#step-4 .crewbus-clean-summary span{font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.52}
+#step-4 .crewbus-clean-controls{padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(255,255,255,.025);margin-bottom:10px}
+#step-4 .crewbus-search-wrap{margin-bottom:10px}
+#step-4 .crewbus-clean-control-line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+#step-4 .crewbus-clean-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+#step-4 .crewbus-sort-clean{display:flex;align-items:center;gap:7px;margin-left:4px;font-size:10px;text-transform:uppercase;letter-spacing:.1em;opacity:.7}
+#step-4 .crewbus-sort-clean select{min-height:34px}
+#step-4 .crewbus-list-header{display:grid;grid-template-columns:88px minmax(260px,1.7fr) minmax(130px,.85fr) 105px minmax(180px,1.1fr);align-items:center;gap:12px;padding:8px 14px 7px 54px;color:rgba(255,255,255,.42);font-size:9px;letter-spacing:.13em;text-transform:uppercase}
+#step-4 .crewbus-unified-list{display:flex;flex-direction:column;gap:6px}
+#step-4 .crewbus-unified-list .crewbus-flight-card{display:grid;grid-template-columns:36px 88px minmax(260px,1.7fr) minmax(130px,.85fr) 105px minmax(180px,1.1fr);align-items:center;gap:12px;min-height:68px;padding:9px 12px;border:1px solid rgba(255,255,255,.085);border-radius:13px;background:rgba(255,255,255,.025);transition:border-color .15s,background .15s,transform .15s}
+#step-4 .crewbus-unified-list .crewbus-flight-card:hover{background:rgba(255,255,255,.045);border-color:rgba(255,255,255,.15)}
+#step-4 .crewbus-unified-list .crewbus-flight-card.selected{border-color:rgba(163,119,255,.5);background:linear-gradient(90deg,rgba(128,86,255,.10),rgba(255,255,255,.025))}
+#step-4 .crewbus-check{width:30px;height:30px;border-radius:9px;border:1px solid rgba(255,255,255,.16);background:transparent;color:#fff;display:grid;place-items:center;font-weight:800;cursor:pointer}
+#step-4 .crewbus-flight-card.selected .crewbus-check{background:var(--a1,#8b5cf6);border-color:transparent}
+#step-4 .crewbus-clean-flight-time{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+#step-4 .crewbus-clean-flight-time strong{font-size:20px;font-weight:850;letter-spacing:-.02em}
+#step-4 .crewbus-clean-flight-time span{font-size:8px;letter-spacing:.12em;text-transform:uppercase;opacity:.43;margin-top:5px}
+#step-4 .crewbus-clean-flight-main{min-width:0}
+#step-4 .crewbus-clean-flight-top{display:flex;align-items:center;gap:7px;min-width:0}
+#step-4 .crewbus-clean-flight-top>strong{font-size:15px;letter-spacing:.01em;white-space:nowrap}
+#step-4 .crewbus-direction{font-size:8px!important;letter-spacing:.09em!important;padding:4px 6px;border-radius:5px!important}
+#step-4 .crewbus-source-pill{font-size:8px;letter-spacing:.08em;text-transform:uppercase;opacity:.4}
+#step-4 .crewbus-clean-flight-sub{margin-top:5px}
+#step-4 .crewbus-registration-input{width:100%;max-width:205px;min-height:30px;padding:5px 9px;border:1px solid rgba(255,255,255,.12);border-radius:7px;background:rgba(0,0,0,.14);color:inherit;font:800 13px var(--mono,monospace);text-transform:uppercase;outline:none}
+#step-4 .crewbus-registration-input:focus{border-color:rgba(157,110,255,.7);box-shadow:0 0 0 2px rgba(157,110,255,.1)}
+#step-4 .crewbus-clean-meta{font-size:10px;opacity:.66;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#step-4 .crewbus-card-actions{display:flex;justify-content:flex-end;align-items:center;gap:6px;min-width:0}
+#step-4 .crewbus-card-actions .crewbus-wfs-mode{display:flex;gap:4px}
+#step-4 .crewbus-mode-btn,#step-4 .crewbus-hs-btn{font-size:9px;padding:6px 7px;min-height:28px}
+#step-4 .crewbus-manual-clean{margin-top:10px}
+#step-4 .crewbus-manual-clean details{border:1px solid rgba(255,255,255,.1);border-radius:14px;background:rgba(255,255,255,.02);overflow:hidden}
+#step-4 .crewbus-manual-clean summary{list-style:none;display:flex;align-items:center;gap:11px;padding:13px 15px;cursor:pointer;user-select:none}
+#step-4 .crewbus-manual-clean summary::-webkit-details-marker{display:none}
+#step-4 .manual-plus{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.12);font-size:17px;opacity:.8}
+#step-4 .crewbus-manual-clean summary strong{display:block;font-size:12px}
+#step-4 .crewbus-manual-clean summary small{display:block;margin-top:2px;font-size:10px;opacity:.45}
+#step-4 .crewbus-manual-clean summary em{margin-left:auto;font-style:normal;font-size:9px;text-transform:uppercase;letter-spacing:.12em;opacity:.55}
+#step-4 .crewbus-manual-clean details[open] .manual-plus{transform:rotate(45deg)}
+#step-4 .crewbus-manual-clean .crewbus-add-grid{padding:0 15px 12px;border-top:1px solid rgba(255,255,255,.07);padding-top:12px}
+#step-4 .crewbus-manual-clean .crewbus-add-btn{margin:0 15px 15px;width:calc(100% - 30px);min-height:38px}
+#step-4 .crewbus-clean-bottom{margin-top:12px;padding:10px 0 0;border-top:1px solid rgba(255,255,255,.08);display:grid;grid-template-columns:1fr auto 1.2fr;gap:10px;align-items:center}
+#step-4 .crewbus-clean-bottom .crewbus-generate-btn{width:100%;justify-content:center}
+@media(max-width:900px){#step-4 .crewbus-list-header{display:none}#step-4 .crewbus-unified-list .crewbus-flight-card{grid-template-columns:32px 72px minmax(0,1fr) auto;gap:9px}#step-4 .crewbus-clean-meta:nth-of-type(1),#step-4 .crewbus-clean-meta:nth-of-type(2){display:none}#step-4 .crewbus-card-actions{grid-column:3/5;justify-content:flex-start}#step-4 .crewbus-registration-input{max-width:190px}#step-4 .crewbus-clean-bottom{grid-template-columns:1fr;}}
+@media(max-width:600px){#step-4 .crewbus-clean-toolbar{align-items:flex-start;flex-direction:column}#step-4 .crewbus-refresh-btn{width:100%}#step-4 .crewbus-clean-summary strong{font-size:20px}#step-4 .crewbus-clean-control-line{align-items:stretch;flex-direction:column}#step-4 .crewbus-clean-actions{width:100%}#step-4 .crewbus-sort-clean{margin-left:0}#step-4 .crewbus-unified-list .crewbus-flight-card{grid-template-columns:30px 68px minmax(0,1fr);padding:9px 8px}#step-4 .crewbus-card-actions{grid-column:2/4}#step-4 .crewbus-clean-flight-top{flex-wrap:wrap}#step-4 .crewbus-clean-flight-top>strong{font-size:14px}#step-4 .crewbus-clean-flight-time strong{font-size:18px}}
+</style>
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -2571,125 +2630,81 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
      Système indépendant : FIDS arrivals + departures, sélection libre,
      ajouts manuels et génération de la feuille Crew Bus.
      ══════════════════════════════════════════════════════════════ -->
-<div id="step-4" class="hidden">
-  <div class="section-hd">
+<div id="step-4" class="hidden crewbus-redesigned">
+  <div class="section-hd crewbus-clean-head">
     <div class="section-eyebrow"><span class="eyebrow-dot"></span>Étape 4 sur 4</div>
     <div class="section-title crewbus-title-row">
       <span>Crew Bus</span>
       <span class="crewbus-live-badge"><span class="crewbus-live-dot"></span><span id="crewbus-status-label">Prêt</span></span>
     </div>
-    <div class="section-desc">Sélectionnez les arrivées et départs à intégrer à la feuille Crew Bus.</div>
+    <div class="section-desc">Préparez la feuille Crew Bus. Sélectionnez les vols, vérifiez les immatriculations et générez.</div>
   </div>
 
-  <div class="crewbus-toolbar">
-    <div class="crewbus-toolbar-main">
-      <div class="crewbus-source">
-        <span class="crewbus-source-icon">✈</span>
-        <div>
-          <div class="crewbus-source-kicker">FITS / FIDS</div>
-          <div class="crewbus-source-copy">Arrivées + départs indépendants des opérations</div>
-        </div>
+  <div class="crewbus-clean-toolbar">
+    <div class="crewbus-source-clean">
+      <span class="crewbus-source-icon">✈</span>
+      <div>
+        <strong>FIDS</strong>
+        <span id="crewbus-loading-line" aria-live="polite">Les arrivées et départs sont synchronisés automatiquement.</span>
       </div>
-      <button type="button" class="crewbus-refresh-btn" id="crewbus-refresh-btn" onclick="loadCrewBusFromFids(true)">
-        <span class="crewbus-refresh-icon">↻</span><span>Actualiser</span>
-      </button>
     </div>
-    <div id="crewbus-loading-line" class="crewbus-loading-line" aria-live="polite"></div>
+    <button type="button" class="crewbus-refresh-btn" id="crewbus-refresh-btn" onclick="loadCrewBusFromFids(true)"><span class="crewbus-refresh-icon">↻</span> Actualiser</button>
   </div>
 
-  <div class="crewbus-stats">
-    <div class="crewbus-stat crewbus-stat-accent"><span class="crewbus-stat-num" id="crewbus-selected-count">0</span><span class="crewbus-stat-label">Sélectionnés</span></div>
-    <div class="crewbus-stat"><span class="crewbus-stat-num" id="crewbus-arr-count">0</span><span class="crewbus-stat-label">Arrivées</span></div>
-    <div class="crewbus-stat"><span class="crewbus-stat-num" id="crewbus-dep-count">0</span><span class="crewbus-stat-label">Départs</span></div>
+  <div class="crewbus-clean-summary">
+    <div><strong id="crewbus-selected-count">0</strong><span>sélectionnés</span></div>
+    <div><strong id="crewbus-arr-count">0</strong><span>arrivées</span></div>
+    <div><strong id="crewbus-dep-count">0</strong><span>départs</span></div>
   </div>
 
-  <div class="crewbus-controls">
+  <div class="crewbus-clean-controls">
     <div class="crewbus-search-wrap">
       <span class="crewbus-search-icon">⌕</span>
-      <input id="crewbus-search" type="text" placeholder="Rechercher un vol, une immatriculation, un handler…" oninput="renderCrewBusFlights()" autocomplete="off">
+      <input id="crewbus-search" type="text" placeholder="Rechercher un vol, une immatriculation ou un handler…" oninput="renderCrewBusFlights()" autocomplete="off">
       <button type="button" class="crewbus-search-clear" onclick="document.getElementById('crewbus-search').value='';renderCrewBusFlights()" aria-label="Effacer la recherche">×</button>
     </div>
-    <div class="crewbus-control-row">
+    <div class="crewbus-clean-control-line">
       <div class="crewbus-filter-group" role="tablist" aria-label="Filtrer les vols">
         <button type="button" class="crewbus-filter active" data-filter="all" onclick="setCrewBusFilter('all')">Tous</button>
         <button type="button" class="crewbus-filter" data-filter="arr" onclick="setCrewBusFilter('arr')">Arrivées</button>
         <button type="button" class="crewbus-filter" data-filter="dep" onclick="setCrewBusFilter('dep')">Départs</button>
         <button type="button" class="crewbus-filter" data-filter="other" onclick="setCrewBusFilter('other')">Autres</button>
       </div>
-      <div class="crewbus-sort-wrap">
-        <span class="crewbus-sort-label">Trier</span>
-        <select id="crewbus-sort" onchange="crewBusSort=this.value;renderCrewBusFlights()">
-          <option value="time">Chronologique</option>
-          <option value="flight">N° de vol</option>
-          <option value="reg">Immatriculation</option>
-          <option value="handler">Handler</option>
-        </select>
+      <div class="crewbus-clean-actions">
+        <button type="button" class="crewbus-mini-btn" onclick="selectAllCrewBusVisible()">Tout sélectionner</button>
+        <button type="button" class="crewbus-mini-btn ghost" onclick="clearCrewBusSelection()">Tout retirer</button>
+        <label class="crewbus-sort-clean"><span>Trier</span><select id="crewbus-sort" onchange="crewBusSort=this.value;renderCrewBusFlights()"><option value="time">Chronologique</option><option value="flight">N° de vol</option><option value="reg">Immatriculation</option><option value="handler">Handler</option></select></label>
       </div>
     </div>
   </div>
 
-  <div class="crewbus-selection-bar">
-    <div>
-      <span class="crewbus-selection-title">Sélection Crew Bus</span>
-      <span class="crewbus-selection-hint" id="crewbus-selection-hint">Les vols retenus apparaîtront dans la worksheet.</span>
-    </div>
-    <div class="crewbus-selection-actions">
-      <button type="button" class="crewbus-mini-btn" onclick="selectAllCrewBusVisible()">Tout sélectionner</button>
-      <button type="button" class="crewbus-mini-btn ghost" onclick="clearCrewBusSelection()">Tout retirer</button>
+  <div class="crewbus-list-header">
+    <span>Vol</span><span>Immatriculation</span><span>Handler</span><span>Stand</span><span>Actions</span>
+  </div>
+  <div id="crewbus-flight-list" class="crewbus-unified-list">
+    <div id="crewbus-unified-list">
+      <div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des données FIDS.</span></div>
     </div>
   </div>
 
-  <div id="crewbus-flight-list" class="crewbus-flight-list crewbus-flight-columns">
-    <section class="crewbus-flight-column" id="crewbus-arr-column">
-      <div class="crewbus-column-head"><div><span class="crewbus-column-kicker">ARRIVÉES</span><span class="crewbus-column-count" id="crewbus-arr-visible-count">0</span></div><span class="crewbus-column-sub">ETA · FIDS</span></div>
-      <div id="crewbus-arr-list" class="crewbus-column-list"><div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des arrivées FIDS.</span></div></div>
-    </section>
-    <section class="crewbus-flight-column" id="crewbus-dep-column">
-      <div class="crewbus-column-head"><div><span class="crewbus-column-kicker">DÉPARTS</span><span class="crewbus-column-count" id="crewbus-dep-visible-count">0</span></div><span class="crewbus-column-sub">PICK UP · FIDS</span></div>
-      <div id="crewbus-dep-list" class="crewbus-column-list"><div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des départs FIDS.</span></div></div>
-    </section>
-    <section class="crewbus-flight-column crewbus-flight-column-other" id="crewbus-other-column">
-      <div class="crewbus-column-head">
-        <div><span class="crewbus-column-kicker">AUTRE CREW-BUS</span><span class="crewbus-column-count" id="crewbus-other-visible-count">0</span></div>
-        <span class="crewbus-column-sub">VOLS NON HABITUELS</span>
+  <div class="crewbus-manual-clean">
+    <details>
+      <summary><span class="manual-plus">＋</span><span><strong>Ajouter un vol manuellement</strong><small>Pour un vol absent du FIDS</small></span><em>Ajouter</em></summary>
+      <div class="crewbus-add-grid">
+        <label class="crewbus-field"><span>Direction</span><select id="crewbus-man-type" onchange="updateCrewBusManualTimeLabel()"><option value="arr">Arrivée</option><option value="dep">Départ</option></select></label>
+        <label class="crewbus-field"><span>N° de vol</span><input id="crewbus-man-flight" type="text" placeholder="ex. ICL601" autocomplete="off"></label>
+        <label class="crewbus-field"><span id="crewbus-man-time-label">ETA</span><input id="crewbus-man-time" type="time"></label>
+        <label class="crewbus-field"><span>Immatriculation</span><input id="crewbus-man-reg" type="text" placeholder="ex. OO-TNA" autocomplete="off"></label>
+        <label class="crewbus-field"><span>Stand</span><input id="crewbus-man-stand" type="text" placeholder="ex. 134" autocomplete="off"></label>
+        <label class="crewbus-field"><span>Handler</span><input id="crewbus-man-handler" type="text" placeholder="ex. WFS / SWISSPORT" autocomplete="off"></label>
       </div>
-      <div id="crewbus-other-list" class="crewbus-column-list">
-        <div class="crewbus-empty"><div class="crewbus-empty-icon">＋</div><strong>Aucun autre vol</strong><span>Les vols non retenus habituellement apparaîtront ici.</span></div>
-      </div>
-    </section>
+      <button type="button" class="crewbus-add-btn" onclick="addCrewBusManualFlight()">＋ Ajouter ce vol</button>
+    </details>
   </div>
 
-  <div class="crewbus-add-panel">
-    <div class="crewbus-add-head">
-      <div>
-        <div class="crewbus-add-kicker">AJOUT MANUEL</div>
-        <div class="crewbus-add-title">Un vol absent du FIDS ?</div>
-      </div>
-      <span class="crewbus-add-badge">ADD</span>
-    </div>
-    <div class="crewbus-add-grid">
-      <label class="crewbus-field"><span>Direction</span>
-        <select id="crewbus-man-type" onchange="updateCrewBusManualTimeLabel()">
-          <option value="arr">Arrivée</option><option value="dep">Départ</option>
-        </select>
-      </label>
-      <label class="crewbus-field"><span>N° de vol</span><input id="crewbus-man-flight" type="text" placeholder="ex. ICL601" autocomplete="off"></label>
-      <label class="crewbus-field"><span id="crewbus-man-time-label">ETA</span><input id="crewbus-man-time" type="time"></label>
-      <label class="crewbus-field"><span>Immatriculation</span><input id="crewbus-man-reg" type="text" placeholder="ex. OO-TNA" autocomplete="off"></label>
-      <label class="crewbus-field"><span>Stand</span><input id="crewbus-man-stand" type="text" placeholder="ex. 134" autocomplete="off"></label>
-      <label class="crewbus-field"><span>Handler</span><input id="crewbus-man-handler" type="text" placeholder="ex. WFS / SWISSPORT" autocomplete="off"></label>
-    </div>
-    <button type="button" class="crewbus-add-btn" onclick="addCrewBusManualFlight()"><span>＋</span> Ajouter ce vol</button>
-  </div>
-
-  <div class="crewbus-bottom-bar">
+  <div class="crewbus-bottom-bar crewbus-clean-bottom">
     <button type="button" class="btn btn-ghost" onclick="goToStep(3)">&larr; Retour aux opérations</button>
-    <div class="crewbus-order-control" role="group" aria-label="Ordre de génération Crew Bus">
-      <span class="crewbus-order-label">Ordre</span>
-      <button type="button" id="crewbus-order-toggle" class="crewbus-order-toggle" data-order="chrono" onclick="toggleCrewBusSheetOrder()" aria-pressed="false">
-        <span id="crewbus-order-toggle-label">Chronologique</span>
-      </button>
-    </div>
+    <div class="crewbus-order-control" role="group" aria-label="Ordre de génération Crew Bus"><span class="crewbus-order-label">Ordre</span><button type="button" id="crewbus-order-toggle" class="crewbus-order-toggle" data-order="chrono" onclick="toggleCrewBusSheetOrder()" aria-pressed="false"><span id="crewbus-order-toggle-label">Chronologique</span></button></div>
     <button type="button" class="btn crewbus-generate-btn" onclick="generateCrewBusSheet()"><span>▣</span> Générer la feuille Crew Bus</button>
   </div>
 </div>
@@ -6829,13 +6844,9 @@ ${(function(){
     if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('crewBusManualAdd');
   }
   function renderCrewBusFlights(){
-    const root=document.getElementById('crewbus-flight-list');if(!root)return;
-    const arrList=document.getElementById('crewbus-arr-list'),depList=document.getElementById('crewbus-dep-list'),otherList=document.getElementById('crewbus-other-list');
-    const arrCol=document.getElementById('crewbus-arr-column'),depCol=document.getElementById('crewbus-dep-column'),otherCol=document.getElementById('crewbus-other-column');
+    const root=document.getElementById('crewbus-unified-list');
+    if(!root)return;
     const visible=crewBusVisibleFlights();
-    const visibleArr=visible.filter(f=>f.type==='arr' && !crewBusIsOther(f));
-    const visibleDep=visible.filter(f=>f.type==='dep' && !crewBusIsOther(f));
-    const visibleOther=visible.filter(f=>crewBusIsOther(f));
     const allFlights=(crewBusFlights||[]);
     const total=allFlights.length,selected=allFlights.filter(f=>f.selected).length;
     const arr=allFlights.filter(f=>f.type==='arr' && !crewBusIsOther(f)).length;
@@ -6843,17 +6854,8 @@ ${(function(){
     const other=allFlights.filter(crewBusIsOther).length;
     const s=document.getElementById('crewbus-selected-count'),a=document.getElementById('crewbus-arr-count'),d=document.getElementById('crewbus-dep-count');
     if(s)s.textContent=selected;if(a)a.textContent=arr;if(d)d.textContent=dep;
-    const ac=document.getElementById('crewbus-arr-visible-count'),dc=document.getElementById('crewbus-dep-visible-count'),oc=document.getElementById('crewbus-other-visible-count');
-    if(ac)ac.textContent=visibleArr.length;if(dc)dc.textContent=visibleDep.length;if(oc)oc.textContent=visibleOther.length;
     const hint=document.getElementById('crewbus-selection-hint');if(hint)hint.textContent=selected+' sélectionné(s) · '+total+' vol(s) disponibles · '+other+' autre(s) non habituel(s)';
-    if(arrCol)arrCol.style.display=crewBusFilter==='dep'||crewBusFilter==='other'?'none':'';
-    if(depCol)depCol.style.display=crewBusFilter==='arr'||crewBusFilter==='other'?'none':'';
-    if(otherCol)otherCol.style.display=crewBusFilter==='arr'||crewBusFilter==='dep'?'none':'';
-    const empty='<div class="crewbus-empty"><div class="crewbus-empty-icon">⌕</div><strong>Aucun vol trouvé</strong><span>Modifiez le filtre ou la recherche.</span></div>';
-    const otherEmpty='<div class="crewbus-empty"><div class="crewbus-empty-icon">＋</div><strong>Aucun autre vol</strong><span>Les vols non retenus habituellement apparaîtront ici.</span></div>';
-    if(arrList)arrList.innerHTML=visibleArr.length?visibleArr.map(crewBusFlightCardHtml).join(''):empty;
-    if(depList)depList.innerHTML=visibleDep.length?visibleDep.map(crewBusFlightCardHtml).join(''):empty;
-    if(otherList)otherList.innerHTML=visibleOther.length?visibleOther.map(crewBusFlightCardHtml).join(''):otherEmpty;
+    root.innerHTML=visible.length?visible.map(crewBusFlightCardHtml).join(''):'<div class="crewbus-empty"><div class="crewbus-empty-icon">⌕</div><strong>Aucun vol trouvé</strong><span>Modifiez le filtre ou la recherche.</span></div>';
   }
 
   // ── Immatriculation partagée Operations ↔ Crew Bus ──────────────
@@ -6912,22 +6914,21 @@ ${(function(){
     const key=crewBusEscape(f.key);
     const source=f.manual?'MANUEL':'FIDS';
     const isWfs=String(f.handler||'').toUpperCase()==='WFS';
-    const effectiveReg=crewBusEffectiveReg(f)||'';
     const modeHtml=isWfs?('<div class="crewbus-wfs-mode">'
       +'<button type="button" class="crewbus-mode-btn '+(f.wfsMode==='renting'?'active rent':'')+'" data-crewbus-action="wfs" data-mode="renting">🚙 Renting</button>'
       +'<button type="button" class="crewbus-mode-btn '+(f.wfsMode==='handling'?'active hand':'')+'" data-crewbus-action="wfs" data-mode="handling">✈ Handling</button>'
       +'</div>') : '';
-    const hsHtml=f.type==='dep'
-      ? '<button type="button" class="crewbus-hs-btn '+(f.headset?'active':'')+'" data-crewbus-action="headset">🎧 '+(f.headset?'Headset ✓':'Headset')+'</button>' : '';
+    const hsHtml=f.type==='dep'?'<button type="button" class="crewbus-hs-btn '+(f.headset?'active':'')+'" data-crewbus-action="headset">🎧 '+(f.headset?'Headset ✓':'Headset')+'</button>':'';
+    const reg=crewBusEffectiveReg(f);
+    const regHtml='<input class="crewbus-registration-input" value="'+crewBusEscape(reg)+'" data-reg-flight="'+crewBusEscape(f.flight||'')+'" placeholder="Immatriculation" autocomplete="off" aria-label="Immatriculation '+crewBusEscape(f.flight||'')+'" onkeydown="woLggHandleRegistrationKeydown(event)" onblur="woLggHandleRegistrationBlur(event)" onclick="event.stopPropagation()">';
     return '<article class="crewbus-flight-card '+(sel?'selected':'')+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" data-crewbus-key="'+key+'">'
       +'<button type="button" class="crewbus-check" aria-label="'+(sel?'Désélectionner ':'Sélectionner ')+crewBusEscape(f.flight)+'" aria-pressed="'+(sel?'true':'false')+'" data-crewbus-action="flight">'+(sel?'✓':'')+'</button>'
-      +'<div class="crewbus-flight-main">'
-      +'<div class="crewbus-time">'+crewBusEscape(f.time)+'<small>'+(f.type==='dep'?'PICK UP':'ETA')+'</small></div>'
-      +'<div class="crewbus-flight-info">'
-      +'<div class="crewbus-reg-edit-wrap"><input class="crewbus-missing-reg-input crewbus-registration-input" data-reg-flight="'+crewBusEscape(f.flight||'')+'" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="IMMATRICULATION" value="'+crewBusEscape(effectiveReg)+'" aria-label="Immatriculation de '+crewBusEscape(f.flight||'')+'" onclick="event.stopPropagation()" onkeydown="woLggHandleRegistrationKeydown(event)" onblur="woLggHandleRegistrationBlur(event)"></div>'
-      +'<div class="crewbus-flight-meta">'
-      +'<span class="crewbus-direction '+(f.type==='arr'?'arr':'dep')+'">'+(f.type==='arr'?'ARR':'DEP')+'</span><span class="crewbus-meta-chip crewbus-flight-chip">'+crewBusEscape(f.flight||'—')+'</span><span class="crewbus-meta-chip">'+crewBusEscape(f.handler||'—')+'</span>'+(f.stand?'<span class="crewbus-meta-chip">Stand '+crewBusEscape(f.stand)+'</span>':'')+'<span class="crewbus-meta-chip source">'+source+'</span></div></div></div>'
-      +'<div class="crewbus-card-actions">'+modeHtml+hsHtml+'</div></article>';
+      +'<div class="crewbus-clean-flight-time"><strong>'+crewBusEscape(f.time||'—')+'</strong><span>'+(f.type==='dep'?'PICK UP':'ETA')+'</span></div>'
+      +'<div class="crewbus-clean-flight-main"><div class="crewbus-clean-flight-top"><strong>'+crewBusEscape(f.flight||'—')+'</strong><span class="crewbus-direction '+(f.type==='arr'?'arr':'dep')+'">'+(f.type==='arr'?'ARRIVÉE':'DÉPART')+'</span><span class="crewbus-source-pill">'+source+'</span></div><div class="crewbus-clean-flight-sub">'+regHtml+'</div></div>'
+      +'<div class="crewbus-clean-meta"><span>'+(f.handler?crewBusEscape(f.handler):'—')+'</span></div>'
+      +'<div class="crewbus-clean-meta"><span>'+(f.stand?'Stand '+crewBusEscape(f.stand):'—')+'</span></div>'
+      +'<div class="crewbus-card-actions">'+modeHtml+hsHtml+'</div>'
+      +'</article>';
   }
 
   // V65: one delegated handler for all dynamically-rendered Crew Bus controls.
