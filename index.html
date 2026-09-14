@@ -4908,7 +4908,7 @@ async function woLggLogout(){
     const html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheet ' +
       ((f.reg || f.flight || 'Worksheet').replace(/[<>]/g,'')) +
       '</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}.page{page-break-after:avoid;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}</style></head><body>' + page + '</body></html>';
-    openPrintWindow(page, 'Worksheet ' + (f.reg || f.flight || 'Worksheet'));
+    openPrintWindow(html, 'Worksheet ' + (f.reg || f.flight || 'Worksheet'));
   }
 
   // Annule TOUTES les modifications manuelles (Edit Mode), sur TOUS les vols
@@ -6486,42 +6486,79 @@ ${(function(){
   }
 
 
-  // Impression intégrée : aucun nouvel onglet / aucune fenêtre popup navigateur.
-  // Le contenu est affiché dans le modal #print-overlay de l'application, puis
-  // le bouton « Imprimer / PDF » déclenche l'impression native de la page.
+  // Impression directe : aucun nouvel onglet et aucun aperçu HTML dans l'application.
+  // Le document généré est envoyé tel quel à un iframe d'impression temporaire,
+  // puis le navigateur ouvre directement sa page/boîte d'impression native.
   function openPrintWindow(content, title) {
-    var overlay=document.getElementById('print-overlay');
-    var container=document.getElementById('print-content');
-    if(!overlay || !container){
-      alert('Impossible d’ouvrir l’aperçu d’impression.');
-      return false;
-    }
-    var bodyContent=String(content||'');
-    var headStyles='';
-    if(/<html[\s>]/i.test(bodyContent) || /<body[\s>]/i.test(bodyContent)){
-      try{
-        var parsed=new DOMParser().parseFromString(bodyContent,'text/html');
-        headStyles=Array.from(parsed.head ? parsed.head.querySelectorAll('style') : [])
-          .map(function(st){return st.outerHTML;}).join('');
-        bodyContent=parsed.body ? parsed.body.innerHTML : bodyContent;
-      }catch(e){}
-    }
-    container.innerHTML=headStyles+bodyContent;
-    overlay.style.display='flex';
-    overlay.setAttribute('aria-hidden','false');
-    overlay.scrollTop=0;
+    var source = String(content || '');
+    var safeTitle = String(title || 'Worksheet').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    // Les fonctions historiques peuvent fournir soit le document HTML complet,
+    // soit uniquement le contenu d'une/des worksheet(s). Dans le second cas,
+    // on conserve exactement le wrapper A4 utilisé auparavant.
+    var html = /<html[\s>]/i.test(source) || /<!DOCTYPE/i.test(source)
+      ? source
+      : '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>'+safeTitle+'</title>'
+        +'<style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
+        +'html,body{height:100%}body{font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;font-size:8.5pt}'
+        +'.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}'
+        +'.page:last-child{page-break-after:avoid}</style></head><body>'+source+'</body></html>';
+
+    // Nettoyage d'un éventuel ancien frame d'impression.
+    var old = document.getElementById('wo-lgg-print-frame');
+    if (old) old.remove();
+
+    var frame = document.createElement('iframe');
+    frame.id = 'wo-lgg-print-frame';
+    frame.setAttribute('aria-hidden','true');
+    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none;z-index:-1;';
+    document.body.appendChild(frame);
+
+    var cleaned = false;
+    var cleanup = function(){
+      if(cleaned) return;
+      cleaned = true;
+      setTimeout(function(){ if(frame.parentNode) frame.parentNode.removeChild(frame); }, 100);
+    };
+
+    var printFrame = function(){
+      var w = frame.contentWindow;
+      if(!w) { cleanup(); alert('Impossible d’ouvrir la page d’impression.'); return; }
+      try { w.focus(); w.print(); }
+      catch(e) { cleanup(); alert('Impossible d’ouvrir la page d’impression.'); return; }
+      // Chrome/Edge déclenchent afterprint quand l'aperçu est fermé/imprimé.
+      try { w.addEventListener('afterprint', cleanup, {once:true}); } catch(e) {}
+      setTimeout(cleanup, 120000);
+    };
+
+    frame.onload = function(){
+      var w = frame.contentWindow;
+      if(!w) return;
+      var waitImages = Array.from(w.document.images || []).map(function(img){
+        return new Promise(function(resolve){
+          if(img.complete){ resolve(); return; }
+          img.addEventListener('load',resolve,{once:true});
+          img.addEventListener('error',resolve,{once:true});
+        });
+      });
+      var fontsReady = (w.document.fonts && w.document.fonts.ready) ? w.document.fonts.ready.catch(function(){}) : Promise.resolve();
+      Promise.all([fontsReady].concat(waitImages)).then(function(){
+        // Deux frames permettent au moteur de mise en page d'appliquer les règles
+        // @page et les dimensions A4 avant l'ouverture de l'aperçu natif.
+        if(w.requestAnimationFrame){
+          w.requestAnimationFrame(function(){ w.requestAnimationFrame(printFrame); });
+        } else {
+          setTimeout(printFrame,30);
+        }
+      });
+    };
+
+    frame.srcdoc = html;
     return true;
   }
 
-  function closePrintOverlay() {
-    var overlay=document.getElementById('print-overlay');
-    if(!overlay)return;
-    overlay.style.display='none';
-    overlay.setAttribute('aria-hidden','true');
-    var container=document.getElementById('print-content');
-    if(container)container.innerHTML='';
-  }
-
+  // Ancienne fonction conservée pour compatibilité avec d'éventuels boutons déjà
+  // présents dans l'interface : elle imprime le document principal directement.
   function printSheet() { window.print(); }
 
   function generateWorksheets() {
@@ -6697,7 +6734,7 @@ ${(function(){
       + '.page:last-child{page-break-after:avoid}'
       + '</style></head><body>' + pages + '</body></html>';
 
-    openPrintWindow(pages, 'Worksheets LGG');
+    openPrintWindow(html, 'Worksheets LGG');
   }
 
 
