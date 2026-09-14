@@ -2165,27 +2165,15 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     <div style="font-size:16px;font-weight:800;color:var(--a1);margin-bottom:4px">&#9881; Horaires des shifts</div>
     <div style="font-size:12px;color:var(--t2);margin-bottom:18px">Modifie le debut/fin de chaque shift. La fenetre d'affichage (-1h30/+1h) s'ajuste automatiquement.</div>
 
-    <div style="margin-bottom:14px">
-      <label class="field-label">Early</label>
-      <div class="field-row">
-        <input type="time" id="cfg-early-start">
-        <input type="time" id="cfg-early-end">
-      </div>
-    </div>
-    <div style="margin-bottom:14px">
-      <label class="field-label">Late</label>
-      <div class="field-row">
-        <input type="time" id="cfg-late-start">
-        <input type="time" id="cfg-late-end">
-      </div>
-    </div>
-    <div style="margin-bottom:20px">
-      <label class="field-label">Night</label>
-      <div class="field-row">
-        <input type="time" id="cfg-night-start">
-        <input type="time" id="cfg-night-end">
-      </div>
-    </div>
+    <div style="font-size:12px;font-weight:800;color:var(--t1);margin-bottom:10px">Operations</div>
+    <div style="margin-bottom:12px"><label class="field-label">Early</label><div class="field-row"><input type="time" id="cfg-early-start"><input type="time" id="cfg-early-end"></div></div>
+    <div style="margin-bottom:12px"><label class="field-label">Late</label><div class="field-row"><input type="time" id="cfg-late-start"><input type="time" id="cfg-late-end"></div></div>
+    <div style="margin-bottom:16px"><label class="field-label">Night</label><div class="field-row"><input type="time" id="cfg-night-start"><input type="time" id="cfg-night-end"></div></div>
+    <div style="height:1px;background:var(--b2);margin:4px 0 16px"></div>
+    <div style="font-size:12px;font-weight:800;color:var(--t1);margin-bottom:10px">Crew Bus</div>
+    <div style="margin-bottom:12px"><label class="field-label">Early</label><div class="field-row"><input type="time" id="cb-cfg-early-start"><input type="time" id="cb-cfg-early-end"></div></div>
+    <div style="margin-bottom:12px"><label class="field-label">Late</label><div class="field-row"><input type="time" id="cb-cfg-late-start"><input type="time" id="cb-cfg-late-end"></div></div>
+    <div style="margin-bottom:20px"><label class="field-label">Night</label><div class="field-row"><input type="time" id="cb-cfg-night-start"><input type="time" id="cb-cfg-night-end"></div></div>
 
     <div style="display:flex;gap:10px">
       <button class="btn btn-ghost" style="flex:1" onclick="closeShiftSettings()">Annuler</button>
@@ -2394,7 +2382,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
         <div><label class="field-label">Agent / Equipe</label><input type="text" id="shift-agent" placeholder="Nom ou equipe"></div>
       </div>
       <div>
-        <label class="field-label">Shift</label>
+        <label class="field-label">Shift Operations</label>
         <div class="shift-grid">
           <button class="shift-btn" id="btn-shift-early" data-shift="EARLY" data-time="05:30-14:00" onclick="selectShift(this)">
             <span class="shift-name">Early</span><span class="shift-time" id="lbl-time-early">05:30 - 14:00</span>
@@ -2404,6 +2392,20 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
           </button>
           <button class="shift-btn" id="btn-shift-night" data-shift="NIGHT" data-time="21:30-06:00" onclick="selectShift(this)">
             <span class="shift-name">Night</span><span class="shift-time" id="lbl-time-night">21:30 - 06:00</span>
+          </button>
+        </div>
+      </div>
+      <div style="margin-top:18px">
+        <label class="field-label">Shift Crew Bus</label>
+        <div class="shift-grid">
+          <button class="shift-btn crewbus-shift-btn" id="cb-btn-shift-early" data-shift="EARLY" data-time="05:30-14:00" onclick="selectCrewBusShift(this)">
+            <span class="shift-name">Early</span><span class="shift-time" id="cb-lbl-time-early">05:30 - 14:00</span>
+          </button>
+          <button class="shift-btn crewbus-shift-btn" id="cb-btn-shift-late" data-shift="LATE" data-time="13:30-22:00" onclick="selectCrewBusShift(this)">
+            <span class="shift-name">Late</span><span class="shift-time" id="cb-lbl-time-late">13:30 - 22:00</span>
+          </button>
+          <button class="shift-btn crewbus-shift-btn" id="cb-btn-shift-night" data-shift="NIGHT" data-time="21:30-06:00" onclick="selectCrewBusShift(this)">
+            <span class="shift-name">Night</span><span class="shift-time" id="cb-lbl-time-night">21:30 - 06:00</span>
           </button>
         </div>
       </div>
@@ -3132,6 +3134,7 @@ async function woLggLogout(){
       shiftDate:document.getElementById('shift-date')?.value||'',
       shiftAgent:document.getElementById('shift-agent')?.value||'',
       selectedShift:typeof selectedShift!=='undefined'?selectedShift:null,
+      crewBusSelectedShift:typeof crewBusSelectedShift!=='undefined'?crewBusSelectedShift:null,
       flights:typeof flights!=='undefined'?flights:[],
       selectedFlights:typeof selectedFlights!=='undefined'?Array.from(selectedFlights):[],
       caterings:typeof caterings!=='undefined'?caterings:[],
@@ -3207,6 +3210,7 @@ async function woLggLogout(){
       }
 
       if(typeof selectedShift!=='undefined')selectedShift=s.selectedShift||null;
+      if(typeof crewBusSelectedShift!=='undefined')crewBusSelectedShift=s.crewBusSelectedShift||null;
       if(s.selectedShift?.name){
         const b=document.querySelector('.shift-btn[data-shift="'+s.selectedShift.name+'"]');
         if(b){document.querySelectorAll('.shift-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
@@ -3701,6 +3705,12 @@ async function woLggLogout(){
     LATE:  { start: '13:30', end: '22:00' },
     NIGHT: { start: '21:30', end: '06:00' }
   };
+  let crewBusShiftConfig = JSON.parse(localStorage.getItem('lgg_crewbus_shift_config') || 'null') || {
+    EARLY: { start: '05:30', end: '14:00' },
+    LATE:  { start: '13:30', end: '22:00' },
+    NIGHT: { start: '21:30', end: '06:00' }
+  };
+  let crewBusSelectedShift = null;
   let knownRegs = JSON.parse(localStorage.getItem('lgg_known_regs') || 'null') || {};
   let fleetNotes = JSON.parse(localStorage.getItem('lgg_fleet_notes') || 'null') || {};
 
@@ -3722,9 +3732,17 @@ async function woLggLogout(){
   });
 
   function selectShift(btn) {
-    document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#btn-shift-early,#btn-shift-late,#btn-shift-night').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     selectedShift = { name: btn.dataset.shift, time: btn.dataset.time };
+    if(typeof woLggQueueSave==='function') woLggQueueSave();
+  }
+
+  function selectCrewBusShift(btn) {
+    document.querySelectorAll('.crewbus-shift-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    crewBusSelectedShift = { name: btn.dataset.shift, time: btn.dataset.time };
+    if(typeof woLggMarkWorkChanged==='function') woLggMarkWorkChanged('crewBusShift');
     if(typeof woLggQueueSave==='function') woLggQueueSave();
   }
 
@@ -3786,8 +3804,28 @@ async function woLggLogout(){
       if (diff < bestDiff) { bestDiff = diff; best = s; }
     });
     if (!best) return;
-    const btn = document.querySelector('.shift-btn[data-shift="' + best.name + '"]');
+    const btn = document.querySelector('#btn-shift-' + best.name.toLowerCase());
     if (btn) selectShift(btn);
+    autoDetectCrewBusShift();
+  }
+
+  function autoDetectCrewBusShift() {
+    const now = new Date();
+    const curMin = now.getHours() * 60 + now.getMinutes();
+    const candidates = [
+      { name: 'EARLY', start: cfgToMin(crewBusShiftConfig.EARLY.start) },
+      { name: 'LATE',  start: cfgToMin(crewBusShiftConfig.LATE.start) },
+      { name: 'NIGHT', start: cfgToMin(crewBusShiftConfig.NIGHT.start) }
+    ];
+    let best = null, bestDiff = Infinity;
+    candidates.forEach(s => {
+      let diff = curMin - s.start;
+      if (diff < 0) diff += 1440;
+      if (diff < bestDiff) { bestDiff = diff; best = s; }
+    });
+    if (!best) return;
+    const btn = document.querySelector('#cb-btn-shift-' + best.name.toLowerCase());
+    if (btn) selectCrewBusShift(btn);
   }
 
   // ── Shift time filter ─────────────────────────────────────────
@@ -3809,12 +3847,18 @@ async function woLggLogout(){
 
   function updateShiftButtonLabels() {
     ['EARLY', 'LATE', 'NIGHT'].forEach(name => {
-      const cfg = shiftConfig[name];
       const lower = name.toLowerCase();
+      const cfg = shiftConfig[name];
       const btn = document.getElementById('btn-shift-' + lower);
       const lbl = document.getElementById('lbl-time-' + lower);
       if (btn) btn.dataset.time = cfg.start + '-' + cfg.end;
       if (lbl) lbl.textContent = cfg.start + ' - ' + cfg.end;
+
+      const cbCfg = crewBusShiftConfig[name];
+      const cbBtn = document.getElementById('cb-btn-shift-' + lower);
+      const cbLbl = document.getElementById('cb-lbl-time-' + lower);
+      if (cbBtn) cbBtn.dataset.time = cbCfg.start + '-' + cbCfg.end;
+      if (cbLbl) cbLbl.textContent = cbCfg.start + ' - ' + cbCfg.end;
     });
   }
 
@@ -3825,6 +3869,12 @@ async function woLggLogout(){
     document.getElementById('cfg-late-end').value    = shiftConfig.LATE.end;
     document.getElementById('cfg-night-start').value = shiftConfig.NIGHT.start;
     document.getElementById('cfg-night-end').value   = shiftConfig.NIGHT.end;
+    document.getElementById('cb-cfg-early-start').value = crewBusShiftConfig.EARLY.start;
+    document.getElementById('cb-cfg-early-end').value   = crewBusShiftConfig.EARLY.end;
+    document.getElementById('cb-cfg-late-start').value  = crewBusShiftConfig.LATE.start;
+    document.getElementById('cb-cfg-late-end').value    = crewBusShiftConfig.LATE.end;
+    document.getElementById('cb-cfg-night-start').value = crewBusShiftConfig.NIGHT.start;
+    document.getElementById('cb-cfg-night-end').value   = crewBusShiftConfig.NIGHT.end;
     document.getElementById('settings-modal-overlay').classList.remove('hidden');
   }
   function closeShiftSettings() {
@@ -3836,12 +3886,21 @@ async function woLggLogout(){
       LATE:  { start: document.getElementById('cfg-late-start').value  || '13:30', end: document.getElementById('cfg-late-end').value  || '22:00' },
       NIGHT: { start: document.getElementById('cfg-night-start').value || '21:30', end: document.getElementById('cfg-night-end').value || '06:00' }
     };
+    crewBusShiftConfig = {
+      EARLY: { start: document.getElementById('cb-cfg-early-start').value || '05:30', end: document.getElementById('cb-cfg-early-end').value || '14:00' },
+      LATE:  { start: document.getElementById('cb-cfg-late-start').value  || '13:30', end: document.getElementById('cb-cfg-late-end').value  || '22:00' },
+      NIGHT: { start: document.getElementById('cb-cfg-night-start').value || '21:30', end: document.getElementById('cb-cfg-night-end').value || '06:00' }
+    };
     localStorage.setItem('lgg_shift_config', JSON.stringify(shiftConfig));
+    localStorage.setItem('lgg_crewbus_shift_config', JSON.stringify(crewBusShiftConfig));
     updateShiftButtonLabels();
-    // Si un shift etait deja selectionne, on garde le meme nom (juste les horaires ont change)
     if (selectedShift) {
       const btn = document.getElementById('btn-shift-' + selectedShift.name.toLowerCase());
       if (btn) selectShift(btn);
+    }
+    if (crewBusSelectedShift) {
+      const cbBtn = document.getElementById('cb-btn-shift-' + crewBusSelectedShift.name.toLowerCase());
+      if (cbBtn) selectCrewBusShift(cbBtn);
     }
     closeShiftSettings();
   }
@@ -4074,8 +4133,9 @@ async function woLggLogout(){
   // qu'une comparaison "jour/heure" en texte (c'etait la source de la plupart de nos bugs
   // Night Shift : minuit, changement de mois, etc. sont geres nativement par Date).
   // Hypothese (comme partout ailleurs dans l'app) : l'appareil est regle sur l'heure de Bruxelles.
-  function shiftDateWindow(dateStr, shiftName) {
-    const cfg = shiftName && shiftConfig[shiftName];
+  function shiftDateWindow(dateStr, shiftName, config) {
+    const cfgMap = config || shiftConfig;
+    const cfg = shiftName && cfgMap[shiftName];
     if (!cfg || !dateStr) return null;
     const parts = dateStr.split('-').map(Number);
     const y = parts[0], mo = parts[1], d = parts[2];
@@ -6678,7 +6738,7 @@ ${(function(){
   function crewBusChrono(hhmm){
     if(!hhmm||!/^(\d{1,2}):\d{2}$/.test(hhmm))return 999999;
     const p=hhmm.split(':').map(Number); let mins=p[0]*60+p[1];
-    if(selectedShift&&selectedShift.name==='NIGHT'&&p[0]<12)mins+=1440;
+    if(crewBusSelectedShift&&crewBusSelectedShift.name==='NIGHT'&&p[0]<12)mins+=1440;
     return mins;
   }
   function crewBusEscape(v){
@@ -6712,6 +6772,15 @@ ${(function(){
     const h=String(handler||'').toUpperCase();
     return !!h && h!=='FEDEX' && h!=='AVIAPARTNER';
   }
+  function crewBusOperationalTime(f){
+    const raw=f?.raw||{};
+    if(raw.aTx){
+      const actual=isoToHHMM(raw.aTx);
+      if(actual)return {time:actual,label:f.type==='arr'?'ATA':'ATD'};
+    }
+    const estimated=isoToHHMM(raw.eTx||raw.sTx)||f?.eta||f?.time||'';
+    return {time:estimated,label:f.type==='arr'?'ETA':'ETD'};
+  }
   function crewBusMakeFlight(raw,type){
     const flight=String(raw.flightNumber||raw.flightPax||'').toUpperCase().trim();
     if(!flight)return null;
@@ -6734,8 +6803,8 @@ ${(function(){
   }
   function crewBusNormalizeList(arrivals,departures){
     const dateStr=document.getElementById('shift-date')?.value||todayBrusselsDateStr();
-    const shift=selectedShift?.name||'NIGHT';
-    const win=shiftDateWindow(dateStr,shift);
+    const shift=crewBusSelectedShift?.name||'NIGHT';
+    const win=shiftDateWindow(dateStr,shift,crewBusShiftConfig);
     const out=[]; const seen=new Set();
     (arrivals||[]).forEach(raw=>{
       const f=crewBusMakeFlight(raw,'arr'); if(!f)return;
@@ -6756,9 +6825,9 @@ ${(function(){
     setCrewBusStatus('loading','Synchronisation…');
     setCrewBusLoading('Récupération des arrivées et départs FIDS…');
     try{
-      if(!selectedShift){
-        const active=document.querySelector('.shift-btn.active');
-        if(active)selectShift(active); else autoDetectShift();
+      if(!crewBusSelectedShift){
+        const active=document.querySelector('.crewbus-shift-btn.active');
+        if(active)selectCrewBusShift(active); else autoDetectCrewBusShift();
       }
       const fidsTimeout=(promise,label)=>Promise.race([
         promise,
@@ -7027,7 +7096,7 @@ ${(function(){
   })();
 
   function buildCrewBusSnapshot(){
-    return {flights:crewBusFlights||[],selected:Array.from(crewBusSelected||[]),filter:crewBusFilter,sort:crewBusSort,loaded:!!crewBusLoaded,sheetOrder:crewBusSheetOrder};
+    return {flights:crewBusFlights||[],selected:Array.from(crewBusSelected||[]),filter:crewBusFilter,sort:crewBusSort,loaded:!!crewBusLoaded,sheetOrder:crewBusSheetOrder,selectedShift:crewBusSelectedShift||null};
   }
   function applyCrewBusSnapshot(s){
     if(!s||typeof s!=='object')return;
@@ -7041,6 +7110,11 @@ ${(function(){
     crewBusSort=['time','flight','reg','handler'].includes(s.sort)?s.sort:'time';
     if(s.sheetOrder==='grouped'||s.sheetOrder==='chrono')crewBusSheetOrder=s.sheetOrder;
     crewBusLoaded=!!s.loaded;
+    if(s.selectedShift&&s.selectedShift.name){
+      crewBusSelectedShift=s.selectedShift;
+      const cb=document.querySelector('.crewbus-shift-btn[data-shift="'+s.selectedShift.name+'"]');
+      if(cb){document.querySelectorAll('.crewbus-shift-btn').forEach(x=>x.classList.remove('active'));cb.classList.add('active');}
+    }
     setTimeout(()=>{const q=document.getElementById('crewbus-sort');if(q)q.value=crewBusSort;document.querySelectorAll('.crewbus-filter').forEach(b=>b.classList.toggle('active',b.dataset.filter===crewBusFilter));renderCrewBusFlights();},0);
   }
 
@@ -7069,7 +7143,7 @@ ${(function(){
       return;
     }
 
-    const shift=selectedShift?.name||'—';
+    const shift=crewBusSelectedShift?.name||'—';
     const esc=crewBusEscape;
 
     /*
@@ -7188,15 +7262,19 @@ ${(function(){
       const reg=crewBusEffectiveReg(f)||'';
       const flight=String(f.flight||'').toUpperCase();
       const key=reg || ('__NO_REG__'+flight);
-      const item=handlingMap.get(key)||{reg,flight,pairs:[]};
+      const item=handlingMap.get(key)||{reg,flight,arr:null,dep:null};
       if(!item.flight) item.flight=flight;
-      item.pairs.push({time:f.time||'',type:f.type});
+      const ref=crewBusOperationalTime(f);
+      if(f.type==='arr') item.arr=ref;
+      else item.dep=ref;
       handlingMap.set(key,item);
     });
     const handlingRows=[...handlingMap.values()].map(function(item){
-      const pairs=item.pairs.slice().sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
-      return {reg:item.reg,flight:item.flight,depArr:pairs.map(p=>(p.type==='dep'?'DEP ':'ARR ')+p.time).join(' / '),rentingFlight:''};
-    }).sort((a,b)=>crewBusChrono(String(a.depArr).match(/\b\d{1,2}:\d{2}\b/)?.[0]||'99:99')-crewBusChrono(String(b.depArr).match(/\b\d{1,2}:\d{2}\b/)?.[0]||'99:99')).slice(0,Math.max(5,rowCount));
+      const parts=[];
+      if(item.arr?.time) parts.push('ARR '+item.arr.time);
+      if(item.dep?.time) parts.push('DEP '+item.dep.time);
+      return {reg:item.reg,flight:item.flight,depArr:parts.join(' / '),sortTime:item.arr?.time||item.dep?.time||'99:99'};
+    }).sort((a,b)=>crewBusChrono(a.sortTime)-crewBusChrono(b.sortTime)).slice(0,Math.max(5,rowCount));
 
     // Renting belongs exclusively in HANDLING WFS.
     // La feuille doit afficher l'IMMATRICULATION de l'avion, pas son numéro de vol.
@@ -7220,16 +7298,17 @@ ${(function(){
     for(let i=0;i<lowerRowsCount;i++){
       const h=headsetRows[i];
       const g=handlingRows[i];
-      const hDepart=h?(h.eta||h.time||''):'';
+      const hRef=h?crewBusOperationalTime(h):null;
+      const hDepart=hRef?.time||'';
       const gTime=g?(g.depArr||''):'';
       lowerRows+=
         '<tr class="lower-data-row">'+
-          '<td class="lower-data">'+esc(crewBusEffectiveReg(h)||'')+'</td>'+
+          '<td class="lower-data headset-strong">'+esc(crewBusEffectiveReg(h)||'')+'</td>'+
           '<td class="lower-data headset-flt">'+esc(h?.flight||'')+'</td>'+
-          '<td class="lower-data headset-depart">'+esc(hDepart)+'</td>'+
-          '<td class="lower-data">'+esc(g?.reg||'')+'</td>'+
+          '<td class="lower-data headset-depart headset-strong">'+esc(hDepart)+'</td>'+
+          '<td class="lower-data handling-strong">'+esc(g?.reg||'')+'</td>'+
           '<td class="lower-data handling-flt">'+esc(g?.flight||'')+'</td>'+
-          '<td class="lower-data handling-deparr">'+esc(gTime)+'</td>'+
+          '<td class="lower-data handling-deparr handling-strong">'+esc(gTime)+'</td>'+
           '<td class="lower-data handling-wfs-reg">'+esc(rentingFlights[i]||'')+'</td>'+
         '</tr>';
     }
@@ -7274,6 +7353,7 @@ ${(function(){
       '.lower-header{height:'+PX_TO_MM(lowerHeaderPx)+';font-size:3.55mm;font-weight:700;text-align:center;vertical-align:middle;padding:0 .55mm;line-height:1.02;white-space:normal}'+
       '.lower-data-row{height:'+PX_TO_MM(lowerRowPx)+'}'+
       '.lower-data{height:'+PX_TO_MM(lowerRowPx)+';font-size:'+Math.max(3.05,Math.min(3.8,lowerRowPx*0.017)).toFixed(2)+'mm;text-align:center;vertical-align:middle;padding:0 .55mm;line-height:1}'+
+      '.lower-data.headset-strong,.lower-data.handling-strong{font-size:'+Math.max(3.35,Math.min(4.15,lowerRowPx*0.0185)).toFixed(2)+'mm;font-weight:800!important}'+
       '@media print{html,body{width:210mm!important;height:297mm!important}.crewbus-page{break-after:avoid!important;page-break-after:avoid!important;break-inside:avoid!important;page-break-inside:avoid!important}}'+
       '</style></head><body>'+
       '<div class="crewbus-page">'+
@@ -7374,6 +7454,7 @@ ${(function(){
     selectedASL737 = new Set();
     selectedASL737Initialized = new Set();
     selectedShift = null;
+    crewBusSelectedShift = null;
     crewBusFlights = [];
     crewBusSelected = new Set();
     crewBusLoaded = false;
