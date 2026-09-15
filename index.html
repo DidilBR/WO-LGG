@@ -5873,7 +5873,7 @@ function restoreActiveTextField(saved) {
         <td><b>${f.time}</b></td>
         <td>${f.stand || '—'}</td>
         <td>${f.handler || '—'}</td>
-        <td>${f.remarks || ''}</td>
+        <td class="operation-remarks">${f.remarks || ''}</td>
       </tr>`).join('');
 
     // ASL 737 section (TAY/FEDEX + OEIMD/FEDEX only, not B744)
@@ -5927,6 +5927,7 @@ function restoreActiveTextField(saved) {
   table { width: 100%; border-collapse: collapse; }
   th { background: #000; color: #fff; padding: 4pt 6pt; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5pt; text-align: left; }
   td { padding: 6pt 6pt; border-bottom: 1pt solid #bbb; font-size: 10pt; color: #000; vertical-align: middle; }
+  .operation-remarks { font-size: 11.5pt !important; font-weight: 800 !important; color: #000 !important; line-height: 1.25; }
   tr:nth-child(even) td { background: #f0f0f0; }
   .notes-title { font-size: 8pt; text-transform: uppercase; letter-spacing: 1pt; color: #333; margin-bottom: 6pt; margin-top: 8pt; }
   .note-line { border-bottom: 1pt solid #999; margin-bottom: 10pt; }
@@ -7344,9 +7345,15 @@ ${(function(){
       'html,body{margin:0!important;padding:0!important;width:210mm;height:297mm;background:#fff;color:#111}'+
       'body{font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;overflow:hidden}'+
       '.crewbus-page{position:relative;width:'+PAGE_W+';height:'+PAGE_H+';background:#fff;overflow:hidden}'+
-      '.crewbus-table{position:absolute;table-layout:fixed;border-collapse:collapse;border-spacing:0;font-family:Arial,Helvetica,sans-serif;color:#111}'+
+      '.crewbus-back-page{position:relative!important;left:auto!important;top:auto!important;width:'+PAGE_W+';height:'+PAGE_H+';overflow:hidden}'+
+      '.crewbus-table{position:absolute;table-layout:fixed;border-collapse:collapse;border-spacing:0;font-family:Arial,Helvetica,sans-serif;color:#111;border:0.35mm solid #222}'+
       '.crewbus-table td{border:0.35mm solid #222;overflow:hidden;background:#fff!important;box-sizing:border-box}'+
       '.crewbus-arr-dep-separator td{background:#fff!important;color:#fff!important}'+
+      '.crewbus-back-page{break-before:page!important;page-break-before:always!important;display:block;background:#fff;padding:'+PX_TO_MM(210)+' '+PX_TO_MM(240)+';box-sizing:border-box}'+
+      '.crewbus-back-title{font-family:Arial,Helvetica,sans-serif;font-size:5.0mm;font-weight:700;color:#111;border:0.35mm solid #222;padding:4mm 5mm;margin-bottom:2.5mm}'+
+      '.crewbus-back-subtitle{font-family:Arial,Helvetica,sans-serif;font-size:3.5mm;font-weight:700;color:#111;margin:0 0 4mm 0}'+
+      '.crewbus-writing-area{border-left:0.35mm solid #222;border-right:0.35mm solid #222;border-top:0.35mm solid #222}'+
+      '.crewbus-writing-area div{height:10.2mm;border-bottom:0.35mm solid #777}'+
 
       '.main-table{left:'+PX_TO_MM(PAGE_LEFT)+';top:'+PX_TO_MM(mainTop)+';width:'+PX_TO_MM(TABLE_W)+'}'+
       '.main-title-row{height:'+PX_TO_MM(titleH)+'}'+
@@ -7377,7 +7384,7 @@ ${(function(){
       '.lower-data-row{height:'+PX_TO_MM(lowerRowPx)+'}'+
       '.lower-data{height:'+PX_TO_MM(lowerRowPx)+';font-size:'+Math.max(3.05,Math.min(3.8,lowerRowPx*0.017)).toFixed(2)+'mm;text-align:center;vertical-align:middle;padding:0 .55mm;line-height:1}'+
       '.lower-data.headset-strong,.lower-data.handling-strong{font-size:'+Math.max(3.35,Math.min(4.15,lowerRowPx*0.0185)).toFixed(2)+'mm;font-weight:800!important}'+
-      '@media print{html,body{width:210mm!important;height:297mm!important}.crewbus-page{break-after:avoid!important;page-break-after:avoid!important;break-inside:avoid!important;page-break-inside:avoid!important}}'+
+      '@media print{html,body{width:210mm!important;min-height:297mm!important}.crewbus-page{break-inside:avoid!important;page-break-inside:avoid!important}.crewbus-page:not(.crewbus-back-page){break-after:page!important;page-break-after:always!important}.crewbus-back-page{break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important}}'+
       '</style></head><body>'+
       '<div class="crewbus-page">'+
       '<table class="crewbus-table main-table">'+
@@ -7415,6 +7422,13 @@ ${(function(){
         '</tr>'+ 
         lowerRows+ 
       '</table>'+ 
+      '</div>'+
+      '<div class="crewbus-page crewbus-back-page">'+
+        '<div class="crewbus-back-title">Informations complémentaires</div>'+
+        '<div class="crewbus-back-subtitle">Notes / consignes / informations équipage</div>'+
+        '<div class="crewbus-writing-area">'+
+          '<div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>'+
+        '</div>'+
       '</div></body></html>';
 
     openPrintWindow(htmlOut, 'Crew Bus');
