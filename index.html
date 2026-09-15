@@ -2709,6 +2709,11 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     </section>
   </div>
 
+  <div class="crewbus-extra-notes-clean">
+    <label for="crewbus-extra-notes"><span class="crewbus-extra-notes-icon">📝</span> Informations complémentaires</label>
+    <textarea id="crewbus-extra-notes" placeholder="Écrivez ici les informations qui doivent apparaître au verso de la feuille Crew Bus…" autocomplete="off"></textarea>
+  </div>
+
   <div class="crewbus-manual-clean">
     <details>
       <summary><span class="manual-plus">＋</span><span><strong>Ajouter un vol manuellement</strong><small>Pour un vol absent du FIDS</small></span><em>Ajouter</em></summary>
@@ -7169,6 +7174,8 @@ ${(function(){
 
     const shift=crewBusSelectedShift?.name||'—';
     const esc=crewBusEscape;
+    const crewBusExtraNotes=String((document.getElementById('crewbus-extra-notes')||{}).value || localStorage.getItem('lgg_extra_notes') || '').trim();
+    const crewBusExtraNotesHtml=esc(crewBusExtraNotes).replace(/\r?\n/g,'<br>');
 
     /*
       V78 — CREW BUS FINAL LAYOUT
@@ -7352,8 +7359,7 @@ ${(function(){
       '.crewbus-back-page{break-before:page!important;page-break-before:always!important;display:block;background:#fff;padding:'+PX_TO_MM(210)+' '+PX_TO_MM(240)+';box-sizing:border-box}'+
       '.crewbus-back-title{font-family:Arial,Helvetica,sans-serif;font-size:5.0mm;font-weight:700;color:#111;border:0.35mm solid #222;padding:4mm 5mm;margin-bottom:2.5mm}'+
       '.crewbus-back-subtitle{font-family:Arial,Helvetica,sans-serif;font-size:3.5mm;font-weight:700;color:#111;margin:0 0 4mm 0}'+
-      '.crewbus-writing-area{border-left:0.35mm solid #222;border-right:0.35mm solid #222;border-top:0.35mm solid #222}'+
-      '.crewbus-writing-area div{height:10.2mm;border-bottom:0.35mm solid #777}'+
+      '.crewbus-writing-box{width:100%;height:218mm;border:0.45mm solid #222;box-sizing:border-box;padding:6mm;font-size:4.0mm;line-height:1.45;white-space:normal;overflow:hidden}'+
 
       '.main-table{left:'+PX_TO_MM(PAGE_LEFT)+';top:'+PX_TO_MM(mainTop)+';width:'+PX_TO_MM(TABLE_W)+'}'+
       '.main-title-row{height:'+PX_TO_MM(titleH)+'}'+
@@ -7426,9 +7432,7 @@ ${(function(){
       '<div class="crewbus-page crewbus-back-page">'+
         '<div class="crewbus-back-title">Informations complémentaires</div>'+
         '<div class="crewbus-back-subtitle">Notes / consignes / informations équipage</div>'+
-        '<div class="crewbus-writing-area">'+
-          '<div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>'+
-        '</div>'+
+        '<div class="crewbus-writing-box">'+crewBusExtraNotesHtml+'</div>'+
       '</div></body></html>';
 
     openPrintWindow(htmlOut, 'Crew Bus');
@@ -7499,6 +7503,7 @@ ${(function(){
     document.getElementById('fids-text').value = '';
     if (document.getElementById('catering-text')) document.getElementById('catering-text').value = '';
     if (document.getElementById('extra-notes')) document.getElementById('extra-notes').value = '';
+    if (document.getElementById('crewbus-extra-notes')) document.getElementById('crewbus-extra-notes').value = '';
     localStorage.removeItem('lgg_extra_notes');
     document.getElementById('shift-agent').value = '';
     document.getElementById('shift-date').value = todayBrusselsDateStr();
@@ -7535,12 +7540,20 @@ ${(function(){
     // Restaure les notes complementaires ecrites precedemment (survit a
     // l'actualisation automatique des vols ET a un rechargement de page).
     var savedNotes = localStorage.getItem('lgg_extra_notes');
-    if (!woLggUser && savedNotes && document.getElementById('extra-notes')) {
-      document.getElementById('extra-notes').value = savedNotes;
-    }
     var notesEl = document.getElementById('extra-notes');
+    var crewbusNotesEl = document.getElementById('crewbus-extra-notes');
+    if (savedNotes) {
+      if (notesEl) notesEl.value = savedNotes;
+      if (crewbusNotesEl) crewbusNotesEl.value = savedNotes;
+    }
     if (notesEl) notesEl.addEventListener('input', function(){
       localStorage.setItem('lgg_extra_notes', notesEl.value);
+      if (crewbusNotesEl && crewbusNotesEl.value !== notesEl.value) crewbusNotesEl.value = notesEl.value;
+    });
+    if (crewbusNotesEl) crewbusNotesEl.addEventListener('input', function(){
+      localStorage.setItem('lgg_extra_notes', crewbusNotesEl.value);
+      if (notesEl && notesEl.value !== crewbusNotesEl.value) notesEl.value = crewbusNotesEl.value;
+      if(typeof woLggMarkWorkChanged==='function' && woLggUser && !woLggVisitorMode) woLggMarkWorkChanged('crewBusExtraNotes');
     });
 
     initAutoRefreshUI();
@@ -7859,7 +7872,7 @@ body.wo-lgg-scroll-locked{
 
 <style id="wo-lgg-v64-crewbus-polish">
 /* V64 — Crew Bus : composition centrée, largeur plafonnée, contrôles fiables */
-.app-wrap.crewbus-active{width:100%;max-width:1000px;margin:0 auto;padding-left:24px;padding-right:24px}
+.app-wrap.crewbus-active{width:100%;max-width:900px;margin:0 auto;padding-left:24px;padding-right:24px}
 #step-4 .section-hd{width:100%;max-width:1040px;margin-left:auto;margin-right:auto;text-align:center}
 #step-4 .crewbus-title-row{justify-content:center}
 #step-4 .section-desc{max-width:760px;margin-left:auto;margin-right:auto}
@@ -8037,6 +8050,35 @@ body.wo-lgg-scroll-locked{
 </script>
 
 
+<style id="wo-lgg-v80-crewbus-compact-ui">
+/* V80.2 — Crew Bus plus compact, sans écraser les informations. */
+#step-4 .section-hd{max-width:900px!important;margin-left:auto!important;margin-right:auto!important}
+#step-4 .crewbus-clean-toolbar,
+#step-4 .crewbus-clean-summary,
+#step-4 .crewbus-clean-controls,
+#step-4 .crewbus-list-header,
+#step-4 .crewbus-flight-columns,
+#step-4 .crewbus-manual-clean,
+#step-4 .crewbus-bottom-bar{max-width:880px!important;margin-left:auto!important;margin-right:auto!important}
+#step-4 .crewbus-clean-toolbar{padding:11px 13px!important}
+#step-4 .crewbus-clean-controls{padding:11px!important}
+#step-4 .crewbus-clean-summary{gap:8px!important}
+#step-4 .crewbus-flight-columns{gap:9px!important}
+#step-4 .crewbus-column-list{padding:7px!important}
+#step-4 .crewbus-flight-card{padding:9px 10px!important}
+#step-4 .crewbus-clean-flight-main{gap:8px!important}
+#step-4 .crewbus-clean-flight-top>strong{font-size:14px!important}
+#step-4 .crewbus-clean-meta{font-size:9px!important}
+@media(max-width:900px){#step-4 .crewbus-clean-toolbar,#step-4 .crewbus-clean-summary,#step-4 .crewbus-clean-controls,#step-4 .crewbus-list-header,#step-4 .crewbus-flight-columns,#step-4 .crewbus-manual-clean,#step-4 .crewbus-bottom-bar{max-width:100%!important}}
+</style>
+<style id="wo-lgg-v80-crewbus-extra-notes">
+#step-4 .crewbus-extra-notes-clean{width:100%;max-width:880px;margin:10px auto 0;padding:11px 12px;border:1px solid rgba(255,255,255,.10);border-radius:13px;background:rgba(255,255,255,.018);box-sizing:border-box}
+#step-4 .crewbus-extra-notes-clean label{display:flex;align-items:center;gap:7px;margin:0 0 7px;font:800 9px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--t2)}
+#step-4 .crewbus-extra-notes-icon{font-size:13px;line-height:1}
+#step-4 .crewbus-extra-notes-clean textarea{display:block;width:100%;min-height:76px;box-sizing:border-box;resize:vertical;padding:9px 10px;border:1px solid rgba(255,255,255,.10);border-radius:9px;background:rgba(0,0,0,.12);color:var(--t1);font:500 11px/1.5 var(--sans);outline:none}
+#step-4 .crewbus-extra-notes-clean textarea:focus{border-color:rgba(143,168,255,.55);box-shadow:0 0 0 2px rgba(143,168,255,.08)}
+@media(max-width:600px){#step-4 .crewbus-extra-notes-clean{padding:9px 10px}#step-4 .crewbus-extra-notes-clean textarea{min-height:70px}}
+</style>
 <style id="wo-lgg-v80-crewbus-three-columns-clean">
 /* V80.1 — Retour aux 3 colonnes, avec hiérarchie visuelle plus légère. */
 #step-4 .crewbus-flight-columns{
