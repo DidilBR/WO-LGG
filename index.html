@@ -2032,6 +2032,133 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 @media(max-width:900px){#step-4 .crewbus-list-header{display:none}#step-4 .crewbus-unified-list .crewbus-flight-card{grid-template-columns:32px 72px minmax(0,1fr) auto;gap:9px}#step-4 .crewbus-clean-meta:nth-of-type(1),#step-4 .crewbus-clean-meta:nth-of-type(2){display:none}#step-4 .crewbus-card-actions{grid-column:3/5;justify-content:flex-start}#step-4 .crewbus-registration-input{max-width:190px}#step-4 .crewbus-clean-bottom{grid-template-columns:1fr;}}
 @media(max-width:600px){#step-4 .crewbus-clean-toolbar{align-items:flex-start;flex-direction:column}#step-4 .crewbus-refresh-btn{width:100%}#step-4 .crewbus-clean-summary strong{font-size:20px}#step-4 .crewbus-clean-control-line{align-items:stretch;flex-direction:column}#step-4 .crewbus-clean-actions{width:100%}#step-4 .crewbus-sort-clean{margin-left:0}#step-4 .crewbus-unified-list .crewbus-flight-card{grid-template-columns:30px 68px minmax(0,1fr);padding:9px 8px}#step-4 .crewbus-card-actions{grid-column:2/4}#step-4 .crewbus-clean-flight-top{flex-wrap:wrap}#step-4 .crewbus-clean-flight-top>strong{font-size:14px}#step-4 .crewbus-clean-flight-time strong{font-size:18px}}
 </style>
+
+<style id="wo-lgg-v83-final-layout-fixes">
+/* V83 — Corrections finales :
+   1) Étapes 1/2 gardent toujours leur centrage normal.
+   2) Étapes 3 + 4 réellement côte à côte dès que l'espace le permet.
+   3) Les boutons déplacés en haut disparaissent du bas en mode combiné.
+   4) "Feuille Crewbus" retrouve une couleur lisible.
+*/
+
+/* Étapes 1 & 2 : centrage stable. */
+.app-wrap:not(.crewbus-combined) #step-1,
+.app-wrap:not(.crewbus-combined) #step-2{
+  width:100%!important;
+  max-width:680px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+@media(min-width:920px){
+  /* Mode combiné : 2 colonnes réelles. */
+  .app-wrap.crewbus-combined{
+    width:min(calc(100% - 28px),1500px)!important;
+    max-width:1500px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+    column-gap:18px!important;
+    row-gap:0!important;
+    align-items:start!important;
+    padding-left:14px!important;
+    padding-right:14px!important;
+  }
+
+  .app-wrap.crewbus-combined .progress-bar{
+    grid-column:1/-1!important;
+    width:100%!important;
+  }
+
+  .app-wrap.crewbus-combined #step-3{
+    grid-column:1!important;
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+  }
+
+  .app-wrap.crewbus-combined #step-4{
+    grid-column:2!important;
+    width:100%!important;
+    min-width:0!important;
+    margin:0!important;
+    display:block!important;
+    position:sticky!important;
+    top:76px!important;
+    max-height:calc(100dvh - 88px)!important;
+    overflow:auto!important;
+    overscroll-behavior:contain;
+    padding:4px 2px 22px!important;
+  }
+
+  /* Opérations compactes sans perte d'information. */
+  .app-wrap.crewbus-combined #step-3 .section-hd{margin-bottom:10px!important}
+  .app-wrap.crewbus-combined #step-3 .section-title{font-size:23px!important}
+  .app-wrap.crewbus-combined #step-3 .section-desc{font-size:10px!important;line-height:1.4!important}
+  .app-wrap.crewbus-combined #step-3 .flight-card{padding:8px 9px!important;gap:6px!important}
+  .app-wrap.crewbus-combined #step-3 .flight-info{gap:4px!important}
+  .app-wrap.crewbus-combined #step-3 .flight-num{min-width:54px!important;font-size:11px!important}
+  .app-wrap.crewbus-combined #step-3 .flight-time{font-size:9px!important}
+  .app-wrap.crewbus-combined #step-3 .flight-stand{font-size:8px!important;padding:3px 5px!important}
+  .app-wrap.crewbus-combined #step-3 .operations-registration-input{width:92px!important;min-width:92px!important;font-size:10px!important}
+  .app-wrap.crewbus-combined #step-3 .remarks-input{font-size:9px!important;padding:4px 6px!important}
+
+  /* Les actions ont été remontées dans la barre supérieure : on retire les doublons du bas. */
+  .app-wrap.crewbus-combined #step-3 > .actions,
+  .app-wrap.crewbus-combined #step-4 .crewbus-bottom-bar{
+    display:none!important;
+  }
+
+  .app-wrap.crewbus-combined .crewbus-next-step-btn,
+  .app-wrap.crewbus-combined .crewbus-back-operations-btn{
+    display:none!important;
+  }
+
+  .app-wrap.crewbus-combined .combined-action-bar{
+    display:flex!important;
+  }
+
+  .app-wrap.crewbus-combined #step-4 .crewbus-flight-columns{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:6px!important;
+  }
+  .app-wrap.crewbus-combined #step-4 .crewbus-column-list{max-height:31vh!important}
+
+  /* Feuille Crewbus : contraste bleu/violet avec texte blanc. */
+  .app-wrap.crewbus-combined .combined-crewbus-btn{
+    color:#fff!important;
+    border:1px solid rgba(120,190,255,.45)!important;
+    background:linear-gradient(135deg,#087ef5,#5b4df5)!important;
+    box-shadow:0 6px 18px rgba(50,100,255,.22)!important;
+    text-shadow:0 1px 4px rgba(0,0,0,.28);
+  }
+  .app-wrap.crewbus-combined .combined-crewbus-btn:hover{
+    filter:brightness(1.1)!important;
+    transform:translateY(-2px)!important;
+    box-shadow:0 9px 24px rgba(50,100,255,.30)!important;
+  }
+}
+
+@media(max-width:919px){
+  /* En dessous de 920px on garde une seule colonne, mais sans doublons en bas. */
+  .app-wrap.crewbus-combined #step-3 > .actions,
+  .app-wrap.crewbus-combined #step-4 .crewbus-bottom-bar{
+    display:none!important;
+  }
+  .app-wrap.crewbus-combined .combined-action-bar{
+    display:flex!important;
+  }
+  .app-wrap:not(.crewbus-combined) #step-1,
+  .app-wrap:not(.crewbus-combined) #step-2{
+    width:100%!important;
+    max-width:680px!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -8387,10 +8514,15 @@ body.wo-lgg-scroll-locked{
 
   function syncLayoutUI(){
     const combined=isCombined();
+    const stepActive=(typeof currentStep!=='undefined' && Number(currentStep)===3);
+    const combinedActive=combined && stepActive;
+
     const app=document.querySelector('.app-wrap');
-    if(app)app.classList.toggle('crewbus-combined',combined);
+    // Le mode combiné ne modifie la largeur globale que lorsque l'étape 3 est affichée.
+    if(app)app.classList.toggle('crewbus-combined',combinedActive);
+
     const actionBar=document.getElementById('combined-action-bar');
-    if(actionBar)actionBar.style.display=combined?'flex':'';
+    if(actionBar)actionBar.style.display=combinedActive?'flex':'none';
 
     const step4=document.getElementById('step-4');
     const indicator=document.getElementById('step-indicator');
@@ -8585,7 +8717,7 @@ body.wo-lgg-scroll-locked{
       generatePDF();
       generateWorksheets();
     }catch(e){
-      console.error('Impression complète V82:',e);
+      console.error('Impression complète V83:',e);
     }finally{
       window.openPrintWindow=originalOpenPrintWindow;
     }
