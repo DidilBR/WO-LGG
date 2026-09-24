@@ -2367,7 +2367,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     <div class="prog-line"></div>
     <div class="prog-step" id="prog-3"><div class="prog-num">3</div><span class="prog-label">Vols</span></div>
     <div class="prog-line"></div>
-    <div class="prog-step" id="prog-4"><div class="prog-num">4</div><span class="prog-label">Crew Bus</span></div>
+    <div class="prog-step" id="prog-4" role="button" tabindex="0" aria-label="Ouvrir Crew Bus" onclick="goToStep(4)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goToStep(4)}"><div class="prog-num">4</div><span class="prog-label">Crew Bus</span></div>
   </div>
 
   <div id="step-1">
@@ -2454,6 +2454,12 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
         </span>
       </div>
       <div class="section-desc">Vérifiez et ajustez avant de générer. Les immatriculations se modifient à l’étape 4 et restent synchronisées ici.</div>
+    <div class="crewbus-layout-toggle" id="crewbus-layout-toggle" role="group" aria-label="Affichage des étapes 3 et 4">
+      <span class="crewbus-layout-label">Affichage</span>
+      <button type="button" class="crewbus-layout-btn" data-mode="separate" onclick="setCrewBusLayoutMode('separate')">↔ Pages séparées</button>
+      <button type="button" class="crewbus-layout-btn" data-mode="combined" onclick="setCrewBusLayoutMode('combined')">▦ Étapes 3 + 4 ensemble</button>
+      <span class="crewbus-layout-hint">Crew Bus à droite en mode combiné</span>
+    </div>
     </div>
     <div class="stats-row">
       <div class="stat-card"><div class="num" id="count-selected">0</div><div class="lbl">Selectionnes</div></div>
@@ -2730,7 +2736,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   </div>
 
   <div class="crewbus-bottom-bar crewbus-clean-bottom">
-    <button type="button" class="btn btn-ghost" onclick="goToStep(3)">&larr; Retour aux opérations</button>
+    <button type="button" class="btn btn-ghost crewbus-back-operations-btn" onclick="goToStep(3)">&larr; Retour aux opérations</button>
     <div class="crewbus-order-control" role="group" aria-label="Ordre de génération Crew Bus"><span class="crewbus-order-label">Ordre</span><button type="button" id="crewbus-order-toggle" class="crewbus-order-toggle" data-order="chrono" onclick="toggleCrewBusSheetOrder()" aria-pressed="false"><span id="crewbus-order-toggle-label">Chronologique</span></button></div>
     <button type="button" class="btn crewbus-generate-btn" onclick="generateCrewBusSheet()"><span>▣</span> Générer la feuille Crew Bus</button>
   </div>
@@ -8242,6 +8248,199 @@ body.wo-lgg-scroll-locked{
   #step-4 .crewbus-manual-clean .crewbus-add-grid{grid-template-columns:1fr}
 }
 </style>
+
+
+<style id="wo-lgg-v81-public-crewbus-combined">
+/* V81 — Crew Bus public pour tous + affichage 3/4 combinable. */
+.crewbus-layout-toggle{
+  display:flex;align-items:center;justify-content:flex-start;gap:6px;flex-wrap:wrap;
+  margin-top:14px;padding:7px;border:1px solid rgba(143,168,255,.14);
+  border-radius:12px;background:rgba(143,168,255,.035);
+}
+.crewbus-layout-label{font:800 8px/1 var(--mono);letter-spacing:1.3px;text-transform:uppercase;color:var(--t3);padding:0 4px}
+.crewbus-layout-btn{
+  min-height:32px;padding:7px 10px;border-radius:9px;border:1px solid var(--b2);
+  background:transparent;color:var(--t2);font:800 8px/1 var(--mono);letter-spacing:.4px;
+  cursor:pointer;transition:transform .16s,border-color .16s,background .16s,color .16s,box-shadow .16s;
+}
+.crewbus-layout-btn:hover{transform:translateY(-1px);border-color:var(--a1);color:var(--t1);background:rgba(143,168,255,.055)}
+.crewbus-layout-btn.active{border-color:rgba(143,168,255,.48);background:linear-gradient(135deg,rgba(143,168,255,.13),rgba(201,85,255,.08));color:var(--t1);box-shadow:0 0 0 1px rgba(143,168,255,.08)}
+.crewbus-layout-hint{font-size:8px;color:var(--t3);margin-left:auto;white-space:nowrap}
+
+#prog-4[role="button"]{cursor:pointer}
+#prog-4[role="button"]:focus-visible{outline:2px solid var(--a1);outline-offset:3px;border-radius:9px}
+
+@media(min-width:1150px){
+  /* Mode combiné : vraie vue de travail en 2 colonnes, données et actions conservées. */
+  .app-wrap.crewbus-combined{
+    width:min(calc(100% - 28px),1450px)!important;
+    max-width:1450px!important;
+    display:grid!important;
+    grid-template-columns:minmax(520px,.94fr) minmax(650px,1.06fr)!important;
+    column-gap:18px!important;
+    row-gap:0!important;
+    align-items:start!important;
+    padding-left:24px!important;padding-right:24px!important;
+  }
+  .app-wrap.crewbus-combined .progress-bar{grid-column:1/-1;width:100%}
+  .app-wrap.crewbus-combined #step-3{grid-column:1;min-width:0}
+  .app-wrap.crewbus-combined #step-4{
+    grid-column:2;min-width:0;display:block!important;
+    position:sticky!important;top:78px;max-height:calc(100dvh - 92px);
+    overflow:auto;overscroll-behavior:contain;padding:4px 2px 22px!important;
+  }
+  .app-wrap.crewbus-combined #step-4 .section-hd{text-align:left;max-width:none!important;margin-bottom:12px!important}
+  .app-wrap.crewbus-combined #step-4 .crewbus-title-row{justify-content:flex-start}
+  .app-wrap.crewbus-combined #step-4 .section-desc{margin-left:0;margin-right:0}
+  .app-wrap.crewbus-combined #step-4 .crewbus-clean-toolbar,
+  .app-wrap.crewbus-combined #step-4 .crewbus-clean-summary,
+  .app-wrap.crewbus-combined #step-4 .crewbus-clean-controls,
+  .app-wrap.crewbus-combined #step-4 .crewbus-list-header,
+  .app-wrap.crewbus-combined #step-4 .crewbus-flight-columns,
+  .app-wrap.crewbus-combined #step-4 .crewbus-manual-clean,
+  .app-wrap.crewbus-combined #step-4 .crewbus-bottom-bar,
+  .app-wrap.crewbus-combined #step-4 .crewbus-extra-notes-clean{max-width:100%!important}
+  .app-wrap.crewbus-combined #step-4 .crewbus-flight-columns{gap:7px!important}
+  .app-wrap.crewbus-combined #step-4 .crewbus-column-list{max-height:34vh!important}
+  .app-wrap.crewbus-combined #step-3 .flight-card{padding:10px 10px;gap:8px}
+  .app-wrap.crewbus-combined #step-3 .flight-info{gap:5px}
+  .app-wrap.crewbus-combined #step-3 .operations-registration-input{width:104px;min-width:104px}
+  .app-wrap.crewbus-combined #step-3 .flight-num{min-width:58px;font-size:12px}
+  .app-wrap.crewbus-combined #step-3 .flight-time{font-size:10px}
+  .app-wrap.crewbus-combined #step-3 .flight-stand{font-size:9px;padding:3px 6px}
+  .app-wrap.crewbus-combined #step-3 .remarks-input{font-size:10px!important;padding:5px 7px!important}
+  .app-wrap.crewbus-combined .crewbus-next-step-btn{display:none!important}
+  .app-wrap.crewbus-combined .crewbus-back-operations-btn{display:none!important}
+}
+
+@media(max-width:1149px){
+  /* Sur écran plus étroit : même page, empilée plutôt que comprimée. */
+  .app-wrap.crewbus-combined{width:100%;max-width:100%!important}
+  .app-wrap.crewbus-combined #step-4{display:block!important;position:static!important;max-height:none!important;overflow:visible!important;padding-top:16px!important}
+  .app-wrap.crewbus-combined .crewbus-next-step-btn{display:none!important}
+  .app-wrap.crewbus-combined .crewbus-back-operations-btn{display:none!important}
+}
+
+@media(max-width:760px){
+  .crewbus-layout-toggle{align-items:stretch;gap:5px}
+  .crewbus-layout-label{width:100%;padding:1px 2px 3px}
+  .crewbus-layout-btn{flex:1;min-width:0;padding:8px 7px;font-size:7px}
+  .crewbus-layout-hint{width:100%;margin-left:0;white-space:normal;line-height:1.35}
+  .app-wrap.crewbus-combined #step-4{padding-top:12px!important}
+}
+
+@media(prefers-reduced-motion:reduce){.crewbus-layout-btn{transition:none!important}}
+</style>
+
+<script id="wo-lgg-v81-public-crewbus-combined">
+(function(){
+  'use strict';
+  if(window.__woLggV81PublicCrewBusInstalled)return;
+  window.__woLggV81PublicCrewBusInstalled=true;
+
+  const STORAGE_KEY='lgg_crewbus_layout_mode';
+  const isCombined=()=>{
+    try{return localStorage.getItem(STORAGE_KEY)==='combined';}catch(e){return false;}
+  };
+
+  // V81 : le Crew Bus n'est plus limité à un compte précis.
+  window.woLggHasCrewBusBetaAccess=function(){ return true; };
+
+  window.woLggUpdateCrewBusAccessUI=function(){
+    try{
+      if(typeof woLggUpdateAdminOnlyUI==='function')woLggUpdateAdminOnlyUI();
+    }catch(e){}
+    window.woLggCrewBusBetaAccess=true;
+    const beta=document.getElementById('app-menu-crewbus-beta');
+    if(beta)beta.style.display='none';
+    const p4=document.getElementById('prog-4');
+    if(p4)p4.style.display='';
+    const next=document.querySelector('.crewbus-next-step-btn');
+    if(next)next.style.display='';
+    syncLayoutUI();
+  };
+
+  function ensureToggle(){
+    const root=document.getElementById('crewbus-layout-toggle');
+    if(!root)return;
+    root.querySelectorAll('.crewbus-layout-btn').forEach(btn=>{
+      const active=btn.dataset.mode===(isCombined()?'combined':'separate');
+      btn.classList.toggle('active',active);
+      btn.setAttribute('aria-pressed',active?'true':'false');
+    });
+  }
+
+  function syncLayoutUI(){
+    const combined=isCombined();
+    const app=document.querySelector('.app-wrap');
+    if(app)app.classList.toggle('crewbus-combined',combined);
+
+    const step4=document.getElementById('step-4');
+    const indicator=document.getElementById('step-indicator');
+    const p3=document.getElementById('prog-3');
+    const p4=document.getElementById('prog-4');
+
+    if(typeof currentStep!=='undefined' && currentStep===3){
+      if(combined){
+        if(step4)step4.classList.remove('hidden');
+        if(indicator)indicator.textContent='ÉTAPES 3 + 4 / 4';
+        if(p3)p3.classList.add('active');
+        if(p4)p4.classList.add('active');
+      }else{
+        if(step4)step4.classList.add('hidden');
+        if(indicator)indicator.textContent='ETAPE 3 / 4';
+        if(p4)p4.classList.remove('active');
+      }
+      if(combined && typeof crewBusLoaded!=='undefined' && !crewBusLoaded && typeof loadCrewBusFromFids==='function'){
+        setTimeout(()=>loadCrewBusFromFids(false),80);
+      }else if(combined && typeof renderCrewBusFlights==='function'){
+        setTimeout(()=>renderCrewBusFlights(),0);
+      }
+    }
+    ensureToggle();
+  }
+
+  window.setCrewBusLayoutMode=function(mode){
+    const next=mode==='combined'?'combined':'separate';
+    try{localStorage.setItem(STORAGE_KEY,next);}catch(e){}
+    syncLayoutUI();
+    const step=(typeof currentStep!=='undefined'?Number(currentStep):1);
+    if(step===3 || step===4 && typeof window.goToStep==='function'){
+      if(next==='combined')window.goToStep(3);
+      else window.goToStep(step===4?4:3);
+    }
+  };
+
+  if(typeof window.goToStep==='function' && !window.__woLggV81GoToStepWrapped){
+    const baseGoToStep=window.goToStep;
+    window.__woLggV81GoToStepWrapped=true;
+    window.goToStep=function(n){
+      const requested=Math.max(1,Math.min(4,Number(n)||1));
+      if(isCombined() && requested===4){
+        const result=baseGoToStep.call(this,3);
+        syncLayoutUI();
+        setTimeout(()=>{
+          const el=document.getElementById('step-4');
+          if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+        },40);
+        return result;
+      }
+      const result=baseGoToStep.apply(this,arguments);
+      syncLayoutUI();
+      return result;
+    };
+  }
+
+  function boot(){
+    if(typeof window.woLggUpdateCrewBusAccessUI==='function')window.woLggUpdateCrewBusAccessUI();
+    syncLayoutUI();
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
+})();
+</script>
+
 </body>
 </html>
 
