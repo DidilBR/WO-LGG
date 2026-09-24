@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr" data-theme="cyber">
 <head>
-<!-- WO-LGG V66 CACHE GUARD v22 -->
+<!-- WO-LGG V84 CACHE GUARD v22 -->
 <script>
 (function(){
   try{
@@ -2110,8 +2110,8 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     display:none!important;
   }
 
-  .app-wrap.crewbus-combined .crewbus-next-step-btn,
-  .app-wrap.crewbus-combined .crewbus-back-operations-btn{
+  .workflow-shell.crewbus-combined .crewbus-next-step-btn,
+  .workflow-shell.crewbus-combined .crewbus-back-operations-btn{
     display:none!important;
   }
 
@@ -2485,6 +2485,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   </div>
 </div>
 
+<div id="workflow-shell" class="workflow-shell">
 <div class="app-wrap">
 
   <div class="progress-bar">
@@ -2875,6 +2876,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     <div class="crewbus-order-control" role="group" aria-label="Ordre de génération Crew Bus"><span class="crewbus-order-label">Ordre</span><button type="button" id="crewbus-order-toggle" class="crewbus-order-toggle" data-order="chrono" onclick="toggleCrewBusSheetOrder()" aria-pressed="false"><span id="crewbus-order-toggle-label">Chronologique</span></button></div>
     <button type="button" class="btn crewbus-generate-btn" onclick="generateCrewBusSheet()"><span>▣</span> Générer la feuille Crew Bus</button>
   </div>
+</div>
 </div>
 
 <div id="pdf-sheet"></div>
@@ -8518,8 +8520,10 @@ body.wo-lgg-scroll-locked{
     const combinedActive=combined && stepActive;
 
     const app=document.querySelector('.app-wrap');
-    // Le mode combiné ne modifie la largeur globale que lorsque l'étape 3 est affichée.
+    const shell=document.getElementById('workflow-shell');
+    // Le mode combiné s'applique au shell qui contient réellement les étapes 3 et 4.
     if(app)app.classList.toggle('crewbus-combined',combinedActive);
+    if(shell)shell.classList.toggle('crewbus-combined',combinedActive);
 
     const actionBar=document.getElementById('combined-action-bar');
     if(actionBar)actionBar.style.display=combinedActive?'flex':'none';
@@ -8640,20 +8644,11 @@ body.wo-lgg-scroll-locked{
 @keyframes woLggPrintAllShine{0%,35%{transform:translateX(-70%) rotate(8deg)}65%,100%{transform:translateX(70%) rotate(8deg)}}
 
 @media(min-width:760px){
-  .app-wrap.crewbus-combined{
-    width:min(calc(100% - 20px),1500px)!important;
-    max-width:1500px!important;
-    display:grid!important;
-    grid-template-columns:minmax(390px,.86fr) minmax(430px,1.14fr)!important;
-    column-gap:14px!important;
-    row-gap:0!important;
-    align-items:start!important;
-    padding-left:10px!important;
-    padding-right:10px!important;
-  }
-  .app-wrap.crewbus-combined .progress-bar{grid-column:1/-1}
-  .app-wrap.crewbus-combined #step-3{grid-column:1;min-width:0;width:100%}
-  .app-wrap.crewbus-combined #step-4{
+  /* V84 neutralise l'ancien conteneur grid de V82 : le shell porte désormais les colonnes. */
+  .workflow-shell.crewbus-combined .app-wrap{display:contents!important;}
+  .workflow-shell.crewbus-combined .progress-bar{grid-column:1/-1}
+  .workflow-shell.crewbus-combined #step-3{grid-column:1;min-width:0;width:100%}
+  .workflow-shell.crewbus-combined #step-4{
     grid-column:2;min-width:0;width:100%;display:block!important;
     position:sticky!important;top:76px;max-height:calc(100dvh - 88px);
     overflow:auto;padding:4px 2px 22px!important;
@@ -8670,9 +8665,9 @@ body.wo-lgg-scroll-locked{
   .app-wrap.crewbus-combined #step-3 .flight-stand{font-size:8px;padding:3px 5px}
   .app-wrap.crewbus-combined #step-3 .operations-registration-input{width:92px;min-width:92px;font-size:10px}
   .app-wrap.crewbus-combined #step-3 .remarks-input{font-size:9px!important;padding:4px 6px!important}
-  .app-wrap.crewbus-combined .crewbus-next-step-btn,
-  .app-wrap.crewbus-combined .crewbus-back-operations-btn{display:none!important}
-  .app-wrap.crewbus-combined .combined-action-bar{display:flex}
+  .workflow-shell.crewbus-combined .crewbus-next-step-btn,
+  .workflow-shell.crewbus-combined .crewbus-back-operations-btn{display:none!important}
+  .workflow-shell.crewbus-combined .combined-action-bar{display:flex}
   .app-wrap.crewbus-combined #step-4 .crewbus-clean-toolbar,
   .app-wrap.crewbus-combined #step-4 .crewbus-clean-summary,
   .app-wrap.crewbus-combined #step-4 .crewbus-clean-controls,
@@ -8684,13 +8679,121 @@ body.wo-lgg-scroll-locked{
   .app-wrap.crewbus-combined #step-4 .crewbus-column-list{max-height:30vh!important}
 }
 @media(max-width:759px){
-  .app-wrap.crewbus-combined .combined-action-bar{display:flex}
+  .workflow-shell.crewbus-combined .combined-action-bar{display:flex}
   .combined-action-bar .btn{flex:1 1 calc(50% - 7px)}
   .combined-print-all-btn{flex-basis:100%!important}
 }
 @media(prefers-reduced-motion:reduce){
   .combined-print-all-btn{animation:none!important}
   .combined-print-all-btn::before{animation:none!important}
+}
+</style>
+
+
+<style id="wo-lgg-v84-real-two-column-layout">
+/* V84 — Structure réelle : app-wrap + Crew Bus dans un shell commun.
+   Le mode combiné ne peut plus empiler l'étape 4 sous l'étape 3. */
+.workflow-shell{
+  position:relative;
+  z-index:1;
+}
+
+@media(min-width:760px){
+  .workflow-shell.crewbus-combined{
+    width:min(calc(100% - 40px),1500px);
+    max-width:1500px;
+    margin:0 auto;
+    padding:0 0 100px;
+    display:grid;
+    grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+    column-gap:18px;
+    row-gap:0;
+    align-items:start;
+  }
+  .workflow-shell.crewbus-combined .app-wrap{
+    display:contents!important;
+  }
+  .workflow-shell.crewbus-combined .progress-bar{
+    grid-column:1 / -1;
+    width:100%;
+    max-width:none;
+    padding:0;
+    margin-left:0;
+    margin-right:0;
+  }
+  .workflow-shell.crewbus-combined #step-3{
+    grid-column:1;
+    grid-row:2;
+    min-width:0;
+    width:100%;
+    max-width:none;
+    margin:0;
+    padding:0;
+  }
+  .workflow-shell.crewbus-combined #step-4{
+    grid-column:2;
+    grid-row:2;
+    min-width:0;
+    width:100%;
+    max-width:none;
+    margin:0;
+    padding:0 2px 22px;
+    position:sticky!important;
+    top:76px;
+    max-height:calc(100dvh - 88px);
+    overflow:auto;
+    overscroll-behavior:contain;
+  }
+  /* Les actions sont désormais en haut : aucune duplication en bas. */
+  .workflow-shell.crewbus-combined #step-3 > .actions{display:none!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-bottom-bar{display:none!important}
+
+  /* Compactage propre de la colonne opérations. */
+  .workflow-shell.crewbus-combined #step-3 .section-hd{margin-bottom:10px}
+  .workflow-shell.crewbus-combined #step-3 .stats-row{gap:7px}
+  .workflow-shell.crewbus-combined #step-3 .stat-card{padding:10px 11px}
+  .workflow-shell.crewbus-combined #step-3 .stat-card .num{font-size:21px}
+  .workflow-shell.crewbus-combined #step-3 .flight-card{padding:8px!important;gap:6px!important}
+  .workflow-shell.crewbus-combined #step-3 .flight-info{gap:4px!important}
+  .workflow-shell.crewbus-combined #step-3 .flight-num{min-width:54px;font-size:11px}
+  .workflow-shell.crewbus-combined #step-3 .flight-time{font-size:9px}
+  .workflow-shell.crewbus-combined #step-3 .flight-stand{font-size:8px;padding:3px 5px}
+  .workflow-shell.crewbus-combined #step-3 .operations-registration-input{width:92px;min-width:92px;font-size:10px}
+  .workflow-shell.crewbus-combined #step-3 .remarks-input{font-size:9px!important;padding:4px 6px!important}
+
+  /* Crew Bus occupe réellement toute la colonne de droite. */
+  .workflow-shell.crewbus-combined #step-4 .section-hd{margin:0 0 10px!important;text-align:left!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-title-row{justify-content:flex-start}
+  .workflow-shell.crewbus-combined #step-4 .section-desc{margin-left:0;margin-right:0}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-clean-toolbar,
+  .workflow-shell.crewbus-combined #step-4 .crewbus-clean-summary,
+  .workflow-shell.crewbus-combined #step-4 .crewbus-clean-controls,
+  .workflow-shell.crewbus-combined #step-4 .crewbus-list-header,
+  .workflow-shell.crewbus-combined #step-4 .crewbus-flight-columns,
+  .workflow-shell.crewbus-combined #step-4 .crewbus-manual-clean,
+  .workflow-shell.crewbus-combined #step-4 .crewbus-extra-notes-clean{
+    width:100%!important;max-width:none!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-column-list{max-height:31vh!important}
+
+  /* La commande "Feuille Crewbus" doit rester très lisible. */
+  .workflow-shell.crewbus-combined .combined-crewbus-btn{
+    color:#fff!important;
+    background:linear-gradient(135deg,#2563eb,#7c3aed,#c026d3)!important;
+    border:1px solid rgba(255,255,255,.28)!important;
+    box-shadow:0 6px 20px rgba(93,63,211,.24)!important;
+    text-shadow:0 1px 2px rgba(0,0,0,.35);
+  }
+}
+
+@media(max-width:759px){
+  .workflow-shell.crewbus-combined{width:100%;max-width:none;margin:0;padding-bottom:88px}
+  .workflow-shell.crewbus-combined #step-3 > .actions{display:none!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-bottom-bar{display:none!important}
+  .workflow-shell.crewbus-combined .combined-crewbus-btn{
+    color:#fff!important;
+    background:linear-gradient(135deg,#2563eb,#7c3aed,#c026d3)!important;
+  }
 }
 </style>
 
