@@ -2460,6 +2460,14 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       <button type="button" class="crewbus-layout-btn" data-mode="combined" onclick="setCrewBusLayoutMode('combined')">▦ Étapes 3 + 4 ensemble</button>
       <span class="crewbus-layout-hint">Crew Bus à droite en mode combiné</span>
     </div>
+    <div class="combined-action-bar" id="combined-action-bar" aria-label="Actions du mode combiné">
+      <button type="button" class="btn btn-ghost" onclick="goToStep(2)">← Retour</button>
+      <button type="button" class="btn btn-amber" onclick="generateWorksheets()">▣ Worksheets</button>
+      <button type="button" class="btn btn-primary" onclick="generatePDF()">▣ Feuille nettoyage</button>
+      <button type="button" class="btn btn-cyan combined-crewbus-btn" onclick="generateCrewBusSheet()">▣ Feuille Crewbus</button>
+      <button type="button" class="btn btn-danger" onclick="resetAll()">Recommencer</button>
+      <button type="button" class="btn combined-print-all-btn" onclick="generateAllPrint()">✦ Imprimer le tout</button>
+    </div>
     </div>
     <div class="stats-row">
       <div class="stat-card"><div class="num" id="count-selected">0</div><div class="lbl">Selectionnes</div></div>
@@ -6586,8 +6594,12 @@ ${(function(){
 
     var swissportDepartures = getSwissportDepartures();
 
-    var pages = '';
+    var pagesHandling = '';
+    var pagesSwissport = '';
+    var pagesCatering = '';
+    var pagesNormal = '';
     var pagesASL737 = ''; // printed last
+    var pagesBlank = '';
     eligible.forEach(function(f) {
       var origIdx = flights.indexOf(f);
       var flt = (f.flight || '').toUpperCase();
@@ -6622,7 +6634,7 @@ ${(function(){
         if (cbSvaDirect && cbSvaDirect.checked) svaChecked = true;
 
         if (svaChecked) {
-          pages += makeSheet(Object.assign({}, f, { _handling: true, handler: 'WFS' }));
+          pagesHandling += makeSheet(Object.assign({}, f, { _handling: true, handler: 'WFS' }));
         }
         return;
       }
@@ -6631,7 +6643,7 @@ ${(function(){
       if (isWFS) {
         var cbHdl = document.getElementById('wfs-handling-' + origIdx);
         if (cbHdl && cbHdl.checked) {
-          pages += makeSheet(Object.assign({}, f, { _handling: true }));
+          pagesHandling += makeSheet(Object.assign({}, f, { _handling: true }));
 
           return;
         }
@@ -6639,7 +6651,7 @@ ${(function(){
 
       // ── GTI/SWISSPORT : auto worksheet, no checkbox needed ──
       if (hnd.includes('SWISSPORT') && flt.startsWith('GTI')) {
-        pages += makeSheet(Object.assign({}, f, { _gtiSwiss: true }));
+        pagesSwissport += makeSheet(Object.assign({}, f, { _gtiSwiss: true }));
         return;
       }
 
@@ -6662,7 +6674,7 @@ ${(function(){
         if (anyChecked) {
           // Main worksheet (all except headset combined)
           if (ftChecked || clChecked || lavChecked || watChecked) {
-            pages += makeSheet(Object.assign({}, f, {
+            pagesSwissport += makeSheet(Object.assign({}, f, {
               _swissFT:  ftChecked,
               _swissCl:  clChecked,
               _swissLav: lavChecked,
@@ -6672,7 +6684,7 @@ ${(function(){
           // Headset: separate worksheet with departure flight number
           if (hdsChecked) {
             var depFlt = swissportDepartures[((f.reg||'').toUpperCase())] || f.flight;
-            pages += makeSheet(Object.assign({}, f, { flight: depFlt, _swissHds: true }));
+            pagesSwissport += makeSheet(Object.assign({}, f, { flight: depFlt, _swissHds: true }));
           }
           return;
         }
@@ -6694,18 +6706,17 @@ ${(function(){
       // ── LHA catering extra worksheet (en plus du Full Transit normal) ──
 
       // ── QTR catering extra worksheet ──
-      pages += makeSheet(f);
+      pagesNormal += makeSheet(f);
       if (flt.startsWith('LHA')) {
         var cbLha = document.getElementById('lha-catering-' + origIdx);
         if (cbLha && cbLha.checked) {
-          pages += makeSheet(Object.assign({}, f, { _lhaCatering: true }));
+          pagesCatering += makeSheet(Object.assign({}, f, { _lhaCatering: true }));
         }
       }
 
     });
 
     // Catering worksheets - one per selected catering
-    var pagesCatering = '';
     caterings.forEach(function(ct, i) {
       if (!selectedCaterings.has(i)) return;
       pagesCatering += makeSheet({
@@ -6718,10 +6729,7 @@ ${(function(){
       });
     });
 
-    // Worksheets vierges (Edit Mode) : chaque entree a deja son override complet
-    // dans flightOverrides (voir createBlankWorksheet) — makeSheet() l'applique
-    // integralement, aucune detection automatique par prefixe/handler ici.
-    var pagesBlank = '';
+    // Worksheets vierges (Edit Mode) : imprimees après les feuilles normales.
     blankWorksheets.forEach(function(b) {
       var blankOv = flightOverrides[b.key.toUpperCase()] || {};
       pagesBlank += makeSheet({
@@ -6735,7 +6743,14 @@ ${(function(){
       });
     });
 
-    pages = pages + pagesASL737 + pagesCatering + pagesBlank; // vierges imprimees en tout dernier
+    // Ordre V82 demandé :
+    // 1) Handling
+    // 2) Swissport (sélections : LHA / HLF / etc.)
+    // 3) Catering
+    // 4) Nettoyage normal
+    // 5) ASL 737
+    // 6) Worksheets vierges éventuelles
+    var pages = pagesHandling + pagesSwissport + pagesCatering + pagesNormal + pagesASL737 + pagesBlank;
     var html = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Worksheets LGG</title>'
       + '<style>'
       + '@page{size:A4 portrait;margin:8mm}'
@@ -8374,6 +8389,8 @@ body.wo-lgg-scroll-locked{
     const combined=isCombined();
     const app=document.querySelector('.app-wrap');
     if(app)app.classList.toggle('crewbus-combined',combined);
+    const actionBar=document.getElementById('combined-action-bar');
+    if(actionBar)actionBar.style.display=combined?'flex':'';
 
     const step4=document.getElementById('step-4');
     const indicator=document.getElementById('step-indicator');
@@ -8438,6 +8455,171 @@ body.wo-lgg-scroll-locked{
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
+})();
+</script>
+
+
+<style id="wo-lgg-v82-combined-workflow">
+/* V82 — Mode combiné : vraie vue 2 colonnes + barre d'actions + impression complète. */
+.combined-action-bar{
+  display:none;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+  margin-top:8px;
+  padding:8px;
+  border:1px solid rgba(143,168,255,.14);
+  border-radius:12px;
+  background:linear-gradient(90deg,rgba(0,212,255,.035),rgba(143,168,255,.045),rgba(201,85,255,.035));
+}
+.combined-action-bar .btn{
+  min-height:34px!important;
+  padding:7px 10px!important;
+  font-size:8px!important;
+  white-space:nowrap;
+}
+.combined-crewbus-btn{
+  border-color:rgba(0,229,160,.32)!important;
+  color:#8fffe1!important;
+}
+.combined-print-all-btn{
+  position:relative;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.38)!important;
+  color:#fff!important;
+  background:linear-gradient(100deg,#00d4ff,#8b5cf6,#ff3cac,#ffb000,#00e5a0,#00d4ff)!important;
+  background-size:300% 100%!important;
+  box-shadow:0 0 0 1px rgba(255,255,255,.08),0 0 18px rgba(139,92,246,.25),0 8px 28px rgba(0,212,255,.12)!important;
+  animation:woLggPrintAllGradient 4s linear infinite,woLggPrintAllGlow 1.8s ease-in-out infinite;
+  font-weight:950!important;
+}
+.combined-print-all-btn::before{
+  content:"";
+  position:absolute;
+  inset:-40%;
+  background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.72) 50%,transparent 62%);
+  transform:translateX(-55%) rotate(8deg);
+  animation:woLggPrintAllShine 2.7s ease-in-out infinite;
+  pointer-events:none;
+}
+.combined-print-all-btn:hover{transform:translateY(-2px) scale(1.015)!important}
+@keyframes woLggPrintAllGradient{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes woLggPrintAllGlow{0%,100%{filter:saturate(1);box-shadow:0 0 0 1px rgba(255,255,255,.08),0 0 15px rgba(139,92,246,.22),0 8px 24px rgba(0,212,255,.10)}50%{filter:saturate(1.35);box-shadow:0 0 0 1px rgba(255,255,255,.14),0 0 28px rgba(255,60,172,.34),0 8px 32px rgba(0,212,255,.18)}}
+@keyframes woLggPrintAllShine{0%,35%{transform:translateX(-70%) rotate(8deg)}65%,100%{transform:translateX(70%) rotate(8deg)}}
+
+@media(min-width:760px){
+  .app-wrap.crewbus-combined{
+    width:min(calc(100% - 20px),1500px)!important;
+    max-width:1500px!important;
+    display:grid!important;
+    grid-template-columns:minmax(390px,.86fr) minmax(430px,1.14fr)!important;
+    column-gap:14px!important;
+    row-gap:0!important;
+    align-items:start!important;
+    padding-left:10px!important;
+    padding-right:10px!important;
+  }
+  .app-wrap.crewbus-combined .progress-bar{grid-column:1/-1}
+  .app-wrap.crewbus-combined #step-3{grid-column:1;min-width:0;width:100%}
+  .app-wrap.crewbus-combined #step-4{
+    grid-column:2;min-width:0;width:100%;display:block!important;
+    position:sticky!important;top:76px;max-height:calc(100dvh - 88px);
+    overflow:auto;padding:4px 2px 22px!important;
+  }
+  .app-wrap.crewbus-combined #step-3 .section-hd{margin-bottom:10px}
+  .app-wrap.crewbus-combined #step-3 .section-desc{font-size:10px;line-height:1.4}
+  .app-wrap.crewbus-combined #step-3 .stats-row{gap:7px}
+  .app-wrap.crewbus-combined #step-3 .stat-card{padding:10px 11px}
+  .app-wrap.crewbus-combined #step-3 .stat-card .num{font-size:21px}
+  .app-wrap.crewbus-combined #step-3 .flight-card{padding:8px!important;gap:6px!important}
+  .app-wrap.crewbus-combined #step-3 .flight-info{gap:4px!important}
+  .app-wrap.crewbus-combined #step-3 .flight-num{min-width:54px;font-size:11px}
+  .app-wrap.crewbus-combined #step-3 .flight-time{font-size:9px}
+  .app-wrap.crewbus-combined #step-3 .flight-stand{font-size:8px;padding:3px 5px}
+  .app-wrap.crewbus-combined #step-3 .operations-registration-input{width:92px;min-width:92px;font-size:10px}
+  .app-wrap.crewbus-combined #step-3 .remarks-input{font-size:9px!important;padding:4px 6px!important}
+  .app-wrap.crewbus-combined .crewbus-next-step-btn,
+  .app-wrap.crewbus-combined .crewbus-back-operations-btn{display:none!important}
+  .app-wrap.crewbus-combined .combined-action-bar{display:flex}
+  .app-wrap.crewbus-combined #step-4 .crewbus-clean-toolbar,
+  .app-wrap.crewbus-combined #step-4 .crewbus-clean-summary,
+  .app-wrap.crewbus-combined #step-4 .crewbus-clean-controls,
+  .app-wrap.crewbus-combined #step-4 .crewbus-list-header,
+  .app-wrap.crewbus-combined #step-4 .crewbus-flight-columns,
+  .app-wrap.crewbus-combined #step-4 .crewbus-manual-clean,
+  .app-wrap.crewbus-combined #step-4 .crewbus-bottom-bar,
+  .app-wrap.crewbus-combined #step-4 .crewbus-extra-notes-clean{max-width:100%!important}
+  .app-wrap.crewbus-combined #step-4 .crewbus-column-list{max-height:30vh!important}
+}
+@media(max-width:759px){
+  .app-wrap.crewbus-combined .combined-action-bar{display:flex}
+  .combined-action-bar .btn{flex:1 1 calc(50% - 7px)}
+  .combined-print-all-btn{flex-basis:100%!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .combined-print-all-btn{animation:none!important}
+  .combined-print-all-btn::before{animation:none!important}
+}
+</style>
+
+<script id="wo-lgg-v82-combined-workflow">
+(function(){
+  'use strict';
+  if(window.__woLggV82CombinedWorkflowInstalled)return;
+  window.__woLggV82CombinedWorkflowInstalled=true;
+
+  window.generateAllPrint=function(){
+    var captured=[];
+    var originalOpenPrintWindow=window.openPrintWindow;
+    if(typeof originalOpenPrintWindow!=='function'){
+      alert('La fonction d’impression est indisponible.');
+      return;
+    }
+
+    window.openPrintWindow=function(content,title){
+      captured.push({content:String(content||''),title:String(title||'')});
+    };
+
+    try{
+      generateCrewBusSheet();
+      generatePDF();
+      generateWorksheets();
+    }catch(e){
+      console.error('Impression complète V82:',e);
+    }finally{
+      window.openPrintWindow=originalOpenPrintWindow;
+    }
+
+    if(!captured.length){
+      alert('Aucun document à imprimer.');
+      return;
+    }
+
+    var styles='';
+    var bodies='';
+    captured.forEach(function(item,index){
+      var source=item.content;
+      var styleMatches=source.match(/<style[\s\S]*?<\/style>/gi)||[];
+      styles += styleMatches.join('\n')+'\n';
+      var bodyMatch=source.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+      var body=bodyMatch?bodyMatch[1]:source.replace(/<!doctype[^>]*>/i,'').replace(/<html[^>]*>/i,'').replace(/<\/html>/i,'');
+      bodies += '<section class="wo-all-print-section wo-all-print-'+index+'">'+body+'</section>';
+    });
+
+    var html='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>LGG — Impression complète</title>'+
+      '<style>'+
+      '@page{size:A4 portrait;margin:0}'+
+      'html,body{margin:0!important;padding:0!important;background:#fff}'+
+      'body{font-family:Arial,Helvetica,sans-serif;color:#111}'+
+      '.wo-all-print-section{position:relative;break-after:page!important;page-break-after:always!important;background:#fff}'+
+      '.wo-all-print-section:last-child{break-after:auto!important;page-break-after:auto!important}'+
+      '.wo-all-print-0{min-height:297mm}'+
+      '.wo-all-print-1{padding:12mm;min-height:297mm;box-sizing:border-box}'+
+      '.wo-all-print-2{min-height:297mm}'+
+      '</style>'+styles+'</head><body>'+bodies+'</body></html>';
+
+    originalOpenPrintWindow(html,'LGG — Impression complète');
+  };
 })();
 </script>
 
