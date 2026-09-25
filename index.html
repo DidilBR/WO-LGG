@@ -2431,6 +2431,152 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   }
 }
 </style>
+
+<style id="wo-lgg-v86-purete-comfort">
+/* V86 — Pureté confortable : même identité bleue/cyan, fond adouci et contrastes rééquilibrés. */
+[data-layout="purete"]{
+  --bg0:#e7edf2;
+  --bg1:#f0f4f7;
+  --bg2:#e3ebf0;
+  --bg3:#d8e2e8;
+  --b1:rgba(19,62,98,.10);
+  --b2:rgba(0,128,208,.20);
+  --b3:rgba(0,128,208,.34);
+  --a1:#008fe8;
+  --a2:#00b7de;
+  --t1:#173049;
+  --t2:#5b6f82;
+  --t3:#8798a8;
+}
+[data-layout="purete"] body{
+  background:
+    radial-gradient(ellipse 75% 55% at 12% 0%,rgba(0,145,255,.055),transparent 62%),
+    radial-gradient(ellipse 65% 50% at 92% 100%,rgba(0,194,255,.045),transparent 64%),
+    var(--bg0);
+}
+[data-layout="purete"] body::before{
+  background:
+    radial-gradient(ellipse 56% 42% at 14% 10%,rgba(0,145,255,.035),transparent 62%),
+    radial-gradient(ellipse 48% 38% at 86% 14%,rgba(0,194,255,.028),transparent 62%),
+    radial-gradient(ellipse 60% 48% at 46% 100%,rgba(0,145,255,.028),transparent 64%);
+  opacity:.9;
+}
+[data-layout="purete"] header{
+  background:rgba(235,241,245,.92)!important;
+  border-bottom:1px solid rgba(19,62,98,.10)!important;
+  box-shadow:0 1px 20px rgba(28,63,95,.08)!important;
+  backdrop-filter:blur(18px) saturate(115%);
+}
+[data-layout="purete"] .app-menu-trigger,
+[data-layout="purete"] .fleet-menu-btn{
+  color:#173049!important;
+  background:rgba(255,255,255,.56)!important;
+  border-color:rgba(19,62,98,.13)!important;
+}
+[data-layout="purete"] .menu-trigger-label{color:#5b6f82!important}
+[data-layout="purete"] .menu-trigger-icon,
+[data-layout="purete"] .fleet-menu-icon{color:var(--a1)!important}
+[data-layout="purete"] .app-header-menu{
+  background:linear-gradient(180deg,rgba(16,27,42,.985),rgba(9,19,31,.99))!important;
+  border-color:rgba(0,145,255,.22)!important;
+  box-shadow:0 24px 70px rgba(20,45,70,.34),0 0 0 1px rgba(255,255,255,.03) inset!important;
+  color:#f5f9ff!important;
+}
+[data-layout="purete"] .app-header-menu .app-menu-kicker,
+[data-layout="purete"] .app-header-menu .app-menu-section-label,
+[data-layout="purete"] .app-header-menu .app-menu-section-meta{
+  color:rgba(226,237,248,.58)!important;
+}
+[data-layout="purete"] .app-header-menu .app-menu-title,
+[data-layout="purete"] .app-header-menu .app-menu-profile-name,
+[data-layout="purete"] .app-header-menu .app-menu-item,
+[data-layout="purete"] .app-header-menu .app-menu-item b,
+[data-layout="purete"] .app-header-menu .app-menu-section-head{
+  color:#f5f9ff!important;
+}
+[data-layout="purete"] .app-header-menu .app-menu-item small{
+  color:rgba(224,236,247,.68)!important;
+}
+[data-layout="purete"] .app-header-menu .app-menu-close{
+  color:rgba(229,239,248,.72)!important;
+  border-color:rgba(255,255,255,.10)!important;
+}
+[data-layout="purete"] .app-header-menu .app-menu-item-icon{
+  color:#59c9ff!important;
+  border-color:rgba(0,145,255,.18)!important;
+  background:rgba(0,145,255,.07)!important;
+}
+[data-layout="purete"] .app-header-menu .app-menu-item:hover{
+  background:rgba(74,157,220,.11)!important;
+  border-color:rgba(93,190,255,.16)!important;
+}
+[data-layout="purete"] .app-header-menu .app-menu-profile{
+  border-color:rgba(255,255,255,.09)!important;
+  background:rgba(255,255,255,.035)!important;
+}
+[data-layout="purete"] .app-header-menu .app-menu-profile-role{color:#62d0ff!important}
+[data-layout="purete"] .app-header-menu .app-menu-color-block{
+  border-top-color:rgba(255,255,255,.09)!important;
+  border-bottom-color:rgba(255,255,255,.09)!important;
+}
+[data-layout="purete"] .app-header-menu .app-menu-item.is-disabled{opacity:.58!important}
+[data-layout="purete"] .app-header-menu .app-menu-item.is-disabled .app-menu-item-icon{color:#6f8da3!important}
+[data-layout="purete"] .app-header-menu .app-menu-footer{color:#fff!important}
+[data-layout="purete"] .app-header-menu .app-menu-logout{color:#ff9bb0!important}
+[data-layout="purete"] .panel,
+[data-layout="purete"] .flight-card,
+[data-layout="purete"] .stat-card{
+  box-shadow:0 2px 14px rgba(24,58,88,.055)!important;
+}
+[data-layout="purete"] .panel:hover,
+[data-layout="purete"] .flight-card:hover{
+  box-shadow:0 5px 18px rgba(0,120,200,.075)!important;
+}
+[data-layout="purete"] input[type=text],
+[data-layout="purete"] input[type=date],
+[data-layout="purete"] input[type=time],
+[data-layout="purete"] input[type=email],
+[data-layout="purete"] input[type=password],
+[data-layout="purete"] textarea,
+[data-layout="purete"] select{
+  background:rgba(255,255,255,.74)!important;
+  border-color:rgba(19,62,98,.14)!important;
+  color:var(--t1)!important;
+}
+[data-layout="purete"] .btn-ghost{
+  color:#486176!important;
+  background:rgba(255,255,255,.34)!important;
+  border-color:rgba(19,62,98,.16)!important;
+}
+[data-layout="purete"] .btn-ghost:hover{
+  color:#183a54!important;
+  background:rgba(255,255,255,.55)!important;
+}
+</style>
+
+<style id="wo-lgg-v86-step-transitions">
+/* V86 — Transitions d'étapes : glissement doux, cohérent dans les deux directions. */
+@keyframes woStepFallbackForward{from{opacity:0;transform:translateX(24px);filter:blur(1.5px)}to{opacity:1;transform:none;filter:none}}
+@keyframes woStepFallbackBackward{from{opacity:0;transform:translateX(-24px);filter:blur(1.5px)}to{opacity:1;transform:none;filter:none}}
+.wo-step-enter-forward{animation:woStepFallbackForward .34s cubic-bezier(.2,.82,.2,1) both!important}
+.wo-step-enter-backward{animation:woStepFallbackBackward .34s cubic-bezier(.2,.82,.2,1) both!important}
+::view-transition-old(root),::view-transition-new(root){
+  animation-duration:.36s;
+  animation-timing-function:cubic-bezier(.2,.82,.2,1);
+}
+:root[data-step-direction="forward"]::view-transition-old(root){animation-name:woStepOldForward}
+:root[data-step-direction="forward"]::view-transition-new(root){animation-name:woStepNewForward}
+:root[data-step-direction="backward"]::view-transition-old(root){animation-name:woStepOldBackward}
+:root[data-step-direction="backward"]::view-transition-new(root){animation-name:woStepNewBackward}
+@keyframes woStepOldForward{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(-22px)}}
+@keyframes woStepNewForward{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:translateX(0)}}
+@keyframes woStepOldBackward{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(22px)}}
+@keyframes woStepNewBackward{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:translateX(0)}}
+@media (prefers-reduced-motion:reduce){
+  .wo-step-enter-forward,.wo-step-enter-backward{animation:none!important}
+  ::view-transition-old(root),::view-transition-new(root){animation-duration:.001ms!important}
+}
+</style>
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
@@ -9130,6 +9276,46 @@ body.wo-lgg-scroll-locked{
 })();
 </script>
 
+
+<script id="wo-lgg-v86-step-transition-runtime">
+(function(){
+  if(window.__woLggV86StepTransitionInstalled)return;
+  window.__woLggV86StepTransitionInstalled=true;
+  var ready=false;
+  setTimeout(function(){ready=true;},700);
+  function numericStep(){return (typeof window.currentStep!=='undefined') ? Number(window.currentStep)||1 : 1;}
+  function fallbackAnimate(step,direction){
+    var el=document.getElementById('step-'+step);
+    if(!el)return;
+    var cls=direction==='backward'?'wo-step-enter-backward':'wo-step-enter-forward';
+    el.classList.remove('wo-step-enter-forward','wo-step-enter-backward');
+    void el.offsetWidth;
+    el.classList.add(cls);
+    setTimeout(function(){el.classList.remove(cls);},390);
+  }
+  if(typeof window.goToStep==='function' && !window.__woLggV86GoToStepWrapped){
+    var baseGoToStep=window.goToStep;
+    window.__woLggV86GoToStepWrapped=true;
+    window.goToStep=function(n){
+      var requested=Math.max(1,Math.min(4,Number(n)||1));
+      var before=numericStep();
+      var direction=requested<before?'backward':'forward';
+      if(requested===before && !(requested===4 && document.querySelector('.crewbus-combined'))){return baseGoToStep.apply(this,arguments);}
+      if(!ready || typeof document.startViewTransition!=='function'){
+        var result=baseGoToStep.apply(this,arguments);
+        var after=numericStep();
+        if(after!==before || requested===4)fallbackAnimate(after,direction);
+        return result;
+      }
+      document.documentElement.setAttribute('data-step-direction',direction);
+      var ctx=this;
+      var vt=document.startViewTransition(function(){baseGoToStep.apply(ctx,arguments);}.bind(this));
+      vt.finished.finally(function(){document.documentElement.removeAttribute('data-step-direction');});
+      return vt;
+    };
+  }
+})();
+</script>
 </body>
 </html>
 
