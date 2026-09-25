@@ -2548,9 +2548,9 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 </style>
 
 <style id="wo-lgg-v86-step-transitions">
-/* V86 — Transitions d'étapes : glissement doux, cohérent dans les deux directions. */
-@keyframes woStepFallbackForward{from{opacity:0;transform:translateX(24px);filter:blur(1.5px)}to{opacity:1;transform:none;filter:none}}
-@keyframes woStepFallbackBackward{from{opacity:0;transform:translateX(-24px);filter:blur(1.5px)}to{opacity:1;transform:none;filter:none}}
+/* V90 — Transition verticale : la nouvelle étape arrive du bas en avançant, du haut en revenant. */
+@keyframes woStepFallbackForward{from{opacity:0;transform:translateY(42px);filter:blur(1.5px)}to{opacity:1;transform:none;filter:none}}
+@keyframes woStepFallbackBackward{from{opacity:0;transform:translateY(-42px);filter:blur(1.5px)}to{opacity:1;transform:none;filter:none}}
 .wo-step-enter-forward{animation:woStepFallbackForward .34s cubic-bezier(.2,.82,.2,1) both!important}
 .wo-step-enter-backward{animation:woStepFallbackBackward .34s cubic-bezier(.2,.82,.2,1) both!important}
 ::view-transition-old(root),::view-transition-new(root){
@@ -2561,10 +2561,10 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 :root[data-step-direction="forward"]::view-transition-new(root){animation-name:woStepNewForward}
 :root[data-step-direction="backward"]::view-transition-old(root){animation-name:woStepOldBackward}
 :root[data-step-direction="backward"]::view-transition-new(root){animation-name:woStepNewBackward}
-@keyframes woStepOldForward{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(-22px)}}
-@keyframes woStepNewForward{from{opacity:0;transform:translateX(22px)}to{opacity:1;transform:translateX(0)}}
-@keyframes woStepOldBackward{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(22px)}}
-@keyframes woStepNewBackward{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:translateX(0)}}
+@keyframes woStepOldForward{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-32px)}}
+@keyframes woStepNewForward{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
+@keyframes woStepOldBackward{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(32px)}}
+@keyframes woStepNewBackward{from{opacity:0;transform:translateY(-32px)}to{opacity:1;transform:translateY(0)}}
 @media (prefers-reduced-motion:reduce){
   .wo-step-enter-forward,.wo-step-enter-backward{animation:none!important}
   ::view-transition-old(root),::view-transition-new(root){animation-duration:.001ms!important}
@@ -9270,7 +9270,7 @@ body.wo-lgg-scroll-locked{
 </script>
 
 
-<script id="wo-lgg-v86-step-transition-runtime">
+<script id="wo-lgg-v89-step-transition-runtime">
 (function(){
   if(window.__woLggV86StepTransitionInstalled)return;
   window.__woLggV86StepTransitionInstalled=true;
@@ -9291,11 +9291,9 @@ body.wo-lgg-scroll-locked{
     window.__woLggV86GoToStepWrapped=true;
     window.goToStep=function(n){
       var requested=Math.max(1,Math.min(4,Number(n)||1));
-      // Les animations de changement d'étape sont volontairement réservées
-      // au thème Pureté. Tous les autres thèmes gardent exactement leur
-      // comportement de navigation d'origine.
-      var layout=(document.documentElement.getAttribute('data-layout') || document.body?.getAttribute('data-layout') || 'classic').toLowerCase();
-      if(layout!=='purete'){ return baseGoToStep.apply(this,arguments); }
+      // V89 — La transition d'étape est commune à tous les thèmes.
+      // Elle reproduit le glissement doux observé entre les étapes 3 et 4,
+      // dans les deux sens, sans modifier les palettes ou styles des thèmes.
       var before=numericStep();
       var direction=requested<before?'backward':'forward';
       if(requested===before && !(requested===4 && document.querySelector('.crewbus-combined'))){return baseGoToStep.apply(this,arguments);}
