@@ -9316,6 +9316,8 @@ body.wo-lgg-scroll-locked{
 })();
 </script>
 
+
+<!-- V92: radical combined UI only. Print/worksheet/CrewBus generation remains exactly V90. -->
 <style id="wo-lgg-v91-radical-combined-professional">
 /* ================================================================
    V91 — MODE COMBINÉ : poste opérationnel professionnel
@@ -9622,7 +9624,6 @@ body.wo-lgg-scroll-locked{
   .workflow-shell.crewbus-combined *{scroll-behavior:auto!important;transition-duration:.001ms!important}
 }
 </style>
-
 <script id="wo-lgg-v91-combined-shell-reframe">
 (function(){
   'use strict';
@@ -9665,103 +9666,6 @@ body.wo-lgg-scroll-locked{
   else boot();
 })();
 </script>
-
-<script id="wo-lgg-v91-print-all-fidelity">
-(function(){
-  'use strict';
-  window.generateAllPrint=function(){
-    var captured=[];
-    var originalOpenPrintWindow=window.openPrintWindow;
-    if(typeof originalOpenPrintWindow!=='function'){
-      alert('La fonction d’impression est indisponible.');
-      return;
-    }
-    window.openPrintWindow=function(content,title){
-      captured.push({content:String(content||''),title:String(title||'')});
-    };
-
-    try{
-      /* Ordre demandé : Crew Bus → feuille nettoyage → Worksheets. */
-      generateCrewBusSheet();
-      generatePDF();
-      generateWorksheets();
-    }catch(e){
-      console.error('V91 Impression complète:',e);
-    }finally{
-      window.openPrintWindow=originalOpenPrintWindow;
-    }
-
-    if(!captured.length){
-      alert('Aucun document à imprimer.');
-      return;
-    }
-
-    function extractBody(source){
-      var m=source.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-      if(m)return m[1];
-      return source.replace(/<!doctype[^>]*>/i,'').replace(/<html[^>]*>/i,'').replace(/<\/html>/i,'');
-    }
-    function extractStyles(source){
-      var matches=source.match(/<style[^>]*>[\s\S]*?<\/style>/gi)||[];
-      return matches.map(function(tag){
-        return tag
-          .replace(/@page\s*\{[\s\S]*?\}/gi,'')
-          .replace(/html,body\s*\{[\s\S]*?\}/gi,'')
-          .replace(/body\s*\{[\s\S]*?\}/gi,'');
-      }).join('\\n');
-    }
-
-    var sections=captured.map(function(item,index){
-      var source=item.content;
-      return '<section class="wo-all-print-section wo-all-print-'+index+'">'
-        +'<style>'+extractStyles(source)+'</style>'
-        +extractBody(source)
-        +'</section>';
-    }).join('');
-
-    var html='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>LGG — Impression complète</title>'+
-      '<style>'+
-      '@page{size:A4 portrait;margin:0}'+
-      'html,body{margin:0!important;padding:0!important;background:#fff!important}'+
-      'body{font-family:Arial,Helvetica,sans-serif;color:#111!important}'+
-      '.wo-all-print-section{position:relative;width:210mm;min-height:297mm;margin:0;padding:0;box-sizing:border-box;background:#fff;break-after:page!important;page-break-after:always!important;overflow:hidden}'+
-      '.wo-all-print-section:last-child{break-after:auto!important;page-break-after:auto!important}'+
-      /* La feuille de nettoyage et les Worksheets conservent leur géométrie interne d'origine. */
-      '.wo-all-print-0,.wo-all-print-1,.wo-all-print-2{width:210mm;min-height:297mm}'+
-      '</style>'+sections+'</body></html>';
-
-    originalOpenPrintWindow(html,'LGG — Impression complète');
-  };
-})();
-</script>
-
-<script id="wo-lgg-v91-crewbus-paper-scale">
-(function(){
-  'use strict';
-  if(window.__woLggV91CrewBusPaperScaleInstalled)return;
-  window.__woLggV91CrewBusPaperScaleInstalled=true;
-
-  /*
-   * Le nouveau modèle de Crew Bus préféré par l'utilisateur est volontairement
-   * légèrement dézoomé : cadre visible, marges régulières, feuille plus lisible.
-   * On applique le même rendu à la génération directe ET à l'impression complète.
-   */
-  var baseCrewBus=window.generateCrewBusSheet;
-  if(typeof baseCrewBus!=='function')return;
-  window.generateCrewBusSheet=function(){
-    var old=window.openPrintWindow;
-    window.openPrintWindow=function(content,title){
-      var source=String(content||'');
-      if(/crewbus-page/i.test(source) && /<style/i.test(source)){
-        source=source.replace(/<\/style>/i,
-          '.crewbus-page{transform:scale(.95);transform-origin:top center;margin-left:auto;margin-right:auto}.crewbus-back-page{transform:scale(.95);transform-origin:top center;margin-left:auto;margin-right:auto}'+
-          '<\\/style>');
-      }
-      return old.call(this,source,title);
-    };
-    try{return baseCrewBus.apply(this,arguments);}finally{window.openPrintWindow=old;}
-  };
-})();
-</script>
 </body>
 </html>
+
