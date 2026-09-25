@@ -2434,25 +2434,18 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 
 <style id="wo-lgg-v86-purete-comfort">
 /* V86 — Pureté confortable : même identité bleue/cyan, fond adouci et contrastes rééquilibrés. */
+/* V86 fix: Pureté ne redéfinit plus les variables globales de couleur.
+   Les thèmes Aurora/Ocean/Forest/Sunset restent donc indépendants du mode d'interface. */
 [data-layout="purete"]{
-  --bg0:#e7edf2;
-  --bg1:#f0f4f7;
-  --bg2:#e3ebf0;
-  --bg3:#d8e2e8;
-  --b1:rgba(19,62,98,.10);
-  --b2:rgba(0,128,208,.20);
-  --b3:rgba(0,128,208,.34);
-  --a1:#008fe8;
-  --a2:#00b7de;
-  --t1:#173049;
-  --t2:#5b6f82;
-  --t3:#8798a8;
+  --purete-bg0:#e7edf2;
+  --purete-bg1:#f0f4f7;
+  --purete-panel:rgba(255,255,255,.74);
 }
 [data-layout="purete"] body{
   background:
-    radial-gradient(ellipse 75% 55% at 12% 0%,rgba(0,145,255,.055),transparent 62%),
-    radial-gradient(ellipse 65% 50% at 92% 100%,rgba(0,194,255,.045),transparent 64%),
-    var(--bg0);
+    radial-gradient(ellipse 75% 55% at 12% 0%,color-mix(in srgb,var(--a1) 7%,transparent),transparent 62%),
+    radial-gradient(ellipse 65% 50% at 92% 100%,color-mix(in srgb,var(--a2) 6%,transparent),transparent 64%),
+    var(--purete-bg0);
 }
 [data-layout="purete"] body::before{
   background:
@@ -2469,11 +2462,11 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 }
 [data-layout="purete"] .app-menu-trigger,
 [data-layout="purete"] .fleet-menu-btn{
-  color:#173049!important;
+  color:var(--t1)!important;
   background:rgba(255,255,255,.56)!important;
   border-color:rgba(19,62,98,.13)!important;
 }
-[data-layout="purete"] .menu-trigger-label{color:#5b6f82!important}
+[data-layout="purete"] .menu-trigger-label{color:var(--t2)!important}
 [data-layout="purete"] .menu-trigger-icon,
 [data-layout="purete"] .fleet-menu-icon{color:var(--a1)!important}
 [data-layout="purete"] .app-header-menu{
@@ -2502,7 +2495,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   border-color:rgba(255,255,255,.10)!important;
 }
 [data-layout="purete"] .app-header-menu .app-menu-item-icon{
-  color:#59c9ff!important;
+  color:var(--a1)!important;
   border-color:rgba(0,145,255,.18)!important;
   background:rgba(0,145,255,.07)!important;
 }
@@ -2514,7 +2507,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   border-color:rgba(255,255,255,.09)!important;
   background:rgba(255,255,255,.035)!important;
 }
-[data-layout="purete"] .app-header-menu .app-menu-profile-role{color:#62d0ff!important}
+[data-layout="purete"] .app-header-menu .app-menu-profile-role{color:var(--a1)!important}
 [data-layout="purete"] .app-header-menu .app-menu-color-block{
   border-top-color:rgba(255,255,255,.09)!important;
   border-bottom-color:rgba(255,255,255,.09)!important;
@@ -2544,12 +2537,12 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   color:var(--t1)!important;
 }
 [data-layout="purete"] .btn-ghost{
-  color:#486176!important;
+  color:var(--t2)!important;
   background:rgba(255,255,255,.34)!important;
   border-color:rgba(19,62,98,.16)!important;
 }
 [data-layout="purete"] .btn-ghost:hover{
-  color:#183a54!important;
+  color:var(--t1)!important;
   background:rgba(255,255,255,.55)!important;
 }
 </style>
@@ -9309,7 +9302,10 @@ body.wo-lgg-scroll-locked{
       }
       document.documentElement.setAttribute('data-step-direction',direction);
       var ctx=this;
-      var vt=document.startViewTransition(function(){baseGoToStep.apply(ctx,arguments);}.bind(this));
+      // IMPORTANT: startViewTransition appelle son callback sans les arguments
+      // de goToStep. Il faut donc conserver explicitement l'étape demandée.
+      var requestedArgs=[requested];
+      var vt=document.startViewTransition(function(){baseGoToStep.apply(ctx,requestedArgs);});
       vt.finished.finally(function(){document.documentElement.removeAttribute('data-step-direction');});
       return vt;
     };
