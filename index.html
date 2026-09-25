@@ -2159,6 +2159,278 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 }
 </style>
 
+
+<style id="wo-lgg-v85-combined-symbiosis">
+/* V85 — Mode combiné : vue "cockpit" compacte et symbiotique.
+   Scope strictement limité à .crewbus-combined : le mode séparé reste inchangé. */
+@media (min-width:760px){
+  .workflow-shell.crewbus-combined{
+    width:min(calc(100% - 28px),1560px)!important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)!important;
+    column-gap:12px!important;
+    padding-bottom:72px!important;
+  }
+
+  /* ── Deux panneaux visuellement jumeaux ── */
+  .workflow-shell.crewbus-combined #step-3,
+  .workflow-shell.crewbus-combined #step-4{
+    border:1px solid rgba(143,168,255,.14)!important;
+    border-radius:18px!important;
+    background:linear-gradient(180deg,rgba(10,15,31,.68),rgba(6,10,22,.50))!important;
+    box-shadow:0 16px 45px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.025)!important;
+  }
+  .workflow-shell.crewbus-combined #step-3{
+    padding:16px 14px 18px!important;
+    overflow:hidden!important;
+  }
+  .workflow-shell.crewbus-combined #step-4{
+    padding:16px 14px 18px!important;
+  }
+
+  /* ── En-têtes : courts, alignés, même rythme ── */
+  .workflow-shell.crewbus-combined #step-3 .section-eyebrow,
+  .workflow-shell.crewbus-combined #step-4 .section-eyebrow{
+    display:none!important;
+  }
+  .workflow-shell.crewbus-combined #step-3 .section-title,
+  .workflow-shell.crewbus-combined #step-4 .section-title{
+    font-size:20px!important;
+    line-height:1.05!important;
+    letter-spacing:-.02em!important;
+    margin:0!important;
+  }
+  .workflow-shell.crewbus-combined #step-3 .section-desc,
+  .workflow-shell.crewbus-combined #step-4 .section-desc{
+    margin:4px 0 9px!important;
+    font-size:8.5px!important;
+    line-height:1.35!important;
+    opacity:.48!important;
+    max-width:100%!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .section-desc{
+    display:none!important;
+  }
+
+  /* ── Le toggle devient un petit sélecteur, pas une grosse barre ── */
+  .workflow-shell.crewbus-combined .crewbus-layout-toggle{
+    margin:7px 0 8px!important;
+    padding:4px!important;
+    border-radius:10px!important;
+    gap:3px!important;
+    width:max-content!important;
+    max-width:100%!important;
+  }
+  .workflow-shell.crewbus-combined .crewbus-layout-label,
+  .workflow-shell.crewbus-combined .crewbus-layout-hint{
+    display:none!important;
+  }
+  .workflow-shell.crewbus-combined .crewbus-layout-btn{
+    min-height:26px!important;
+    padding:5px 9px!important;
+    font-size:7px!important;
+  }
+
+  /* ── Barre d'actions : une seule ligne, hiérarchie claire ── */
+  .workflow-shell.crewbus-combined .combined-action-bar{
+    margin:7px 0 10px!important;
+    padding:5px!important;
+    gap:4px!important;
+    border-radius:11px!important;
+    background:rgba(255,255,255,.025)!important;
+  }
+  .workflow-shell.crewbus-combined .combined-action-bar .btn{
+    min-height:29px!important;
+    padding:5px 8px!important;
+    font-size:7px!important;
+    flex:0 1 auto!important;
+  }
+  .workflow-shell.crewbus-combined .combined-action-bar .combined-print-all-btn{
+    margin-left:auto!important;
+  }
+
+  /* ── Opérations : supprimer le bruit visuel sans perdre les actions ── */
+  .workflow-shell.crewbus-combined #step-3 #refresh-badge{display:none!important}
+  .workflow-shell.crewbus-combined #step-3 .stats-row{margin:7px 0!important;gap:5px!important}
+  .workflow-shell.crewbus-combined #step-3 .stat-card{
+    min-height:42px!important;
+    padding:7px 9px!important;
+    border-radius:11px!important;
+    background:rgba(255,255,255,.025)!important;
+  }
+  .workflow-shell.crewbus-combined #step-3 .stat-card .num{font-size:17px!important}
+  .workflow-shell.crewbus-combined #step-3 .stat-card .lbl{font-size:6px!important;letter-spacing:.12em!important}
+  .workflow-shell.crewbus-combined #step-3 #flight-search{
+    margin:6px 0 8px!important;
+    min-height:34px!important;
+    padding:8px 10px!important;
+    font-size:9px!important;
+    border-radius:10px!important;
+  }
+  .workflow-shell.crewbus-combined #step-3 .flights-list{
+    max-height:38vh!important;
+    overflow:auto!important;
+    padding-right:2px!important;
+  }
+  .workflow-shell.crewbus-combined #step-3 .flights-list > .flight-card,
+  .workflow-shell.crewbus-combined #step-3 .flight-card{
+    border-radius:10px!important;
+  }
+  .workflow-shell.crewbus-combined #step-3 .flights-list + *{}
+
+  /* Les gros titres de sections deviennent des séparateurs très discrets. */
+  .workflow-shell.crewbus-combined #step-3 > div[style*="Avions à nettoyer"],
+  .workflow-shell.crewbus-combined #step-3 #catering-section > div:first-child,
+  .workflow-shell.crewbus-combined #step-3 #asl737-section > div:first-child,
+  .workflow-shell.crewbus-combined #step-3 #blank-worksheets-section > div:first-child{
+    margin:8px 0 6px!important;
+  }
+  .workflow-shell.crewbus-combined #step-3 > div[style*="Avions à nettoyer"] > div:nth-child(2),
+  .workflow-shell.crewbus-combined #step-3 #catering-section > div:first-child > div:nth-child(2),
+  .workflow-shell.crewbus-combined #step-3 #asl737-section > div:first-child > div:nth-child(2),
+  .workflow-shell.crewbus-combined #step-3 #blank-worksheets-section > div:first-child > div:nth-child(2){
+    font-size:7px!important;
+    padding:4px 9px!important;
+    letter-spacing:.13em!important;
+  }
+  .workflow-shell.crewbus-combined #step-3 #catering-section .stats-row{margin:5px 0!important}
+  .workflow-shell.crewbus-combined #step-3 #catering-section .flights-list,
+  .workflow-shell.crewbus-combined #step-3 #asl737-section .flights-list,
+  .workflow-shell.crewbus-combined #step-3 #blank-worksheets-section .flights-list{
+    max-height:18vh!important;
+    overflow:auto!important;
+  }
+  .workflow-shell.crewbus-combined #step-3 .panel[style*="Informations complémentaires"]{
+    margin-top:9px!important;
+  }
+  .workflow-shell.crewbus-combined #step-3 .panel[style*="Informations complémentaires"] textarea{
+    min-height:52px!important;
+  }
+  .workflow-shell.crewbus-combined #step-3 .add-manual-toggle{
+    min-height:30px!important;
+    padding:6px 9px!important;
+    font-size:7px!important;
+  }
+
+  /* ── Crew Bus : même langage visuel que Opérations ── */
+  .workflow-shell.crewbus-combined #step-4 .crewbus-clean-toolbar{
+    margin:0 0 7px!important;
+    padding:7px 9px!important;
+    min-height:40px!important;
+    border-radius:11px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-source-clean span:last-child{
+    font-size:7px!important;
+    opacity:.42!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-source-icon{width:25px!important;height:25px!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-refresh-btn{
+    min-height:28px!important;padding:5px 8px!important;font-size:7px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-clean-summary{
+    gap:5px!important;
+    margin:6px 0!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-clean-summary > div{
+    min-height:39px!important;
+    padding:6px 8px!important;
+    border-radius:10px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-clean-summary strong{font-size:16px!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-clean-summary span{font-size:6px!important;letter-spacing:.1em!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-clean-controls{
+    padding:7px!important;
+    margin-bottom:6px!important;
+    border-radius:11px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-search-wrap input{
+    min-height:31px!important;padding:7px 28px!important;font-size:8px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-clean-control-line{
+    gap:5px!important;margin-top:5px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-filter,
+  .workflow-shell.crewbus-combined #step-4 .crewbus-mini-btn,
+  .workflow-shell.crewbus-combined #step-4 .crewbus-sort-clean select{
+    min-height:25px!important;padding:4px 7px!important;font-size:6.5px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-list-header{
+    display:none!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-flight-columns{
+    gap:6px!important;
+    align-items:stretch!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-flight-column{
+    border-radius:11px!important;
+    overflow:hidden!important;
+    background:rgba(255,255,255,.018)!important;
+    border:1px solid rgba(143,168,255,.09)!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-column-head{
+    min-height:32px!important;
+    padding:6px 8px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-column-kicker{font-size:7px!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-column-sub{font-size:5.5px!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-column-count{font-size:7px!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-column-list{
+    max-height:34vh!important;
+    min-height:80px!important;
+    padding:5px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-flight-card{
+    padding:7px 7px 6px!important;
+    margin-bottom:5px!important;
+    border-radius:9px!important;
+    gap:5px 6px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-flight-card .crewbus-check{
+    width:22px!important;height:22px!important;border-radius:7px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-flight-card .crewbus-flight-main{
+    grid-template-columns:42px minmax(0,1fr)!important;
+    gap:6px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-flight-card .crewbus-time{font-size:12px!important;min-width:42px!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-flight-card .crewbus-flight-number{font-size:8px!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-flight-card .crewbus-meta-chip,
+  .workflow-shell.crewbus-combined #step-4 .crewbus-flight-card .crewbus-direction{font-size:5.5px!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-registration-input{
+    min-height:21px!important;padding:3px 5px!important;font-size:7px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-clean-meta{font-size:5.5px!important;margin-top:2px!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-card-actions{gap:3px!important;margin-top:3px!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-flight-card .crewbus-mode-btn,
+  .workflow-shell.crewbus-combined #step-4 .crewbus-flight-card .crewbus-hs-btn{
+    min-height:20px!important;padding:3px 5px!important;font-size:5.5px!important;border-radius:6px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-extra-notes-clean{
+    margin:7px 0 0!important;
+    padding:7px 9px!important;
+    border-radius:10px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-extra-notes-clean textarea{
+    min-height:38px!important;
+    font-size:7px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-manual-clean{margin-top:6px!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-manual-clean summary{
+    min-height:34px!important;padding:6px 8px!important;
+  }
+  .workflow-shell.crewbus-combined #step-4 .crewbus-manual-clean summary strong{font-size:8px!important}
+  .workflow-shell.crewbus-combined #step-4 .crewbus-manual-clean summary small,
+  .workflow-shell.crewbus-combined #step-4 .crewbus-manual-clean summary em{font-size:6px!important}
+}
+
+@media (max-width:759px){
+  .workflow-shell.crewbus-combined #step-3,
+  .workflow-shell.crewbus-combined #step-4{
+    border-radius:14px!important;
+    margin-left:8px!important;margin-right:8px!important;
+    padding:13px 11px 15px!important;
+  }
+}
+</style>
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
