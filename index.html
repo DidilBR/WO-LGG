@@ -5270,12 +5270,25 @@ async function woLggLogout(){
   }
 
   // ── Modale d'edition complete d'un vol ──────────────────────────────
-  // Clic sur le voile = fermer ; le contenu de la modale reste interactif.
+  // Le backdrop ne doit se fermer que sur un VRAI clic complet en dehors
+  // de la fenêtre. Un déplacement/drag de la souris hors du cadre ne ferme
+  // donc jamais la création d'une worksheet.
   (function bindEditModalBackdrop(){
     const overlay=document.getElementById('edit-flight-overlay');
     if(!overlay || overlay.dataset.bound==='1') return;
     overlay.dataset.bound='1';
-    overlay.addEventListener('click',function(e){ if(e.target===overlay) closeEditFlightModal(); });
+    let downOnBackdrop=false;
+    overlay.addEventListener('pointerdown',function(e){
+      downOnBackdrop=(e.target===overlay);
+    },true);
+    overlay.addEventListener('pointerup',function(e){
+      const shouldClose=downOnBackdrop && e.target===overlay;
+      downOnBackdrop=false;
+      if(shouldClose) closeEditFlightModal();
+    },true);
+    overlay.addEventListener('pointercancel',function(){
+      downOnBackdrop=false;
+    },true);
   })();
 
   let __editFlightKey = null; // numero de vol ORIGINAL en cours d’edition (cle stable de flightOverrides)
@@ -5408,7 +5421,10 @@ async function woLggLogout(){
     // Override vide mais present : suffit pour que needsFullTransit()/makeSheet()
     // reconnaissent ce "vol" et generent sa worksheet des qu'il est imprime,
     // meme sans qu'aucun champ n'ait encore ete rempli.
-    flightOverrides[key] = { flight: key, grid: {} };
+    // Ne jamais préremplir le N° de vol avec l'identifiant technique BLANK-X.
+    // La worksheet reste réellement vierge jusqu'à ce que l'utilisateur saisisse
+    // lui-même un nom / numéro de vol.
+    flightOverrides[key] = { grid: {} };
     renderBlankWorksheetsList();
     openEditFlightModal(key);
     if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('createBlankWorksheet');
