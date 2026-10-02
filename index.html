@@ -2625,6 +2625,46 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 #wo-lgg-auth-overlay .wo-lgg-subtitle{color:#fff;text-align:center;font-size:21px;font-weight:800;margin-bottom:8px}
 #wo-lgg-auth-overlay .wo-lgg-note{color:#aeb6c8;text-align:center;font-size:11px;line-height:1.5;margin:0 auto 18px;max-width:560px}
 #wo-lgg-auth-overlay .wo-lgg-note b{color:#ffc85c}
+#wo-lgg-auth-overlay .wo-lgg-login-brand{
+  position:absolute;top:34px;left:50%;transform:translateX(-50%);z-index:2;text-align:center;pointer-events:none;
+}
+#wo-lgg-auth-overlay .wo-lgg-brand-title{position:relative;color:#fff;font-size:clamp(42px,5vw,68px);font-weight:800;letter-spacing:-2.5px;line-height:1;text-shadow:0 3px 16px rgba(0,0,0,.28);white-space:nowrap}
+#wo-lgg-auth-overlay .wo-lgg-brand-subtitle{margin-top:20px;color:rgba(255,255,255,.70);font-size:clamp(13px,1.5vw,19px);font-weight:600;letter-spacing:7px;white-space:nowrap}
+#wo-lgg-auth-overlay .wo-lgg-brand-arc{position:absolute;display:block;border-radius:999px;transform:rotate(-38deg);}
+#wo-lgg-auth-overlay .wo-lgg-brand-arc.orange{width:58px;height:30px;border-top:9px solid #ff971e;right:70px;top:-18px}
+#wo-lgg-auth-overlay .wo-lgg-brand-arc.blue{width:62px;height:30px;border-bottom:9px solid #2aa8ff;right:-2px;top:35px;transform:rotate(-38deg)}
+#wo-lgg-auth-overlay .wo-lgg-login-shell{width:min(840px,94vw);margin-top:clamp(245px,24vh,300px);margin-bottom:18px}
+#wo-lgg-auth-overlay .wo-lgg-account-panel{padding:34px 62px 34px;border-radius:28px}
+#wo-lgg-auth-overlay .wo-lgg-account-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+#wo-lgg-auth-overlay .wo-lgg-account-card{min-height:170px}
+#wo-lgg-auth-overlay .wo-lgg-other-card{overflow:hidden}
+#wo-lgg-auth-overlay .wo-lgg-other-actions{max-width:100%;justify-content:center;flex-wrap:wrap}
+#wo-lgg-auth-overlay .wo-lgg-other-action{font-size:9px;padding:6px 8px}
+@media(max-width:760px){
+  #wo-lgg-auth-overlay .wo-lgg-login-brand{top:24px}
+  #wo-lgg-auth-overlay .wo-lgg-brand-title{font-size:39px;letter-spacing:-1.8px}
+  #wo-lgg-auth-overlay .wo-lgg-brand-subtitle{margin-top:13px;font-size:11px;letter-spacing:4px}
+  #wo-lgg-auth-overlay .wo-lgg-brand-arc.orange{width:42px;height:22px;border-width:7px;right:47px;top:-12px}
+  #wo-lgg-auth-overlay .wo-lgg-brand-arc.blue{width:45px;height:22px;border-width:7px;right:-2px;top:28px}
+  #wo-lgg-auth-overlay .wo-lgg-login-shell{width:min(94vw,620px);margin-top:clamp(245px,27vh,305px)}
+  #wo-lgg-auth-overlay .wo-lgg-account-panel{padding:24px 20px 22px}
+  #wo-lgg-auth-overlay .wo-lgg-account-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  #wo-lgg-auth-overlay .wo-lgg-account-card{min-height:118px}
+  #wo-lgg-auth-overlay .wo-lgg-other-actions{gap:4px}
+  #wo-lgg-auth-overlay .wo-lgg-other-action{font-size:7px;padding:5px 5px}
+}
+@media(max-width:430px){
+  #wo-lgg-auth-overlay .wo-lgg-login-brand{top:18px}
+  #wo-lgg-auth-overlay .wo-lgg-brand-title{font-size:32px}
+  #wo-lgg-auth-overlay .wo-lgg-brand-subtitle{font-size:9px;letter-spacing:3px;margin-top:9px}
+  #wo-lgg-auth-overlay .wo-lgg-login-shell{margin-top:clamp(220px,25vh,265px)}
+  #wo-lgg-auth-overlay .wo-lgg-account-panel{padding:20px 14px 18px}
+  #wo-lgg-auth-overlay .wo-lgg-account-card{min-height:100px}
+  #wo-lgg-auth-overlay .wo-lgg-account-avatar{font-size:28px}
+  #wo-lgg-auth-overlay .wo-lgg-account-name{font-size:13px}
+  #wo-lgg-auth-overlay .wo-lgg-other-actions{display:none}
+  #wo-lgg-auth-overlay .wo-lgg-other-card:after{content:'Se connecter / créer';font-size:7px;color:rgba(255,255,255,.65);margin-top:-3px}
+}
 @media(max-width:760px){
   #wo-lgg-auth-overlay.wo-lgg-login-screen{padding:12px!important;background-position:center center!important}
   #wo-lgg-auth-overlay .wo-lgg-login-shell{width:min(94vw,620px);margin-top:clamp(245px,27vh,310px)}
@@ -2654,6 +2694,10 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 <body>
 <div id="wo-lgg-auth-overlay" class="wo-lgg-login-screen" aria-hidden="false">
   <div class="wo-lgg-login-backdrop"></div>
+  <div class="wo-lgg-login-brand" aria-label="Liège Airport Operations Tools">
+    <div class="wo-lgg-brand-title">Liège Airport<span class="wo-lgg-brand-arc orange"></span><span class="wo-lgg-brand-arc blue"></span></div>
+    <div class="wo-lgg-brand-subtitle">OPERATIONS TOOLS</div>
+  </div>
   <div class="wo-lgg-login-shell">
     <div class="wo-lgg-account-panel" id="wo-lgg-account-panel">
       <div class="wo-lgg-panel-title">Choisir un compte</div>
@@ -3468,23 +3512,35 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   function woLggRenderAccounts(){
     const grid=document.getElementById('wo-lgg-account-grid');if(!grid)return;
     const saved=woLggSavedAccounts().filter(a=>!a.visitor && String(a.email||'').toLowerCase()!=='adilbarre2005@icloud.com');
-    const accounts=[{name:'Adil',email:'adilbarre2005@icloud.com',kind:'ADMIN'},...saved,{name:'Visiteur',email:'',kind:'VISITEUR',visitor:true}];
-    // Pour l'écran principal, on garde toujours Adil + Visiteur + Autre.
-    // Les nouveaux comptes pourront ensuite être mémorisés et proposés avant « Autre ».
-    const visible=accounts.slice(0,2);
-    grid.innerHTML=visible.map(a=>{
+    const extra=saved.length?saved[0]:null;
+    const cards=[
+      {name:'Adil',email:'adilbarre2005@icloud.com',kind:'ADMIN'},
+      {name:'Visiteur',email:'',kind:'VISITEUR',visitor:true}
+    ];
+    // L'écran principal reste volontairement limité à Adil, Visiteur et Autre.
+    const accountHtml=cards.map(a=>{
       const visitor=!!a.visitor;
       const safeEmail=String(a.email||'').replace(/[\\'\n\r]/g,'');
       const safeName=String(a.name||'').replace(/[&<>]/g,'');
       const action=visitor?'woLggContinueAsVisitor()':`woLggOpenAccount('${safeEmail}','${safeName}')`;
-      return `<button type="button" class="wo-lgg-account-card${String(a.kind).toUpperCase()==='ADMIN'?' selected':''}" onclick="${action}"><div class="${visitor?'wo-lgg-account-avatar':'wo-lgg-account-avatar'}">●</div><div class="wo-lgg-account-name">${safeName}</div></button>`;
-    }).join('') + `<div class="wo-lgg-account-card wo-lgg-other-card" role="button" tabindex="0" onclick="woLggOpenOther()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();woLggOpenOther()}"><div class="wo-lgg-account-plus">＋</div><div class="wo-lgg-account-name">Autre</div><div class="wo-lgg-other-actions"><button type="button" class="wo-lgg-other-action" onclick="event.stopPropagation();woLggOpenOther()">Se connecter</button><button type="button" class="wo-lgg-other-action" onclick="event.stopPropagation();woLggOpenCreateAccount()">Créer un compte</button></div></div>`;
+      return `<button type="button" class="wo-lgg-account-card${safeName==='Adil'?' selected':''}" onclick="${action}"><div class="wo-lgg-account-avatar">●</div><div class="wo-lgg-account-name">${safeName}</div></button>`;
+    }).join('');
+    const otherHtml=`<div class="wo-lgg-account-card wo-lgg-other-card" role="button" tabindex="0" onclick="woLggOpenOther()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();woLggOpenOther()}">
+      <div class="wo-lgg-account-plus">＋</div>
+      <div class="wo-lgg-account-name">Autre</div>
+      <div class="wo-lgg-other-actions">
+        <button type="button" class="wo-lgg-other-action" onclick="event.stopPropagation();woLggOpenOther()">Se connecter</button>
+        <button type="button" class="wo-lgg-other-action" onclick="event.stopPropagation();woLggOpenCreateAccount()">Créer un compte</button>
+      </div>
+    </div>`;
+    grid.innerHTML=accountHtml+otherHtml;
   }
   function woLggSetAuthPanels(mode){
     const form=document.getElementById('wo-lgg-login-form-wrap'),create=document.getElementById('wo-lgg-create-wrap');
     const or=document.querySelector('#wo-lgg-account-panel .wo-lgg-or');
     // L'écran principal doit rester fidèle à la maquette : comptes + formulaire visibles ensemble.
-    if(form)form.style.display=(mode==='create')?'none':'block';
+    if(form)form.style.display='block';
+    if(form)form.style.display=mode==='create'?'none':'block';
     if(create)create.style.display=mode==='create'?'block':'none';
     if(or)or.style.display='flex';
   }
