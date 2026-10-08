@@ -2570,27 +2570,130 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
   ::view-transition-old(root),::view-transition-new(root){animation-duration:.001ms!important}
 }
 </style>
+
+<style id="wo-lgg-auth-airport-redesign">
+/* V49 — LGG airport operations login: visual-only redesign + small UX helpers. */
+#wo-lgg-auth-overlay{
+  position:fixed!important;inset:0!important;z-index:100000!important;display:flex;align-items:center;justify-content:center;
+  padding:24px!important;box-sizing:border-box!important;overflow:auto!important;
+  background:
+    radial-gradient(circle at 50% 36%,rgba(0,212,255,.09),transparent 34%),
+    linear-gradient(180deg,rgba(3,10,18,.91),rgba(2,7,14,.985)),
+    #040a11!important;
+}
+#wo-lgg-auth-overlay::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;
+  background:
+    linear-gradient(115deg,transparent 0 43%,rgba(255,255,255,.055) 43.1%,transparent 43.3%),
+    repeating-linear-gradient(90deg,transparent 0 79px,rgba(0,212,255,.025) 80px,transparent 81px);
+}
+#wo-lgg-auth-overlay::after{
+  content:"LGG  ·  50°38' N  ·  005°26' E";position:absolute;left:28px;bottom:20px;
+  color:rgba(185,215,228,.24);font:600 8px/1 var(--mono);letter-spacing:2px;pointer-events:none;
+}
+.wo-auth-backdrop-grid{position:absolute;inset:0;pointer-events:none;background:linear-gradient(transparent 96%,rgba(0,212,255,.045) 96%);background-size:100% 44px;opacity:.28}
+.wo-auth-runway{position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:.5}
+.wo-auth-runway::before{
+  content:"";position:absolute;left:50%;top:-20%;width:3px;height:140%;transform:rotate(22deg);
+  background:repeating-linear-gradient(to bottom,rgba(255,255,255,.34) 0 42px,transparent 42px 88px);
+  filter:drop-shadow(0 0 7px rgba(255,255,255,.12));
+}
+.wo-auth-runway::after{
+  content:"";position:absolute;left:calc(50% - 1px);top:52%;width:210px;height:1px;transform:rotate(22deg);
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.42),transparent);box-shadow:0 0 18px rgba(0,212,255,.16);
+}
+.wo-runway-light{position:absolute;width:5px;height:5px;border-radius:50%;background:#9cecff;box-shadow:0 0 12px rgba(0,212,255,.9);animation:woRunwayPulse 2.4s ease-in-out infinite}
+.wo-runway-light.l1{left:18%;top:27%}.wo-runway-light.l2{right:17%;top:62%;animation-delay:.8s}.wo-runway-light.l3{left:72%;top:78%;animation-delay:1.5s}
+.wo-runway-plane{position:absolute;left:49%;top:15%;font-size:17px;color:rgba(255,255,255,.3);transform:rotate(22deg);animation:woPlaneDrift 8s ease-in-out infinite}
+@keyframes woRunwayPulse{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes woPlaneDrift{0%,100%{transform:translateY(0) rotate(22deg);opacity:.18}50%{transform:translateY(16px) rotate(22deg);opacity:.42}}
+.wo-auth-card{
+  position:relative;z-index:2;width:min(410px,100%);box-sizing:border-box;padding:30px;
+  border:1px solid rgba(135,213,231,.24);border-radius:20px;
+  background:linear-gradient(145deg,rgba(23,39,48,.91),rgba(8,18,25,.94));
+  box-shadow:0 30px 90px rgba(0,0,0,.58),0 0 70px rgba(0,212,255,.08),inset 0 1px rgba(255,255,255,.09);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+.wo-auth-card::before{content:"";position:absolute;inset:0;border-radius:20px;pointer-events:none;background:linear-gradient(120deg,rgba(255,255,255,.07),transparent 28%,transparent 72%,rgba(0,212,255,.035));}
+.wo-auth-brand{display:flex;align-items:center;gap:13px;position:relative}
+.wo-auth-brand-mark{width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:11px;color:#fff;font-size:20px;background:linear-gradient(135deg,#ffc400,#ff8a00);box-shadow:0 8px 22px rgba(255,157,0,.25);animation:none}
+.wo-auth-title{font:700 16px/1 var(--sans);color:#fff;letter-spacing:.1px}
+.wo-auth-subtitle{margin-top:5px;font:700 8px/1 var(--mono);letter-spacing:2.1px;color:#8ec1d0}
+.wo-auth-status{display:inline-flex;align-items:center;gap:7px;margin-top:20px;padding:6px 9px;border:1px solid rgba(0,229,160,.17);border-radius:999px;background:rgba(0,229,160,.045);color:#77cdb5;font:700 8px/1 var(--mono);letter-spacing:1.15px}
+.wo-auth-status-dot{width:6px;height:6px;border-radius:50%;background:#00e5a0;box-shadow:0 0 9px rgba(0,229,160,.75)}
+.wo-auth-intro{margin:17px 0 20px;color:#b6c4ca;font-size:12px;line-height:1.55}
+#wo-lgg-auth-overlay .field-label{margin-bottom:7px;color:#dce6e9;font-size:9px;letter-spacing:1.5px}
+#wo-lgg-auth-overlay input[type="email"],#wo-lgg-auth-overlay input[type="password"]{
+  min-height:46px!important;background:rgba(255,255,255,.055)!important;border:1px solid rgba(165,211,222,.19)!important;
+  border-radius:10px!important;color:#fff!important;font-size:13px!important;
+}
+#wo-lgg-auth-overlay input::placeholder{color:#7e929a}
+#wo-lgg-auth-overlay input:focus{border-color:rgba(0,212,255,.68)!important;box-shadow:0 0 0 3px rgba(0,212,255,.09),0 0 22px rgba(0,212,255,.07)!important;background:rgba(0,212,255,.055)!important}
+.wo-auth-password-wrap{position:relative;margin-bottom:0}
+.wo-auth-password-wrap input{padding-right:48px!important}
+.wo-auth-password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;background:transparent;color:#89a4ad;cursor:pointer;border-radius:8px;font-size:14px}
+.wo-auth-password-toggle:hover{color:#fff;background:rgba(255,255,255,.06)}
+.wo-auth-message{min-height:18px;margin:10px 0 7px;color:#ff6684;font-size:11px;line-height:1.4}
+.wo-auth-login{width:100%!important;min-height:46px;padding:12px 16px!important;border-radius:10px!important;background:linear-gradient(135deg,#ffc400,#ff8a00)!important;color:#101010!important;box-shadow:0 8px 24px rgba(255,157,0,.18)!important;letter-spacing:1.2px!important}
+.wo-auth-login:hover{opacity:.94!important;transform:translateY(-1px)!important;box-shadow:0 10px 28px rgba(255,157,0,.27)!important}
+.wo-auth-login-arrow{font-size:17px;line-height:1;transition:transform .2s}.wo-auth-login:hover .wo-auth-login-arrow{transform:translateX(3px)}
+.wo-auth-divider{display:flex;align-items:center;gap:9px;margin:18px 0 12px;color:#60757e;font:700 8px/1 var(--mono);letter-spacing:1px}.wo-auth-divider span{height:1px;flex:1;background:rgba(165,211,222,.11)}
+#wo-lgg-auth-overlay #wo-lgg-visitor-btn{
+  display:flex!important;align-items:center;justify-content:space-between;width:100%!important;min-height:43px;box-sizing:border-box;
+  margin:0!important;padding:11px 13px!important;border:1px solid rgba(128,194,210,.2)!important;border-radius:10px!important;
+  background:rgba(255,255,255,.025)!important;color:#d7e2e6!important;font:700 10px/1 var(--sans)!important;
+  letter-spacing:.3px;cursor:pointer;transition:all .2s
+}
+#wo-lgg-auth-overlay #wo-lgg-visitor-btn:hover{border-color:rgba(0,212,255,.55)!important;background:rgba(0,212,255,.06)!important;color:#fff!important;transform:translateY(-1px)}
+.wo-auth-visitor-arrow{font-size:15px;color:#78a6b1;transition:transform .2s}.wo-lgg-visitor-btn:hover .wo-auth-visitor-arrow{transform:translate(2px,-2px)}
+.wo-auth-visitor-note{text-align:center;margin-top:9px;color:#6f858e;font:500 8px/1.4 var(--mono);letter-spacing:.15px}
+.wo-auth-footer{display:flex;justify-content:center;gap:7px;margin-top:23px;color:#50656e;font:700 7px/1 var(--mono);letter-spacing:1.7px}
+@media(max-width:520px){#wo-lgg-auth-overlay{padding:16px!important}.wo-auth-card{padding:24px 20px;width:100%;border-radius:17px}.wo-auth-runway{opacity:.25}.wo-auth-footer{margin-top:18px}}
+@media(prefers-reduced-motion:reduce){.wo-runway-light,.wo-runway-plane{animation:none!important}}
+</style>
 </head>
 <body>
-<div id="wo-lgg-auth-overlay" style="position:fixed;inset:0;background:rgba(5,5,15,.97);z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px">
-  <div style="width:100%;max-width:390px;background:var(--bg1);border:1px solid var(--b2);border-radius:16px;padding:28px;box-shadow:0 20px 70px rgba(0,0,0,.55)">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><div class="logo-icon" style="animation:none">✈</div><div><div class="logo-text" style="font-size:15px">LGG · Cleaning Ops</div><div class="logo-sub">Connexion sécurisée</div></div></div>
-    <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-bottom:18px">Veuillez vous connecter à votre compte utilisateur.</div>
-    <label class="field-label">E-mail</label><input type="email" id="wo-lgg-email" autocomplete="username" placeholder="adresse e-mail" style="margin-bottom:12px">
-    <label class="field-label">Mot de passe</label><input type="password" id="wo-lgg-password" autocomplete="current-password" placeholder="mot de passe" onkeydown="if(event.key==='Enter')woLggLogin()" style="margin-bottom:12px">
-    <div id="wo-lgg-auth-message" style="min-height:18px;font-size:12px;color:var(--red);margin-bottom:12px"></div>
-    <button class="btn btn-primary" style="width:100%" onclick="woLggLogin()">Se connecter</button>
-
-    <button type="button" id="wo-lgg-visitor-btn" onclick="woLggContinueAsVisitor()"
-      style="width:100%;margin-top:10px;background:transparent;border:1px solid rgba(0,212,255,.28);border-radius:10px;color:var(--t1);padding:11px 16px;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;transition:.2s"
-      onmouseenter="this.style.borderColor='var(--a1)';this.style.color='var(--a1)';this.style.background='rgba(0,212,255,.06)'"
-      onmouseleave="this.style.borderColor='rgba(0,212,255,.28)';this.style.color='var(--t1)';this.style.background='transparent'">
-      Continuer en tant que visiteur
-    </button>
-    <div style="margin-top:8px;text-align:center;font-family:var(--mono);font-size:8px;color:var(--t3)">
-      Session temporaire · aucune donnée de compte ne sera enregistrée
+<div id="wo-lgg-auth-overlay" aria-label="Connexion LGG Cleaning Ops">
+  <div class="wo-auth-backdrop-grid" aria-hidden="true"></div>
+  <div class="wo-auth-runway" aria-hidden="true"><span class="wo-runway-light l1"></span><span class="wo-runway-light l2"></span><span class="wo-runway-light l3"></span><span class="wo-runway-plane">✈</span></div>
+  <section class="wo-auth-card" role="dialog" aria-modal="true" aria-labelledby="wo-auth-title">
+    <div class="wo-auth-brand">
+      <div class="wo-auth-brand-mark" aria-hidden="true">✈</div>
+      <div class="wo-auth-brand-copy">
+        <div id="wo-auth-title" class="wo-auth-title">LGG · Cleaning Ops</div>
+        <div class="wo-auth-subtitle">OPERATIONS · LIÈGE AIRPORT</div>
+      </div>
     </div>
-  </div>
+
+    <div class="wo-auth-status"><span class="wo-auth-status-dot"></span><span>SYSTÈME OPÉRATIONNEL</span></div>
+
+    <div class="wo-auth-intro">Connexion sécurisée à votre espace opérations.</div>
+
+    <label class="field-label" for="wo-lgg-email">E-mail</label>
+    <input type="email" id="wo-lgg-email" autocomplete="username" placeholder="adresse e-mail"
+      onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('wo-lgg-password').focus()}"
+      style="margin-bottom:12px">
+
+    <label class="field-label" for="wo-lgg-password">Mot de passe</label>
+    <div class="wo-auth-password-wrap">
+      <input type="password" id="wo-lgg-password" autocomplete="current-password" placeholder="mot de passe"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();woLggLogin()}" style="margin-bottom:0">
+      <button type="button" class="wo-auth-password-toggle" aria-label="Afficher le mot de passe" onclick="woLggTogglePassword()">◉</button>
+    </div>
+
+    <div id="wo-lgg-auth-message" class="wo-auth-message" aria-live="polite"></div>
+
+    <button class="btn btn-primary wo-auth-login" type="button" onclick="woLggLogin()"><span>Se connecter</span><span class="wo-auth-login-arrow">→</span></button>
+
+    <div class="wo-auth-divider"><span></span><b>OU</b><span></span></div>
+
+    <button type="button" id="wo-lgg-visitor-btn" onclick="woLggContinueAsVisitor()">
+      <span>Continuer en tant que visiteur</span><span class="wo-auth-visitor-arrow">↗</span>
+    </button>
+    <div class="wo-auth-visitor-note">Session temporaire · aucune donnée de compte enregistrée</div>
+
+    <div class="wo-auth-footer"><span>LGG</span><span>•</span><span>CLEANING OPERATIONS</span></div>
+  </section>
 </div>
 
 <header id="app-header">
@@ -3348,6 +3451,16 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     if(r)r.textContent=woLggProfile?.role||'';
     if(b)b.style.display='inline-flex';
   }
+  function woLggTogglePassword(){
+    const input=document.getElementById('wo-lgg-password');
+    const btn=document.querySelector('.wo-auth-password-toggle');
+    if(!input)return;
+    const visible=input.type==='text';
+    input.type=visible?'password':'text';
+    if(btn){btn.textContent=visible?'◉':'◉';btn.setAttribute('aria-label',visible?'Afficher le mot de passe':'Masquer le mot de passe');}
+    input.focus();
+  }
+
   async function woLggLogin(){
     const email=document.getElementById('wo-lgg-email').value.trim(),password=document.getElementById('wo-lgg-password').value,m=document.getElementById('wo-lgg-auth-message');
     if(!email||!password){m.textContent='Entre ton e-mail et ton mot de passe.';return;} m.textContent='Connexion…';
