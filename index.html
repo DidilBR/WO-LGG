@@ -2571,130 +2571,308 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 }
 </style>
 
-<style id="wo-lgg-auth-airport-redesign">
-/* V49 — LGG airport operations login: visual-only redesign + small UX helpers. */
-#wo-lgg-auth-overlay{
-  position:fixed!important;inset:0!important;z-index:100000!important;display:flex;align-items:center;justify-content:center;
-  padding:24px!important;box-sizing:border-box!important;overflow:auto!important;
-  background:
-    radial-gradient(circle at 50% 36%,rgba(0,212,255,.09),transparent 34%),
-    linear-gradient(180deg,rgba(3,10,18,.91),rgba(2,7,14,.985)),
-    #040a11!important;
+<style id="wo-lgg-v90-crewbus-radical">
+/* V90 — refonte radicale de l'étape 4 : poste de contrôle épuré, tableau unifié + feuille sélectionnée. */
+#step-4.crewbus-radical-v90{max-width:none!important}
+#step-4.crewbus-radical-v90 .crewbus-clean-head{max-width:1180px;margin:0 auto 14px;text-align:left}
+#step-4.crewbus-radical-v90 .crewbus-title-row{justify-content:flex-start}
+#step-4.crewbus-radical-v90 .section-desc{max-width:760px;margin-left:0;margin-right:0;color:var(--t3)}
+
+.cb90-command{
+  width:100%;max-width:1180px;margin:0 auto 10px;
+  display:grid;grid-template-columns:minmax(250px,1fr) auto auto;align-items:center;gap:12px;
+  padding:12px 14px;border:1px solid rgba(255,255,255,.08);border-radius:15px;
+  background:linear-gradient(120deg,rgba(143,168,255,.055),rgba(255,255,255,.018));
 }
-#wo-lgg-auth-overlay::before{
-  content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;
-  background:
-    linear-gradient(115deg,transparent 0 43%,rgba(255,255,255,.055) 43.1%,transparent 43.3%),
-    repeating-linear-gradient(90deg,transparent 0 79px,rgba(0,212,255,.025) 80px,transparent 81px);
+.cb90-command-main{display:flex;align-items:center;gap:11px;min-width:0}
+.cb90-command-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;border-radius:12px;background:linear-gradient(145deg,rgba(143,168,255,.13),rgba(201,85,255,.09));border:1px solid rgba(143,168,255,.18);font-size:19px}
+.cb90-command-copy{min-width:0;display:flex;flex-direction:column;gap:2px}
+.cb90-kicker{display:block;font:900 8px/1 var(--mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--t3)}
+.cb90-command-copy strong{font-size:13px;color:var(--t1);letter-spacing:-.01em}
+.cb90-command-copy small{font-size:8px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb90-command-stats{display:flex;align-items:stretch;border:1px solid rgba(255,255,255,.07);border-radius:11px;overflow:hidden;background:rgba(0,0,0,.08)}
+.cb90-stat{min-width:76px;padding:7px 10px;border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.cb90-stat:last-child{border-right:0}
+.cb90-stat b{font-size:17px;line-height:1;color:var(--t1)}
+.cb90-stat span{font:800 7px/1 var(--mono);letter-spacing:.9px;text-transform:uppercase;color:var(--t3)}
+.cb90-stat-arr b{color:#63efb2}.cb90-stat-dep b{color:#ff7892}
+.cb90-refresh{height:40px;display:inline-flex;align-items:center;gap:7px;padding:0 12px;border:1px solid rgba(143,168,255,.18);border-radius:10px;background:rgba(143,168,255,.055);color:var(--t1);font:900 8px var(--mono);letter-spacing:.5px;cursor:pointer;transition:.18s}
+.cb90-refresh:hover{border-color:rgba(143,168,255,.42);background:rgba(143,168,255,.09);transform:translateY(-1px)}
+.cb90-refresh:disabled{opacity:.55;cursor:wait;transform:none}
+.cb90-refresh .crewbus-refresh-icon{font-size:16px}
+.cb90-refresh.is-loading .crewbus-refresh-icon{animation:crewbusSpin .8s linear infinite}
+
+.cb90-controls{
+  width:100%;max-width:1180px;margin:0 auto 11px;
+  display:grid;grid-template-columns:minmax(250px,1.35fr) auto 1fr auto;align-items:center;gap:8px;
+  padding:8px;border:1px solid rgba(255,255,255,.08);border-radius:13px;background:rgba(255,255,255,.018)
 }
-#wo-lgg-auth-overlay::after{
-  content:"LGG  ·  50°38' N  ·  005°26' E";position:absolute;left:28px;bottom:20px;
-  color:rgba(185,215,228,.24);font:600 8px/1 var(--mono);letter-spacing:2px;pointer-events:none;
+.cb90-search{height:38px;min-width:0;position:relative;display:flex;align-items:center}
+.cb90-search>span{position:absolute;left:11px;font-size:17px;color:var(--t3);pointer-events:none}
+.cb90-search input{width:100%;height:38px!important;margin:0!important;padding:0 36px 0 32px!important;border-radius:9px!important;border:1px solid rgba(255,255,255,.08)!important;background:rgba(0,0,0,.11)!important;font-size:10px!important}
+.cb90-search>button{position:absolute;right:5px;width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:var(--t3);font-size:17px;cursor:pointer}
+.cb90-search>button:hover{background:rgba(255,255,255,.05);color:var(--t1)}
+.cb90-filterbar{display:flex;align-items:center;gap:4px;padding:3px;border-radius:10px;border:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.09)}
+.cb90-controls .crewbus-filter{min-height:30px;padding:6px 9px;border:0;background:transparent;color:var(--t3);border-radius:7px;font:900 7px var(--mono);letter-spacing:.5px}
+.cb90-controls .crewbus-filter em{font-style:normal;opacity:.62;margin-left:4px}
+.cb90-controls .crewbus-filter.active{background:rgba(143,168,255,.12);color:var(--t1);box-shadow:none}
+.cb90-control-spacer{min-width:0}
+.cb90-actions{display:flex;align-items:center;gap:5px;justify-content:flex-end}
+.cb90-lite{height:32px;padding:0 9px;border:1px solid rgba(143,168,255,.16);border-radius:8px;background:rgba(143,168,255,.045);color:var(--a1);font:900 7px var(--mono);cursor:pointer;white-space:nowrap}
+.cb90-lite.ghost{color:var(--t3);background:transparent}
+.cb90-lite:hover{border-color:rgba(143,168,255,.4);color:var(--t1)}
+.cb90-sort{display:flex;align-items:center;gap:6px;margin-left:2px}
+.cb90-sort span{font:800 7px var(--mono);letter-spacing:1px;text-transform:uppercase;color:var(--t3)}
+.cb90-sort select{width:122px!important;height:32px!important;margin:0!important;padding:0 8px!important;border-radius:8px!important;font-size:8px!important}
+
+.cb90-workspace{width:100%;max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:11px;align-items:start}
+.cb90-board,.cb90-manifest{border:1px solid rgba(255,255,255,.08);border-radius:15px;background:rgba(255,255,255,.015);overflow:hidden}
+.cb90-board{min-width:0}
+.cb90-board-head,.cb90-manifest-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;border-bottom:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,rgba(255,255,255,.018),transparent)}
+.cb90-board-head>div:first-child,.cb90-manifest-head>div{min-width:0;display:flex;flex-direction:column;gap:3px}
+.cb90-board-head strong,.cb90-manifest-head strong{font-size:12px;color:var(--t1);line-height:1.1}
+.cb90-board-head small,.cb90-manifest-head small{font-size:8px;color:var(--t3)}
+.cb90-board-badge{height:28px;display:inline-flex;align-items:center;padding:0 9px;border-radius:8px;border:1px solid rgba(143,168,255,.14);background:rgba(143,168,255,.045);font:800 7px var(--mono);letter-spacing:.7px;color:var(--a1);text-transform:uppercase}
+.cb90-columns-head{display:grid;grid-template-columns:28px 68px minmax(92px,1.05fr) 130px 88px 55px minmax(104px,.9fr);gap:8px;padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.055);background:rgba(0,0,0,.12);font:900 6px var(--mono);letter-spacing:1.1px;text-transform:uppercase;color:rgba(255,255,255,.34)}
+.cb90-flight-group{border-bottom:1px solid rgba(255,255,255,.05)}
+.cb90-flight-group:last-child{border-bottom:0}
+.cb90-flight-group.is-muted{opacity:.38}
+.cb90-flight-group header{height:31px;display:flex;align-items:center;gap:7px;padding:0 10px;border-bottom:1px solid rgba(255,255,255,.045);background:rgba(255,255,255,.012)}
+.cb90-group-dot{width:6px;height:6px;border-radius:50%;background:var(--a1);box-shadow:0 0 10px rgba(143,168,255,.36)}
+.cb90-flight-group-arr .cb90-group-dot{background:#61eab0;box-shadow:0 0 10px rgba(97,234,176,.32)}
+.cb90-flight-group-dep .cb90-group-dot{background:#ff718d;box-shadow:0 0 10px rgba(255,113,141,.3)}
+.cb90-flight-group-other .cb90-group-dot{background:#ffd166;box-shadow:0 0 10px rgba(255,209,102,.25)}
+.cb90-flight-group header strong{font:900 8px var(--mono);letter-spacing:1px;color:var(--t1)}
+.cb90-flight-group header b{min-width:21px;height:18px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:rgba(255,255,255,.045);font:900 7px var(--mono);color:var(--t2)}
+.cb90-flight-group header small{margin-left:auto;font:700 6px var(--mono);letter-spacing:1px;color:var(--t3);text-transform:uppercase}
+.cb90-group-list{display:grid;gap:1px}
+
+#step-4.crewbus-radical-v90 .cb90-flight-row{
+  display:grid!important;grid-template-columns:28px 68px minmax(92px,1.05fr) 130px 88px 55px minmax(104px,.9fr)!important;gap:8px!important;align-items:center;
+  min-height:55px!important;padding:7px 10px!important;border:0;border-bottom:1px solid rgba(255,255,255,.045)!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;transform:none!important;position:relative;overflow:hidden
 }
-.wo-auth-backdrop-grid{position:absolute;inset:0;pointer-events:none;background:linear-gradient(transparent 96%,rgba(0,212,255,.045) 96%);background-size:100% 44px;opacity:.28}
-.wo-auth-runway{position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:.5}
-.wo-auth-runway::before{
-  content:"";position:absolute;left:50%;top:-20%;width:3px;height:140%;transform:rotate(22deg);
-  background:repeating-linear-gradient(to bottom,rgba(255,255,255,.34) 0 42px,transparent 42px 88px);
-  filter:drop-shadow(0 0 7px rgba(255,255,255,.12));
+#step-4.crewbus-radical-v90 .cb90-flight-row:before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:2px;border-radius:2px;background:transparent}
+#step-4.crewbus-radical-v90 .cb90-flight-row:hover{background:rgba(255,255,255,.025)!important;border-color:rgba(255,255,255,.045)!important}
+#step-4.crewbus-radical-v90 .cb90-flight-row.selected{background:linear-gradient(90deg,rgba(143,168,255,.055),rgba(143,168,255,.018))!important;border-color:rgba(143,168,255,.06)!important}
+#step-4.crewbus-radical-v90 .cb90-flight-row.selected:before{background:linear-gradient(180deg,var(--a1),var(--a2))}
+#step-4.crewbus-radical-v90 .cb90-check{width:22px!important;height:22px!important;margin:0!important;border-radius:7px!important;background:rgba(255,255,255,.015)!important;border:1px solid rgba(255,255,255,.12)!important;color:#fff!important;font-size:11px!important}
+#step-4.crewbus-radical-v90 .cb90-flight-row.selected .cb90-check{background:linear-gradient(135deg,var(--a1),var(--a2))!important;border-color:transparent!important;box-shadow:0 0 10px rgba(143,168,255,.18)}
+#step-4.crewbus-radical-v90 .cb90-time{min-width:0;display:flex!important;flex-direction:column;align-items:flex-start;gap:3px}
+#step-4.crewbus-radical-v90 .cb90-time strong{font:900 15px/1 var(--mono);letter-spacing:-.2px;color:var(--t1)}
+#step-4.crewbus-radical-v90 .cb90-time span{font:800 6px/1 var(--mono);letter-spacing:.9px;color:var(--t3)}
+#step-4.crewbus-radical-v90 .cb90-flight{min-width:0}
+#step-4.crewbus-radical-v90 .cb90-flight-line{display:flex;align-items:center;gap:5px;min-width:0}
+#step-4.crewbus-radical-v90 .cb90-flight-line>strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:900 11px/1 var(--mono);color:var(--t1)}
+#step-4.crewbus-radical-v90 .cb90-flight .crewbus-direction{font-size:6px!important;padding:3px 5px!important;border-radius:5px!important}
+.cb90-manual-pill{padding:3px 5px;border-radius:5px;border:1px solid rgba(255,209,102,.14);background:rgba(255,209,102,.05);color:#ffd166;font:900 6px var(--mono);letter-spacing:.5px}
+.cb90-flight-type{margin-top:4px;font-size:7px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#step-4.crewbus-radical-v90 .cb90-reg-cell{min-width:0}
+#step-4.crewbus-radical-v90 .cb90-reg{width:100%!important;max-width:none!important;height:30px!important;min-height:30px!important;padding:0 8px!important;border-radius:7px!important;background:rgba(0,0,0,.10)!important;border:1px solid rgba(255,255,255,.08)!important;font:900 9px var(--mono)!important;color:var(--t1)!important;letter-spacing:.3px}
+#step-4.crewbus-radical-v90 .cb90-reg:focus{border-color:rgba(255,180,0,.42)!important;box-shadow:0 0 0 3px rgba(255,180,0,.07)!important}
+#step-4.crewbus-radical-v90 .cb90-handler,.cb90-stand{min-width:0;font:800 8px var(--mono);color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#step-4.crewbus-radical-v90 .cb90-stand{color:var(--t1);font-weight:900}
+#step-4.crewbus-radical-v90 .cb90-row-actions{display:flex!important;align-items:center;justify-content:flex-start!important;flex-wrap:wrap;gap:4px!important;min-width:0;margin:0!important}
+#step-4.crewbus-radical-v90 .cb90-row-actions .crewbus-mode-btn,#step-4.crewbus-radical-v90 .cb90-row-actions .crewbus-hs-btn{min-height:25px!important;padding:4px 6px!important;border-radius:6px!important;font-size:6px!important}
+#step-4.crewbus-radical-v90 .cb90-empty{margin:8px 10px;padding:24px 12px;border:1px dashed rgba(255,255,255,.09);background:transparent}
+
+.cb90-manifest{position:sticky;top:76px;max-height:calc(100dvh - 92px);display:flex;flex-direction:column}
+.cb90-manifest-head{padding:12px 13px}
+.cb90-manifest-count{min-width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:linear-gradient(135deg,rgba(143,168,255,.13),rgba(201,85,255,.08));border:1px solid rgba(143,168,255,.18);font:900 14px var(--mono);color:var(--t1)}
+.cb90-manifest-list{padding:7px;display:grid;gap:3px;overflow:auto;min-height:125px;max-height:39vh}
+.crewbus-selected-empty{min-height:130px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;border:1px dashed rgba(255,255,255,.08);border-radius:10px;color:var(--t3);padding:18px}
+.crewbus-selected-empty>span{font-size:18px;opacity:.5}
+.crewbus-selected-empty strong{font-size:10px;color:var(--t2)}
+.crewbus-selected-empty small{font-size:8px;line-height:1.35;color:var(--t3)}
+.cb90-manifest-row{display:grid;grid-template-columns:24px 44px minmax(0,1fr) 22px;gap:7px;align-items:center;padding:7px;border-radius:8px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.018)}
+.cb90-manifest-row:hover{background:rgba(255,255,255,.035);border-color:rgba(143,168,255,.15)}
+.cb90-manifest-index{font:900 7px var(--mono);color:var(--t3);text-align:center}
+.cb90-manifest-time{font:900 11px var(--mono);color:var(--t1);line-height:1}
+.cb90-manifest-time small{display:block;margin-top:4px;font:800 5px var(--mono);letter-spacing:.7px;color:var(--t3)}
+.cb90-manifest-main{min-width:0}
+.cb90-manifest-main strong{display:block;font:900 9px var(--mono);color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb90-manifest-main span{display:block;margin-top:3px;font-size:7px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb90-manifest-remove{width:22px;height:22px;border:0;border-radius:6px;background:transparent;color:var(--t3);font-size:16px;cursor:pointer}
+.cb90-manifest-remove:hover{background:rgba(255,95,122,.08);color:#ff718d}
+.cb90-manifest-order{margin:5px 7px 7px;padding:9px 10px;border:1px solid rgba(255,255,255,.07);border-radius:9px;background:rgba(255,255,255,.014);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cb90-manifest-order div{min-width:0;display:flex;flex-direction:column;gap:3px}
+.cb90-manifest-order span{font:800 6px var(--mono);letter-spacing:.9px;color:var(--t3)}
+.cb90-manifest-order strong{font-size:9px;color:var(--t1)}
+.cb90-order-button{height:28px;padding:0 8px;border-radius:7px;border:1px solid rgba(143,168,255,.18);background:rgba(143,168,255,.055);color:var(--a1);font:900 7px var(--mono);cursor:pointer}
+.cb90-order-button[data-order="grouped"]{border-color:rgba(255,209,102,.22);background:rgba(255,209,102,.05);color:#ffd166}
+.cb90-manifest-notes{padding:0 7px 7px}
+.cb90-manifest-notes label{display:flex;align-items:center;gap:6px;margin-bottom:5px;font:800 7px var(--mono);letter-spacing:.8px;text-transform:uppercase;color:var(--t3)}
+.cb90-manifest-notes textarea{width:100%!important;min-height:70px!important;margin:0!important;resize:vertical!important;padding:8px!important;border-radius:8px!important;font-size:8px!important;line-height:1.45!important;background:rgba(0,0,0,.1)!important;border:1px solid rgba(255,255,255,.07)!important}
+.cb90-generate{margin:0 7px 6px;width:calc(100% - 14px)!important;min-height:48px;padding:7px 9px!important;border-radius:10px!important;display:grid!important;grid-template-columns:28px 1fr auto;gap:7px;align-items:center;text-align:left}
+.cb90-generate-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.10);font-size:12px}
+.cb90-generate span:nth-child(2){display:flex;flex-direction:column;gap:3px;min-width:0}
+.cb90-generate strong{font-size:9px;line-height:1.1}
+.cb90-generate small{font-size:7px;opacity:.58}
+.cb90-generate>b{font-size:16px;font-weight:400}
+.cb90-back{margin:0 7px 8px;height:30px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:transparent;color:var(--t3);font:800 7px var(--mono);cursor:pointer}
+.cb90-back:hover{color:var(--t1);border-color:rgba(255,255,255,.18)}
+
+.cb90-manual{width:100%;max-width:1180px;margin:10px auto 0}
+.cb90-manual details{border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.014);overflow:hidden}
+.cb90-manual summary{min-height:47px;padding:8px 11px;display:flex;align-items:center;gap:9px;cursor:pointer;list-style:none}
+.cb90-manual summary::-webkit-details-marker{display:none}
+.cb90-manual summary>span:nth-child(2){min-width:0;display:flex;flex-direction:column;gap:3px}
+.cb90-manual summary strong{font-size:10px;color:var(--t1)}
+.cb90-manual summary small{font-size:8px;color:var(--t3)}
+.cb90-manual summary em{margin-left:auto;font:900 7px var(--mono);letter-spacing:.9px;text-transform:uppercase;color:var(--t3);font-style:normal}
+.cb90-manual-icon{width:27px;height:27px;display:flex;align-items:center;justify-content:center;border-radius:7px;border:1px solid rgba(255,209,102,.16);background:rgba(255,209,102,.045);color:#ffd166;font-size:15px}
+.cb90-manual .crewbus-add-grid{padding:10px 11px;border-top:1px solid rgba(255,255,255,.06);display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+.cb90-manual .crewbus-field>span{display:block;font:800 6px var(--mono);letter-spacing:.9px;text-transform:uppercase;color:var(--t3);margin-bottom:4px}
+.cb90-manual .crewbus-field input,.cb90-manual .crewbus-field select{width:100%!important;min-height:32px;height:32px!important;padding:6px 8px!important;border-radius:8px!important;font-size:9px!important}
+.cb90-manual .crewbus-add-btn{width:calc(100% - 22px);margin:0 11px 11px;height:34px;border-radius:8px;font-size:8px}
+
+/* Mode combiné : on garde la nouvelle organisation, sans écraser la colonne opérations. */
+@media(min-width:760px){
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90{padding:0 2px 22px!important;max-height:calc(100dvh - 88px);overflow:auto;position:sticky!important;top:76px}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .crewbus-clean-head,
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-command,
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-controls,
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-workspace,
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-manual{max-width:none!important;width:100%!important}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-workspace{grid-template-columns:minmax(0,1fr) 286px;gap:8px}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-controls{grid-template-columns:1fr auto;}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-control-spacer{display:none}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-actions{grid-column:1/-1;justify-content:flex-start}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-command{grid-template-columns:1fr auto}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-refresh{grid-column:2;grid-row:1}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-command-stats{grid-column:1}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-command-main{grid-column:1;grid-row:1}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-command-stats{justify-self:end;transform:translateY(27px)}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-command{padding-bottom:42px}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-columns-head,
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-flight-row{grid-template-columns:25px 52px minmax(70px,1fr) 88px 63px 44px minmax(72px,.9fr)!important}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-columns-head{font-size:5px}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-flight-row{min-height:49px!important;padding:6px 7px!important}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-time strong{font-size:12px}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-flight-line>strong{font-size:9px}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-reg{font-size:8px!important}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-row-actions .crewbus-mode-btn,
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-row-actions .crewbus-hs-btn{font-size:5px!important;padding:4px 5px!important}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-manifest{position:static;max-height:30vh}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-manifest-list{max-height:16vh}
+  .workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb90-manual{margin-top:7px}
 }
-.wo-auth-runway::after{
-  content:"";position:absolute;left:calc(50% - 1px);top:52%;width:210px;height:1px;transform:rotate(22deg);
-  background:linear-gradient(90deg,transparent,rgba(0,212,255,.42),transparent);box-shadow:0 0 18px rgba(0,212,255,.16);
+
+@media(max-width:980px){
+  .cb90-controls{grid-template-columns:1fr}
+  .cb90-control-spacer{display:none}
+  .cb90-actions{justify-content:flex-start;flex-wrap:wrap}
+  .cb90-workspace{grid-template-columns:1fr}
+  .cb90-manifest{position:static;max-height:none}
+  .cb90-manifest-list{max-height:270px}
+  .cb90-manual .crewbus-add-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
-.wo-runway-light{position:absolute;width:5px;height:5px;border-radius:50%;background:#9cecff;box-shadow:0 0 12px rgba(0,212,255,.9);animation:woRunwayPulse 2.4s ease-in-out infinite}
-.wo-runway-light.l1{left:18%;top:27%}.wo-runway-light.l2{right:17%;top:62%;animation-delay:.8s}.wo-runway-light.l3{left:72%;top:78%;animation-delay:1.5s}
-.wo-runway-plane{position:absolute;left:49%;top:15%;font-size:17px;color:rgba(255,255,255,.3);transform:rotate(22deg);animation:woPlaneDrift 8s ease-in-out infinite}
-@keyframes woRunwayPulse{0%,100%{opacity:.35}50%{opacity:1}}
-@keyframes woPlaneDrift{0%,100%{transform:translateY(0) rotate(22deg);opacity:.18}50%{transform:translateY(16px) rotate(22deg);opacity:.42}}
-.wo-auth-card{
-  position:relative;z-index:2;width:min(410px,100%);box-sizing:border-box;padding:30px;
-  border:1px solid rgba(135,213,231,.24);border-radius:20px;
-  background:linear-gradient(145deg,rgba(23,39,48,.91),rgba(8,18,25,.94));
-  box-shadow:0 30px 90px rgba(0,0,0,.58),0 0 70px rgba(0,212,255,.08),inset 0 1px rgba(255,255,255,.09);
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+@media(max-width:760px){
+  #step-4.crewbus-radical-v90 .crewbus-clean-head{padding:0 1px}
+  .cb90-command{grid-template-columns:1fr;gap:9px}
+  .cb90-command-stats{justify-content:stretch}
+  .cb90-stat{flex:1}
+  .cb90-refresh{width:100%;justify-content:center}
+  .cb90-workspace{grid-template-columns:1fr}
+  .cb90-board{overflow:hidden}
+  .cb90-columns-head{display:none}
+  #step-4.crewbus-radical-v90 .cb90-flight-row{grid-template-columns:25px 58px minmax(0,1fr) auto!important;grid-template-rows:auto auto auto!important;gap:0 7px!important;min-height:0!important;padding:8px 8px!important}
+  #step-4.crewbus-radical-v90 .cb90-check{grid-column:1!important;grid-row:1 / 3!important}
+  #step-4.crewbus-radical-v90 .cb90-time{grid-column:2!important;grid-row:1!important}
+  #step-4.crewbus-radical-v90 .cb90-flight{grid-column:3!important;grid-row:1!important}
+  #step-4.crewbus-radical-v90 .cb90-reg-cell{grid-column:3!important;grid-row:2!important;margin-top:6px}
+  #step-4.crewbus-radical-v90 .cb90-handler{grid-column:4!important;grid-row:1!important;max-width:82px;text-align:right}
+  #step-4.crewbus-radical-v90 .cb90-stand{grid-column:4!important;grid-row:2!important;text-align:right}
+  #step-4.crewbus-radical-v90 .cb90-row-actions{grid-column:1 / -1!important;grid-row:3!important;margin-top:6px!important}
+  .cb90-manual .crewbus-add-grid{grid-template-columns:1fr 1fr}
 }
-.wo-auth-card::before{content:"";position:absolute;inset:0;border-radius:20px;pointer-events:none;background:linear-gradient(120deg,rgba(255,255,255,.07),transparent 28%,transparent 72%,rgba(0,212,255,.035));}
-.wo-auth-brand{display:flex;align-items:center;gap:13px;position:relative}
-.wo-auth-brand-mark{width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:11px;color:#fff;font-size:20px;background:linear-gradient(135deg,#ffc400,#ff8a00);box-shadow:0 8px 22px rgba(255,157,0,.25);animation:none}
-.wo-auth-title{font:700 16px/1 var(--sans);color:#fff;letter-spacing:.1px}
-.wo-auth-subtitle{margin-top:5px;font:700 8px/1 var(--mono);letter-spacing:2.1px;color:#8ec1d0}
-.wo-auth-status{display:inline-flex;align-items:center;gap:7px;margin-top:20px;padding:6px 9px;border:1px solid rgba(0,229,160,.17);border-radius:999px;background:rgba(0,229,160,.045);color:#77cdb5;font:700 8px/1 var(--mono);letter-spacing:1.15px}
-.wo-auth-status-dot{width:6px;height:6px;border-radius:50%;background:#00e5a0;box-shadow:0 0 9px rgba(0,229,160,.75)}
-.wo-auth-intro{margin:17px 0 20px;color:#b6c4ca;font-size:12px;line-height:1.55}
-#wo-lgg-auth-overlay .field-label{margin-bottom:7px;color:#dce6e9;font-size:9px;letter-spacing:1.5px}
-#wo-lgg-auth-overlay input[type="email"],#wo-lgg-auth-overlay input[type="password"]{
-  min-height:46px!important;background:rgba(255,255,255,.055)!important;border:1px solid rgba(165,211,222,.19)!important;
-  border-radius:10px!important;color:#fff!important;font-size:13px!important;
+@media(max-width:500px){
+  .cb90-filterbar{overflow:auto}
+  .cb90-controls .crewbus-filter{flex:1;min-width:72px}
+  .cb90-actions>*{flex:1}
+  .cb90-sort{width:100%;margin-left:0;justify-content:space-between}
+  .cb90-sort select{flex:1;width:auto!important}
+  .cb90-stat{min-width:0;padding:7px 6px}
+  .cb90-stat b{font-size:15px}
+  #step-4.crewbus-radical-v90 .cb90-handler{max-width:68px}
+  .cb90-manual .crewbus-add-grid{grid-template-columns:1fr}
 }
-#wo-lgg-auth-overlay input::placeholder{color:#7e929a}
-#wo-lgg-auth-overlay input:focus{border-color:rgba(0,212,255,.68)!important;box-shadow:0 0 0 3px rgba(0,212,255,.09),0 0 22px rgba(0,212,255,.07)!important;background:rgba(0,212,255,.055)!important}
-.wo-auth-password-wrap{position:relative;margin-bottom:0}
-.wo-auth-password-wrap input{padding-right:48px!important}
-.wo-auth-password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;background:transparent;color:#89a4ad;cursor:pointer;border-radius:8px;font-size:14px}
-.wo-auth-password-toggle:hover{color:#fff;background:rgba(255,255,255,.06)}
-.wo-auth-message{min-height:18px;margin:10px 0 7px;color:#ff6684;font-size:11px;line-height:1.4}
-.wo-auth-login{width:100%!important;min-height:46px;padding:12px 16px!important;border-radius:10px!important;background:linear-gradient(135deg,#ffc400,#ff8a00)!important;color:#101010!important;box-shadow:0 8px 24px rgba(255,157,0,.18)!important;letter-spacing:1.2px!important}
-.wo-auth-login:hover{opacity:.94!important;transform:translateY(-1px)!important;box-shadow:0 10px 28px rgba(255,157,0,.27)!important}
-.wo-auth-login-arrow{font-size:17px;line-height:1;transition:transform .2s}.wo-auth-login:hover .wo-auth-login-arrow{transform:translateX(3px)}
-.wo-auth-divider{display:flex;align-items:center;gap:9px;margin:18px 0 12px;color:#60757e;font:700 8px/1 var(--mono);letter-spacing:1px}.wo-auth-divider span{height:1px;flex:1;background:rgba(165,211,222,.11)}
-#wo-lgg-auth-overlay #wo-lgg-visitor-btn{
-  display:flex!important;align-items:center;justify-content:space-between;width:100%!important;min-height:43px;box-sizing:border-box;
-  margin:0!important;padding:11px 13px!important;border:1px solid rgba(128,194,210,.2)!important;border-radius:10px!important;
-  background:rgba(255,255,255,.025)!important;color:#d7e2e6!important;font:700 10px/1 var(--sans)!important;
-  letter-spacing:.3px;cursor:pointer;transition:all .2s
-}
-#wo-lgg-auth-overlay #wo-lgg-visitor-btn:hover{border-color:rgba(0,212,255,.55)!important;background:rgba(0,212,255,.06)!important;color:#fff!important;transform:translateY(-1px)}
-.wo-auth-visitor-arrow{font-size:15px;color:#78a6b1;transition:transform .2s}.wo-lgg-visitor-btn:hover .wo-auth-visitor-arrow{transform:translate(2px,-2px)}
-.wo-auth-visitor-note{text-align:center;margin-top:9px;color:#6f858e;font:500 8px/1.4 var(--mono);letter-spacing:.15px}
-.wo-auth-footer{display:flex;justify-content:center;gap:7px;margin-top:23px;color:#50656e;font:700 7px/1 var(--mono);letter-spacing:1.7px}
-@media(max-width:520px){#wo-lgg-auth-overlay{padding:16px!important}.wo-auth-card{padding:24px 20px;width:100%;border-radius:17px}.wo-auth-runway{opacity:.25}.wo-auth-footer{margin-top:18px}}
-@media(prefers-reduced-motion:reduce){.wo-runway-light,.wo-runway-plane{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.cb90-refresh,.cb90-flight-row{transition:none!important}}
 </style>
 </head>
 <body>
-<div id="wo-lgg-auth-overlay" aria-label="Connexion LGG Cleaning Ops">
-  <div class="wo-auth-backdrop-grid" aria-hidden="true"></div>
-  <div class="wo-auth-runway" aria-hidden="true"><span class="wo-runway-light l1"></span><span class="wo-runway-light l2"></span><span class="wo-runway-light l3"></span><span class="wo-runway-plane">✈</span></div>
-  <section class="wo-auth-card" role="dialog" aria-modal="true" aria-labelledby="wo-auth-title">
-    <div class="wo-auth-brand">
-      <div class="wo-auth-brand-mark" aria-hidden="true">✈</div>
-      <div class="wo-auth-brand-copy">
-        <div id="wo-auth-title" class="wo-auth-title">LGG · Cleaning Ops</div>
-        <div class="wo-auth-subtitle">OPERATIONS · LIÈGE AIRPORT</div>
+<div id="wo-lgg-auth-overlay" class="lgg-auth-v1">
+  <div class="lgg-auth-runway" aria-hidden="true">
+    <span class="runway-plane">✈</span><i></i><i></i><i></i><i></i><i></i>
+    <span class="runway-coordinates">LGG · 50°38′ N · 005°26′ E</span>
+  </div>
+  <section class="lgg-auth-card" role="dialog" aria-modal="true" aria-labelledby="lgg-auth-title">
+    <div class="lgg-auth-brand">
+      <div class="lgg-auth-logo">✈</div>
+      <div><h1 id="lgg-auth-title">LGG · Cleaning Ops</h1><p>OPERATIONS · LIÈGE AIRPORT</p></div>
+    </div>
+    <div class="lgg-auth-status"><span></span>SYSTÈME OPÉRATIONNEL</div>
+    <p class="lgg-auth-intro">Connexion sécurisée à votre espace opérations.</p>
+    <form class="lgg-auth-form" onsubmit="event.preventDefault();woLggLogin()">
+      <label for="wo-lgg-email">E-MAIL</label>
+      <input type="email" id="wo-lgg-email" autocomplete="username" placeholder="adresse e-mail" required>
+      <label for="wo-lgg-password">MOT DE PASSE</label>
+      <div class="lgg-auth-password">
+        <input type="password" id="wo-lgg-password" autocomplete="current-password" placeholder="mot de passe" required>
+        <button type="button" aria-label="Afficher ou masquer le mot de passe" onclick="const p=document.getElementById('wo-lgg-password');p.type=p.type==='password'?'text':'password';this.classList.toggle('is-visible',p.type==='text')"><span></span></button>
       </div>
-    </div>
-
-    <div class="wo-auth-status"><span class="wo-auth-status-dot"></span><span>SYSTÈME OPÉRATIONNEL</span></div>
-
-    <div class="wo-auth-intro">Connexion sécurisée à votre espace opérations.</div>
-
-    <label class="field-label" for="wo-lgg-email">E-mail</label>
-    <input type="email" id="wo-lgg-email" autocomplete="username" placeholder="adresse e-mail"
-      onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('wo-lgg-password').focus()}"
-      style="margin-bottom:12px">
-
-    <label class="field-label" for="wo-lgg-password">Mot de passe</label>
-    <div class="wo-auth-password-wrap">
-      <input type="password" id="wo-lgg-password" autocomplete="current-password" placeholder="mot de passe"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();woLggLogin()}" style="margin-bottom:0">
-      <button type="button" class="wo-auth-password-toggle" aria-label="Afficher le mot de passe" onclick="woLggTogglePassword()">◉</button>
-    </div>
-
-    <div id="wo-lgg-auth-message" class="wo-auth-message" aria-live="polite"></div>
-
-    <button class="btn btn-primary wo-auth-login" type="button" onclick="woLggLogin()"><span>Se connecter</span><span class="wo-auth-login-arrow">→</span></button>
-
-    <div class="wo-auth-divider"><span></span><b>OU</b><span></span></div>
-
-    <button type="button" id="wo-lgg-visitor-btn" onclick="woLggContinueAsVisitor()">
-      <span>Continuer en tant que visiteur</span><span class="wo-auth-visitor-arrow">↗</span>
-    </button>
-    <div class="wo-auth-visitor-note">Session temporaire · aucune donnée de compte enregistrée</div>
-
-    <div class="wo-auth-footer"><span>LGG</span><span>•</span><span>CLEANING OPERATIONS</span></div>
+      <div id="wo-lgg-auth-message" role="status" aria-live="polite"></div>
+      <button type="submit" class="lgg-auth-submit">SE CONNECTER <span>⟶</span></button>
+    </form>
+    <div class="lgg-auth-divider"><span>OU</span></div>
+    <button type="button" id="wo-lgg-visitor-btn" class="lgg-auth-visitor" onclick="woLggContinueAsVisitor()">Continuer en tant que visiteur <span>↗</span></button>
+    <p class="lgg-auth-footnote">Session temporaire · aucune donnée de compte enregistrée</p>
+    <div class="lgg-auth-signature">LGG · CLEANING OPERATIONS</div>
   </section>
 </div>
+<style id="lgg-auth-production-interface">
+#wo-lgg-auth-overlay.lgg-auth-v1{position:fixed!important;inset:0!important;z-index:100000!important;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:26px 18px!important;box-sizing:border-box;background:#030b12!important;color:#edf5fa;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.lgg-auth-v1 *{box-sizing:border-box}
+.lgg-auth-runway{position:absolute;inset:0;overflow:hidden;pointer-events:none;background:radial-gradient(ellipse at 50% 43%,rgba(15,101,119,.18),transparent 43%),linear-gradient(115deg,transparent 48%,rgba(56,121,139,.06) 48.1%,transparent 48.4%),repeating-linear-gradient(0deg,transparent 0 51px,rgba(87,147,160,.035) 52px,transparent 53px 103px)}
+.lgg-auth-runway:before,.lgg-auth-runway:after{content:"";position:absolute;width:2px;height:130%;top:-15%;background:linear-gradient(transparent,rgba(80,151,169,.07),transparent);transform:rotate(25deg)}
+.lgg-auth-runway:before{left:19%}.lgg-auth-runway:after{right:20%}
+.lgg-auth-runway i{position:absolute;width:3px;height:42px;border-radius:2px;background:rgba(159,190,200,.26);transform:rotate(22deg)}
+.lgg-auth-runway i:nth-of-type(1){top:17%;right:21%}.lgg-auth-runway i:nth-of-type(2){top:26%;right:27%}.lgg-auth-runway i:nth-of-type(3){top:35%;right:33%}.lgg-auth-runway i:nth-of-type(4){bottom:22%;left:28%}.lgg-auth-runway i:nth-of-type(5){bottom:13%;left:20%}
+.lgg-auth-runway .runway-plane{position:absolute;top:21%;left:50%;font-size:23px;opacity:.18;transform:rotate(-22deg)}
+.lgg-auth-runway .runway-coordinates{position:absolute;bottom:7%;left:5%;font:8px/1.5 ui-monospace,monospace;letter-spacing:3px;color:rgba(135,176,190,.28)}
+.lgg-auth-card{position:relative;width:min(100%,494px);padding:36px 36px 31px;border-radius:25px;border:1px solid rgba(147,192,204,.25);background:linear-gradient(145deg,rgba(25,43,51,.96),rgba(7,22,29,.98));box-shadow:0 32px 100px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.035);backdrop-filter:blur(20px)}
+.lgg-auth-brand{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.lgg-auth-logo{width:51px;height:51px;display:grid;place-items:center;flex:0 0 auto;border-radius:13px;background:linear-gradient(145deg,#ffc928,#ff9d00);font-size:27px;box-shadow:0 8px 25px rgba(255,166,0,.15)}
+.lgg-auth-brand h1{font-size:19px;line-height:1.2;font-weight:750;letter-spacing:-.35px;margin:0;color:#f3f7f9}
+.lgg-auth-brand p{font:700 8px/1.5 ui-monospace,SFMono-Regular,monospace;letter-spacing:3px;color:#8faab3;margin:6px 0 0}
+.lgg-auth-status{display:inline-flex;align-items:center;gap:9px;padding:7px 12px;border-radius:30px;border:1px solid rgba(38,203,163,.19);background:rgba(20,185,145,.055);font:700 9px/1.2 ui-monospace,monospace;letter-spacing:1.8px;color:#78c6b4}
+.lgg-auth-status span{width:7px;height:7px;border-radius:50%;background:#2ce0ad;box-shadow:0 0 12px rgba(44,224,173,.7)}
+.lgg-auth-intro{margin:22px 0 25px;color:#b1c0c7;font-size:14px;line-height:1.6}
+.lgg-auth-form{display:flex;flex-direction:column}
+.lgg-auth-form>label{font-size:10px;letter-spacing:2px;font-weight:800;color:#d2dfe4;margin:0 0 9px}
+.lgg-auth-form>input,.lgg-auth-password input{width:100%;height:56px;border-radius:12px;border:1px solid rgba(148,181,193,.22);background:rgba(232,244,248,.055);color:#f4f8fa;padding:0 17px;font:500 14px/1.3 inherit;outline:none;transition:border-color .2s,box-shadow .2s}
+.lgg-auth-form>input{margin-bottom:17px}
+.lgg-auth-form input::placeholder{color:#d3dde2}
+.lgg-auth-form>input:focus,.lgg-auth-password input:focus{border-color:rgba(54,215,195,.75);box-shadow:0 0 0 3px rgba(54,215,195,.09)}
+.lgg-auth-password{position:relative;margin-bottom:8px}
+.lgg-auth-password input{padding-right:53px}
+.lgg-auth-password button{position:absolute;right:7px;top:7px;width:40px;height:40px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer}
+.lgg-auth-password button span{width:14px;height:14px;border:1.5px solid #9eb8c0;border-radius:50%;position:relative}
+.lgg-auth-password button span:after{content:"";position:absolute;inset:3px;border-radius:50%;background:#9eb8c0}
+.lgg-auth-password button.is-visible span:after{background:#2ce0ad}
+#wo-lgg-auth-message{min-height:17px;margin:0 0 8px;color:#ff9999;font-size:11px;line-height:1.4}
+.lgg-auth-submit{width:100%;height:56px;border:0;border-radius:12px;background:linear-gradient(105deg,#6d80ff,#bd55f4);color:#fff;font-size:12px;font-weight:850;letter-spacing:1.6px;cursor:pointer;box-shadow:0 10px 26px rgba(121,91,255,.2);transition:filter .2s,transform .2s}
+.lgg-auth-submit:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.lgg-auth-submit span{font-size:18px;margin-left:8px;vertical-align:-1px}
+.lgg-auth-divider{display:flex;align-items:center;gap:12px;margin:19px 0 15px;color:#738a93;font:8px ui-monospace,monospace}
+.lgg-auth-divider:before,.lgg-auth-divider:after{content:"";height:1px;flex:1;background:rgba(144,176,186,.13)}
+.lgg-auth-visitor{width:100%;min-height:52px;border-radius:12px;border:1px solid rgba(148,181,193,.2);background:rgba(232,244,248,.025);color:#d8e3e7;font-size:12px;font-weight:750;cursor:pointer;transition:background .2s,border-color .2s}
+.lgg-auth-visitor:hover{background:rgba(232,244,248,.06);border-color:rgba(148,211,220,.4)}
+.lgg-auth-visitor span{font-size:16px;vertical-align:-1px}
+.lgg-auth-footnote{text-align:center;margin:14px 0 0;color:#738992;font:8px/1.7 ui-monospace,monospace;letter-spacing:.3px}
+.lgg-auth-signature{text-align:center;margin-top:25px;color:#60757e;font:8px ui-monospace,monospace;letter-spacing:3px}
+@media(max-width:520px){#wo-lgg-auth-overlay.lgg-auth-v1{padding:18px!important}.lgg-auth-card{padding:26px 24px 25px;border-radius:22px}.lgg-auth-brand{gap:12px;margin-bottom:21px}.lgg-auth-logo{width:47px;height:47px;font-size:25px}.lgg-auth-brand h1{font-size:17px}.lgg-auth-brand p{font-size:7px;letter-spacing:2px}.lgg-auth-intro{font-size:13px;margin:19px 0 22px}.lgg-auth-form>input,.lgg-auth-password input{height:53px}.lgg-auth-submit{height:54px}.lgg-auth-runway .runway-coordinates{font-size:7px;letter-spacing:2px}}
+@media(max-height:700px){.lgg-auth-card{padding-top:22px;padding-bottom:20px}.lgg-auth-brand{margin-bottom:15px}.lgg-auth-intro{margin:14px 0 17px}.lgg-auth-form>input{height:48px;margin-bottom:12px}.lgg-auth-password input{height:48px}.lgg-auth-password button{top:4px}.lgg-auth-submit{height:49px}.lgg-auth-signature{margin-top:15px}}
+</style>
 
 <header id="app-header">
   <div class="header-inner app-header-clean">
@@ -3284,95 +3462,118 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
      Système indépendant : FIDS arrivals + departures, sélection libre,
      ajouts manuels et génération de la feuille Crew Bus.
      ══════════════════════════════════════════════════════════════ -->
-<div id="step-4" class="hidden crewbus-redesigned">
+<div id="step-4" class="hidden crewbus-redesigned crewbus-radical-v90">
   <div class="section-hd crewbus-clean-head">
     <div class="section-eyebrow"><span class="eyebrow-dot"></span>Étape 4 sur 4</div>
     <div class="section-title crewbus-title-row">
       <span>Crew Bus</span>
-      <span class="crewbus-live-badge"><span class="crewbus-live-dot"></span><span id="crewbus-status-label">Prêt</span></span>
+      <span class="crewbus-live-badge" id="crewbus-status-badge"><span class="crewbus-live-dot"></span><span id="crewbus-status-label">Prêt</span></span>
     </div>
-    <div class="section-desc">Préparez la feuille Crew Bus. Sélectionnez les vols, vérifiez les immatriculations et générez.</div>
+    <div class="section-desc">Préparez la feuille Crew Bus depuis une seule vue de contrôle. Tout est organisé autour de l’heure, du vol et de la sélection.</div>
   </div>
 
-  <div class="crewbus-clean-toolbar">
-    <div class="crewbus-source-clean">
-      <span class="crewbus-source-icon">✈</span>
-      <div>
-        <strong>FIDS</strong>
-        <span id="crewbus-loading-line" aria-live="polite">Les arrivées et départs sont synchronisés automatiquement.</span>
+  <section class="cb90-command">
+    <div class="cb90-command-main">
+      <div class="cb90-command-icon">🚌</div>
+      <div class="cb90-command-copy">
+        <span class="cb90-kicker">CREW BUS CONTROL</span>
+        <strong>Planning FIDS</strong>
+        <small id="crewbus-loading-line" aria-live="polite">Synchronisation automatique des arrivées et départs.</small>
       </div>
     </div>
-    <button type="button" class="crewbus-refresh-btn" id="crewbus-refresh-btn" onclick="loadCrewBusFromFids(true)"><span class="crewbus-refresh-icon">↻</span> Actualiser</button>
-  </div>
-
-  <div class="crewbus-clean-summary">
-    <div><strong id="crewbus-selected-count">0</strong><span>sélectionnés</span></div>
-    <div><strong id="crewbus-arr-count">0</strong><span>arrivées</span></div>
-    <div><strong id="crewbus-dep-count">0</strong><span>départs</span></div>
-  </div>
-
-  <div class="crewbus-clean-controls">
-    <div class="crewbus-search-wrap">
-      <span class="crewbus-search-icon">⌕</span>
-      <input id="crewbus-search" type="text" placeholder="Rechercher un vol, une immatriculation ou un handler…" oninput="renderCrewBusFlights()" autocomplete="off">
-      <button type="button" class="crewbus-search-clear" onclick="document.getElementById('crewbus-search').value='';renderCrewBusFlights()" aria-label="Effacer la recherche">×</button>
+    <div class="cb90-command-stats" aria-label="Résumé Crew Bus">
+      <div class="cb90-stat"><b id="crewbus-selected-count">0</b><span>Sélectionnés</span></div>
+      <div class="cb90-stat cb90-stat-arr"><b id="crewbus-arr-count">0</b><span>Arrivées</span></div>
+      <div class="cb90-stat cb90-stat-dep"><b id="crewbus-dep-count">0</b><span>Départs</span></div>
     </div>
-    <div class="crewbus-clean-control-line">
-      <div class="crewbus-filter-group" role="tablist" aria-label="Filtrer les vols">
-        <button type="button" class="crewbus-filter active" data-filter="all" onclick="setCrewBusFilter('all')">Tous</button>
-        <button type="button" class="crewbus-filter" data-filter="arr" onclick="setCrewBusFilter('arr')">Arrivées</button>
-        <button type="button" class="crewbus-filter" data-filter="dep" onclick="setCrewBusFilter('dep')">Départs</button>
-        <button type="button" class="crewbus-filter" data-filter="other" onclick="setCrewBusFilter('other')">Autres</button>
-      </div>
-      <div class="crewbus-clean-actions">
-        <button type="button" class="crewbus-mini-btn" onclick="selectAllCrewBusVisible()">Tout sélectionner</button>
-        <button type="button" class="crewbus-mini-btn ghost" onclick="clearCrewBusSelection()">Tout retirer</button>
-        <label class="crewbus-sort-clean"><span>Trier</span><select id="crewbus-sort" onchange="crewBusSort=this.value;renderCrewBusFlights()"><option value="time">Chronologique</option><option value="flight">N° de vol</option><option value="reg">Immatriculation</option><option value="handler">Handler</option></select></label>
-      </div>
-    </div>
-  </div>
+    <button type="button" class="cb90-refresh" id="crewbus-refresh-btn" onclick="loadCrewBusFromFids(true)">
+      <span class="crewbus-refresh-icon">↻</span><span>Actualiser le FIDS</span>
+    </button>
+  </section>
 
-  <div class="crewbus-list-header">
-    <span>Vol</span><span>Immatriculation</span><span>Handler</span><span>Stand</span><span>Actions</span>
-  </div>
-  <div id="crewbus-flight-list" class="crewbus-flight-columns" aria-live="polite">
-    <section class="crewbus-flight-column" data-crewbus-column="arr">
-      <header class="crewbus-column-head">
-        <div><span class="crewbus-column-kicker">ARRIVÉES</span><span class="crewbus-column-count" id="crewbus-col-arr-count">0</span></div>
-        <span class="crewbus-column-sub">ETA · FIDS</span>
-      </header>
-      <div class="crewbus-column-list" id="crewbus-col-arr">
-        <div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des données FIDS.</span></div>
+  <section class="cb90-controls" aria-label="Recherche et filtres">
+    <div class="cb90-search">
+      <span>⌕</span>
+      <input id="crewbus-search" type="text" placeholder="Rechercher un vol, une immatriculation, un handler ou un stand…" oninput="renderCrewBusFlights()" autocomplete="off">
+      <button type="button" onclick="document.getElementById('crewbus-search').value='';renderCrewBusFlights()" aria-label="Effacer la recherche">×</button>
+    </div>
+    <div class="cb90-filterbar" role="tablist" aria-label="Filtres Crew Bus">
+      <button type="button" class="crewbus-filter active" data-filter="all" onclick="setCrewBusFilter('all')">Tous <em id="crewbus-filter-all-count">0</em></button>
+      <button type="button" class="crewbus-filter" data-filter="arr" onclick="setCrewBusFilter('arr')">Arrivées <em id="crewbus-filter-arr-count">0</em></button>
+      <button type="button" class="crewbus-filter" data-filter="dep" onclick="setCrewBusFilter('dep')">Départs <em id="crewbus-filter-dep-count">0</em></button>
+      <button type="button" class="crewbus-filter" data-filter="other" onclick="setCrewBusFilter('other')">Autres <em id="crewbus-filter-other-count">0</em></button>
+    </div>
+    <div class="cb90-control-spacer"></div>
+    <div class="cb90-actions">
+      <button type="button" class="cb90-lite" onclick="selectAllCrewBusVisible()">Tout sélectionner</button>
+      <button type="button" class="cb90-lite ghost" onclick="clearCrewBusSelection()">Tout retirer</button>
+      <label class="cb90-sort"><span>Trier</span><select id="crewbus-sort" onchange="crewBusSort=this.value;renderCrewBusFlights()"><option value="time">Chronologique</option><option value="flight">N° de vol</option><option value="reg">Immatriculation</option><option value="handler">Handler</option></select></label>
+    </div>
+  </section>
+
+  <div class="cb90-workspace">
+    <section class="cb90-board" aria-label="Planning des vols">
+      <div class="cb90-board-head">
+        <div>
+          <span class="cb90-kicker">PLANNING DU SHIFT</span>
+          <strong>Vols disponibles</strong>
+          <small id="crewbus-selection-hint">0 sélectionné(s) · 0 vol(s) disponibles · 0 autre(s)</small>
+        </div>
+        <div class="cb90-board-badge"><span id="crewbus-filter-context">Tous</span></div>
+      </div>
+      <div class="cb90-columns-head" aria-hidden="true">
+        <span></span><span>HEURE</span><span>VOL</span><span>IMMATR.</span><span>HANDLER</span><span>STAND</span><span>ACTIONS</span>
+      </div>
+      <div id="crewbus-flight-list" class="crewbus-unified-list" aria-live="polite">
+        <section class="cb90-flight-group cb90-flight-group-arr" data-crewbus-column="arr">
+          <header><span class="cb90-group-dot"></span><strong>ARRIVÉES</strong><b id="crewbus-col-arr-count">0</b><small>ETA / ATA</small></header>
+          <div id="crewbus-col-arr" class="cb90-group-list"><div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des données FIDS.</span></div></div>
+        </section>
+        <section class="cb90-flight-group cb90-flight-group-dep" data-crewbus-column="dep">
+          <header><span class="cb90-group-dot"></span><strong>DÉPARTS</strong><b id="crewbus-col-dep-count">0</b><small>PICK UP / ETD</small></header>
+          <div id="crewbus-col-dep" class="cb90-group-list"><div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des données FIDS.</span></div></div>
+        </section>
+        <section class="cb90-flight-group cb90-flight-group-other" data-crewbus-column="other">
+          <header><span class="cb90-group-dot"></span><strong>AUTRES</strong><b id="crewbus-col-other-count">0</b><small>VOLS NON HABITUELS</small></header>
+          <div id="crewbus-col-other" class="cb90-group-list"><div class="crewbus-empty"><div class="crewbus-empty-icon">＋</div><strong>Aucun autre vol</strong><span>Modifiez le filtre ou la recherche.</span></div></div>
+        </section>
       </div>
     </section>
-    <section class="crewbus-flight-column" data-crewbus-column="dep">
-      <header class="crewbus-column-head">
-        <div><span class="crewbus-column-kicker">DÉPARTS</span><span class="crewbus-column-count" id="crewbus-col-dep-count">0</span></div>
-        <span class="crewbus-column-sub">PICK UP · FIDS</span>
-      </header>
-      <div class="crewbus-column-list" id="crewbus-col-dep">
-        <div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des données FIDS.</span></div>
+
+    <aside class="cb90-manifest" aria-label="Préparation de la feuille Crew Bus">
+      <div class="cb90-manifest-head">
+        <div>
+          <span class="cb90-kicker">FEUILLE CREW BUS</span>
+          <strong>Votre sélection</strong>
+          <small>Ce qui partira sur la feuille.</small>
+        </div>
+        <span class="cb90-manifest-count" id="crewbus-manifest-count">0</span>
       </div>
-    </section>
-    <section class="crewbus-flight-column crewbus-flight-column-other" data-crewbus-column="other">
-      <header class="crewbus-column-head">
-        <div><span class="crewbus-column-kicker">AUTRE CREW-BUS</span><span class="crewbus-column-count" id="crewbus-col-other-count">0</span></div>
-        <span class="crewbus-column-sub">VOLS NON HABITUELS</span>
-      </header>
-      <div class="crewbus-column-list" id="crewbus-col-other">
-        <div class="crewbus-empty"><div class="crewbus-empty-icon">＋</div><strong>Aucun vol</strong><span>Les vols non habituels apparaîtront ici.</span></div>
+
+      <div id="crewbus-selected-list" class="cb90-manifest-list">
+        <div class="crewbus-selected-empty"><span>＋</span><strong>Aucun vol sélectionné</strong><small>Cliquez sur une ligne à gauche pour la préparer.</small></div>
       </div>
-    </section>
+
+      <div class="cb90-manifest-order">
+        <div><span>ORDRE D'IMPRESSION</span><strong id="crewbus-order-toggle-label">Chronologique</strong></div>
+        <button type="button" id="crewbus-order-toggle" class="cb90-order-button" data-order="chrono" onclick="toggleCrewBusSheetOrder()" aria-pressed="false">Changer</button>
+      </div>
+
+      <div class="cb90-manifest-notes">
+        <label for="crewbus-extra-notes"><span>📝</span> Informations complémentaires</label>
+        <textarea id="crewbus-extra-notes" placeholder="Informations à placer au verso de la feuille Crew Bus…" autocomplete="off" oninput="if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('crewBusExtraNotes')"></textarea>
+      </div>
+
+      <button type="button" class="crewbus-generate-btn cb90-generate" onclick="generateCrewBusSheet()">
+        <span class="cb90-generate-icon">▣</span><span><strong>Générer la feuille Crew Bus</strong><small>Créer le document à imprimer</small></span><b>→</b>
+      </button>
+      <button type="button" class="cb90-back" onclick="goToStep(3)">← Retour aux opérations</button>
+    </aside>
   </div>
 
-  <div class="crewbus-extra-notes-clean">
-    <label for="crewbus-extra-notes"><span class="crewbus-extra-notes-icon">📝</span> Informations complémentaires</label>
-    <textarea id="crewbus-extra-notes" placeholder="Écrivez ici les informations qui doivent apparaître au verso de la feuille Crew Bus…" autocomplete="off"></textarea>
-  </div>
-
-  <div class="crewbus-manual-clean">
+  <div class="cb90-manual">
     <details>
-      <summary><span class="manual-plus">＋</span><span><strong>Ajouter un vol manuellement</strong><small>Pour un vol absent du FIDS</small></span><em>Ajouter</em></summary>
+      <summary><span class="cb90-manual-icon">＋</span><span><strong>Ajouter un vol manuellement</strong><small>Pour un vol absent du FIDS ou un transport particulier.</small></span><em>Ajouter</em></summary>
       <div class="crewbus-add-grid">
         <label class="crewbus-field"><span>Direction</span><select id="crewbus-man-type" onchange="updateCrewBusManualTimeLabel()"><option value="arr">Arrivée</option><option value="dep">Départ</option></select></label>
         <label class="crewbus-field"><span>N° de vol</span><input id="crewbus-man-flight" type="text" placeholder="ex. ICL601" autocomplete="off"></label>
@@ -3384,14 +3585,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       <button type="button" class="crewbus-add-btn" onclick="addCrewBusManualFlight()">＋ Ajouter ce vol</button>
     </details>
   </div>
-
-  <div class="crewbus-bottom-bar crewbus-clean-bottom">
-    <button type="button" class="btn btn-ghost crewbus-back-operations-btn" onclick="goToStep(3)">&larr; Retour aux opérations</button>
-    <div class="crewbus-order-control" role="group" aria-label="Ordre de génération Crew Bus"><span class="crewbus-order-label">Ordre</span><button type="button" id="crewbus-order-toggle" class="crewbus-order-toggle" data-order="chrono" onclick="toggleCrewBusSheetOrder()" aria-pressed="false"><span id="crewbus-order-toggle-label">Chronologique</span></button></div>
-    <button type="button" class="btn crewbus-generate-btn" onclick="generateCrewBusSheet()"><span>▣</span> Générer la feuille Crew Bus</button>
-  </div>
-</div>
-</div>
+</div>>
 
 <div id="pdf-sheet"></div>
 <div id="print-overlay" aria-hidden="true" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:999;flex-direction:column;align-items:center;overflow-y:auto;padding:24px">
@@ -3451,16 +3645,6 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     if(r)r.textContent=woLggProfile?.role||'';
     if(b)b.style.display='inline-flex';
   }
-  function woLggTogglePassword(){
-    const input=document.getElementById('wo-lgg-password');
-    const btn=document.querySelector('.wo-auth-password-toggle');
-    if(!input)return;
-    const visible=input.type==='text';
-    input.type=visible?'password':'text';
-    if(btn){btn.textContent=visible?'◉':'◉';btn.setAttribute('aria-label',visible?'Afficher le mot de passe':'Masquer le mot de passe');}
-    input.focus();
-  }
-
   async function woLggLogin(){
     const email=document.getElementById('wo-lgg-email').value.trim(),password=document.getElementById('wo-lgg-password').value,m=document.getElementById('wo-lgg-auth-message');
     if(!email||!password){m.textContent='Entre ton e-mail et ton mot de passe.';return;} m.textContent='Connexion…';
@@ -7669,15 +7853,35 @@ ${(function(){
     if(!root)return;
     const visible=crewBusVisibleFlights();
     const allFlights=(crewBusFlights||[]);
-    const total=allFlights.length,selected=allFlights.filter(f=>f.selected).length;
+    const total=allFlights.length;
+    const selected=allFlights.filter(f=>f.selected).length;
     const arrAll=allFlights.filter(f=>f.type==='arr' && !crewBusIsOther(f)).length;
     const depAll=allFlights.filter(f=>f.type==='dep' && !crewBusIsOther(f)).length;
     const otherAll=allFlights.filter(crewBusIsOther).length;
+
     const s=document.getElementById('crewbus-selected-count'),a=document.getElementById('crewbus-arr-count'),d=document.getElementById('crewbus-dep-count');
-    if(s)s.textContent=selected;if(a)a.textContent=arrAll;if(d)d.textContent=depAll;
+    if(s)s.textContent=selected;
+    if(a)a.textContent=arrAll;
+    if(d)d.textContent=depAll;
+
     const ca=document.getElementById('crewbus-col-arr-count'),cd=document.getElementById('crewbus-col-dep-count'),co=document.getElementById('crewbus-col-other-count');
-    if(ca)ca.textContent=arrAll;if(cd)cd.textContent=depAll;if(co)co.textContent=otherAll;
-    const hint=document.getElementById('crewbus-selection-hint');if(hint)hint.textContent=selected+' sélectionné(s) · '+total+' vol(s) disponibles · '+otherAll+' autre(s) non habituel(s)';
+    if(ca)ca.textContent=arrAll;
+    if(cd)cd.textContent=depAll;
+    if(co)co.textContent=otherAll;
+
+    const fa=document.getElementById('crewbus-filter-all-count'),fr=document.getElementById('crewbus-filter-arr-count'),fd=document.getElementById('crewbus-filter-dep-count'),fo=document.getElementById('crewbus-filter-other-count');
+    if(fa)fa.textContent=total;
+    if(fr)fr.textContent=arrAll;
+    if(fd)fd.textContent=depAll;
+    if(fo)fo.textContent=otherAll;
+
+    const hint=document.getElementById('crewbus-selection-hint');
+    if(hint)hint.textContent=selected+' sélectionné(s) · '+total+' vol(s) disponibles · '+otherAll+' autre(s) non habituel(s)';
+    const context=document.getElementById('crewbus-filter-context');
+    if(context){
+      const labels={all:'Tous',arr:'Arrivées',dep:'Départs',other:'Autres'};
+      context.textContent=labels[crewBusFilter]||'Tous';
+    }
 
     const arr=visible.filter(f=>f.type==='arr' && !crewBusIsOther(f));
     const dep=visible.filter(f=>f.type==='dep' && !crewBusIsOther(f));
@@ -7685,7 +7889,9 @@ ${(function(){
     const fill=(id,list,label)=>{
       const el=document.getElementById(id);
       if(!el)return;
-      el.innerHTML=list.length?list.map(crewBusFlightCardHtml).join(''):'<div class="crewbus-empty crewbus-column-empty"><div class="crewbus-empty-icon">—</div><strong>'+label+'</strong><span>Modifiez le filtre ou la recherche.</span></div>';
+      el.innerHTML=list.length
+        ? list.map(crewBusFlightCardHtml).join('')
+        : '<div class="crewbus-empty cb90-empty"><div class="crewbus-empty-icon">—</div><strong>'+label+'</strong><span>Modifiez le filtre ou la recherche.</span></div>';
     };
     fill('crewbus-col-arr',arr,'Aucune arrivée');
     fill('crewbus-col-dep',dep,'Aucun départ');
@@ -7694,7 +7900,59 @@ ${(function(){
     root.querySelector('[data-crewbus-column="arr"]')?.classList.toggle('is-muted',crewBusFilter==='dep'||crewBusFilter==='other');
     root.querySelector('[data-crewbus-column="dep"]')?.classList.toggle('is-muted',crewBusFilter==='arr'||crewBusFilter==='other');
     root.querySelector('[data-crewbus-column="other"]')?.classList.toggle('is-muted',crewBusFilter==='arr'||crewBusFilter==='dep');
+
+    renderCrewBusManifest();
   }
+
+  function renderCrewBusManifest(){
+    const root=document.getElementById('crewbus-selected-list');
+    const countEl=document.getElementById('crewbus-manifest-count');
+    if(!root)return;
+    const selected=(crewBusFlights||[]).filter(f=>f&&f.selected);
+    if(countEl)countEl.textContent=selected.length;
+    if(!selected.length){
+      root.innerHTML='<div class="crewbus-selected-empty"><span>＋</span><strong>Aucun vol sélectionné</strong><small>Cliquez sur une ligne à gauche pour la préparer.</small></div>';
+      return;
+    }
+    const chrono=(list)=>list.slice().sort((a,b)=>crewBusChrono(a.time)-crewBusChrono(b.time));
+    const ordered=crewBusSheetOrder==='grouped'
+      ? [...chrono(selected.filter(f=>f.type==='arr')), ...chrono(selected.filter(f=>f.type==='dep'))]
+      : chrono(selected);
+    root.innerHTML=ordered.map((f,i)=>{
+      const reg=crewBusEffectiveReg(f);
+      const key=crewBusEscape(f.key);
+      const time=crewBusEscape(f.time||'—');
+      const flight=crewBusEscape(f.flight||'—');
+      const stand=f.stand?crewBusEscape(f.stand):'—';
+      const handler=f.handler?crewBusEscape(f.handler):'—';
+      return '<div class="cb90-manifest-row">'
+        +'<span class="cb90-manifest-index">'+String(i+1).padStart(2,'0')+'</span>'
+        +'<div class="cb90-manifest-time">'+time+'<small>'+(f.type==='dep'?'PICK UP':'ARRIVÉE')+'</small></div>'
+        +'<div class="cb90-manifest-main"><strong>'+flight+'</strong><span>'+(reg?crewBusEscape(reg):'Immatriculation manquante')+' · '+handler+' · S'+stand+'</span></div>'
+        +'<button type="button" class="cb90-manifest-remove" data-remove-crewbus="'+key+'" title="Retirer">×</button>'
+        +'</div>';
+    }).join('');
+  }
+
+  function removeCrewBusSelection(key){
+    const f=crewBusFlights.find(x=>x.key===key); if(!f)return;
+    f.selected=false;
+    crewBusSelected.delete(key);
+    renderCrewBusFlights();
+    if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('crewBusSelection');
+  }
+
+  (function initCrewBusManifestInteractions(){
+    if(window.__woCrewBusManifestInteractionsReady)return;
+    window.__woCrewBusManifestInteractionsReady=true;
+    document.addEventListener('click',function(e){
+      const btn=e.target && e.target.closest ? e.target.closest('#crewbus-selected-list [data-remove-crewbus]') : null;
+      if(!btn)return;
+      e.preventDefault();
+      e.stopPropagation();
+      removeCrewBusSelection(btn.getAttribute('data-remove-crewbus')||'');
+    });
+  })();
 
   // ── Immatriculation partagée Operations ↔ Crew Bus ──────────────
   function woLggFlightOverrideKey(flight){
@@ -7750,7 +8008,6 @@ ${(function(){
   function crewBusFlightCardHtml(f){
     const sel=!!f.selected;
     const key=crewBusEscape(f.key);
-    const source=f.manual?'MANUEL':'FIDS';
     const isWfs=String(f.handler||'').toUpperCase()==='WFS';
     const modeHtml=isWfs?('<div class="crewbus-wfs-mode">'
       +'<button type="button" class="crewbus-mode-btn '+(f.wfsMode==='renting'?'active rent':'')+'" data-crewbus-action="wfs" data-mode="renting">🚙 Renting</button>'
@@ -7758,14 +8015,19 @@ ${(function(){
       +'</div>') : '';
     const hsHtml=f.type==='dep'?'<button type="button" class="crewbus-hs-btn '+(f.headset?'active':'')+'" data-crewbus-action="headset">🎧 '+(f.headset?'Headset ✓':'Headset')+'</button>':'';
     const reg=crewBusEffectiveReg(f);
-    const regHtml='<input class="crewbus-registration-input" value="'+crewBusEscape(reg)+'" data-reg-flight="'+crewBusEscape(f.flight||'')+'" placeholder="Immatriculation" autocomplete="off" aria-label="Immatriculation '+crewBusEscape(f.flight||'')+'" onkeydown="woLggHandleRegistrationKeydown(event)" onblur="woLggHandleRegistrationBlur(event)" onclick="event.stopPropagation()">';
-    return '<article class="crewbus-flight-card '+(sel?'selected':'')+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" data-crewbus-key="'+key+'">'
-      +'<button type="button" class="crewbus-check" aria-label="'+(sel?'Désélectionner ':'Sélectionner ')+crewBusEscape(f.flight)+'" aria-pressed="'+(sel?'true':'false')+'" data-crewbus-action="flight">'+(sel?'✓':'')+'</button>'
-      +'<div class="crewbus-clean-flight-time"><strong>'+crewBusEscape(f.time||'—')+'</strong><span>'+(f.type==='dep'?'PICK UP':'ETA')+'</span></div>'
-      +'<div class="crewbus-clean-flight-main"><div class="crewbus-clean-flight-top"><strong>'+crewBusEscape(f.flight||'—')+'</strong><span class="crewbus-direction '+(f.type==='arr'?'arr':'dep')+'">'+(f.type==='arr'?'ARRIVÉE':'DÉPART')+'</span><span class="crewbus-source-pill">'+source+'</span></div><div class="crewbus-clean-flight-sub">'+regHtml+'</div></div>'
-      +'<div class="crewbus-clean-meta"><span>'+(f.handler?crewBusEscape(f.handler):'—')+'</span></div>'
-      +'<div class="crewbus-clean-meta"><span>'+(f.stand?'Stand '+crewBusEscape(f.stand):'—')+'</span></div>'
-      +'<div class="crewbus-card-actions">'+modeHtml+hsHtml+'</div>'
+    const regHtml='<input class="crewbus-registration-input cb90-reg" value="'+crewBusEscape(reg)+'" data-reg-flight="'+crewBusEscape(f.flight||'')+'" placeholder="Immatriculation" autocomplete="off" aria-label="Immatriculation '+crewBusEscape(f.flight||'')+'" onkeydown="woLggHandleRegistrationKeydown(event)" onblur="woLggHandleRegistrationBlur(event)" onclick="event.stopPropagation()">';
+    const status=f.type==='arr'?'ARRIVÉE':'DÉPART';
+    return '<article class="crewbus-flight-card cb90-flight-row '+(sel?'selected':'')+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" data-crewbus-key="'+key+'">'
+      +'<button type="button" class="crewbus-check cb90-check" aria-label="'+(sel?'Désélectionner ':'Sélectionner ')+crewBusEscape(f.flight)+'" aria-pressed="'+(sel?'true':'false')+'" data-crewbus-action="flight">'+(sel?'✓':'')+'</button>'
+      +'<div class="crewbus-clean-flight-time cb90-time"><strong>'+crewBusEscape(f.time||'—')+'</strong><span>'+(f.type==='dep'?'PICK UP':'ETA')+'</span></div>'
+      +'<div class="crewbus-clean-flight-main cb90-flight">'
+        +'<div class="cb90-flight-line"><strong>'+crewBusEscape(f.flight||'—')+'</strong><span class="crewbus-direction '+(f.type==='arr'?'arr':'dep')+'">'+status+'</span>'+(f.manual?'<span class="cb90-manual-pill">MANUEL</span>':'')+'</div>'
+        +'<div class="cb90-flight-type">'+crewBusEscape(f.raw?.aircraftType||f.raw?.aircraftModel||'')+'</div>'
+      +'</div>'
+      +'<div class="cb90-reg-cell">'+regHtml+'</div>'
+      +'<div class="cb90-handler">'+(f.handler?crewBusEscape(f.handler):'—')+'</div>'
+      +'<div class="cb90-stand">'+(f.stand?crewBusEscape(f.stand):'—')+'</div>'
+      +'<div class="crewbus-card-actions cb90-row-actions">'+modeHtml+hsHtml+'</div>'
       +'</article>';
   }
 
