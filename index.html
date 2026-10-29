@@ -4064,13 +4064,17 @@ async function woLggLogout(){
     return data||null;
   }
 
-  function woLggApplyCloudState(row){
+  function woLggApplyCloudState(row, options={}){
     const s=row?.state;
     if(!s||![1,2,3,4,5].includes(Number(s.version)))return false;
+    // Une mise à jour Realtime peut venir d'un autre appareil du même compte.
+    // Elle synchronise les données, mais ne doit jamais faire sauter l'étape,
+    // déplacer la page ou rejouer une transition pendant que l'opérateur travaille.
+    const restoreNavigation=options && options.restoreNavigation===true;
 
     woLggSessionHydrating=true;
     try{
-      if(typeof currentStep!=='undefined'&&Number.isFinite(Number(s.currentStep)))currentStep=Number(s.currentStep);
+      if(restoreNavigation && typeof currentStep!=='undefined'&&Number.isFinite(Number(s.currentStep)))currentStep=Number(s.currentStep);
       const d=document.getElementById('shift-date'); if(d&&typeof s.shiftDate==='string')d.value=s.shiftDate;
       const a=document.getElementById('shift-agent'); if(a&&typeof s.shiftAgent==='string')a.value=s.shiftAgent;
       const n=document.getElementById('extra-notes'); if(n&&typeof s.extraNotes==='string')n.value=s.extraNotes;
@@ -4133,13 +4137,14 @@ async function woLggLogout(){
       if(typeof updateCateringCount==='function')updateCateringCount();
       if(typeof updateSelectedCount==='function')updateSelectedCount();
 
-      const savedStep=Math.max(1,Math.min(4,Number(s.currentStep)||1));
-      const savedX=Number.isFinite(Number(s.scrollX))?Number(s.scrollX):0;
-      const savedY=Number.isFinite(Number(s.scrollY))?Number(s.scrollY):0;
-
-      // IMPORTANT: currentStep modifié seul ne change pas le DOM.
-      if(typeof goToStep==='function')goToStep(savedStep);
-      requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(savedX,savedY)));
+      if(restoreNavigation){
+        const savedStep=Math.max(1,Math.min(4,Number(s.currentStep)||1));
+        const savedX=Number.isFinite(Number(s.scrollX))?Number(s.scrollX):0;
+        const savedY=Number.isFinite(Number(s.scrollY))?Number(s.scrollY):0;
+        // La navigation n'est restaurée que sur demande explicite de reprise.
+        if(typeof goToStep==='function')goToStep(savedStep);
+        requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(savedX,savedY)));
+      }
 
       woLggLastCloudUpdatedAt=row.updated_at||null;
       woLggLastSavedFingerprint=woLggFingerprint(s);
@@ -9923,6 +9928,124 @@ html[data-layout="orbit"] body::before{
 }
 </style>
 
+
+<style id="wo-lgg-v95-admin-motion-and-crewbus-density">
+/* V95 — Stabilité admin : le compte connecté peut restaurer le thème Orbit.
+   Neutraliser ses animations ambiantes (dont .app-wrap) qui donnaient l'impression
+   que l'écran import FIDS bougeait. Les rotations explicites de chargement restent actives. */
+html[data-layout="orbit"] body,
+html[data-layout="orbit"] body::before,
+html[data-layout="orbit"] header,
+html[data-layout="orbit"] .app-wrap,
+html[data-layout="orbit"] .panel,
+html[data-layout="orbit"] .stat-card,
+html[data-layout="orbit"] .progress-bar .prog-line,
+html[data-layout="orbit"] .section-hd .section-title,
+html[data-layout="orbit"] .stat-card .num,
+html[data-layout="orbit"] .btn-primary,
+html[data-layout="orbit"] .logo-icon,
+html[data-layout="orbit"] .prog-step.active .prog-num,
+html[data-layout="orbit"] .theme-dots .tdot.active,
+html[data-layout="orbit"] .flight-card::after,
+html[data-layout="neo"] body::before,
+html[data-layout="neo"] .logo-icon,
+html[data-layout="neo"] .btn-primary,
+html[data-layout="neo"] .prog-step.active .prog-num,
+html[data-layout="purete"] body::before,
+html[data-layout="purete"] .shift-btn,
+html[data-layout="purete"] .logo-icon,
+html[data-layout="purete"] .btn-primary,
+html[data-layout="purete"] .eyebrow-dot {
+  animation:none!important;
+  animation-delay:0s!important;
+}
+html[data-layout="orbit"] body,
+html[data-layout="orbit"] .app-wrap { filter:none!important; }
+html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!important; }
+
+/* Densité desktop : des lignes compactes pour voir plus d'avions à la fois. */
+#step-4.crewbus-radical-v90 .cb90-workspace{
+  grid-template-columns:minmax(0,1fr) 310px!important;
+  gap:10px!important;
+}
+#step-4.crewbus-radical-v90 #crewbus-flight-list{gap:8px!important;padding:8px!important}
+#step-4.crewbus-radical-v90 .cb90-flight-group header{height:34px!important;padding:0 9px!important}
+#step-4.crewbus-radical-v90 .cb90-flight-group header strong{font-size:9px!important}
+#step-4.crewbus-radical-v90 .cb90-flight-group header b{height:19px!important;min-width:22px!important;font-size:8px!important}
+#step-4.crewbus-radical-v90 #crewbus-col-arr,
+#step-4.crewbus-radical-v90 #crewbus-col-dep,
+#step-4.crewbus-radical-v90 #crewbus-col-other{
+  gap:4px!important;padding:6px!important;max-height:64vh!important;
+}
+#step-4.crewbus-radical-v90 #crewbus-col-other{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#step-4.crewbus-radical-v90 .cb90-flight-row{
+  display:grid!important;
+  grid-template-columns:23px 54px minmax(74px,1fr) minmax(112px,.88fr)!important;
+  grid-template-rows:auto auto auto!important;
+  align-items:center!important;
+  gap:4px 7px!important;
+  min-height:0!important;
+  padding:7px 7px 7px!important;
+  border-radius:8px!important;
+}
+#step-4.crewbus-radical-v90 .cb90-check{grid-column:1!important;grid-row:1/3!important;width:22px!important;height:22px!important;font-size:11px!important}
+#step-4.crewbus-radical-v90 .cb90-time{grid-column:2!important;grid-row:1!important;gap:3px!important}
+#step-4.crewbus-radical-v90 .cb90-time strong{font-size:14px!important}
+#step-4.crewbus-radical-v90 .cb90-time span{font-size:6px!important}
+#step-4.crewbus-radical-v90 .cb90-flight{grid-column:3!important;grid-row:1!important;min-width:0!important}
+#step-4.crewbus-radical-v90 .cb90-flight-line{gap:4px!important;flex-wrap:nowrap!important}
+#step-4.crewbus-radical-v90 .cb90-flight-line>strong{font-size:10px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+#step-4.crewbus-radical-v90 .cb90-flight .crewbus-direction{font-size:6px!important;padding:3px 4px!important}
+#step-4.crewbus-radical-v90 .cb90-flight-type{font-size:7px!important;margin-top:2px!important;line-height:1.1!important}
+#step-4.crewbus-radical-v90 .cb90-reg-cell{grid-column:4!important;grid-row:1!important;margin:0!important}
+#step-4.crewbus-radical-v90 .cb90-reg{
+  height:32px!important;min-height:32px!important;padding:0 7px!important;border-radius:6px!important;
+  font-size:14px!important;letter-spacing:.35px!important;
+}
+#step-4.crewbus-radical-v90 .cb90-reg::placeholder{font-size:8px!important}
+#step-4.crewbus-radical-v90 .cb90-handler{grid-column:2/4!important;grid-row:2!important;font-size:7px!important;line-height:1.15!important;margin:0!important}
+#step-4.crewbus-radical-v90 .cb90-stand{grid-column:4!important;grid-row:2!important;font-size:8px!important;line-height:1.15!important;justify-self:start!important}
+#step-4.crewbus-radical-v90 .cb90-row-actions{
+  grid-column:2/5!important;grid-row:3!important;display:flex!important;flex-direction:row!important;
+  align-items:center!important;justify-content:flex-start!important;flex-wrap:nowrap!important;
+  gap:5px!important;min-height:0!important;margin:1px 0 0!important;
+}
+#step-4.crewbus-radical-v90 .crewbus-wfs-mode{display:flex!important;flex:0 1 auto!important;width:auto!important;gap:5px!important}
+#step-4.crewbus-radical-v90 .cb90-row-actions .crewbus-mode-btn,
+#step-4.crewbus-radical-v90 .cb90-row-actions .crewbus-hs-btn{
+  flex:0 1 auto!important;min-width:0!important;min-height:30px!important;height:30px!important;
+  padding:6px 8px!important;border-radius:6px!important;font:800 9px/1 var(--sans)!important;
+  letter-spacing:0!important;white-space:nowrap!important;
+}
+#step-4.crewbus-radical-v90 .cb90-row-actions .crewbus-mode-btn.active.rent{color:#ffd166!important}
+#step-4.crewbus-radical-v90 .cb90-row-actions .crewbus-mode-btn.active.hand{color:#6df5c0!important}
+#step-4.crewbus-radical-v90 .cb90-row-actions .crewbus-hs-btn.active{color:#b9c8ff!important}
+
+@media(max-width:1199px){
+  #step-4.crewbus-radical-v90 .cb90-workspace{grid-template-columns:minmax(0,1fr)!important}
+  #step-4.crewbus-radical-v90 .cb90-manifest{position:static!important;max-height:none!important}
+  #step-4.crewbus-radical-v90 .cb90-manifest-list{max-height:30vh!important}
+}
+@media(max-width:900px){
+  #step-4.crewbus-radical-v90 #crewbus-flight-list{grid-template-columns:minmax(0,1fr)!important}
+  #step-4.crewbus-radical-v90 .cb90-flight-row{grid-template-columns:24px 58px minmax(100px,1fr) minmax(130px,.8fr)!important}
+  #step-4.crewbus-radical-v90 #crewbus-col-other{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:600px){
+  #step-4.crewbus-radical-v90 #crewbus-col-other{grid-template-columns:minmax(0,1fr)!important}
+  #step-4.crewbus-radical-v90 .cb90-flight-row{grid-template-columns:22px 52px minmax(70px,1fr) minmax(104px,.8fr)!important;gap:4px 6px!important;padding:7px!important}
+  #step-4.crewbus-radical-v90 .cb90-time strong{font-size:13px!important}
+  #step-4.crewbus-radical-v90 .cb90-reg{font-size:13px!important;height:30px!important;min-height:30px!important}
+  #step-4.crewbus-radical-v90 .cb90-row-actions{grid-column:2/5!important;flex-wrap:wrap!important}
+  #step-4.crewbus-radical-v90 .cb90-row-actions .crewbus-mode-btn,
+  #step-4.crewbus-radical-v90 .cb90-row-actions .crewbus-hs-btn{min-height:29px!important;height:29px!important;padding:6px 7px!important;font-size:9px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  html[data-layout] body,html[data-layout] body::before,html[data-layout] header,html[data-layout] .app-wrap,
+  html[data-layout] .panel,html[data-layout] .stat-card,html[data-layout] .section-title,
+  html[data-layout] .btn-primary,html[data-layout] .logo-icon{animation:none!important;transition:none!important}
+}
+</style>
 </body>
 </html>
 
