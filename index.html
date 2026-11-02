@@ -6829,7 +6829,7 @@ function restoreActiveTextField(saved) {
   /* Le layout V95 reste la référence. Le wrapper ne change rien au rendu
      tant que le contenu tient ; il sert uniquement de limite A4 au besoin. */
   .cleaning-fit-page { width:100%; height:273mm; max-height:273mm; margin:0 auto; overflow:hidden; position:relative; page-break-after:avoid; page-break-inside:avoid; break-after:avoid; break-inside:avoid; }
-  .cleaning-fit-content { width:100%; transform-origin:top center; }
+  .cleaning-fit-content { width:100%; transform-origin:top left; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; background: #fff; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2pt solid #000; padding-bottom: 5pt; margin-bottom: 6pt; }
@@ -6893,7 +6893,7 @@ ${(function(){
 </div>
 </div></div>
 <script>
-/* V97 — mise à l'échelle uniforme, seulement lorsque le contenu dépasse l'A4.
+/* V98 — compression verticale uniquement, seulement lorsque le contenu dépasse l'A4.
    Aucune taille, colonne ou section du layout V95 n'est changée par défaut. */
 (function fitCleaningSheetToOnePage(){
   var page=document.querySelector('.cleaning-fit-page');
@@ -6907,7 +6907,8 @@ ${(function(){
     var scale=Math.min(1,(available-6)/natural);
     if(!isFinite(scale)||scale<=0)scale=1;
     scale=Math.max(0.12,Math.floor(scale*10000)/10000);
-    content.style.transform='scale('+scale+')';
+    /* Compression verticale uniquement : la feuille conserve 100% de sa largeur A4. */
+    content.style.transform='scaleY('+scale+')';
     page.setAttribute('data-fit-scale',scale.toFixed(4));
     page.setAttribute('data-natural-height',String(Math.round(natural)));
     page.setAttribute('data-available-height',String(Math.round(available)));
