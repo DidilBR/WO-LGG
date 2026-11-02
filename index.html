@@ -6825,24 +6825,30 @@ function restoreActiveTextField(saved) {
 <meta charset="UTF-8">
 <title>Cleaning OPS LGG ${date}</title>
 <style>
-  @page { size: A4 portrait; margin: 12mm; }
+  /* Feuille de nettoyage : format A4 strict, même logique de réduction que Crew Bus. */
+  @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 10pt; color: #000; background: #fff; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2pt solid #000; padding-bottom: 5pt; margin-bottom: 6pt; }
-  .title { font-size: 14pt; font-weight: 700; }
-  .subtitle { font-size: 10pt; color: #333; margin-top: 2pt; }
-  .meta { text-align: right; font-size: 10pt; line-height: 1.4; color: #000; }
+  html, body { width: 210mm; height: 297mm; margin: 0 !important; padding: 0 !important; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 8.5pt; color: #000; background: #fff; overflow: hidden; }
+  .cleaning-fit-page { width: 198mm; height: 285mm; max-height: 285mm; margin: 6mm auto; overflow: hidden; page-break-after: avoid; page-break-inside: avoid; break-after: avoid; break-inside: avoid; }
+  .cleaning-fit-content { width: 100%; transform-origin: top left; }
+  .cleaning-fit-content * { break-inside: avoid; page-break-inside: avoid; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1.5pt solid #000; padding-bottom: 3pt; margin-bottom: 3pt; }
+  .title { font-size: 12pt; font-weight: 700; }
+  .subtitle { font-size: 8pt; color: #333; margin-top: 1pt; }
+  .meta { text-align: right; font-size: 8pt; line-height: 1.2; color: #000; }
   table { width: 100%; border-collapse: collapse; }
-  th { background: #000; color: #fff; padding: 4pt 6pt; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5pt; text-align: left; }
-  td { padding: 6pt 6pt; border-bottom: 1pt solid #bbb; font-size: 10pt; color: #000; vertical-align: middle; }
-  .operation-remarks { font-size: 11.5pt !important; font-weight: 800 !important; color: #000 !important; line-height: 1.25; }
+  .cleaning-fit-content th { background: #000; color: #fff; padding: 2.5pt 3.5pt !important; font-size: 7.5pt !important; line-height: 1.05; text-transform: uppercase; letter-spacing: 0.25pt; text-align: left; }
+  .cleaning-fit-content td { padding: 2.5pt 3.5pt !important; border-bottom: 0.7pt solid #bbb; font-size: 8pt !important; line-height: 1.08; color: #000; vertical-align: middle; }
+  .operation-remarks { font-size: 9pt !important; font-weight: 800 !important; color: #000 !important; line-height: 1.08; }
   tr:nth-child(even) td { background: #f0f0f0; }
-  .notes-title { font-size: 8pt; text-transform: uppercase; letter-spacing: 1pt; color: #333; margin-bottom: 6pt; margin-top: 8pt; }
-  .note-line { border-bottom: 1pt solid #999; margin-bottom: 10pt; }
-  .footer { margin-top: 6pt; border-top: 1pt solid #aaa; padding-top: 5pt; font-size: 7pt; color: #333; display: flex; justify-content: space-between; }
+  .notes-title { font-size: 7pt; text-transform: uppercase; letter-spacing: 0.8pt; color: #333; margin-bottom: 2pt; margin-top: 4pt; }
+  .cleaning-note-line { border-bottom: 0.7pt solid #999; margin-bottom: 2pt; font-size: 8pt; line-height: 1.1; padding-bottom: 1pt; min-height: 11pt; overflow-wrap: anywhere; }
+  .footer { margin-top: 3pt; border-top: 0.7pt solid #aaa; padding-top: 2pt; font-size: 6.5pt; color: #333; display: flex; justify-content: space-between; }
 </style>
 </head>
 <body>
+<div class="cleaning-fit-page"><div class="cleaning-fit-content">
 <div class="header">
   <div>
     <div class="title">CLEANING OPS — LGG</div>
@@ -6874,11 +6880,11 @@ ${asl737Block}
 <div class="notes-title">Notes</div>
 ${(function(){
   var lines = extraNotesLines;
-  var totalLines = 6;
+  var totalLines = Math.max(6, lines.length);
   var html = '';
   for(var ni=0; ni<totalLines; ni++){
     var txt = lines[ni] ? lines[ni].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
-    html += '<div style="border-bottom:1pt solid #999;margin-bottom:10pt;font-size:10pt;font-weight:' + (txt?'700':'400') + ';color:#000;padding-bottom:2pt;min-height:14pt">' + txt + '</div>';
+    html += '<div class="cleaning-note-line" style="font-weight:' + (txt?'700':'400') + ';color:#000">' + txt + '</div>';
   }
   return html;
 })()}
@@ -6886,20 +6892,39 @@ ${(function(){
   <span>LGG Cleaning Ops · ${new Date().toLocaleString('fr-BE')}</span>
   <span>${chosen.length} avion${chosen.length > 1 ? 's' : ''} à nettoyer</span>
 </div>
-<style id="wo-lgg-v66-crewbus-category-state">
-/* V66 — Crew Bus : les actions sont des catégories de worksheet explicites. */
-.crewbus-card-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.crewbus-mode-btn,.crewbus-hs-btn{cursor:pointer!important;pointer-events:auto!important;position:relative;z-index:6;transition:transform .16s ease,background .16s ease,border-color .16s ease,box-shadow .16s ease,color .16s ease}
-.crewbus-mode-btn.active.rent{background:rgba(96,165,250,.16)!important;border-color:#60a5fa!important;color:#dbeafe!important;box-shadow:0 0 0 1px rgba(96,165,250,.14),0 8px 20px rgba(96,165,250,.08)!important}
-.crewbus-mode-btn.active.hand{background:rgba(0,229,160,.15)!important;border-color:#00e5a0!important;color:#b8ffea!important;box-shadow:0 0 0 1px rgba(0,229,160,.14),0 8px 20px rgba(0,229,160,.08)!important}
-.crewbus-hs-btn.active{background:rgba(196,181,253,.17)!important;border-color:#c4b5fd!important;color:#f0e9ff!important;box-shadow:0 0 0 1px rgba(196,181,253,.14),0 8px 20px rgba(196,181,253,.08)!important}
-.crewbus-mode-btn:active,.crewbus-hs-btn:active{transform:scale(.97)}
-@media(max-width:760px){.crewbus-card-actions{justify-content:flex-start;width:100%;padding-left:38px}.crewbus-mode-btn,.crewbus-hs-btn{min-height:38px}}
-</style>
+</div></div>
+<script>
+/* Ajustement automatique sur une seule page A4, notes et sections comprises. */
+(function fitCleaningSheetToOnePage(){
+  function applyFit(){
+    var page=document.querySelector('.cleaning-fit-page');
+    var content=document.querySelector('.cleaning-fit-content');
+    if(!page||!content)return;
+    var available=page.clientHeight||1077;
+    var scale=1;
+    for(var i=0;i<6;i++){
+      content.style.zoom='1';
+      content.style.width=(100/scale)+'%';
+      var measured=content.scrollHeight||content.getBoundingClientRect().height;
+      if(!measured||!isFinite(measured))return;
+      var next=Math.min(1,(available-5)/measured);
+      if(!isFinite(next)||next<=0)return;
+      if(Math.abs(next-scale)<0.002){scale=next;break;}
+      scale=next;
+    }
+    scale=Math.max(0.25,Math.min(1,scale*0.985));
+    content.style.width=(100/scale)+'%';
+    content.style.zoom=scale.toFixed(4);
+    page.setAttribute('data-fit-scale',scale.toFixed(3));
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){requestAnimationFrame(function(){applyFit();requestAnimationFrame(applyFit);});},{once:true});
+  else requestAnimationFrame(function(){applyFit();requestAnimationFrame(applyFit);});
+})();
+<\/script>
 </body>
 </html>`;
 
-    openPrintWindow(html, 'Worksheet');
+    openPrintWindow(html, 'Feuille de nettoyage');
   }
 
   // Worksheet rules
@@ -7420,7 +7445,9 @@ ${(function(){
     var frame = document.createElement('iframe');
     frame.id = 'wo-lgg-print-frame';
     frame.setAttribute('aria-hidden','true');
-    frame.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none;z-index:-1;';
+    // Viewport A4 réel : les documents qui calculent leur réduction à l'impression
+    // doivent être mesurés à la bonne largeur/hauteur, et non dans un iframe 1×1 px.
+    frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0;opacity:0;pointer-events:none;z-index:-1;';
     document.body.appendChild(frame);
 
     var cleaned = false;
@@ -7539,9 +7566,11 @@ ${(function(){
         }
       }
 
-      // ── GTI/SWISSPORT : auto worksheet, no checkbox needed ──
+      // ── GTI/SWISSPORT : avion standard, ordre normal des opérations ──
+      // Le profil de worksheet GTI est conservé (Full Transit + Laundry),
+      // mais ces avions ne doivent pas rejoindre le lot des demandes spéciales Swissport.
       if (hnd.includes('SWISSPORT') && flt.startsWith('GTI')) {
-        pagesSwissport += makeSheet(Object.assign({}, f, { _gtiSwiss: true }));
+        pagesNormal += makeSheet(Object.assign({}, f, { _gtiSwiss: true }));
         return;
       }
 
