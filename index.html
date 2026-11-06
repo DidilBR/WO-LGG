@@ -2961,6 +2961,9 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       <button type="button" class="app-menu-item" id="app-menu-shift-settings" style="display:none" onclick="closeAppHeaderMenu();openShiftSettings()">
         <span class="app-menu-item-icon">&#9881;</span><span><b>Paramètres de shift</b><small>Horaires et fenêtres FIDS</small></span>
       </button>
+      <button type="button" class="app-menu-item app-menu-deicing-item" id="app-menu-deicing" onclick="closeAppHeaderMenu();openDeicingOperations()">
+        <span class="app-menu-item-icon">❄</span><span><b>Deicing Operations</b><small>Départs à traiter · suivi des changements horaires</small></span>
+      </button>
       <button type="button" class="app-menu-item" onclick="closeAppHeaderMenu();openLayoutSettings()">
         <span class="app-menu-item-icon">&#10024;</span><span><b>Interface &amp; thème</b><small>Choisir l'interface de travail</small></span>
       </button>
@@ -10074,6 +10077,260 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
   html[data-layout] .btn-primary,html[data-layout] .logo-icon{animation:none!important;transition:none!important}
 }
 </style>
+
+<style id="lgg-deicing-operations-css">
+.app-menu-deicing-item{border-color:rgba(64,190,255,.24)!important;background:linear-gradient(105deg,rgba(20,150,220,.09),rgba(255,255,255,.012))!important}
+.app-menu-deicing-item .app-menu-item-icon{color:#59caff!important}
+#deicing-overlay,#deicing-alert-overlay{position:fixed;inset:0;z-index:10080;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,7,16,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#deicing-overlay.open,#deicing-alert-overlay.open{display:flex}
+.deicing-dialog{width:min(1120px,100%);max-height:min(92vh,1000px);overflow:hidden;display:flex;flex-direction:column;border:1px solid rgba(100,190,235,.25);border-radius:20px;background:linear-gradient(155deg,#101d2a,#08121e 62%,#0b1926);color:#eaf5ff;box-shadow:0 30px 100px rgba(0,0,0,.55)}
+.deicing-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 24px;border-bottom:1px solid rgba(145,190,220,.15);background:linear-gradient(100deg,rgba(31,143,200,.13),rgba(255,255,255,.015))}
+.deicing-brand{display:flex;align-items:center;gap:13px;min-width:0}.deicing-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,#0aa5e9,#176bd4);font-size:23px;box-shadow:0 8px 24px rgba(0,150,230,.25)}
+.deicing-kicker{font:800 9px/1.4 var(--mono);letter-spacing:1.8px;color:#69cfff;text-transform:uppercase}.deicing-title{font:850 22px/1.1 var(--sans);margin-top:3px;color:#f5fbff}.deicing-subtitle{font-size:11px;color:#91aabd;margin-top:5px}
+.deicing-close{width:36px;height:36px;border:1px solid rgba(180,210,230,.18);border-radius:10px;background:rgba(255,255,255,.04);color:#d8edfa;font-size:22px;cursor:pointer}
+.deicing-controls{display:grid;grid-template-columns:1.1fr .8fr .8fr auto auto;align-items:end;gap:11px;padding:17px 24px;border-bottom:1px solid rgba(145,190,220,.12)}
+.deicing-field label{display:block;margin:0 0 7px;font:800 9px var(--mono);letter-spacing:1.2px;text-transform:uppercase;color:#8faabd}
+.deicing-field input{width:100%;height:42px;padding:0 12px;border:1px solid rgba(140,190,220,.22);border-radius:10px;background:#0a1723;color:#eff8ff;font:700 14px var(--sans);color-scheme:dark;outline:none}
+.deicing-field input:focus{border-color:#4abdeb;box-shadow:0 0 0 3px rgba(74,189,235,.12)}
+.deicing-btn{height:42px;padding:0 16px;border-radius:10px;border:1px solid rgba(90,190,235,.25);background:rgba(28,145,205,.14);color:#dff5ff;font:800 10px var(--sans);letter-spacing:.4px;cursor:pointer;white-space:nowrap}
+.deicing-btn.primary{border-color:#168fd0;background:linear-gradient(110deg,#0a9bd9,#226fe0);color:white;box-shadow:0 7px 20px rgba(0,140,220,.2)}
+.deicing-btn:disabled{opacity:.55;cursor:wait}
+.deicing-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 24px;color:#8faabd;font-size:11px}
+.deicing-count{display:inline-flex;align-items:center;gap:7px;color:#e7f7ff;font-weight:800}.deicing-count strong{font:900 18px var(--mono);color:#63d0ff}
+.deicing-table-wrap{overflow:auto;margin:0 24px 18px;border:1px solid rgba(140,190,220,.16);border-radius:12px;min-height:150px;max-height:48vh;background:rgba(2,9,16,.28)}
+.deicing-table{width:100%;border-collapse:collapse;min-width:720px;font-variant-numeric:tabular-nums}.deicing-table th{position:sticky;top:0;z-index:1;padding:12px 13px;text-align:left;background:#142a3a;color:#83cfee;font:800 9px var(--mono);letter-spacing:1.1px;text-transform:uppercase;border-bottom:1px solid rgba(120,190,225,.22)}
+.deicing-table td{padding:12px 13px;border-bottom:1px solid rgba(150,190,215,.1);font-size:12px;color:#e2edf5;white-space:nowrap}.deicing-table tr:last-child td{border-bottom:0}.deicing-table tbody tr:nth-child(even){background:rgba(255,255,255,.025)}
+.deicing-table .time{font:900 16px var(--mono);color:#fff}.deicing-table .flight{font-weight:900;color:#c5eaff}.deicing-table .reg{font:900 15px var(--mono);color:#ffd36b;letter-spacing:.6px}.deicing-handler{color:#9cb5c6}.deicing-empty{padding:45px 18px;text-align:center;color:#8da5b6;font-size:13px}
+.deicing-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px 20px;border-top:1px solid rgba(145,190,220,.12)}.deicing-foot-note{font-size:10px;line-height:1.5;color:#7792a5}.deicing-foot-actions{display:flex;gap:9px}
+.deicing-alert-dialog{width:min(620px,100%);padding-bottom:18px}.deicing-alert-body{padding:20px 24px;max-height:55vh;overflow:auto}.deicing-alert-status{padding:13px 14px;border-radius:12px;background:rgba(35,165,220,.1);border:1px solid rgba(75,190,235,.2);color:#dff6ff;font-size:13px;font-weight:800;margin-bottom:13px}.deicing-alert-status.ok{border-color:rgba(50,210,150,.22);background:rgba(50,210,150,.08);color:#b8f4d8}.deicing-change-list{display:grid;gap:8px}.deicing-change-item{padding:11px 12px;border:1px solid rgba(150,190,215,.14);border-radius:10px;background:rgba(255,255,255,.025);display:grid;grid-template-columns:1fr auto;gap:4px 12px}.deicing-change-item strong{font:900 12px var(--mono);color:#fff}.deicing-change-item span{font-size:11px;color:#a9bfcd}.deicing-alert-actions{display:flex;justify-content:flex-end;gap:9px;padding:0 24px}
+@media(max-width:760px){#deicing-overlay,#deicing-alert-overlay{padding:8px;align-items:flex-end}.deicing-dialog{max-height:95vh;border-radius:18px}.deicing-head{padding:15px 16px}.deicing-title{font-size:18px}.deicing-controls{grid-template-columns:1fr 1fr;padding:14px 16px;gap:9px}.deicing-field:first-child{grid-column:1/-1}.deicing-controls .deicing-btn{width:100%}.deicing-summary{padding:10px 16px}.deicing-table-wrap{margin:0 12px 14px;max-height:42vh}.deicing-foot{padding:12px 16px 16px;align-items:stretch;flex-direction:column}.deicing-foot-actions{display:grid;grid-template-columns:1fr 1fr}.deicing-btn{padding:0 10px}.deicing-alert-body{padding:16px}.deicing-alert-actions{padding:0 16px;display:grid;grid-template-columns:1fr}}
+</style>
+
+
+<div id="deicing-overlay" aria-hidden="true">
+  <section class="deicing-dialog" role="dialog" aria-modal="true" aria-labelledby="deicing-title">
+    <header class="deicing-head">
+      <div class="deicing-brand"><div class="deicing-icon">❄</div><div><div class="deicing-kicker">LGG · AIRPORT OPERATIONS</div><div class="deicing-title" id="deicing-title">Deicing Operations</div><div class="deicing-subtitle">Liste des départs à traiter · tous handlers sauf FEDEX</div></div></div>
+      <button type="button" class="deicing-close" onclick="closeDeicingOperations()" aria-label="Fermer">×</button>
+    </header>
+    <div class="deicing-controls">
+      <div class="deicing-field"><label for="deicing-date">Date locale (Belgique)</label><input id="deicing-date" type="date"></div>
+      <div class="deicing-field"><label for="deicing-from">De</label><input id="deicing-from" type="time" value="00:00"></div>
+      <div class="deicing-field"><label for="deicing-to">À</label><input id="deicing-to" type="time" value="23:59"></div>
+      <button type="button" class="deicing-btn" id="deicing-refresh" onclick="loadDeicingDepartures()">↻ Actualiser</button>
+      <button type="button" class="deicing-btn primary" id="deicing-print" onclick="printDeicingSheet()" disabled>▣ Imprimer la feuille</button>
+    </div>
+    <div class="deicing-summary"><div class="deicing-count"><strong id="deicing-count">0</strong> départ(s) dans la plage sélectionnée</div><div id="deicing-local-status">Heures affichées en heure belge (Europe/Brussels)</div></div>
+    <div class="deicing-table-wrap"><table class="deicing-table"><thead><tr><th>Heure départ</th><th>Vol</th><th>Immatriculation</th><th>Type avion</th><th>Handler</th><th>Stand</th></tr></thead><tbody id="deicing-rows"><tr><td colspan="6"><div class="deicing-empty">Choisissez une plage horaire puis actualisez les départs.</div></td></tr></tbody></table></div>
+    <footer class="deicing-foot"><div class="deicing-foot-note">Source : FIDS Départs de Liège Airport.<br>Les vols dont le handler contient « FEDEX » sont exclus.</div><div class="deicing-foot-actions"><button type="button" class="deicing-btn" onclick="closeDeicingOperations()">Fermer</button><button type="button" class="deicing-btn primary" id="deicing-print-bottom" onclick="printDeicingSheet()" disabled>Imprimer la feuille</button></div></footer>
+  </section>
+</div>
+<div id="deicing-alert-overlay" aria-hidden="true">
+  <section class="deicing-dialog deicing-alert-dialog" role="dialog" aria-modal="true" aria-labelledby="deicing-alert-title">
+    <header class="deicing-head"><div class="deicing-brand"><div class="deicing-icon">🔔</div><div><div class="deicing-kicker">SURVEILLANCE HORAIRE</div><div class="deicing-title" id="deicing-alert-title">Deicing Operations · Mise à jour</div><div class="deicing-subtitle" id="deicing-alert-subtitle">Comparaison avec la dernière feuille imprimée</div></div></div><button type="button" class="deicing-close" onclick="closeDeicingAlert()" aria-label="Fermer">×</button></header>
+    <div class="deicing-alert-body"><div id="deicing-alert-status" class="deicing-alert-status"></div><div id="deicing-change-list" class="deicing-change-list"></div></div>
+    <div class="deicing-alert-actions"><button type="button" class="deicing-btn" onclick="closeDeicingAlert()">Fermer</button><button type="button" class="deicing-btn primary" id="deicing-alert-reprint" onclick="reprintDeicingFromAlert()" style="display:none">↻ Réimprimer la feuille actualisée</button></div>
+  </section>
+</div>
+
+
+<script id="lgg-deicing-operations-js">
+(function(){
+  'use strict';
+  const DEICING_BASELINE_KEY='lgg_deicing_last_print_v1';
+  const DEICING_HOUR_MS=60*60*1000;
+  let deicingRows=[];
+  let deicingLoaded=false;
+  let deicingRawDepartures=[];
+  let deicingLastRange=null;
+  let deicingCheckRunning=false;
+  let deicingHourlyTimer=null;
+
+  function deicingEl(id){return document.getElementById(id);}
+  function deicingEscape(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+  function deicingDateToday(){
+    const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Brussels',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+    const get=t=>parts.find(p=>p.type===t)?.value||'';
+    return get('year')+'-'+get('month')+'-'+get('day');
+  }
+  function deicingBrusselsWallToDate(dateStr,timeStr){
+    const d=String(dateStr||'').split('-').map(Number), t=String(timeStr||'').split(':').map(Number);
+    if(d.length!==3||t.length<2||!d[0]||!d[1]||!d[2]||!Number.isFinite(t[0])||!Number.isFinite(t[1]))return null;
+    const desired=Date.UTC(d[0],d[1]-1,d[2],t[0],t[1],0);
+    let guess=new Date(desired);
+    const fmt=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Brussels',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+    for(let i=0;i<4;i++){
+      const p=fmt.formatToParts(guess); const v={}; p.forEach(x=>{v[x.type]=x.value;});
+      const actual=Date.UTC(Number(v.year),Number(v.month)-1,Number(v.day),Number(v.hour),Number(v.minute),Number(v.second));
+      const delta=desired-actual; if(!delta)break; guess=new Date(guess.getTime()+delta);
+    }
+    return guess;
+  }
+  function deicingUtcFromRaw(raw){
+    const value=raw?.eTx||raw?.sTx||raw?.aTx||raw?.date||raw?.departureTime||raw?.estimatedDeparture||raw?.scheduledDeparture;
+    if(!value)return null;
+    if(typeof toBrusselsDate==='function')return toBrusselsDate(value);
+    const d=new Date(/[Zz]$|[+-]\d\d:\d\d$/.test(String(value))?value:String(value)+'Z');
+    return Number.isNaN(d.getTime())?null:d;
+  }
+  function deicingRawText(raw,keys){for(const key of keys){const v=raw?.[key];if(v!=null&&String(v).trim()!=='')return String(v).trim();}return '';}
+  function deicingFormatTime(d){return new Intl.DateTimeFormat('fr-BE',{timeZone:'Europe/Brussels',hour:'2-digit',minute:'2-digit',hour12:false}).format(d);}
+  function deicingFormatDate(d){return new Intl.DateTimeFormat('fr-BE',{timeZone:'Europe/Brussels',day:'2-digit',month:'2-digit',year:'numeric'}).format(d);}
+  function deicingKey(row){return [row.flight.toUpperCase(),row.localDate].join('|');}
+  function deicingWindow(){
+    const date=deicingEl('deicing-date')?.value||deicingDateToday();
+    const from=deicingEl('deicing-from')?.value||'00:00';
+    const to=deicingEl('deicing-to')?.value||'23:59';
+    let start=deicingBrusselsWallToDate(date,from),end=deicingBrusselsWallToDate(date,to);
+    if(!start||!end)return null;
+    if(end<=start){const dp=date.split('-').map(Number);const next=new Date(Date.UTC(dp[0],dp[1]-1,dp[2]+1));const nextDate=next.toISOString().slice(0,10);end=deicingBrusselsWallToDate(nextDate,to);}
+    return {date,from,to,startMs:start.getTime(),endMs:end.getTime()};
+  }
+  function deicingNormalizeRows(rawList,range){
+    const out=[],seen=new Set();
+    (Array.isArray(rawList)?rawList:[]).forEach(raw=>{
+      const handler=deicingRawText(raw,['handler','handlingAgent','groundHandler']).toUpperCase();
+      if(handler.includes('FEDEX'))return;
+      const flight=deicingRawText(raw,['flightNumber','flightPax','flight','callsign']).toUpperCase();
+      if(!flight)return;
+      const dt=deicingUtcFromRaw(raw); if(!dt)return;
+      const ms=dt.getTime(); if(ms<range.startMs||ms>range.endMs)return;
+      const localDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Brussels',year:'numeric',month:'2-digit',day:'2-digit'}).format(dt);
+      const row={
+        flight,
+        reg:deicingRawText(raw,['aircraftRegistration','registration','reg']).toUpperCase(),
+        aircraft:deicingRawText(raw,['aircraftType','aircraftTypeIcao','aircraftModel','equipment','acType','aircraft']),
+        handler:handler||'—',
+        stand:deicingRawText(raw,['stand','standCode','parkingStand'])||'—',
+        time:deicingFormatTime(dt),
+        localDate,
+        epoch:ms,
+        timeSource:raw?.eTx?'EST':raw?.sTx?'SCH':raw?.aTx?'ACT':'FIDS'
+      };
+      const key=deicingKey(row);
+      if(seen.has(key))return;seen.add(key);out.push(row);
+    });
+    out.sort((a,b)=>a.epoch-b.epoch||a.flight.localeCompare(b.flight));
+    return out;
+  }
+  function deicingSetStatus(text){const el=deicingEl('deicing-local-status');if(el)el.textContent=text;}
+  function deicingRender(){
+    const body=deicingEl('deicing-rows');const count=deicingEl('deicing-count');
+    if(count)count.textContent=String(deicingRows.length);
+    const enabled=deicingLoaded;
+    ['deicing-print','deicing-print-bottom'].forEach(id=>{const b=deicingEl(id);if(b)b.disabled=!enabled;});
+    if(!body)return;
+    if(!deicingRows.length){body.innerHTML='<tr><td colspan="6"><div class="deicing-empty">Aucun départ hors FEDEX dans cette plage horaire.</div></td></tr>';return;}
+    body.innerHTML=deicingRows.map(r=>'<tr><td class="time">'+deicingEscape(r.time)+' <small style="font:700 8px var(--mono);color:#80a4b9">'+deicingEscape(r.timeSource)+'</small></td><td class="flight">'+deicingEscape(r.flight)+'</td><td class="reg">'+deicingEscape(r.reg||'—')+'</td><td>'+deicingEscape(r.aircraft||'—')+'</td><td class="deicing-handler">'+deicingEscape(r.handler)+'</td><td>'+deicingEscape(r.stand)+'</td></tr>').join('');
+  }
+  window.openDeicingOperations=function(skipInitialLoad){
+    const overlay=deicingEl('deicing-overlay');if(!overlay)return;
+    if(!deicingEl('deicing-date').value)deicingEl('deicing-date').value=deicingDateToday();
+    if(!deicingEl('deicing-from').value)deicingEl('deicing-from').value=deicingFormatTime(new Date());
+    overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');
+    if(!skipInitialLoad)loadDeicingDepartures();
+  };
+  window.closeDeicingOperations=function(){const o=deicingEl('deicing-overlay');if(o){o.classList.remove('open');o.setAttribute('aria-hidden','true');}};
+  window.loadDeicingDepartures=async function(){
+    const btn=deicingEl('deicing-refresh');if(btn){btn.disabled=true;btn.textContent='Chargement…';}
+    deicingSetStatus('Récupération des départs FIDS…');
+    try{
+      const range=deicingWindow();if(!range)throw new Error('Plage horaire invalide.');
+      const raw=await fetchJsonWithFallback(FIDS_DEPARTURES_URL);
+      deicingRawDepartures=Array.isArray(raw)?raw:(Array.isArray(raw?.departures)?raw.departures:[]);
+      deicingLastRange=range;deicingRows=deicingNormalizeRows(deicingRawDepartures,range);deicingLoaded=true;deicingRender();
+      deicingSetStatus('Heure locale belge · '+range.from+' → '+range.to+(range.to<=range.from?' (lendemain)':'')+' · FIDS actualisé à '+deicingFormatTime(new Date()));
+    }catch(e){console.error('Deicing Operations:',e);deicingLoaded=false;deicingRows=[];deicingRender();deicingSetStatus('Erreur FIDS : '+(e?.message||'récupération impossible'));}
+    finally{if(btn){btn.disabled=false;btn.textContent='↻ Actualiser';}}
+  };
+  function deicingPrintHtml(rows,range){
+    const esc=deicingEscape;const now=new Date();
+    const tableRows=rows.map((r,i)=>'<tr><td class="num">'+(i+1)+'</td><td class="time">'+esc(r.time)+'</td><td class="flight">'+esc(r.flight)+'</td><td class="reg">'+esc(r.reg||'—')+'</td><td>'+esc(r.aircraft||'—')+'</td><td>'+esc(r.handler)+'</td><td>'+esc(r.stand)+'</td></tr>').join('');
+    return '<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deicing Operations - LGG</title><style>@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#172533;margin:0;background:#fff;font-size:10pt}.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #163c56;padding:0 0 10px;margin-bottom:14px}.brand{font-size:18pt;font-weight:900;letter-spacing:.2px;color:#12354c}.sub{font-size:8.5pt;color:#526879;margin-top:4px}.meta{text-align:right;font-size:8pt;color:#40596b;line-height:1.6}.bar{display:flex;justify-content:space-between;align-items:end;margin:0 0 10px}.bar h2{font-size:14pt;text-transform:uppercase;margin:0;color:#163c56;letter-spacing:.7px}.bar span{font-size:9pt;color:#526879;font-weight:700}table{border-collapse:collapse;width:100%;table-layout:fixed}thead{display:table-header-group}th{background:#163c56;color:#fff;font-size:8pt;text-align:left;padding:9px 7px;letter-spacing:.5px;text-transform:uppercase}td{padding:8px 7px;border-bottom:1px solid #d5e0e7;font-size:9pt;overflow-wrap:anywhere}tbody tr:nth-child(even){background:#f2f6f8}tr{break-inside:avoid;page-break-inside:avoid}.num{width:7%;color:#8294a1;font-size:8pt}.time{width:14%;font-weight:900;font-size:12pt;font-variant-numeric:tabular-nums;color:#132f43}.flight{width:17%;font-weight:900;color:#1d5877}.reg{width:18%;font-weight:900;font-family:Consolas,monospace;color:#9a6500;letter-spacing:.3px}.foot{border-top:1px solid #cbd8e0;margin-top:12px;padding-top:7px;display:flex;justify-content:space-between;font-size:7.5pt;color:#667d8b}.note{font-size:8pt;color:#647887;margin-top:10px}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body><header class="top"><div><div class="brand">❄ DEICING OPERATIONS</div><div class="sub">Liège Airport · Départs hors handler FEDEX</div></div><div class="meta"><b>'+esc(deicingFormatDate(new Date(range.startMs)))+'</b><br>Plage : '+esc(range.from)+' → '+esc(range.to)+(range.to<=range.from?' · lendemain':'')+'<br>Heure Belgique · Europe/Brussels<br>Imprimé le '+esc(deicingFormatDate(now))+' à '+esc(deicingFormatTime(now))+'</div></header><div class="bar"><h2>Départs à traiter</h2><span>'+rows.length+' avion(s)</span></div><table><thead><tr><th style="width:7%">N°</th><th style="width:14%">Heure</th><th style="width:17%">Vol</th><th style="width:18%">Immatriculation</th><th style="width:17%">Type avion</th><th style="width:17%">Handler</th><th style="width:10%">Stand</th></tr></thead><tbody>'+tableRows+'</tbody></table><div class="note">Liste établie à partir du FIDS Départs de Liège Airport. Les vols dont le handler contient FEDEX sont exclus.</div><footer class="foot"><span>LGG · Cleaning Ops</span><span>Deicing Operations · '+rows.length+' départ(s)</span></footer></body></html>';
+  }
+  function deicingSaveBaseline(rows,range){
+    const baseline={version:1,printedAt:Date.now(),lastCheckedAt:Date.now(),range,rows:rows.map(r=>({...r}))};
+    try{localStorage.setItem(DEICING_BASELINE_KEY,JSON.stringify(baseline));}catch(e){console.warn('Deicing baseline storage failed',e);}
+    deicingScheduleHourlyCheck();
+    return baseline;
+  }
+  function deicingReadBaseline(){try{const s=localStorage.getItem(DEICING_BASELINE_KEY);if(!s)return null;const b=JSON.parse(s);return b&&b.version===1&&Array.isArray(b.rows)&&b.range?b:null;}catch(e){return null;}}
+  function deicingOpenPrint(html,onPrint){
+    const frame=document.createElement('iframe');frame.setAttribute('aria-hidden','true');frame.style.cssText='position:fixed;left:-12000px;top:0;width:210mm;height:297mm;border:0;opacity:0;pointer-events:none';document.body.appendChild(frame);
+    let done=false;const finish=()=>{if(done)return;done=true;try{onPrint&&onPrint();}catch(e){console.error(e);}setTimeout(()=>frame.remove(),500);};
+    frame.onload=()=>{try{const w=frame.contentWindow;if(!w)throw new Error('Fenêtre impression indisponible');w.addEventListener('afterprint',finish,{once:true});w.focus();w.print();setTimeout(finish,1500);}catch(e){frame.remove();alert('Impossible d’ouvrir l’impression : '+e.message);}};
+    frame.srcdoc=html;
+  }
+  window.printDeicingSheet=function(){
+    if(!deicingLoaded||!deicingLastRange){alert('Chargez d’abord les départs FIDS avant l’impression.');return;}
+    const rows=deicingRows.map(r=>({...r}));const range={...deicingLastRange};
+    const html=deicingPrintHtml(rows,range);
+    deicingOpenPrint(html,()=>deicingSaveBaseline(rows,range));
+    // Le point de comparaison est initialisé dès l'ouverture de la boîte d'impression.
+    deicingSaveBaseline(rows,range);
+    closeDeicingOperations();
+  };
+  function deicingDiff(base,current){
+    const oldMap=new Map(base.rows.map(r=>[deicingKey(r),r]));
+    const nowMap=new Map(current.map(r=>[deicingKey(r),r]));
+    const added=current.filter(r=>!oldMap.has(deicingKey(r)));
+    const changed=[];
+    current.forEach(r=>{const old=oldMap.get(deicingKey(r));if(old&&Math.abs(Number(r.epoch)-Number(old.epoch))>30*60000)changed.push({old,row:r,delta:Number(r.epoch)-Number(old.epoch)});});
+    const removed=base.rows.filter(r=>!nowMap.has(deicingKey(r)));
+    return {added,changed,removed};
+  }
+  function deicingShowAlert(diff,base,hasError){
+    const o=deicingEl('deicing-alert-overlay');const status=deicingEl('deicing-alert-status');const list=deicingEl('deicing-change-list');const reprint=deicingEl('deicing-alert-reprint');
+    if(!o||!status||!list)return;
+    const total=diff.added.length+diff.changed.length;
+    if(hasError){status.className='deicing-alert-status';status.textContent='Impossible de vérifier les départs FIDS cette heure-ci. La dernière feuille imprimée reste votre référence.';list.innerHTML='';if(reprint)reprint.style.display='none';}
+    else if(!total){status.className='deicing-alert-status ok';status.textContent='Aucun changement détecté depuis la dernière feuille Deicing imprimée. Aucun nouveau départ et aucun changement horaire supérieur à 30 minutes.';list.innerHTML='';if(reprint)reprint.style.display='none';}
+    else{
+      status.className='deicing-alert-status';status.textContent=diff.added.length+' nouveau(x) départ(s) · '+diff.changed.length+' changement(s) d’horaire supérieur(s) à 30 minutes.';
+      list.innerHTML=diff.added.map(r=>'<div class="deicing-change-item"><strong>＋ '+deicingEscape(r.flight)+' · '+deicingEscape(r.time)+'</strong><span>NOUVEAU DÉPART</span><span>'+deicingEscape(r.reg||'Immatriculation inconnue')+' · '+deicingEscape(r.handler)+'</span><span>'+deicingEscape(r.stand)+'</span></div>').join('')+diff.changed.map(x=>'<div class="deicing-change-item"><strong>↻ '+deicingEscape(x.row.flight)+'</strong><span>HORAIRE MODIFIÉ</span><span>'+deicingEscape(x.old.time)+' → <b style="color:#ffd36b">'+deicingEscape(x.row.time)+'</b></span><span>'+((x.delta>0)?'Retard ':'Avance ')+Math.round(Math.abs(x.delta)/60000)+' min</span></div>').join('');
+      if(reprint)reprint.style.display='inline-flex';
+    }
+    const sub=deicingEl('deicing-alert-subtitle');if(sub)sub.textContent='Dernière feuille : '+deicingFormatDate(new Date(base.printedAt))+' à '+deicingFormatTime(new Date(base.printedAt))+' · comparaison FIDS en heure belge';
+    o.classList.add('open');o.setAttribute('aria-hidden','false');
+    try{if('Notification'in window&&Notification.permission==='granted'){new Notification('Deicing Operations',{body:hasError?'Vérification FIDS impossible':!total?'Aucun changement depuis la dernière impression':status.textContent});}}catch(e){}
+  }
+  window.closeDeicingAlert=function(){const o=deicingEl('deicing-alert-overlay');if(o){o.classList.remove('open');o.setAttribute('aria-hidden','true');}};
+  async function deicingCheckHourly(){
+    if(deicingCheckRunning)return;const base=deicingReadBaseline();if(!base)return;
+    deicingCheckRunning=true;
+    try{
+      const raw=await fetchJsonWithFallback(FIDS_DEPARTURES_URL);const range=base.range;
+      const list=Array.isArray(raw)?raw:(Array.isArray(raw?.departures)?raw.departures:[]);
+      const current=deicingNormalizeRows(list,range);const diff=deicingDiff(base,current);
+      base.lastCheckedAt=Date.now();try{localStorage.setItem(DEICING_BASELINE_KEY,JSON.stringify(base));}catch(e){}
+      deicingShowAlert(diff,base,false);
+    }catch(e){console.error('Deicing hourly check failed:',e);base.lastCheckedAt=Date.now();try{localStorage.setItem(DEICING_BASELINE_KEY,JSON.stringify(base));}catch(x){}deicingShowAlert({added:[],changed:[],removed:[]},base,true);}
+    finally{deicingCheckRunning=false;deicingScheduleHourlyCheck();}
+  }
+  window.reprintDeicingFromAlert=async function(){
+    const base=deicingReadBaseline();if(!base){closeDeicingAlert();openDeicingOperations();return;}
+    closeDeicingAlert();
+    const range=base.range;const from=deicingEl('deicing-from'),to=deicingEl('deicing-to'),date=deicingEl('deicing-date');
+    if(date)date.value=range.date;if(from)from.value=range.from;if(to)to.value=range.to;
+    openDeicingOperations(true);
+    await loadDeicingDepartures();
+    if(deicingLoaded)printDeicingSheet();else alert('Impossible de charger les départs FIDS pour cette plage.');
+  };
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDeicingOperations();closeDeicingAlert();}});
+  ['deicing-overlay','deicing-alert-overlay'].forEach(id=>{const o=deicingEl(id);if(o)o.addEventListener('pointerdown',e=>{if(e.target===o){if(id==='deicing-overlay')closeDeicingOperations();else closeDeicingAlert();}});});
+  // Le suivi démarre une heure après la dernière impression / vérification, même si la page a été rechargée.
+  function deicingScheduleHourlyCheck(){
+    if(deicingHourlyTimer)clearTimeout(deicingHourlyTimer);
+    const baseline=deicingReadBaseline();if(!baseline)return;
+    const reference=Number(baseline.lastCheckedAt)||Number(baseline.printedAt)||Date.now();
+    const delay=Math.max(1000,reference+DEICING_HOUR_MS-Date.now());
+    deicingHourlyTimer=setTimeout(function(){deicingCheckHourly();},delay);
+  }
+  document.addEventListener('visibilitychange',function(){if(!document.hidden){const b=deicingReadBaseline();if(b&&Date.now()-(Number(b.lastCheckedAt)||Number(b.printedAt)||0)>=DEICING_HOUR_MS)deicingCheckHourly();}});
+  deicingScheduleHourlyCheck();
+})();
+</script>
+
 </body>
 </html>
 
