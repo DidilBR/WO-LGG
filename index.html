@@ -2962,7 +2962,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
         <span class="app-menu-item-icon">&#9881;</span><span><b>Paramètres de shift</b><small>Horaires et fenêtres FIDS</small></span>
       </button>
       <button type="button" class="app-menu-item app-menu-deicing-item" id="app-menu-deicing" onclick="closeAppHeaderMenu();openDeicingOperations()">
-        <span class="app-menu-item-icon">❄</span><span><b>Deicing Operations</b><small>Départs à traiter · suivi des changements horaires</small></span>
+        <span class="app-menu-item-icon">❄</span><span><b>Deicing Operations</b><small>Départs potentiels à traiter · suivi des changements horaires</small></span>
       </button>
       <button type="button" class="app-menu-item" onclick="closeAppHeaderMenu();openLayoutSettings()">
         <span class="app-menu-item-icon">&#10024;</span><span><b>Interface &amp; thème</b><small>Choisir l'interface de travail</small></span>
@@ -10097,20 +10097,20 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
 .deicing-btn:disabled{opacity:.55;cursor:wait}
 .deicing-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 24px;color:#8faabd;font-size:11px}
 .deicing-count{display:inline-flex;align-items:center;gap:7px;color:#e7f7ff;font-weight:800}.deicing-count strong{font:900 18px var(--mono);color:#63d0ff}
-.deicing-table-wrap{overflow:auto;margin:0 24px 18px;border:1px solid rgba(140,190,220,.16);border-radius:12px;min-height:150px;max-height:48vh;background:rgba(2,9,16,.28)}
-.deicing-table{width:100%;border-collapse:collapse;min-width:720px;font-variant-numeric:tabular-nums}.deicing-table th{position:sticky;top:0;z-index:1;padding:12px 13px;text-align:left;background:#142a3a;color:#83cfee;font:800 9px var(--mono);letter-spacing:1.1px;text-transform:uppercase;border-bottom:1px solid rgba(120,190,225,.22)}
+.deicing-risk{margin-top:7px;display:flex;align-items:center;flex-wrap:wrap;gap:7px;color:#b7d3e3;font-size:11px;font-weight:750;line-height:1.45}.deicing-risk strong{display:inline-flex;align-items:center;padding:3px 8px;border-radius:7px;font:900 10px var(--mono);letter-spacing:.6px;text-transform:uppercase;border:1px solid rgba(130,180,210,.24);background:rgba(255,255,255,.05);color:#cfefff}.deicing-risk .very-high{background:rgba(244,75,75,.16);border-color:rgba(244,90,90,.42);color:#ffaaaa}.deicing-risk .high{background:rgba(240,145,45,.16);border-color:rgba(240,145,45,.4);color:#ffd09a}.deicing-risk .potential{background:rgba(245,205,75,.13);border-color:rgba(245,205,75,.35);color:#ffe9a1}.deicing-risk .low{background:rgba(70,175,130,.12);border-color:rgba(70,175,130,.3);color:#a8e8c9}.deicing-risk .very-low{background:rgba(100,155,180,.1);border-color:rgba(100,155,180,.25);color:#b7d3e3}.deicing-risk small{display:block;width:100%;font-size:9px;font-weight:500;color:#809aab}.deicing-check-head{text-align:center!important;min-width:112px}.deicing-check-cell{text-align:center!important;vertical-align:middle}.deicing-task-check{appearance:none;-webkit-appearance:none;width:22px;height:22px;border:2px solid #7796a9;border-radius:6px;background:#071522;display:inline-grid;place-items:center;cursor:pointer;vertical-align:middle;transition:background .12s,border-color .12s}.deicing-task-check:checked{background:#0f9c76;border-color:#32d6a7}.deicing-task-check:checked::after{content:"✓";font:900 15px/1 Arial;color:#fff}.deicing-task-check:focus-visible{outline:3px solid rgba(80,195,245,.35);outline-offset:2px}.deicing-table-wrap{overflow:auto;margin:0 24px 18px;border:1px solid rgba(140,190,220,.16);border-radius:12px;min-height:150px;max-height:48vh;background:rgba(2,9,16,.28)}
+.deicing-table{width:100%;border-collapse:collapse;min-width:1040px;font-variant-numeric:tabular-nums}.deicing-table th{position:sticky;top:0;z-index:1;padding:12px 13px;text-align:left;background:#142a3a;color:#83cfee;font:800 9px var(--mono);letter-spacing:1.1px;text-transform:uppercase;border-bottom:1px solid rgba(120,190,225,.22)}
 .deicing-table td{padding:12px 13px;border-bottom:1px solid rgba(150,190,215,.1);font-size:12px;color:#e2edf5;white-space:nowrap}.deicing-table tr:last-child td{border-bottom:0}.deicing-table tbody tr:nth-child(even){background:rgba(255,255,255,.025)}
 .deicing-weather{margin-top:7px;color:#8fe2ff;font:800 11px/1.45 var(--sans);letter-spacing:.15px}.deicing-table .time{font:950 20px/1.1 var(--mono);color:#fff;letter-spacing:.35px}.deicing-table .reg{font:950 19px/1.1 var(--mono);color:#ffd36b;letter-spacing:.8px;text-shadow:0 0 14px rgba(255,205,90,.12)}.deicing-table td.time,.deicing-table td.reg{background:rgba(255,255,255,.025)}.deicing-table .flight{font-weight:900;color:#c5eaff}.deicing-handler{color:#9cb5c6}.deicing-empty{padding:45px 18px;text-align:center;color:#8da5b6;font-size:13px}
 .deicing-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px 20px;border-top:1px solid rgba(145,190,220,.12)}.deicing-foot-note{font-size:10px;line-height:1.5;color:#7792a5}.deicing-foot-actions{display:flex;gap:9px}
 .deicing-alert-dialog{width:min(620px,100%);padding-bottom:18px}.deicing-alert-body{padding:20px 24px;max-height:55vh;overflow:auto}.deicing-alert-status{padding:13px 14px;border-radius:12px;background:rgba(35,165,220,.1);border:1px solid rgba(75,190,235,.2);color:#dff6ff;font-size:13px;font-weight:800;margin-bottom:13px}.deicing-alert-status.ok{border-color:rgba(50,210,150,.22);background:rgba(50,210,150,.08);color:#b8f4d8}.deicing-change-list{display:grid;gap:8px}.deicing-change-item{padding:11px 12px;border:1px solid rgba(150,190,215,.14);border-radius:10px;background:rgba(255,255,255,.025);display:grid;grid-template-columns:1fr auto;gap:4px 12px}.deicing-change-item strong{font:900 12px var(--mono);color:#fff}.deicing-change-item span{font-size:11px;color:#a9bfcd}.deicing-alert-actions{display:flex;justify-content:flex-end;gap:9px;padding:0 24px}
-@media(max-width:760px){#deicing-overlay,#deicing-alert-overlay{padding:8px;align-items:flex-end}.deicing-dialog{max-height:95vh;border-radius:18px}.deicing-head{padding:15px 16px}.deicing-title{font-size:18px}.deicing-controls{grid-template-columns:1fr 1fr;padding:14px 16px;gap:9px}.deicing-field:first-child{grid-column:1/-1}.deicing-controls .deicing-btn{width:100%}.deicing-summary{padding:10px 16px}.deicing-table-wrap{margin:0 12px 14px;max-height:42vh}.deicing-foot{padding:12px 16px 16px;align-items:stretch;flex-direction:column}.deicing-foot-actions{display:grid;grid-template-columns:1fr 1fr}.deicing-btn{padding:0 10px}.deicing-alert-body{padding:16px}.deicing-alert-actions{padding:0 16px;display:grid;grid-template-columns:1fr}}
+@media(max-width:760px){.deicing-risk{font-size:10px}.deicing-task-check{width:24px;height:24px}#deicing-overlay,#deicing-alert-overlay{padding:8px;align-items:flex-end}.deicing-dialog{max-height:95vh;border-radius:18px}.deicing-head{padding:15px 16px}.deicing-title{font-size:18px}.deicing-controls{grid-template-columns:1fr 1fr;padding:14px 16px;gap:9px}.deicing-field:first-child{grid-column:1/-1}.deicing-controls .deicing-btn{width:100%}.deicing-summary{padding:10px 16px}.deicing-table-wrap{margin:0 12px 14px;max-height:42vh}.deicing-foot{padding:12px 16px 16px;align-items:stretch;flex-direction:column}.deicing-foot-actions{display:grid;grid-template-columns:1fr 1fr}.deicing-btn{padding:0 10px}.deicing-alert-body{padding:16px}.deicing-alert-actions{padding:0 16px;display:grid;grid-template-columns:1fr}}
 </style>
 
 
 <div id="deicing-overlay" aria-hidden="true">
   <section class="deicing-dialog" role="dialog" aria-modal="true" aria-labelledby="deicing-title">
     <header class="deicing-head">
-      <div class="deicing-brand"><div class="deicing-icon">❄</div><div><div class="deicing-kicker">LGG · AIRPORT OPERATIONS</div><div class="deicing-title" id="deicing-title">Deicing Operations</div><div class="deicing-subtitle">Liste opérationnelle des départs</div><div class="deicing-weather" id="deicing-weather" aria-live="polite">🌡 Température actuelle à Liège Airport : récupération du METAR…</div></div></div>
+      <div class="deicing-brand"><div class="deicing-icon">❄</div><div><div class="deicing-kicker">LGG · AIRPORT OPERATIONS</div><div class="deicing-title" id="deicing-title">Deicing Operations</div><div class="deicing-subtitle">Liste opérationnelle des départs</div><div class="deicing-weather" id="deicing-weather" aria-live="polite">🌡 Température actuelle à Liège Airport : récupération du METAR…</div><div class="deicing-risk" id="deicing-risk" aria-live="polite">❄ Probabilité d’une demande de deicing : calcul en cours…</div></div></div>
       <button type="button" class="deicing-close" onclick="closeDeicingOperations()" aria-label="Fermer">×</button>
     </header>
     <div class="deicing-controls">
@@ -10121,8 +10121,8 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
       <button type="button" class="deicing-btn primary" id="deicing-print" onclick="printDeicingSheet()" disabled>▣ Imprimer la feuille</button>
     </div>
     <div class="deicing-summary"><div class="deicing-count"><strong id="deicing-count">0</strong> départ(s) dans la plage sélectionnée</div><div id="deicing-local-status">Heures affichées en heure belge (Europe/Brussels)</div></div>
-    <div class="deicing-table-wrap"><table class="deicing-table"><thead><tr><th>Immatriculation</th><th>Heure</th><th>Stand</th><th>Vol</th><th>Handler</th><th>AC Type</th></tr></thead><tbody id="deicing-rows"><tr><td colspan="6"><div class="deicing-empty">Choisissez une plage horaire puis actualisez les départs.</div></td></tr></tbody></table></div>
-    <footer class="deicing-foot"><div class="deicing-foot-note">Source : FIDS Départs de Liège Airport.<br>Météo : METAR EBLG · NOAA NWS / Datamask Aviation.</div><div class="deicing-foot-actions"><button type="button" class="deicing-btn" onclick="closeDeicingOperations()">Fermer</button><button type="button" class="deicing-btn primary" id="deicing-print-bottom" onclick="printDeicingSheet()" disabled>Imprimer la feuille</button></div></footer>
+    <div class="deicing-table-wrap"><table class="deicing-table"><thead><tr><th>Immatriculation</th><th>Heure</th><th>Stand</th><th>Vol</th><th>Handler</th><th>AC Type</th><th class="deicing-check-head">Deicing confirmé</th><th class="deicing-check-head">Fait</th></tr></thead><tbody id="deicing-rows"><tr><td colspan="8"><div class="deicing-empty">Choisissez une plage horaire puis actualisez les départs.</div></td></tr></tbody></table></div>
+    <footer class="deicing-foot"><div class="deicing-foot-note">Source : FIDS Départs de Liège Airport.<br>Météo : METAR EBLG + prévisions horaires Open-Meteo.</div><div class="deicing-foot-actions"><button type="button" class="deicing-btn" onclick="closeDeicingOperations()">Fermer</button><button type="button" class="deicing-btn primary" id="deicing-print-bottom" onclick="printDeicingSheet()" disabled>Imprimer la feuille</button></div></footer>
   </section>
 </div>
 <div id="deicing-alert-overlay" aria-hidden="true">
@@ -10138,11 +10138,22 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
 (function(){
   'use strict';
   const DEICING_BASELINE_KEY='lgg_deicing_last_print_v1';
+  const DEICING_CHECKS_KEY='lgg_deicing_ground_checks_v1';
   const DEICING_HOUR_MS=60*60*1000;
   const DEICING_METAR_URL='https://datamask.org/api/v1/metar/EBLG';
+  const DEICING_TAF_URL='https://datamask.org/api/v1/taf/EBLG';
+  const DEICING_FORECAST_URL='https://api.open-meteo.com/v1/forecast?latitude=50.637&longitude=5.443&current=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,rain,showers,snowfall,weather_code,visibility,wind_speed_10m,wind_gusts_10m&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation_probability,precipitation,rain,showers,snowfall,weather_code,visibility,wind_speed_10m,wind_gusts_10m&forecast_days=7&timezone=Europe%2FBrussels&timeformat=unixtime';
   let deicingWeather=null;
+  let deicingTaf=null;
+  let deicingTafPromise=null;
+  let deicingTafFetchedAt=0;
   let deicingWeatherPromise=null;
   let deicingWeatherTimer=null;
+  let deicingForecast=null;
+  let deicingForecastPromise=null;
+  let deicingForecastFetchedAt=0;
+  let deicingForecastTimer=null;
+  let deicingRisk=null;
   let deicingDefaultsInitialized=false;
   let deicingRows=[];
   let deicingLoaded=false;
@@ -10195,6 +10206,7 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
     if(from)from.value=start.time;
     if(to)to.value=end.time;
     deicingDefaultsInitialized=true;
+    deicingRenderRisk();
   }
   function deicingWeatherText(){
     if(!deicingWeather||!Number.isFinite(Number(deicingWeather.temp)))return 'Température actuelle à Liège Airport : indisponible';
@@ -10217,7 +10229,7 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
         const data=await response.json();
         const temp=data?.decoded?.temperature?.temp;
         if(temp===null||temp===undefined||!Number.isFinite(Number(temp)))throw new Error('Température absente du dernier METAR');
-        deicingWeather={temp:Number(temp),observedAt:data.observedAt||null,source:data.source||'NOAA NWS',attribution:data.attribution||'NOAA NWS · Datamask Aviation'};
+        deicingWeather={temp:Number(temp),dewpoint:Number.isFinite(Number(data?.decoded?.temperature?.dewpoint))?Number(data.decoded.temperature.dewpoint):null,windKt:Number.isFinite(Number(data?.decoded?.wind?.speedKt))?Number(data.decoded.wind.speedKt):null,gustKt:Number.isFinite(Number(data?.decoded?.wind?.gustKt))?Number(data.decoded.wind.gustKt):null,visibilityM:Number.isFinite(Number(data?.decoded?.visibility?.meters))?Number(data.decoded.visibility.meters):null,raw:data.raw||'',observedAt:data.observedAt||null,source:data.source||'NOAA NWS',attribution:data.attribution||'NOAA NWS · Datamask Aviation'};
         if(el)el.textContent=deicingWeatherText();
         return deicingWeather;
       }catch(error){
@@ -10227,6 +10239,176 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
       }finally{deicingWeatherPromise=null;}
     })();
     return deicingWeatherPromise;
+  }
+  function deicingReadChecks(){
+    try{const v=JSON.parse(localStorage.getItem(DEICING_CHECKS_KEY)||'{}');return v&&typeof v==='object'?v:{};}catch(e){return {};}
+  }
+  function deicingGetChecks(row){
+    const all=deicingReadChecks(),key=deicingKey(row),v=all[key]||{};
+    return {confirmed:!!v.confirmed,done:!!v.done};
+  }
+  function deicingSetCheck(key,task,checked){
+    try{
+      const all=deicingReadChecks();
+      if(!all[key])all[key]={};
+      if(task==='confirmed'||task==='done')all[key][task]=!!checked;
+      all[key].updatedAt=Date.now();
+      localStorage.setItem(DEICING_CHECKS_KEY,JSON.stringify(all));
+    }catch(e){console.warn('Deicing ground checklist storage:',e);}
+  }
+  async function deicingLoadTaf(force){
+    if(deicingTafPromise&&!force)return deicingTafPromise;
+    if(!force&&deicingTaf&&Date.now()-deicingTafFetchedAt<15*60*1000)return deicingTaf;
+    deicingTafPromise=(async()=>{
+      try{
+        const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),8000);
+        let response;try{response=await fetch(DEICING_TAF_URL,{method:'GET',cache:'no-store',signal:controller.signal,headers:{'Accept':'application/json'}});}finally{clearTimeout(timeout);}
+        if(!response.ok)throw new Error('TAF EBLG indisponible ('+response.status+')');
+        const data=await response.json();if(!data?.raw)throw new Error('TAF brut absent');
+        deicingTaf={raw:String(data.raw).toUpperCase(),issuedAt:data.issuedAt||null,attribution:data.attribution||'NOAA NWS · Datamask Aviation'};deicingTafFetchedAt=Date.now();
+        deicingRenderRisk();return deicingTaf;
+      }catch(error){console.warn('Deicing TAF:',error);return deicingTaf;}
+      finally{deicingTafPromise=null;}
+    })();return deicingTafPromise;
+  }
+  function deicingTafHazards(range){
+    if(!deicingTaf?.raw)return null;
+    const raw=deicingTaf.raw;
+    // TAF validity group DDHH/DDHH (UTC). Ignore the report if its validity
+    // window does not overlap the selected local-time interval.
+    const groups=[...raw.matchAll(/(?:^|\s)(\d{2})(\d{2})\/(\d{2})(\d{2})(?=\s|$)/g)];
+    if(groups.length){
+      const g=groups[0],now=new Date(),make=(day,hour,base)=>{
+        let d=new Date(Date.UTC(base.getUTCFullYear(),base.getUTCMonth(),Number(day),Number(hour)));
+        if(d.getTime()-base.getTime()>15*86400000)d=new Date(Date.UTC(base.getUTCFullYear(),base.getUTCMonth()-1,Number(day),Number(hour)));
+        if(base.getTime()-d.getTime()>15*86400000)d=new Date(Date.UTC(base.getUTCFullYear(),base.getUTCMonth()+1,Number(day),Number(hour)));
+        return d.getTime();
+      };
+      const start=make(g[1],g[2],now);let end=make(g[3],g[4],new Date(start));
+      if(end<=start)end+=31*86400000;
+      if(range&&(range.endMs<start||range.startMs>end))return null;
+    }
+    const codes=[];
+    if(/\bFZRA\b/.test(raw))codes.push('pluie verglaçante prévue au TAF');
+    if(/\bFZDZ\b/.test(raw))codes.push('bruine verglaçante prévue au TAF');
+    if(/\bFZFG\b/.test(raw))codes.push('brouillard givrant prévu au TAF');
+    if(/\b(?:SN|SG|PL|IC)\b/.test(raw))codes.push('précipitations solides prévues au TAF');
+    if(/\b(?:BR|FG)\b/.test(raw))codes.push('brume/brouillard prévu au TAF');
+    const wind=[...raw.matchAll(/(?:^|\s)(?:\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?KT/g)].map(m=>Math.max(Number(m[1])||0,Number(m[2])||0));
+    return {codes,windKt:wind.length?Math.max(...wind):null,raw};
+  }
+  function deicingForecastHasData(){
+    return !!(deicingForecast&&Array.isArray(deicingForecast.time)&&deicingForecast.time.length&&deicingForecast.temperature_2m);
+  }
+  async function deicingLoadForecast(force){
+    if(deicingForecastPromise&&!force)return deicingForecastPromise;
+    if(!force&&deicingForecastHasData()&&Date.now()-deicingForecastFetchedAt<20*60*1000){deicingRenderRisk();return deicingForecast;}
+    deicingForecastPromise=(async()=>{
+      try{
+        const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),12000);
+        let response;
+        try{response=await fetch(DEICING_FORECAST_URL,{method:'GET',cache:'no-store',signal:controller.signal,headers:{'Accept':'application/json'}});}
+        finally{clearTimeout(timeout);}
+        if(!response.ok)throw new Error('Prévisions indisponibles ('+response.status+')');
+        const data=await response.json();
+        if(!data?.hourly?.time||!Array.isArray(data.hourly.time))throw new Error('Prévisions horaires absentes');
+        deicingForecast=data.hourly;deicingForecastFetchedAt=Date.now();
+        deicingRenderRisk();
+        return deicingForecast;
+      }catch(error){
+        console.warn('Deicing forecast:',error);
+        deicingForecast=null;deicingRenderRisk(error?.message||'Prévisions météo indisponibles');
+        return null;
+      }finally{deicingForecastPromise=null;}
+    })();
+    return deicingForecastPromise;
+  }
+  function deicingWeatherCodeName(code){
+    if([56,57].includes(code))return 'bruine verglaçante';
+    if([66,67].includes(code))return 'pluie verglaçante';
+    if(code===48)return 'brouillard givrant';
+    if(code===45)return 'brouillard';
+    if([71,73,75,77,85,86].includes(code))return 'neige / averses de neige';
+    if([51,53,55].includes(code))return 'bruine';
+    if([61,63,65,80,81,82].includes(code))return 'pluie / averses';
+    return '';
+  }
+  function deicingScoreHour(h,i){
+    const val=k=>{const a=h[k];const n=Array.isArray(a)?Number(a[i]):NaN;return Number.isFinite(n)?n:null;};
+    const temp=val('temperature_2m'),dew=val('dew_point_2m'),rh=val('relative_humidity_2m');
+    const precip=val('precipitation'),rain=val('rain'),showers=val('showers'),snow=val('snowfall');
+    const prob=val('precipitation_probability'),code=val('weather_code'),visibility=val('visibility'),gust=val('wind_gusts_10m');
+    if(temp===null&&code===null&&precip===null&&snow===null)return null;
+    let score=5;const reasons=[];
+    const freezingPrecip=[56,57,66,67].includes(code);
+    const snowCode=[71,73,75,77,85,86].includes(code);
+    const fogCode=[45,48].includes(code);
+    const rainCode=[51,53,55,61,63,65,80,81,82].includes(code);
+    const wet=(precip||0)>0.05||(rain||0)>0.02||(showers||0)>0.02;
+    const dewSpread=(temp!==null&&dew!==null)?temp-dew:null;
+    if(freezingPrecip){score=Math.max(score,98);reasons.push(deicingWeatherCodeName(code)+' annoncée');}
+    if(code===48){score=Math.max(score,92);reasons.push('brouillard déposant du givre');}
+    if(snowCode||(snow||0)>0.02){
+      if(temp!==null&&temp<=2){score=Math.max(score,88);reasons.push('neige prévue avec température proche ou sous 0 °C');}
+      else{score=Math.max(score,58);reasons.push('neige prévue, température de l’air positive');}
+    }
+    if(temp!==null&&temp<=0){score=Math.max(score,24);reasons.push('température de l’air négative');}
+    else if(temp!==null&&temp<=2){score=Math.max(score,16);reasons.push('température proche du gel');}
+    if(wet&&temp!==null&&temp<=0&&!freezingPrecip){score=Math.max(score,88);reasons.push('précipitations avec température sous 0 °C');}
+    else if(wet&&temp!==null&&temp<=2&&rainCode){score=Math.max(score,76);reasons.push('pluie/bruine avec température proche du gel');}
+    else if(wet&&temp!==null&&temp<=3&&(prob===null||prob>=35)){score=Math.max(score,58);reasons.push('précipitations possibles à basse température');}
+    if(fogCode&&temp!==null&&temp<=1){score=Math.max(score,code===48?92:78);reasons.push(code===48?'brouillard givrant':'brouillard par température proche du gel');}
+    if(temp!==null&&temp<=3&&rh!==null&&rh>=88&&dewSpread!==null&&dewSpread<=2){
+      score=Math.max(score,temp<=0?74:58);reasons.push('humidité élevée et point de rosée très proche (risque de givre)');
+    }
+    // Rain/high humidity can affect a cold-soaked wing even with positive OAT;
+    // the aircraft skin/fuel temperature is unknown, so this remains a potential-only signal.
+    if(wet&&rainCode&&temp!==null&&temp>2&&rh!==null&&rh>=85){score=Math.max(score,45);reasons.push('pluie et forte humidité : aile froide éventuelle non mesurable par la météo');}
+    if(visibility!==null&&visibility<1000&&temp!==null&&temp<=2){score=Math.max(score,62);reasons.push('visibilité réduite en air froid');}
+    if(gust!==null&&gust>=35&&(snowCode||(snow||0)>0.02)){score=Math.min(100,score+5);reasons.push('rafales soutenues pendant les précipitations neigeuses');}
+    if(prob!==null&&prob>=60&&temp!==null&&temp<=2&&wet){score=Math.max(score,Math.min(82,score+8));}
+    return {score,reasons:[...new Set(reasons)],temp,dew,rh,prob,code,precip,snow,gust};
+  }
+  function deicingCalculateRisk(range){
+    range=range||deicingWindow()||deicingLastRange;
+    if(!range||!deicingForecastHasData())return null;
+    const h=deicingForecast;let best=null,valid=0;
+    for(let i=0;i<h.time.length;i++){
+      const epoch=Number(h.time[i])*1000;
+      if(!Number.isFinite(epoch)||epoch<range.startMs||epoch>range.endMs)continue;
+      const item=deicingScoreHour(h,i);if(!item)continue;valid++;
+      if(!best||item.score>best.score)best=item;
+    }
+    if(!valid||!best)return null;
+    const taf=deicingTafHazards(range);
+    if(taf&&taf.codes.length){
+      const text=taf.codes.join(' · ');
+      if(taf.codes.some(x=>/verglaçante|givrant/.test(x))){best.score=Math.max(best.score,96);best.reasons.push(text);}
+      else if(taf.codes.some(x=>/précipitations solides/.test(x))){best.score=Math.max(best.score,best.temp!==null&&best.temp<=2?86:58);best.reasons.push(text);}
+      else if(taf.codes.some(x=>/brume\/brouillard/.test(x))&&best.temp!==null&&best.temp<=2){best.score=Math.max(best.score,70);best.reasons.push(text);}
+    }
+    if(taf?.windKt!==null&&taf?.windKt!==undefined&&taf.windKt>=25&&(best.score>=40)){best.score=Math.min(100,best.score+4);best.reasons.push('vent fort signalé dans le TAF ('+taf.windKt+' kt)');}
+    if(deicingWeather&&deicingWeather.temp<=2&&deicingWeather.dewpoint!==null&&deicingWeather.temp-deicingWeather.dewpoint<=2){best.score=Math.max(best.score,Math.max(48,best.score));best.reasons.push('METAR : point de rosée proche de la température');}
+    let level,klass;
+    if(best.score>=85){level='Très élevée';klass='very-high';}
+    else if(best.score>=65){level='Élevée';klass='high';}
+    else if(best.score>=40){level='Potentielle';klass='potential';}
+    else if(best.score>=20){level='Faible';klass='low';}
+    else{level='Très faible';klass='very-low';}
+    const unique=best.reasons.slice(0,3);
+    const explanation=unique.length?unique.join(' · '):'Aucun signal météo marqué dans la période sélectionnée';
+    return {score:best.score,level,klass,explanation,sampleTemp:best.temp,validHours:valid,source:'METAR/TAF EBLG + prévisions horaires Open-Meteo'};
+  }
+  function deicingRiskText(){
+    const r=deicingRisk||deicingCalculateRisk();
+    if(!r)return 'Probabilité d’une demande de deicing : estimation indisponible (prévisions absentes pour cette plage).';
+    return 'Probabilité d’une demande de deicing : '+r.level+' — '+r.explanation;
+  }
+  function deicingRenderRisk(error){
+    const el=deicingEl('deicing-risk');if(!el)return;
+    deicingRisk=deicingCalculateRisk();
+    if(!deicingRisk){el.textContent='❄ Probabilité d’une demande de deicing : '+(error?'indisponible — '+error:'calcul en cours ou prévisions indisponibles pour cette plage');return;}
+    el.innerHTML='❄ Probabilité d’une demande de deicing : <strong class="'+deicingRisk.klass+'">'+deicingEscape(deicingRisk.level)+'</strong><small>'+deicingEscape(deicingRisk.explanation)+' · estimation météo indicative, à confirmer par l’état réel de l’avion et les procédures opérateur.</small>';
   }
   function deicingKey(row){return [row.flight.toUpperCase(),row.localDate].join('|');}
   function deicingWindow(){
@@ -10272,15 +10454,19 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
     const enabled=deicingLoaded;
     ['deicing-print','deicing-print-bottom'].forEach(id=>{const b=deicingEl(id);if(b)b.disabled=!enabled;});
     if(!body)return;
-    if(!deicingRows.length){body.innerHTML='<tr><td colspan="6"><div class="deicing-empty">Aucun départ dans cette plage horaire.</div></td></tr>';return;}
-    body.innerHTML=deicingRows.map(r=>'<tr><td class="reg">'+deicingEscape(r.reg||'—')+'</td><td class="time">'+deicingEscape(r.time)+' <small style="font:700 8px var(--mono);color:#80a4b9">'+deicingEscape(r.timeSource)+'</small></td><td>'+deicingEscape(r.stand)+'</td><td class="flight">'+deicingEscape(r.flight)+'</td><td class="deicing-handler">'+deicingEscape(r.handler)+'</td><td>'+deicingEscape(r.aircraft||'—')+'</td></tr>').join('');
+    if(!deicingRows.length){body.innerHTML='<tr><td colspan="8"><div class="deicing-empty">Aucun départ dans cette plage horaire.</div></td></tr>';return;}
+    body.innerHTML=deicingRows.map(r=>{const c=deicingGetChecks(r),key=deicingEscape(deicingKey(r));return '<tr><td class="reg">'+deicingEscape(r.reg||'—')+'</td><td class="time">'+deicingEscape(r.time)+' <small style="font:700 8px var(--mono);color:#80a4b9">'+deicingEscape(r.timeSource)+'</small></td><td>'+deicingEscape(r.stand)+'</td><td class="flight">'+deicingEscape(r.flight)+'</td><td class="deicing-handler">'+deicingEscape(r.handler)+'</td><td>'+deicingEscape(r.aircraft||'—')+'</td><td class="deicing-check-cell"><input class="deicing-task-check" type="checkbox" aria-label="Deicing confirmé pour '+deicingEscape(r.flight)+'" data-deicing-key="'+key+'" data-deicing-task="confirmed" '+(c.confirmed?'checked':'')+'></td><td class="deicing-check-cell"><input class="deicing-task-check" type="checkbox" aria-label="Deicing fait pour '+deicingEscape(r.flight)+'" data-deicing-key="'+key+'" data-deicing-task="done" '+(c.done?'checked':'')+'></td></tr>';}).join('');
   }
   window.openDeicingOperations=function(skipInitialLoad){
     const overlay=deicingEl('deicing-overlay');if(!overlay)return;
     if(!deicingDefaultsInitialized)deicingSetDefaultRange();
     overlay.classList.add('open');overlay.setAttribute('aria-hidden','false');
     deicingLoadWeather(false);
+    deicingLoadTaf(false);
+    deicingLoadForecast(false);
     if(!deicingWeatherTimer)deicingWeatherTimer=setInterval(()=>{if(overlay.classList.contains('open'))deicingLoadWeather(true);},15*60*1000);
+    if(!deicingForecastTimer)deicingForecastTimer=setInterval(()=>{if(overlay.classList.contains('open'))deicingLoadForecast(true);},30*60*1000);
+    if(!window.__deicingTafTimer)window.__deicingTafTimer=setInterval(()=>{if(overlay.classList.contains('open'))deicingLoadTaf(true);},30*60*1000);
     if(!skipInitialLoad)loadDeicingDepartures();
   };
   window.closeDeicingOperations=function(){const o=deicingEl('deicing-overlay');if(o){o.classList.remove('open');o.setAttribute('aria-hidden','true');}};
@@ -10291,17 +10477,18 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
       const range=deicingWindow();if(!range)throw new Error('Plage horaire invalide.');
       const raw=await fetchJsonWithFallback(FIDS_DEPARTURES_URL);
       deicingRawDepartures=Array.isArray(raw)?raw:(Array.isArray(raw?.departures)?raw.departures:[]);
-      deicingLastRange=range;deicingRows=deicingNormalizeRows(deicingRawDepartures,range);deicingLoaded=true;deicingRender();
+      deicingLastRange=range;deicingRows=deicingNormalizeRows(deicingRawDepartures,range);deicingLoaded=true;deicingRender();deicingRenderRisk();
       deicingSetStatus('Heure locale belge · '+range.from+' → '+range.to+(range.to<=range.from?' (lendemain)':'')+' · FIDS actualisé à '+deicingFormatTime(new Date()));
     }catch(e){console.error('Deicing Operations:',e);deicingLoaded=false;deicingRows=[];deicingRender();deicingSetStatus('Erreur FIDS : '+(e?.message||'récupération impossible'));}
     finally{if(btn){btn.disabled=false;btn.textContent='↻ Actualiser';}}
   };
   function deicingPrintHtml(rows,range){
     const esc=deicingEscape;const now=new Date();
-    const tableRows=rows.map(r=>'<tr><td class="reg">'+esc(r.reg||'—')+'</td><td class="time">'+esc(r.time)+'</td><td class="stand">'+esc(r.stand||'—')+'</td><td class="flight">'+esc(r.flight)+'</td><td class="handler">'+esc(r.handler||'—')+'</td><td class="aircraft">'+esc(r.aircraft||'—')+'</td></tr>').join('');
+    const tableRows=rows.map(r=>{const c=deicingGetChecks(r);return '<tr><td class="reg">'+esc(r.reg||'—')+'</td><td class="time">'+esc(r.time)+'</td><td class="stand">'+esc(r.stand||'—')+'</td><td class="flight">'+esc(r.flight)+'</td><td class="handler">'+esc(r.handler||'—')+'</td><td class="aircraft">'+esc(r.aircraft||'—')+'</td><td class="task">'+(c.confirmed?'☑':'□')+'</td><td class="task">'+(c.done?'☑':'□')+'</td></tr>';}).join('');
     const weather=deicingWeatherText().replace(/^🌡\s*/, '');
+    const risk=deicingRiskText();
     const attribution=deicingWeather?.attribution||'NOAA NWS · Datamask Aviation';
-    return '<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deicing Operations - LGG</title><style>@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#172533;margin:0;background:#fff;font-size:10pt}.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #163c56;padding:0 0 10px;margin-bottom:14px}.brand{font-size:18pt;font-weight:900;letter-spacing:.2px;color:#12354c}.sub{font-size:8.5pt;color:#526879;margin-top:4px}.weather{font-size:10pt;font-weight:800;color:#087aa6;margin-top:7px}.meta{text-align:right;font-size:8pt;color:#40596b;line-height:1.6}.bar{display:flex;justify-content:space-between;align-items:end;margin:0 0 10px}.bar h2{font-size:14pt;text-transform:uppercase;margin:0;color:#163c56;letter-spacing:.7px}.bar span{font-size:9pt;color:#526879;font-weight:700}table{border-collapse:collapse;width:100%;table-layout:fixed}thead{display:table-header-group}th{background:#163c56;color:#fff;font-size:8pt;text-align:left;padding:9px 7px;letter-spacing:.5px;text-transform:uppercase}td{padding:9px 7px;border-bottom:1px solid #d5e0e7;font-size:9pt;overflow-wrap:anywhere;vertical-align:middle}tbody tr:nth-child(even){background:#f2f6f8}tr{break-inside:avoid;page-break-inside:avoid}.reg{width:22%;font-weight:950;font-family:Consolas,monospace;font-size:16pt;line-height:1.1;color:#875500;letter-spacing:.6px;background:#fff8e7}.time{width:14%;font-weight:950;font-size:16pt;line-height:1.1;font-variant-numeric:tabular-nums;color:#102f45;background:#edf7fc}.stand{width:9%;font-weight:800;color:#344f60}.flight{width:16%;font-weight:900;color:#1d5877}.handler{width:19%;font-weight:700;color:#40596b}.aircraft{width:20%;font-weight:700;color:#40596b}.foot{border-top:1px solid #cbd8e0;margin-top:12px;padding-top:7px;display:flex;justify-content:space-between;gap:12px;font-size:7.5pt;color:#667d8b}.note{font-size:7.5pt;color:#647887;margin-top:8px}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body><header class="top"><div><div class="brand">❄ DEICING OPERATIONS</div><div class="sub">Liège Airport · Départs à traiter</div><div class="weather">'+esc(weather)+'</div></div><div class="meta"><b>'+esc(deicingFormatDate(new Date(range.startMs)))+'</b><br>Plage : '+esc(range.from)+' → '+esc(range.to)+(range.to<=range.from?' · lendemain':'')+'<br>Heure Belgique · Europe/Brussels<br>Imprimé le '+esc(deicingFormatDate(now))+' à '+esc(deicingFormatTime(now))+'</div></header><div class="bar"><h2>Départs à traiter</h2><span>'+rows.length+' avion(s)</span></div><table><thead><tr><th style="width:22%">Immatriculation</th><th style="width:14%">Heure</th><th style="width:9%">Stand</th><th style="width:16%">Vol</th><th style="width:19%">Handler</th><th style="width:20%">AC Type</th></tr></thead><tbody>'+tableRows+'</tbody></table><footer class="foot"><span>LGG · Cleaning Ops</span><span>Deicing Operations · '+rows.length+' départ(s)</span><span>Météo METAR EBLG · '+esc(attribution)+'</span></footer></body></html>';
+    return '<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Deicing Operations - LGG</title><style>@page{size:A4 landscape;margin:10mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#172533;margin:0;background:#fff;font-size:9pt}.top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #163c56;padding:0 0 8px;margin-bottom:10px}.brand{font-size:18pt;font-weight:900;letter-spacing:.2px;color:#12354c}.sub{font-size:8.5pt;color:#526879;margin-top:4px}.weather{font-size:10pt;font-weight:800;color:#087aa6;margin-top:6px}.risk{font-size:9pt;font-weight:800;color:#8b5a00;margin-top:5px}.risk-note{font-size:7pt;font-weight:400;color:#657a88;margin-top:3px}.meta{text-align:right;font-size:8pt;color:#40596b;line-height:1.6}.bar{display:flex;justify-content:space-between;align-items:end;margin:0 0 8px}.bar h2{font-size:13pt;text-transform:uppercase;margin:0;color:#163c56;letter-spacing:.7px}.bar span{font-size:9pt;color:#526879;font-weight:700}table{border-collapse:collapse;width:100%;table-layout:fixed}thead{display:table-header-group}th{background:#163c56;color:#fff;font-size:7.5pt;text-align:left;padding:8px 6px;letter-spacing:.35px;text-transform:uppercase}td{padding:8px 6px;border-bottom:1px solid #d5e0e7;font-size:8.5pt;overflow-wrap:anywhere;vertical-align:middle}tbody tr:nth-child(even){background:#f2f6f8}tr{break-inside:avoid;page-break-inside:avoid}.reg{font-weight:950;font-family:Consolas,monospace;font-size:15pt;line-height:1.1;color:#875500;letter-spacing:.6px;background:#fff8e7}.time{font-weight:950;font-size:15pt;line-height:1.1;font-variant-numeric:tabular-nums;color:#102f45;background:#edf7fc}.stand{font-weight:800;color:#344f60}.flight{font-weight:900;color:#1d5877}.handler{font-weight:700;color:#40596b}.aircraft{font-weight:700;color:#40596b}.task{text-align:center;font-size:17pt;font-weight:900;color:#163c56}.foot{border-top:1px solid #cbd8e0;margin-top:10px;padding-top:6px;display:flex;justify-content:space-between;gap:12px;font-size:7pt;color:#667d8b}.checknote{font-size:7pt;color:#647887;margin-top:5px}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body><header class="top"><div><div class="brand">❄ DEICING OPERATIONS</div><div class="sub">Liège Airport · Départs potentiels à traiter</div><div class="weather">'+esc(weather)+'</div><div class="risk">'+esc(risk)+'</div><div class="risk-note">Estimation météo indicative uniquement : vérifier la contamination réelle des surfaces et appliquer les procédures de l’exploitant.</div></div><div class="meta"><b>'+esc(deicingFormatDate(new Date(range.startMs)))+'</b><br>Plage : '+esc(range.from)+' → '+esc(range.to)+(range.to<=range.from?' · lendemain':'')+'<br>Heure Belgique · Europe/Brussels<br>Imprimé le '+esc(deicingFormatDate(now))+' à '+esc(deicingFormatTime(now))+'</div></header><div class="bar"><h2>Départs potentiels à traiter</h2><span>'+rows.length+' avion(s)</span></div><table><thead><tr><th style="width:18%">Immatriculation</th><th style="width:10%">Heure</th><th style="width:8%">Stand</th><th style="width:13%">Vol</th><th style="width:16%">Handler</th><th style="width:13%">AC Type</th><th style="width:11%;text-align:center">Deicing confirmé</th><th style="width:11%;text-align:center">Fait</th></tr></thead><tbody>'+tableRows+'</tbody></table><div class="checknote">Cases à cocher : suivi terrain · cochez « Deicing confirmé » à la confirmation, puis « Fait » après réalisation.</div><footer class="foot"><span>LGG · Cleaning Ops</span><span>Deicing Operations · '+rows.length+' départ(s)</span><span>METAR/TAF EBLG · NOAA NWS / Datamask Aviation · prévisions horaires · '+esc(attribution)+'</span></footer></body></html>';
   }
   function deicingSaveBaseline(rows,range){
     const baseline={version:1,printedAt:Date.now(),lastCheckedAt:Date.now(),range,rows:rows.map(r=>({...r}))};
@@ -10372,6 +10559,12 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
     await loadDeicingDepartures();
     if(deicingLoaded)printDeicingSheet();else alert('Impossible de charger les départs FIDS pour cette plage.');
   };
+  const deicingRowsHost=deicingEl('deicing-rows');
+  if(deicingRowsHost)deicingRowsHost.addEventListener('change',function(e){
+    const input=e.target&&e.target.closest?e.target.closest('.deicing-task-check'):null;if(!input)return;
+    deicingSetCheck(input.getAttribute('data-deicing-key')||'',input.getAttribute('data-deicing-task')||'',input.checked);
+  });
+  ['deicing-date','deicing-from','deicing-to'].forEach(id=>{const el=deicingEl(id);if(el)el.addEventListener('change',()=>deicingRenderRisk());});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDeicingOperations();closeDeicingAlert();}});
   ['deicing-overlay','deicing-alert-overlay'].forEach(id=>{const o=deicingEl(id);if(o)o.addEventListener('pointerdown',e=>{if(e.target===o){if(id==='deicing-overlay')closeDeicingOperations();else closeDeicingAlert();}});});
   // Le suivi démarre une heure après la dernière impression / vérification, même si la page a été rechargée.
