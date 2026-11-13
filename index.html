@@ -3319,106 +3319,186 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     <div class="prog-step" id="prog-4" role="button" tabindex="0" aria-label="Ouvrir Crew Bus" onclick="goToStep(4)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goToStep(4)}"><div class="prog-num">4</div><span class="prog-label">Crew Bus</span></div>
   </div>
 
-  <div id="step-1">
-    <div class="section-hd">
-      <div class="section-eyebrow"><span class="eyebrow-dot"></span>Etape 1 sur 3</div>
-      <div class="section-title">Date &amp; Shift</div>
-      <div class="section-desc">Selectionnez la date et votre shift</div>
-    </div>
-    <div class="panel">
-      <div class="field-row" style="margin-bottom:18px">
-        <div><label class="field-label">Date</label><input type="date" id="shift-date" autocomplete="off"></div>
-        <div><label class="field-label">Agent / Equipe</label><input type="text" id="shift-agent" placeholder="Nom ou equipe"></div>
+  <div id="step-1" class="wo-step wo-step-one">
+    <div class="wo-step-heading">
+      <div>
+        <div class="wo-step-kicker"><span class="wo-step-kicker-dot"></span> ÉTAPE 01 <span class="wo-kicker-divider">/</span> CONTEXTE OPÉRATIONNEL</div>
+        <h1 class="wo-step-title">Préparer le shift</h1>
+        <p class="wo-step-subtitle">Définissez la date, l’équipe et la plage de travail avant de charger les opérations.</p>
       </div>
-      <div id="shift-choice-options">
-        <label class="field-label">Shift</label>
-        <div class="shift-grid">
-          <button class="shift-btn" id="btn-shift-early" data-shift="EARLY" data-time="05:30-14:00" onclick="selectShift(this)">
+      <div class="wo-step-index" aria-hidden="true">01</div>
+    </div>
+
+    <section class="wo-surface wo-shift-surface" aria-labelledby="wo-shift-context-title">
+      <div class="wo-surface-heading">
+        <div>
+          <span class="wo-overline">INFORMATIONS DU SERVICE</span>
+          <h2 id="wo-shift-context-title">Contexte du shift</h2>
+        </div>
+        <span class="wo-surface-tag">Requis</span>
+      </div>
+
+      <div class="wo-context-grid">
+        <div class="wo-input-group">
+          <label class="field-label" for="shift-date">Date opérationnelle</label>
+          <input type="date" id="shift-date" autocomplete="off">
+          <span class="wo-field-note">La date utilisée pour les feuilles et les rapports.</span>
+        </div>
+        <div class="wo-input-group">
+          <label class="field-label" for="shift-agent">Agent / équipe</label>
+          <input type="text" id="shift-agent" placeholder="Nom ou équipe" autocomplete="off">
+          <span class="wo-field-note">Identifie l’équipe responsable du service.</span>
+        </div>
+      </div>
+
+      <div class="wo-shift-divider"></div>
+      <div class="wo-shift-heading">
+        <div>
+          <span class="wo-overline">PLAGE DE TRAVAIL</span>
+          <h2>Choisir un shift</h2>
+        </div>
+        <span class="wo-field-note">Un seul choix possible</span>
+      </div>
+      <div id="shift-choice-options" class="wo-shift-choice-options">
+        <div class="shift-grid wo-shift-grid">
+          <button class="shift-btn wo-shift-card" id="btn-shift-early" data-shift="EARLY" data-time="05:30-14:00" onclick="selectShift(this)">
+            <span class="wo-shift-card-top"><span class="wo-shift-symbol">☀</span><span class="wo-shift-period">MATIN</span></span>
             <span class="shift-name">Early</span><span class="shift-time" id="lbl-time-early">05:30 - 14:00</span>
+            <span class="wo-shift-card-foot">Prise de service matinale</span>
           </button>
-          <button class="shift-btn" id="btn-shift-late" data-shift="LATE" data-time="13:30-22:00" onclick="selectShift(this)">
+          <button class="shift-btn wo-shift-card" id="btn-shift-late" data-shift="LATE" data-time="13:30-22:00" onclick="selectShift(this)">
+            <span class="wo-shift-card-top"><span class="wo-shift-symbol">◷</span><span class="wo-shift-period">APRÈS-MIDI</span></span>
             <span class="shift-name">Late</span><span class="shift-time" id="lbl-time-late">13:30 - 22:00</span>
+            <span class="wo-shift-card-foot">Prise de service tardive</span>
           </button>
-          <button class="shift-btn" id="btn-shift-night" data-shift="NIGHT" data-time="21:30-06:00" onclick="selectShift(this)">
+          <button class="shift-btn wo-shift-card" id="btn-shift-night" data-shift="NIGHT" data-time="21:30-06:00" onclick="selectShift(this)">
+            <span class="wo-shift-card-top"><span class="wo-shift-symbol">☾</span><span class="wo-shift-period">NUIT</span></span>
             <span class="shift-name">Night</span><span class="shift-time" id="lbl-time-night">21:30 - 06:00</span>
+            <span class="wo-shift-card-foot">Service de nuit</span>
           </button>
         </div>
       </div>
-    </div>
-    <div class="actions">
-      <button class="btn btn-primary" onclick="goToStep(2)">Continuer &rarr;</button>
+    </section>
+
+    <div class="wo-step-footer">
+      <div class="wo-footer-caption"><span class="wo-footer-indicator"></span> Les informations seront reprises dans les documents générés.</div>
+      <div class="actions wo-step-actions">
+        <button class="btn btn-primary wo-primary-action" onclick="goToStep(2)">Continuer vers le FIDS <span aria-hidden="true">→</span></button>
+      </div>
     </div>
   </div>
 
-  <div id="step-2" class="hidden">
-    <div class="section-hd">
-      <div class="section-eyebrow"><span class="eyebrow-dot"></span>Etape 2 sur 3</div>
-      <div class="section-title">Import FIDS</div>
-      <div class="section-desc">Collez les donnees depuis fids.liegeairport.com/spw</div>
+  <div id="step-2" class="hidden wo-step wo-step-two">
+    <div class="wo-step-heading">
+      <div>
+        <div class="wo-step-kicker"><span class="wo-step-kicker-dot"></span> ÉTAPE 02 <span class="wo-kicker-divider">/</span> IMPORT DES DONNÉES</div>
+        <h1 class="wo-step-title">Importer les données FIDS</h1>
+        <p class="wo-step-subtitle">Récupérez les mouvements de Liège Airport, puis ajoutez les informations complémentaires nécessaires.</p>
+      </div>
+      <div class="wo-step-index" aria-hidden="true">02</div>
     </div>
-    <div class="panel">
-      
-      <button class="btn btn-primary" id="btn-load-api" onclick="loadFromFidsAPI()" style="width:100%;margin-bottom:10px">&#128260; Charger automatiquement (API FIDS)</button>
-      <div id="api-status" style="font-size:12px;min-height:16px;margin-bottom:14px"></div>
-      <button type="button" id="fids-manual-toggle" class="fids-manual-toggle" aria-expanded="false" aria-controls="fids-manual-panel">
-        <span class="fids-manual-arrow" aria-hidden="true">▸</span>
-        <span>Saisie manuelle</span>
-        <span class="fids-manual-hint">si l'API ne fonctionne pas</span>
-      </button>
-      <div id="fids-manual-panel" class="fids-manual-panel" hidden>
-        <div class="panel-hint">
-          <strong>Comment faire :</strong><br>
-          1. Ouvrez <strong>fids.liegeairport.com/spw</strong><br>
-          2. Attendez que tous les vols chargent<br>
-          3. Selectionnez tout &rarr; Copier<br>
-          4. Collez ci-dessous
+
+    <div class="wo-import-layout">
+      <section class="wo-surface wo-import-main" aria-labelledby="wo-import-title">
+        <div class="wo-surface-heading">
+          <div>
+            <span class="wo-overline">SOURCE PRINCIPALE</span>
+            <h2 id="wo-import-title">Récupération des vols</h2>
+          </div>
+          <span class="wo-source-status"><span></span> FIDS</span>
         </div>
-        <textarea id="fids-text" placeholder="Collez le texte du FIDS ici..." style="width:100%;min-height:130px;resize:vertical;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:11px;line-height:1.6;padding:13px 16px;outline:none"></textarea>
-      </div>
+        <p class="wo-section-copy">La connexion API récupère automatiquement les arrivées et départs disponibles pour votre service.</p>
+        <button class="btn btn-primary wo-api-action" id="btn-load-api" onclick="loadFromFidsAPI()"><span class="wo-api-icon" aria-hidden="true">↻</span> Charger automatiquement <span class="wo-api-secondary">API FIDS</span></button>
+        <div id="api-status" class="wo-api-status" role="status" aria-live="polite"></div>
+
+        <div class="wo-or-divider"><span>OU UTILISER UNE SOURCE MANUELLE</span></div>
+        <div class="wo-manual-import">
+          <button type="button" id="fids-manual-toggle" class="fids-manual-toggle wo-manual-import-toggle" aria-expanded="false" aria-controls="fids-manual-panel">
+            <span class="fids-manual-arrow" aria-hidden="true">▸</span>
+            <span class="wo-manual-import-copy"><strong>Saisie manuelle du FIDS</strong><small>À utiliser si l’API est indisponible</small></span>
+            <span class="wo-manual-import-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div id="fids-manual-panel" class="fids-manual-panel wo-manual-import-panel" hidden>
+            <div class="panel-hint wo-import-instructions">
+              <strong>Procédure d’import :</strong>
+              <ol>
+                <li>Ouvrez <strong>fids.liegeairport.com/spw</strong>.</li>
+                <li>Attendez le chargement de tous les vols.</li>
+                <li>Sélectionnez les données et copiez-les.</li>
+                <li>Collez le contenu dans le champ ci-dessous.</li>
+              </ol>
+            </div>
+            <label class="field-label" for="fids-text">Données copiées depuis le FIDS</label>
+            <textarea id="fids-text" placeholder="Collez ici le contenu du FIDS…" spellcheck="false"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="wo-surface wo-catering-import" aria-labelledby="wo-catering-import-title">
+        <div class="wo-surface-heading">
+          <div>
+            <span class="wo-overline">DONNÉES COMPLÉMENTAIRES</span>
+            <h2 id="wo-catering-import-title">Caterings</h2>
+          </div>
+          <span class="wo-optional-tag">Optionnel</span>
+        </div>
+        <p class="wo-section-copy">Ajoutez ici les lignes de catering. Elles seront analysées avec les données des vols.</p>
+        <div class="wo-format-example">
+          <span>FORMAT ATTENDU</span>
+          <code>11-JUIL&nbsp; QTR&nbsp; A7BFO&nbsp; QR8169&nbsp; 22H45&nbsp; 23H45&nbsp; 4</code>
+        </div>
+        <label class="field-label" for="catering-text">Liste des caterings</label>
+        <textarea id="catering-text" class="wo-catering-textarea" placeholder="Collez les caterings ici (optionnel)…" oninput="if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('cateringText')"></textarea>
+        <div class="wo-note-inline"><span aria-hidden="true">i</span> Vous pourrez encore vérifier les caterings à l’étape suivante.</div>
+      </section>
     </div>
-    <div class="panel" style="margin-top:16px">
-      <div class="panel-hint" style="border-left-color:#00e5a0">
-        <strong>Caterings (optionnel) :</strong><br>
-        Collez ici les lignes de catering depuis votre système.<br>
-        Format : <span style="font-family:var(--mono);font-size:11px;color:var(--t1)">11-JUIL  QTR  A7BFO  QR8169  22H45  23H45  4</span>
+
+    <div class="wo-step-footer">
+      <div class="wo-footer-caption"><span class="wo-footer-indicator"></span> Les données seront contrôlées avant génération des documents.</div>
+      <div class="actions wo-step-actions">
+        <button class="btn btn-ghost" onclick="goToStep(1)">← Retour</button>
+        <button class="btn btn-primary wo-primary-action" onclick="handleAnalyzeClick()">Analyser les données <span aria-hidden="true">→</span></button>
       </div>
-      <textarea id="catering-text" placeholder="Collez les caterings ici (optionnel)..." oninput="if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('cateringText')" style="width:100%;min-height:90px;resize:vertical;background:var(--bg2);border:1px solid rgba(0,229,160,.2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:11px;line-height:1.6;padding:13px 16px;outline:none"></textarea>
-    </div>
-    <div class="actions">
-      <button class="btn btn-ghost" onclick="goToStep(1)">&larr; Retour</button>
-      <button class="btn btn-primary" onclick="handleAnalyzeClick()">Analyser &rarr;</button>
     </div>
   </div>
 
-  <div id="step-3" class="hidden">
-    <div class="section-hd">
-      <div class="section-eyebrow"><span class="eyebrow-dot"></span>Etape 3 sur 4</div>
-      <div class="section-title fids-title-row">
-        <span>Vols detectes</span>
-        <span class="fids-refresh-control" aria-live="polite">
-          <button id="btn-refresh-fids-now" type="button" title="Forcer la réactualisation des vols" aria-label="Forcer la réactualisation des vols" onclick="checkForFlightUpdates(true)">
-            <span class="fids-refresh-icon" aria-hidden="true">⟳</span>
-          </button>
-          <span id="fids-refresh-inline-status" class="fids-refresh-inline-status" aria-live="polite"></span>
-        </span>
+  <div id="step-3" class="hidden wo-step wo-step-three">
+    <div class="wo-step-heading wo-step3-heading">
+      <div>
+        <div class="wo-step-kicker"><span class="wo-step-kicker-dot"></span> ÉTAPE 03 <span class="wo-kicker-divider">/</span> CONTRÔLE OPÉRATIONNEL</div>
+        <div class="section-title fids-title-row wo-step-title-row">
+          <span class="wo-step-title">Vérification des opérations</span>
+          <span class="fids-refresh-control" aria-live="polite">
+            <button id="btn-refresh-fids-now" type="button" title="Forcer la réactualisation des vols" aria-label="Forcer la réactualisation des vols" onclick="checkForFlightUpdates(true)">
+              <span class="fids-refresh-icon" aria-hidden="true">⟳</span>
+            </button>
+            <span id="fids-refresh-inline-status" class="fids-refresh-inline-status" aria-live="polite"></span>
+          </span>
+        </div>
+        <p class="wo-step-subtitle">Contrôlez les vols, ajustez les informations et préparez les feuilles de travail.</p>
       </div>
-      <div class="section-desc">Vérifiez et ajustez avant de générer. Les immatriculations se modifient à l’étape 4 et restent synchronisées ici.</div>
-    <div class="crewbus-layout-toggle" id="crewbus-layout-toggle" role="group" aria-label="Affichage des étapes 3 et 4">
-      <span class="crewbus-layout-label">Affichage</span>
-      <button type="button" class="crewbus-layout-btn" data-mode="separate" onclick="setCrewBusLayoutMode('separate')">↔ Pages séparées</button>
-      <button type="button" class="crewbus-layout-btn" data-mode="combined" onclick="setCrewBusLayoutMode('combined')">▦ Étapes 3 + 4 ensemble</button>
-      <span class="crewbus-layout-hint">Crew Bus à droite en mode combiné</span>
+      <div class="wo-step-index" aria-hidden="true">03</div>
     </div>
-    <div class="combined-action-bar" id="combined-action-bar" aria-label="Actions du mode combiné">
-      <button type="button" class="btn btn-ghost" onclick="goToStep(2)">← Retour</button>
-      <button type="button" class="btn btn-amber" onclick="generateWorksheets()">▣ Worksheets</button>
-      <button type="button" class="btn btn-primary" onclick="generatePDF()">▣ Feuille nettoyage</button>
-      <button type="button" class="btn btn-cyan combined-crewbus-btn" onclick="generateCrewBusSheet()">▣ Feuille Crewbus</button>
-      <button type="button" class="btn btn-danger" onclick="resetAll()">Recommencer</button>
-      <button type="button" class="btn combined-print-all-btn" onclick="generateAllPrint()">✦ Imprimer le tout</button>
+
+    <div class="wo-step3-tools">
+      <div class="crewbus-layout-toggle wo-layout-toggle" id="crewbus-layout-toggle" role="group" aria-label="Affichage des étapes 3 et 4">
+        <span class="crewbus-layout-label">Affichage</span>
+        <button type="button" class="crewbus-layout-btn" data-mode="separate" onclick="setCrewBusLayoutMode('separate')">↔ Pages séparées</button>
+        <button type="button" class="crewbus-layout-btn" data-mode="combined" onclick="setCrewBusLayoutMode('combined')">▦ Étapes 3 + 4 ensemble</button>
+        <span class="crewbus-layout-hint">Crew Bus à droite en mode combiné</span>
+      </div>
+      <div class="combined-action-bar wo-combined-actions" id="combined-action-bar" aria-label="Actions du mode combiné">
+        <button type="button" class="btn btn-ghost" onclick="goToStep(2)">← Retour</button>
+        <button type="button" class="btn btn-amber" onclick="generateWorksheets()">▣ Worksheets</button>
+        <button type="button" class="btn btn-primary" onclick="generatePDF()">▣ Feuille nettoyage</button>
+        <button type="button" class="btn btn-cyan combined-crewbus-btn" onclick="generateCrewBusSheet()">▣ Feuille Crewbus</button>
+        <button type="button" class="btn btn-danger" onclick="resetAll()">Recommencer</button>
+        <button type="button" class="btn combined-print-all-btn" onclick="generateAllPrint()">✦ Imprimer le tout</button>
+      </div>
     </div>
-    </div>
-    <div class="stats-row">
+
+    <div class="wo-step3-overview">
+<div class="stats-row">
       <div class="stat-card"><div class="num" id="count-selected">0</div><div class="lbl">Selectionnes</div></div>
       <div class="stat-card"><div class="num" id="count-total">0</div><div class="lbl">Total detectes</div></div>
     </div>
@@ -3430,20 +3510,18 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     </div>
 
     <!-- Recherche / filtre des vols -->
-    <input type="text" id="flight-search" placeholder="&#128269; Rechercher un vol (numero, immat, stand, handler)..." oninput="onFlightSearch(this.value)"
-      style="width:100%;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--mono);font-size:13px;padding:11px 14px;outline:none;margin-bottom:8px">
-
-    <!-- Avions à nettoyer -->
-    <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
-      <div style="height:1px;flex:1;background:var(--b2)"></div>
-      <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--a1);padding:5px 14px;border:1px solid rgba(0,212,255,.3);border-radius:20px;background:rgba(0,212,255,.06)">🛩 Avions à nettoyer</div>
-      <div style="height:1px;flex:1;background:var(--b2)"></div>
+    <input type="text" id="flight-search" class="wo-flight-search" placeholder="&#128269; Rechercher un vol (numero, immat, stand, handler)..." oninput="onFlightSearch(this.value)">
     </div>
+
+    <section class="wo-surface wo-flight-section" aria-labelledby="wo-flight-section-title">
+    <div class="wo-section-heading"><div><span class="wo-overline">NETTOYAGE</span><h2 id="wo-flight-section-title">Avions à traiter</h2></div><span class="wo-section-note">Sélectionnez les vols concernés</span></div>
+    <!-- Avions à nettoyer -->
     <div class="flights-list" id="flights-list">
       <div class="empty-state"><div class="icon">&#9992;</div><p>Aucun vol detecte</p></div>
     </div>
+    </section>
     <!-- Caterings section -->
-    <div id="catering-section" style="margin-bottom:14px">
+    <div id="catering-section" class="wo-surface wo-catering-section" style="margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
         <div style="height:1px;flex:1;background:rgba(0,229,160,.2)"></div>
         <div style="font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#00e5a0;padding:5px 14px;border:1px solid rgba(0,229,160,.3);border-radius:20px;background:rgba(0,229,160,.06)">🍽 Caterings</div>
@@ -3464,7 +3542,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       </div>
     </div>
 
-    <div id="asl737-section" class="hidden" style="margin-bottom:14px">
+    <div id="asl737-section" class="hidden wo-surface wo-asl-section" style="margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
         <div style="height:1px;flex:1;background:rgba(255,180,0,.2)"></div>
         <div style="display:flex;align-items:center;gap:10px">
@@ -3476,7 +3554,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     </div>
 
     <!-- Worksheets vierges (Edit Mode) -->
-    <div id="blank-worksheets-section" class="hidden" style="margin-bottom:14px">
+    <div id="blank-worksheets-section" class="hidden wo-surface wo-blank-worksheets-section" style="margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px">
         <div style="height:1px;flex:1;background:rgba(255,180,0,.18)"></div>
         <div style="font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#ffb400;padding:5px 14px;border:1px solid rgba(255,180,0,.28);border-radius:20px;background:rgba(255,180,0,.05)">&#9998; Worksheets personnalisées</div>
@@ -3488,8 +3566,8 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
     <!-- Ancien bouton de création conservé uniquement pour compatibilité JS :
          la création passe désormais par Menu > Mode édition. -->
     <button id="create-blank-worksheet-btn" class="hidden" onclick="createBlankWorksheet()" aria-hidden="true" tabindex="-1" style="display:none!important"></button>
-    <button class="add-manual-toggle" onclick="toggleSwissportManhour()" style="display:none;margin-top:8px;border-color:rgba(167,139,250,.45);color:#c4b5fd">⏱ Swissport MANHOUR</button>
-    <button class="add-manual-toggle" onclick="toggleManualForm()">+ Ajouter un vol manuellement</button>
+    <button class="add-manual-toggle wo-manual-toggle" onclick="toggleSwissportManhour()" style="display:none;margin-top:8px;border-color:rgba(167,139,250,.45);color:#c4b5fd">⏱ Swissport MANHOUR</button>
+    <button class="add-manual-toggle wo-manual-toggle" onclick="toggleManualForm()">+ Ajouter un vol manuellement</button>
     
     <div id="swp-manhour-backdrop" class="swp-manhour-backdrop" aria-hidden="true"></div>
     <div class="manual-form hidden" id="swissport-manhour-form" role="dialog" aria-modal="true" aria-labelledby="swp-manhour-title">
@@ -3536,7 +3614,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       </div>
     </div>
 
-<div class="manual-form hidden" id="manual-form">
+<div class="manual-form hidden wo-manual-flight-form" id="manual-form">
       <div class="manual-form-title">Ajout manuel</div>
       <div class="field-row" style="margin-bottom:12px">
         <div><label class="field-label">N de vol *</label><input type="text" id="m-flight" placeholder="ex: TNT123" oninput="var v=this.value.toUpperCase();var row=document.getElementById('abd-choice-row');if(row){if(v.startsWith('ABD'))row.classList.remove('hidden');else row.classList.add('hidden');}"></div>
@@ -3572,11 +3650,11 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       </div>
       <button class="btn btn-primary" onclick="addManualFlight()" style="margin-top:4px">Ajouter ce vol</button>
     </div>
-    <div class="panel" style="margin-top:16px;border-color:rgba(0,212,255,.15)">
+    <div class="panel wo-surface wo-notes-surface" style="margin-top:16px;border-color:rgba(0,212,255,.15)">
       <label class="field-label" style="margin-bottom:8px">&#128221; Informations complémentaires</label>
       <textarea id="extra-notes" placeholder="Ajoutez vos notes ici... (elles apparaîtront dans la section Notes de la feuille)" style="width:100%;min-height:80px;resize:vertical;background:var(--bg2);border:1px solid var(--b2);border-radius:var(--r2);color:var(--t1);font-family:var(--sans);font-size:13px;line-height:1.6;padding:13px 16px;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='var(--a1)'" onblur="this.style.borderColor='var(--b2)'" oninput="localStorage.setItem('lgg_extra_notes', this.value); if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('extraNotes')"></textarea>
     </div>
-    <div class="actions">
+    <div class="actions wo-step3-actions">
       <button class="btn btn-ghost" onclick="goToStep(2)">&larr; Retour</button>
       <button class="btn btn-primary" onclick="generatePDF()">&#128424; Feuille nettoyage</button>
       <button class="btn btn-amber" onclick="generateWorksheets()">&#128203; Worksheets</button>
@@ -3737,7 +3815,7 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       <button type="button" class="crewbus-add-btn" onclick="addCrewBusManualFlight()">＋ Ajouter ce vol</button>
     </details>
   </div>
-</div>>
+</div>
 
 <div id="pdf-sheet"></div>
 <div id="print-overlay" aria-hidden="true" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.88);z-index:999;flex-direction:column;align-items:center;overflow-y:auto;padding:24px">
@@ -10760,6 +10838,407 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
   deicingScheduleHourlyCheck();
 })();
 </script>
+
+<style id="wo-lgg-professional-workflow-v1">
+/* WO-LGG — Professional redesign for operational steps 1–3 */
+.app-wrap:not(.crewbus-active){
+  --bg0:#0b1422;--bg1:#111e30;--bg2:#17263a;--bg3:#1d3048;
+  --b1:rgba(178,202,229,.08);--b2:rgba(178,202,229,.16);--b3:rgba(178,202,229,.27);
+  --a1:#86b6f3;--a2:#5487cc;--t1:#edf3fa;--t2:#9aacc2;--t3:#6c819a;
+  max-width:1220px!important;width:100%;padding:34px 30px 90px!important;
+}
+.app-wrap:not(.crewbus-active) .progress-bar{
+  margin:0 0 34px!important;padding:13px 17px;border:1px solid rgba(176,199,226,.12);
+  border-radius:16px;background:rgba(15,29,47,.88);gap:12px;box-shadow:0 10px 30px rgba(0,0,0,.12)
+}
+.app-wrap:not(.crewbus-active) .prog-step{font-size:9px;letter-spacing:1.1px;color:#8194aa;gap:9px}
+.app-wrap:not(.crewbus-active) .prog-step.active{color:#b8d5fa}
+.app-wrap:not(.crewbus-active) .prog-step.done{color:#9fb1c7}
+.app-wrap:not(.crewbus-active) .prog-num{width:29px;height:29px;border:1px solid rgba(176,199,226,.2);background:rgba(255,255,255,.025);font-size:10px}
+.app-wrap:not(.crewbus-active) .prog-step.active .prog-num{background:#27466d;border-color:#6e9fdc;color:#fff;box-shadow:0 0 0 4px rgba(110,159,220,.1)}
+.app-wrap:not(.crewbus-active) .prog-step.done .prog-num{background:#426f9e;border-color:#426f9e;color:#fff}
+.app-wrap:not(.crewbus-active) .prog-line{height:1px;background:rgba(176,199,226,.14)}
+.app-wrap:not(.crewbus-active) .prog-label{font-size:9px}
+.wo-step{color:var(--t1);min-width:0}
+.wo-step-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin:0 0 24px;padding:0 2px}
+.wo-step-kicker{display:flex;align-items:center;gap:9px;margin-bottom:11px;color:#8db7e8;font:700 9px/1.2 var(--mono);letter-spacing:1.4px;text-transform:uppercase}
+.wo-step-kicker-dot{width:7px;height:7px;border-radius:50%;background:#7eafe8;box-shadow:0 0 0 4px rgba(126,175,232,.12)}
+.wo-kicker-divider{color:#60758d}
+.wo-step-title{margin:0;font:750 clamp(27px,3vw,36px)/1.12 var(--sans);letter-spacing:-1.1px;color:#f0f5fb;background:none!important;-webkit-text-fill-color:initial!important;animation:none!important}
+.wo-step-subtitle{max-width:730px;margin:9px 0 0;color:#9aacc2;font:400 13px/1.65 var(--sans)}
+.wo-step-index{width:56px;height:56px;flex:0 0 56px;display:grid;place-items:center;border:1px solid rgba(146,183,224,.19);border-radius:16px;background:linear-gradient(145deg,rgba(67,110,159,.17),rgba(255,255,255,.025));color:#9ebfe8;font:700 20px/1 var(--mono)}
+.wo-surface{min-width:0;border:1px solid rgba(174,198,226,.13);border-radius:19px;background:linear-gradient(145deg,rgba(19,34,53,.97),rgba(14,27,44,.97));padding:24px;box-shadow:0 14px 34px rgba(0,0,0,.12)}
+.wo-surface-heading,.wo-shift-heading,.wo-section-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.wo-surface-heading{margin-bottom:19px}
+.wo-overline{display:block;margin-bottom:7px;color:#7992ac;font:700 8px/1.3 var(--mono);letter-spacing:1.35px}
+.wo-surface-heading h2,.wo-shift-heading h2,.wo-section-heading h2{margin:0;color:#e9f0f7;font:700 17px/1.25 var(--sans);letter-spacing:-.25px}
+.wo-surface-tag,.wo-optional-tag{padding:6px 10px;border:1px solid rgba(135,174,220,.18);border-radius:30px;background:rgba(110,157,210,.07);color:#a9c4e5;font:700 8px/1 var(--mono);letter-spacing:.4px;text-transform:uppercase;white-space:nowrap}
+.wo-optional-tag{color:#b5c1cf;background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.1)}
+.wo-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.wo-input-group{min-width:0}
+.wo-input-group .field-label{margin-bottom:9px;color:#a7b8cc;font-size:9px;letter-spacing:1.25px}
+.wo-step input[type="text"],.wo-step input[type="date"],.wo-step select,.wo-step textarea{width:100%;min-width:0;min-height:45px;padding:12px 14px;border:1px solid rgba(175,199,228,.17);border-radius:10px;background:#0d1a2a;color:#eef4fa;font:500 13px/1.4 var(--sans);box-shadow:none;transition:border-color .18s,background .18s,box-shadow .18s}
+.wo-step input:focus,.wo-step textarea:focus,.wo-step select:focus{border-color:#719fd5;box-shadow:0 0 0 3px rgba(113,159,213,.13);background:#102139}
+.wo-step input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.75);opacity:.8}
+.wo-field-note{display:block;margin-top:7px;color:#7489a2;font:400 10px/1.45 var(--sans)}
+.wo-shift-divider{height:1px;margin:23px 0 20px;background:rgba(176,199,226,.11)}
+.wo-shift-heading{align-items:flex-end;margin-bottom:12px}
+.wo-shift-heading .wo-field-note{margin:0}
+.wo-shift-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important;margin:0!important}
+.wo-shift-card{position:relative;display:flex;min-width:0;min-height:160px;flex-direction:column;align-items:flex-start;justify-content:flex-start;text-align:left;padding:16px 17px!important;border:1px solid rgba(176,199,226,.14)!important;border-radius:14px!important;background:#101e30!important;box-shadow:none!important;transform:none!important}
+.wo-shift-card:hover{border-color:rgba(136,181,232,.4)!important;background:#152740!important;transform:translateY(-2px)!important}
+.wo-shift-card.active{border-color:#76a8e2!important;background:linear-gradient(150deg,rgba(68,112,164,.25),rgba(17,34,55,.96))!important;box-shadow:inset 0 0 0 1px rgba(118,168,226,.18),0 10px 24px rgba(0,0,0,.15)!important;transform:translateY(-2px)!important}
+.wo-shift-card-top{width:100%;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.wo-shift-symbol{width:30px;height:30px;display:grid;place-items:center;border:1px solid rgba(153,185,220,.17);border-radius:9px;background:rgba(255,255,255,.035);color:#b5cde8;font-size:15px}
+.wo-shift-period{color:#758ba4;font:700 8px/1 var(--mono);letter-spacing:1px}
+.wo-shift-card .shift-name{margin:0 0 5px;color:#edf3fa!important;font:750 15px/1.2 var(--sans);letter-spacing:0;background:none!important;-webkit-text-fill-color:initial!important}
+.wo-shift-card .shift-time{color:#a5bad2;font:600 12px/1.2 var(--mono)}
+.wo-shift-card-foot{margin-top:auto;padding-top:13px;color:#7e93aa;font:400 10px/1.3 var(--sans)}
+.wo-shift-card.active .wo-shift-period,.wo-shift-card.active .shift-time{color:#c4dcf8}
+.wo-step-footer{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:19px;padding:0 2px}
+.wo-footer-caption{display:flex;align-items:center;gap:9px;color:#8296ad;font:400 10px/1.5 var(--sans)}
+.wo-footer-indicator{width:6px;height:6px;flex:0 0 6px;border-radius:50%;background:#76b194}
+.wo-step-actions{display:flex;justify-content:flex-end;gap:9px;margin:0!important}
+.wo-step .btn{min-height:43px;padding:0 17px;border-radius:10px;font:700 9px/1 var(--sans);letter-spacing:.65px;box-shadow:none;transform:none}
+.wo-step .btn:hover{transform:translateY(-1px)}
+.wo-step .btn-primary,.wo-step .wo-primary-action{border:1px solid #537fb1;background:#315a86;color:#fff;box-shadow:0 7px 18px rgba(28,64,102,.22)}
+.wo-step .btn-primary:hover,.wo-step .wo-primary-action:hover{background:#3b6a9d;box-shadow:0 9px 20px rgba(28,64,102,.3)}
+.wo-step .btn-ghost{border:1px solid rgba(174,198,226,.18);background:rgba(255,255,255,.025);color:#b3c2d3}
+.wo-step .btn-amber{background:#a56b19;border:1px solid #c18a34;color:#fff;box-shadow:none}
+.wo-step .btn-danger{color:#d78d92;border:1px solid rgba(215,141,146,.2)}
+
+/* Step 2 */
+.wo-import-layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(320px,.85fr);align-items:stretch;gap:16px}
+.wo-import-main,.wo-catering-import{height:100%}
+.wo-source-status{display:inline-flex;align-items:center;gap:7px;color:#a8c1da;font:700 8px/1 var(--mono);letter-spacing:.8px}
+.wo-source-status span{width:7px;height:7px;border-radius:50%;background:#77c4a0;box-shadow:0 0 0 4px rgba(119,196,160,.1)}
+.wo-section-copy{margin:-7px 0 18px;color:#91a4ba;font:400 12px/1.65 var(--sans)}
+.wo-api-action{width:100%;justify-content:flex-start!important;gap:12px!important;min-height:58px!important;padding:0 17px!important;font-size:10px!important;text-align:left}
+.wo-api-icon{width:30px;height:30px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.18);border-radius:9px;background:rgba(255,255,255,.08);font-size:17px}
+.wo-api-secondary{margin-left:auto;color:rgba(255,255,255,.68);font:600 8px/1 var(--mono);letter-spacing:.7px}
+.wo-api-status{min-height:20px;margin:11px 0 2px;color:#9db2c9;font:500 10px/1.5 var(--sans)}
+.wo-or-divider{display:flex;align-items:center;gap:12px;margin:14px 0;color:#7288a1;font:700 8px/1 var(--mono);letter-spacing:.65px}
+.wo-or-divider:before,.wo-or-divider:after{content:"";height:1px;flex:1;background:rgba(176,199,226,.12)}
+.wo-manual-import{overflow:hidden;border:1px solid rgba(176,199,226,.13);border-radius:12px;background:rgba(5,14,25,.2)}
+.wo-manual-import-toggle{display:flex!important;width:100%;align-items:center;gap:12px;padding:14px!important;border:0!important;border-radius:0!important;background:transparent!important;color:#dce7f3!important;text-align:left;font:600 11px/1.3 var(--sans)!important;letter-spacing:0!important;text-transform:none!important}
+.wo-manual-import-toggle:hover{background:rgba(255,255,255,.035)!important}
+.wo-manual-import-toggle .fids-manual-arrow{color:#8eafd4;font-size:15px}
+.wo-manual-import-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.wo-manual-import-copy strong{font-size:11px;color:#e5edf6}
+.wo-manual-import-copy small{font-size:9px;color:#8297ad;font-weight:400}
+.wo-manual-import-chevron{color:#8298b1;transition:transform .18s}
+.wo-manual-import-toggle[aria-expanded="true"] .wo-manual-import-chevron{transform:rotate(180deg)}
+.wo-manual-import-panel{padding:0 14px 15px!important;border:0!important;background:transparent!important}
+.wo-import-instructions{margin:0 0 13px!important;padding:12px 14px!important;border:1px solid rgba(135,174,220,.12)!important;border-left:2px solid #648db9!important;border-radius:9px!important;background:rgba(92,133,178,.07)!important;color:#a4b6ca!important;font-size:10px!important;line-height:1.7!important}
+.wo-import-instructions ol{margin:7px 0 0 17px;padding:0}
+.wo-import-instructions li{padding:1px 0}
+.wo-manual-import-panel .field-label,.wo-catering-import .field-label{color:#a7b9cc;font-size:8px;letter-spacing:1.1px}
+.wo-manual-import-panel textarea{min-height:145px!important;resize:vertical}
+.wo-format-example{display:grid;gap:8px;padding:13px;border:1px solid rgba(176,199,226,.12);border-radius:10px;background:rgba(6,16,28,.3);margin:0 0 17px}
+.wo-format-example span{color:#7e94ac;font:700 8px/1 var(--mono);letter-spacing:1px}
+.wo-format-example code{color:#b9cde2;font:500 9px/1.55 var(--mono);overflow-wrap:anywhere}
+.wo-catering-textarea{min-height:195px!important;resize:vertical}
+.wo-note-inline{display:flex;align-items:flex-start;gap:8px;margin-top:13px;color:#8398ae;font:400 10px/1.55 var(--sans)}
+.wo-note-inline>span{width:16px;height:16px;flex:0 0 16px;display:grid;place-items:center;border:1px solid rgba(135,174,220,.25);border-radius:50%;color:#a7c5e5;font:700 9px var(--sans)}
+
+/* Step 3 */
+.wo-step3-heading{align-items:center}
+.wo-step-title-row{display:flex;align-items:center;gap:14px;margin:0!important;font-size:inherit!important}
+.wo-step3-tools{display:grid;gap:10px;margin:0 0 16px}
+.wo-layout-toggle{display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:10px 12px;border:1px solid rgba(176,199,226,.12);border-radius:12px;background:rgba(16,31,49,.7)}
+.wo-layout-toggle .crewbus-layout-label{margin-right:5px;color:#8da2ba;font:700 8px/1 var(--mono);letter-spacing:.9px;text-transform:uppercase}
+.wo-layout-toggle .crewbus-layout-btn{min-height:30px;padding:6px 10px;border:1px solid rgba(176,199,226,.16);border-radius:8px;background:rgba(255,255,255,.025);color:#9fb2c8;font:600 9px/1.2 var(--sans)}
+.wo-layout-toggle .crewbus-layout-btn.active,.wo-layout-toggle .crewbus-layout-btn[aria-pressed="true"]{border-color:rgba(119,165,216,.45);background:rgba(83,131,187,.18);color:#d1e2f5}
+.wo-layout-toggle .crewbus-layout-hint{margin-left:auto;color:#748aa2;font:400 9px/1.4 var(--sans)}
+.wo-combined-actions{flex-wrap:wrap;gap:7px;padding:10px;border:1px solid rgba(176,199,226,.13);border-radius:12px;background:#101e30}
+.wo-combined-actions .btn{min-height:35px!important;padding:0 11px!important;font-size:8px!important}
+.wo-step3-overview{display:grid;grid-template-columns:minmax(160px,.45fr) minmax(280px,1.5fr);gap:12px;align-items:center;margin-bottom:15px;padding:13px;border:1px solid rgba(176,199,226,.12);border-radius:14px;background:rgba(15,29,47,.72)}
+.wo-step3-overview .stats-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0!important}
+.wo-step3-overview .stat-card{min-width:0;padding:10px 12px;border:1px solid rgba(176,199,226,.11);border-radius:10px;background:rgba(255,255,255,.025)}
+.wo-step3-overview .stat-card .num{font-size:20px;background:none!important;-webkit-text-fill-color:#c4d8ef!important;color:#c4d8ef!important}
+.wo-step3-overview .stat-card .lbl{margin-top:5px;color:#8296ad;font-size:7px;letter-spacing:.8px}
+.wo-step3-overview #refresh-badge{grid-column:1/-1;min-height:0!important;margin:0!important;padding:8px 10px!important;border-radius:9px!important;font-size:10px!important}
+.wo-step3-overview .wo-flight-search{grid-column:2;grid-row:1;min-height:44px!important;margin:0!important;padding:0 14px!important;background:#0d1a2a!important;border:1px solid rgba(176,199,226,.17)!important;border-radius:10px!important;color:#eef4fa!important;font:500 11px var(--sans)!important}
+.wo-flight-section{padding:18px;margin-bottom:15px}
+.wo-section-heading{align-items:center;margin-bottom:14px;padding:0 2px}
+.wo-section-heading .wo-overline{margin-bottom:4px}
+.wo-section-heading h2{font-size:15px}
+.wo-section-note{color:#7d92a9;font:400 9px/1.4 var(--sans)}
+.wo-flight-section #flights-list{gap:8px;margin:0}
+.wo-flight-section #flights-list [data-idx]{min-width:0;padding:0 0 8px;border:1px solid rgba(176,199,226,.10);border-radius:11px;background:rgba(7,17,29,.33);overflow:hidden}
+.wo-flight-section .flight-card{display:grid!important;grid-template-columns:24px minmax(0,1fr) auto!important;align-items:center;gap:9px!important;padding:12px 13px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;transform:none!important}
+.wo-flight-section .flight-card:hover{background:rgba(255,255,255,.025)!important}
+.wo-flight-section .flight-card.selected{background:rgba(89,137,192,.10)!important;box-shadow:inset 3px 0 0 #6d9ed2!important}
+.wo-flight-section .flight-card .check{width:21px;height:21px;border:1px solid rgba(176,199,226,.25);border-radius:7px;background:rgba(255,255,255,.025);color:#fff}
+.wo-flight-section .flight-card.selected .check{background:#527fae;border-color:#527fae;box-shadow:none}
+.wo-flight-section .flight-info{min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wo-flight-section .operations-registration-input{width:112px!important;min-width:0!important;max-width:112px;height:30px;min-height:30px!important;padding:0 7px!important;border-color:rgba(211,172,97,.30)!important;border-radius:7px!important;background:rgba(211,172,97,.06)!important;color:#e8ca91!important;font:700 9px var(--mono)!important}
+.wo-flight-section .flight-num{min-width:0;color:#e5edf6;font:700 11px var(--mono)}
+.wo-flight-section .flight-time{color:#99aec5;font-size:9px}
+.wo-flight-section .flight-stand{color:#9aacc0;background:rgba(255,255,255,.035);border:1px solid rgba(176,199,226,.10);font-size:8px}
+.wo-flight-section .flight-card>div:nth-child(3){grid-column:3;grid-row:1;display:flex;align-items:center;gap:5px;margin:0!important}
+.wo-flight-section .flight-card>div:nth-child(3) button{width:30px;height:29px;display:grid;place-items:center;border:1px solid rgba(176,199,226,.14)!important;border-radius:8px!important;background:rgba(255,255,255,.025)!important;color:#a8bdd4!important;font-size:12px!important}
+.wo-flight-section .flight-card>div:nth-child(4){grid-column:2/-1;grid-row:2;justify-self:start;margin:0!important;padding:4px 0 0!important;background:transparent!important}
+.wo-flight-section #flights-list .remarks-input{min-height:32px!important;padding:6px 9px!important;border:0!important;border-top:1px solid rgba(176,199,226,.08)!important;border-radius:0!important;background:transparent!important;color:#b5c5d7!important;font:400 10px var(--sans)!important}
+.wo-catering-section,.wo-asl-section,.wo-blank-worksheets-section{margin:0 0 15px!important;padding:18px!important;border-radius:15px!important;background:linear-gradient(145deg,rgba(17,33,52,.97),rgba(13,27,44,.97))!important;border:1px solid rgba(176,199,226,.12)!important}
+.wo-catering-section .stats-row{gap:8px}
+.wo-catering-section .stat-card{padding:11px 13px!important;background:rgba(255,255,255,.025)!important}
+.wo-manual-toggle{margin:0 0 9px!important;padding:14px!important;border:1px dashed rgba(137,174,215,.3)!important;border-radius:12px!important;color:#a9c5e5!important;background:rgba(65,103,148,.07)!important;letter-spacing:.35px!important}
+.wo-manual-toggle:hover{border-color:rgba(137,174,215,.55)!important;background:rgba(65,103,148,.12)!important}
+.wo-manual-flight-form{padding:20px!important;border:1px solid rgba(176,199,226,.13)!important;border-radius:14px!important;background:#101e30!important}
+.wo-notes-surface{margin:15px 0!important;padding:18px!important;border-color:rgba(176,199,226,.13)!important;background:#101e30!important}
+.wo-notes-surface textarea{min-height:80px!important}
+.wo-step3-actions{align-items:center;padding:13px;border:1px solid rgba(176,199,226,.13);border-radius:14px;background:#101e30}
+.wo-step3-actions .btn{flex:0 0 auto}
+.wo-step3-actions .crewbus-next-step-btn{border:1px solid #567fa8;background:#2c527a;color:#fff}
+
+/* Step 4 — responsive Crew Bus repair. Keep the existing controls and data model. */
+.app-wrap.crewbus-active{width:100%;max-width:1360px!important;margin:0 auto;padding:30px 28px 90px!important}
+#step-4.crewbus-radical-v90{width:100%;max-width:100%;min-width:0;overflow:visible}
+#step-4.crewbus-radical-v90 .cb90-workspace{width:100%;max-width:1280px;min-width:0;margin:0 auto;grid-template-columns:minmax(0,1fr)!important}
+#step-4.crewbus-radical-v90 .cb90-board,#step-4.crewbus-radical-v90 #crewbus-flight-list,#step-4.crewbus-radical-v90 .cb-friend-selected,#step-4.crewbus-radical-v90 .cb-friend-selected-grid,#step-4.crewbus-radical-v90 .cb-friend-column,#step-4.crewbus-radical-v90 .cb-friend-card-list,#step-4.crewbus-radical-v90 .cb-friend-headset,#step-4.crewbus-radical-v90 .cb-friend-headset-list{min-width:0;max-width:100%;box-sizing:border-box}
+#step-4.crewbus-radical-v90 .cb-friend-selected-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:start}
+#step-4.crewbus-radical-v90 .cb-friend-card-list{overflow-x:hidden}
+#step-4.crewbus-radical-v90 .cb-friend-flight-card{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important;grid-template-columns:24px 59px minmax(0,1fr) minmax(96px,.72fr)!important;grid-template-rows:auto auto!important;gap:7px!important;padding:9px 10px!important;overflow:hidden!important}
+#step-4.crewbus-radical-v90 .cb-friend-select{grid-column:1!important;grid-row:1!important}
+#step-4.crewbus-radical-v90 .cb-friend-time{grid-column:2!important;grid-row:1!important;min-width:0!important}
+#step-4.crewbus-radical-v90 .cb-friend-flight{grid-column:3!important;grid-row:1!important;min-width:0!important}
+#step-4.crewbus-radical-v90 .cb-friend-reg-cell{grid-column:4!important;grid-row:1!important;min-width:0!important}
+#step-4.crewbus-radical-v90 .cb-friend-meta{display:none!important}
+#step-4.crewbus-radical-v90 .cb-friend-row-actions{grid-column:3/-1!important;grid-row:2!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;flex-wrap:wrap!important;gap:5px!important;min-width:0!important;margin:0!important;padding-top:2px!important}
+#step-4.crewbus-radical-v90 .cb-friend-actions{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+#step-4.crewbus-radical-v90 .cb-friend-mode,#step-4.crewbus-radical-v90 .cb-friend-headset-btn{width:auto!important;max-width:100%;height:26px!important;min-height:26px!important;padding:0 8px!important;font:700 7px var(--mono)!important}
+#step-4.crewbus-radical-v90 .cb-friend-headset-btn{width:auto!important}
+#step-4.crewbus-radical-v90 .cb-friend-reg{width:100%!important;max-width:100%!important;min-width:0!important}
+#step-4.crewbus-radical-v90 .cb-friend-headset-list{grid-template-columns:minmax(0,1fr)!important;gap:7px!important;padding:9px!important}
+#step-4.crewbus-radical-v90 .cb-friend-extra-list{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#step-4.crewbus-radical-v90 .cb-friend-available-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+#step-4.crewbus-radical-v90 .cb90-manifest{width:100%;min-width:0;grid-template-columns:minmax(0,1fr) minmax(150px,.72fr) minmax(0,1fr) minmax(210px,.95fr)!important;gap:12px!important;overflow:hidden!important}
+#step-4.crewbus-radical-v90 .cb90-manifest>*{min-width:0}
+#step-4.crewbus-radical-v90 .cb90-manifest-head strong{font-size:16px}
+#step-4.crewbus-radical-v90 .cb90-manifest-notes textarea{width:100%;min-width:0;box-sizing:border-box}
+#step-4.crewbus-radical-v90 .cb90-generate{min-width:0;white-space:normal}
+#step-4.crewbus-radical-v90 .cb90-manual{width:100%;max-width:1280px;min-width:0;margin:12px auto 0}
+#step-4.crewbus-radical-v90 .cb90-manual details{min-width:0}
+#step-4.crewbus-radical-v90 .cb90-manual .crewbus-add-grid{grid-template-columns:repeat(3,minmax(0,1fr));max-width:none}
+#step-4.crewbus-radical-v90 .cb90-manual .crewbus-add-btn{max-width:none}
+@media(max-width:1120px){
+  .app-wrap.crewbus-active{max-width:100%!important;padding-left:20px!important;padding-right:20px!important}
+  #step-4.crewbus-radical-v90 .cb90-manifest{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #step-4.crewbus-radical-v90 .cb90-manifest-head{grid-column:1/-1}
+  #step-4.crewbus-radical-v90 .cb90-manifest-notes{grid-column:1/-1}
+}
+@media(max-width:760px){
+  .app-wrap:not(.crewbus-active){max-width:100%!important;padding:22px 16px 70px!important}
+  .app-wrap:not(.crewbus-active) .progress-bar{margin-bottom:24px!important;padding:10px 11px;gap:7px}
+  .app-wrap:not(.crewbus-active) .prog-label{font-size:7px;letter-spacing:.45px}
+  .wo-step-heading{gap:12px;margin-bottom:19px}
+  .wo-step-index{width:42px;height:42px;flex-basis:42px;border-radius:12px;font-size:16px}
+  .wo-step-title{font-size:27px}
+  .wo-surface{padding:18px;border-radius:15px}
+  .wo-context-grid,.wo-import-layout{grid-template-columns:minmax(0,1fr)!important}
+  .wo-shift-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important}
+  .wo-shift-card{min-height:145px;padding:12px 10px!important}
+  .wo-shift-card-top{margin-bottom:14px}
+  .wo-shift-card .shift-name{font-size:13px}
+  .wo-shift-card .shift-time{font-size:10px}
+  .wo-shift-card-foot{font-size:8px}
+  .wo-step-footer{align-items:stretch;flex-direction:column;gap:13px}
+  .wo-step-actions{width:100%;justify-content:stretch}
+  .wo-step-actions .btn{flex:1}
+  .wo-step3-overview{grid-template-columns:minmax(0,1fr);gap:9px}
+  .wo-step3-overview .wo-flight-search{grid-column:1;grid-row:auto}
+  .wo-layout-toggle{align-items:flex-start}
+  .wo-layout-toggle .crewbus-layout-hint{width:100%;margin:2px 0 0}
+  .wo-section-heading{align-items:flex-start}
+  .wo-section-note{max-width:42%;text-align:right}
+  .wo-flight-section{padding:13px}
+  .wo-flight-section .flight-card{grid-template-columns:23px minmax(0,1fr)!important}
+  .wo-flight-section .flight-card>div:nth-child(3){grid-column:2!important;grid-row:2!important;justify-self:start}
+  .wo-flight-section .flight-card>div:nth-child(4){grid-column:2!important;grid-row:3!important}
+  .wo-step3-actions{flex-wrap:wrap}
+  .wo-step3-actions .btn{flex:1 1 42%}
+  .app-wrap.crewbus-active{padding:20px 14px 70px!important}
+  #step-4.crewbus-radical-v90 .cb-friend-selected-grid{grid-template-columns:minmax(0,1fr)!important}
+  #step-4.crewbus-radical-v90 .cb-friend-column+.cb-friend-column{border-left:0!important;border-top:1px solid rgba(255,255,255,.07)}
+  #step-4.crewbus-radical-v90 .cb-friend-available-grid{grid-template-columns:minmax(0,1fr)!important}
+  #step-4.crewbus-radical-v90 .cb-friend-extra-list{grid-template-columns:minmax(0,1fr)!important}
+  #step-4.crewbus-radical-v90 .cb90-manifest{grid-template-columns:minmax(0,1fr)!important}
+  #step-4.crewbus-radical-v90 .cb90-manifest-head,#step-4.crewbus-radical-v90 .cb90-manifest-notes{grid-column:1}
+  #step-4.crewbus-radical-v90 .cb90-manual .crewbus-add-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:460px){
+  .app-wrap:not(.crewbus-active){padding-left:11px!important;padding-right:11px!important}
+  .app-wrap:not(.crewbus-active) .progress-bar{gap:5px;padding:9px 8px}
+  .app-wrap:not(.crewbus-active) .prog-step{gap:5px}
+  .app-wrap:not(.crewbus-active) .prog-num{width:25px;height:25px}
+  .app-wrap:not(.crewbus-active) .prog-label{display:none}
+  .wo-step-title{font-size:24px}
+  .wo-step-subtitle{font-size:11px}
+  .wo-step-index{width:36px;height:36px;flex-basis:36px}
+  .wo-shift-grid{grid-template-columns:minmax(0,1fr)!important}
+  .wo-shift-card{min-height:0;display:grid;grid-template-columns:36px minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:10px;padding:12px!important}
+  .wo-shift-card-top{grid-column:1;grid-row:1/3;margin:0}
+  .wo-shift-period{display:none}
+  .wo-shift-card .shift-name{grid-column:2;grid-row:1;margin:0}
+  .wo-shift-card .shift-time{grid-column:2;grid-row:2}
+  .wo-shift-card-foot{grid-column:3;grid-row:1/3;align-self:center;padding:0;margin:0;font-size:8px;text-align:right}
+  .wo-step-actions{flex-wrap:wrap}
+  .wo-step-actions .btn{flex:1 1 100%}
+  .wo-step3-actions .btn{flex-basis:100%}
+  #step-4.crewbus-radical-v90 .cb-friend-flight-card{grid-template-columns:22px 53px minmax(0,1fr)!important}
+  #step-4.crewbus-radical-v90 .cb-friend-reg-cell{grid-column:3!important;grid-row:2!important}
+  #step-4.crewbus-radical-v90 .cb-friend-row-actions{grid-column:3!important;grid-row:3!important}
+  #step-4.crewbus-radical-v90 .cb90-manual .crewbus-add-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(prefers-reduced-motion:reduce){
+  .wo-step *,#step-4.crewbus-radical-v90 *{scroll-behavior:auto!important;animation:none!important;transition:none!important}
+}
+</style>
+
+<style id="wo-lgg-responsive-hardening-v2">
+/* Responsive hardening: prevent narrow-column overflow on tablets and phones. */
+.wo-shift-grid{display:flex!important;flex-wrap:wrap!important;align-items:stretch!important;gap:12px!important}
+.wo-shift-card{flex:1 1 calc(33.333% - 9px)!important;max-width:calc(33.333% - 9px)!important;box-sizing:border-box!important}
+.wo-import-layout{display:flex!important;align-items:stretch!important;gap:16px!important}
+.wo-import-main{flex:1.3 1 0!important;min-width:0!important}
+.wo-catering-import{flex:.85 1 0!important;min-width:280px!important}
+.wo-import-main,.wo-catering-import{box-sizing:border-box!important}
+#step-4.crewbus-radical-v90 .cb-friend-flight-card{
+  grid-template-columns:24px 59px minmax(0,1fr) minmax(118px,.68fr)!important;
+  grid-template-rows:auto auto auto!important;
+  align-items:center!important;
+  overflow:hidden!important;
+}
+#step-4.crewbus-radical-v90 .cb-friend-select{grid-column:1!important;grid-row:1/4!important;align-self:start!important;margin-top:3px!important}
+#step-4.crewbus-radical-v90 .cb-friend-time{grid-column:2!important;grid-row:1!important}
+#step-4.crewbus-radical-v90 .cb-friend-flight{grid-column:3!important;grid-row:1!important}
+#step-4.crewbus-radical-v90 .cb-friend-reg-cell{grid-column:4!important;grid-row:1!important}
+#step-4.crewbus-radical-v90 .cb-friend-meta{grid-column:2/-1!important;grid-row:2!important;min-width:0!important;display:flex!important;align-items:center!important;padding:3px 0!important}
+#step-4.crewbus-radical-v90 .cb-friend-meta .cb90-stand{white-space:normal!important;overflow-wrap:anywhere!important;line-height:1.35!important}
+#step-4.crewbus-radical-v90 .cb-friend-row-actions{grid-column:2/-1!important;grid-row:3!important;display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;flex-wrap:wrap!important;gap:6px!important;min-width:0!important;margin:2px 0 0!important}
+#step-4.crewbus-radical-v90 .cb-friend-row-actions .cb-friend-actions{flex-wrap:wrap!important}
+#step-4.crewbus-radical-v90 .cb-friend-row-actions .cb-friend-headset-btn{width:auto!important;min-width:74px!important}
+#step-4.crewbus-radical-v90 .cb-friend-row-actions .cb-friend-mode{min-width:66px!important}
+#step-4.crewbus-radical-v90 .cb-friend-headset-list{grid-template-columns:minmax(0,1fr)!important}
+@media(max-width:900px){
+  .wo-import-layout{flex-direction:column!important}
+  .wo-import-main,.wo-catering-import{width:100%!important;min-width:0!important;flex:1 1 auto!important}
+  .wo-shift-grid{flex-direction:column!important;gap:8px!important}
+  .wo-shift-card{flex:1 1 auto!important;max-width:none!important;min-height:0!important;display:grid!important;grid-template-columns:36px minmax(0,1fr) auto!important;grid-template-rows:auto auto!important;align-items:center!important;column-gap:10px!important;padding:12px 14px!important}
+  .wo-shift-card-top{grid-column:1!important;grid-row:1/3!important;margin:0!important}
+  .wo-shift-period{display:none!important}
+  .wo-shift-card .shift-name{grid-column:2!important;grid-row:1!important;margin:0!important}
+  .wo-shift-card .shift-time{grid-column:2!important;grid-row:2!important}
+  .wo-shift-card-foot{grid-column:3!important;grid-row:1/3!important;align-self:center!important;padding:0!important;margin:0!important;font-size:9px!important;text-align:right!important}
+}
+@media(max-width:760px){
+  #step-4.crewbus-radical-v90 .cb-friend-flight-card{grid-template-columns:22px 53px minmax(0,1fr)!important;grid-template-rows:auto auto auto auto!important;gap:6px!important}
+  #step-4.crewbus-radical-v90 .cb-friend-select{grid-column:1!important;grid-row:1/5!important}
+  #step-4.crewbus-radical-v90 .cb-friend-time{grid-column:2!important;grid-row:1!important}
+  #step-4.crewbus-radical-v90 .cb-friend-flight{grid-column:3!important;grid-row:1!important}
+  #step-4.crewbus-radical-v90 .cb-friend-reg-cell{grid-column:2/4!important;grid-row:2!important}
+  #step-4.crewbus-radical-v90 .cb-friend-meta{grid-column:2/4!important;grid-row:3!important}
+  #step-4.crewbus-radical-v90 .cb-friend-row-actions{grid-column:2/4!important;grid-row:4!important}
+}
+@media(max-width:460px){
+  #step-4.crewbus-radical-v90 .cb-friend-row-actions .cb-friend-headset-btn{min-width:0!important}
+  #step-4.crewbus-radical-v90 .cb-friend-row-actions .cb-friend-mode{min-width:0!important}
+  .wo-surface{padding:16px!important}
+  .wo-api-secondary{display:none}
+  .wo-step3-overview{padding:10px!important}
+  .wo-flight-section .flight-card{grid-template-columns:22px minmax(0,1fr)!important}
+}
+</style>
+<style id="wo-lgg-workspace-width-final">
+/* La sélection Crew Bus doit occuper la largeur complète : les cartes Arrivées/Départs
+   sont internes à cette zone, pas des colonnes à partager avec le panneau disponible. */
+#step-4.crewbus-radical-v90 #crewbus-flight-list{grid-template-columns:minmax(0,1fr)!important;width:100%!important;min-width:0!important}
+#step-4.crewbus-radical-v90 .cb90-board{width:100%;min-width:0;max-width:100%;overflow:visible!important}
+#step-4.crewbus-radical-v90 .cb-friend-selected{width:100%;min-width:0}
+#step-4.crewbus-radical-v90 .cb-friend-selected-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#step-4.crewbus-radical-v90 .cb-friend-available{width:100%;min-width:0}
+#step-4.crewbus-radical-v90 .cb-friend-available-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+#step-4.crewbus-radical-v90 .cb-friend-headset{width:100%;min-width:0}
+@media(max-width:1120px){
+  .wo-import-layout{flex-direction:column!important}
+  .wo-import-main,.wo-catering-import{width:100%!important;min-width:0!important;flex:1 1 auto!important}
+}
+@media(max-width:760px){
+  #step-4.crewbus-radical-v90 .cb-friend-selected-grid,
+  #step-4.crewbus-radical-v90 .cb-friend-available-grid{grid-template-columns:minmax(0,1fr)!important}
+}
+</style>
+
+<style id="wo-lgg-final-layout-tune">
+@media(max-width:1280px){.wo-import-layout{flex-direction:column!important}.wo-import-main,.wo-catering-import{width:100%!important;min-width:0!important;flex:1 1 auto!important}}
+#step-4.crewbus-radical-v90 .cb-friend-flight-card{grid-template-columns:24px 63px minmax(95px,1fr) minmax(130px,.68fr)!important}
+#step-4.crewbus-radical-v90 .cb-friend-meta{display:block!important;width:auto!important;min-width:0!important}
+#step-4.crewbus-radical-v90 .cb-friend-meta .cb90-stand{display:block!important;width:100%!important;white-space:normal!important;word-break:normal!important;overflow-wrap:break-word!important}
+</style>
+
+<style id="wo-lgg-last-geometry-fix">
+/* Step 2: one clear full-width import lane avoids compressed FIDS/catering panels. */
+.wo-import-layout{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:14px!important}
+.wo-import-main,.wo-catering-import{width:100%!important;min-width:0!important;max-width:none!important;flex:1 1 auto!important;box-sizing:border-box!important}
+.wo-catering-textarea{min-height:160px!important}
+/* Crew Bus: make operational metadata and action buttons full-width rows. */
+#step-4.crewbus-radical-v90 .cb-friend-select{grid-column:1!important;grid-row:1!important;align-self:start!important;margin-top:3px!important}
+#step-4.crewbus-radical-v90 .cb-friend-time{grid-column:2!important;grid-row:1!important}
+#step-4.crewbus-radical-v90 .cb-friend-flight{grid-column:3!important;grid-row:1!important}
+#step-4.crewbus-radical-v90 .cb-friend-reg-cell{grid-column:4!important;grid-row:1!important}
+#step-4.crewbus-radical-v90 .cb-friend-meta{grid-column:1/-1!important;grid-row:2!important;display:block!important;width:100%!important;min-width:0!important}
+#step-4.crewbus-radical-v90 .cb-friend-meta .cb90-stand{display:block!important;width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;word-break:normal!important}
+#step-4.crewbus-radical-v90 .cb-friend-row-actions{grid-column:1/-1!important;grid-row:3!important;display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;justify-content:flex-start!important;align-items:center!important;gap:6px!important;min-width:0!important}
+@media(max-width:760px){
+ #step-4.crewbus-radical-v90 .cb-friend-select{grid-column:1!important;grid-row:1!important}
+ #step-4.crewbus-radical-v90 .cb-friend-time{grid-column:2!important;grid-row:1!important}
+ #step-4.crewbus-radical-v90 .cb-friend-flight{grid-column:3!important;grid-row:1!important}
+ #step-4.crewbus-radical-v90 .cb-friend-reg-cell{grid-column:2/4!important;grid-row:2!important}
+ #step-4.crewbus-radical-v90 .cb-friend-meta{grid-column:1/-1!important;grid-row:3!important}
+ #step-4.crewbus-radical-v90 .cb-friend-row-actions{grid-column:1/-1!important;grid-row:4!important}
+}
+</style>
+
+<style id="wo-lgg-combined-mode-guard">
+/* En vue combinée, la colonne droite est plus étroite : les familles de vols passent en piles pleine largeur. */
+.workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb-friend-selected-grid{grid-template-columns:minmax(0,1fr)!important}
+.workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb-friend-available-grid{grid-template-columns:minmax(0,1fr)!important}
+.workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb-friend-column+.cb-friend-column{border-left:0!important;border-top:1px solid rgba(255,255,255,.07)!important}
+.workflow-shell.crewbus-combined #step-4.crewbus-radical-v90 .cb-friend-meta .cb90-stand{white-space:normal!important}
+</style>
+
+<style id="wo-lgg-step3-flight-flex-layout">
+/* Step 3 flight rows: flex wrapping keeps the registration, flight details and actions readable. */
+.wo-flight-section .flight-card{
+ display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;align-items:center!important;
+ gap:9px!important;padding:12px 13px!important;min-width:0!important;box-sizing:border-box!important;
+}
+.wo-flight-section .flight-card>.check{flex:0 0 21px!important;width:21px!important;height:21px!important;margin:0!important}
+.wo-flight-section .flight-card>.flight-info{flex:1 1 300px!important;min-width:0!important;width:auto!important;display:flex!important;flex-direction:row!important;align-items:center!important;gap:8px!important;flex-wrap:wrap!important}
+.wo-flight-section .flight-card>div:nth-child(3){display:flex!important;flex:0 0 auto!important;align-items:center!important;gap:5px!important;margin-left:auto!important;min-width:0!important}
+.wo-flight-section .flight-card>div:nth-child(4){display:flex;flex:1 1 100%!important;align-items:center!important;gap:5px!important;min-width:0!important;margin-left:30px!important;padding:4px 6px!important}
+.wo-flight-section .flight-card>.flight-info .flight-reg-edit-wrap{flex:0 0 auto;min-width:0}
+.wo-flight-section .flight-card>.flight-info .flight-num{flex:0 0 auto}
+.wo-flight-section .flight-card>.flight-info .flight-time,
+.wo-flight-section .flight-card>.flight-info .flight-stand{flex:0 0 auto}
+.wo-flight-section .flight-card>button{flex:0 0 auto}
+@media(max-width:760px){
+ .wo-flight-section .flight-card{gap:7px!important;padding:10px!important}
+ .wo-flight-section .flight-card>.flight-info{flex-basis:220px!important;gap:6px!important}
+ .wo-flight-section .flight-card>div:nth-child(3){margin-left:30px!important}
+ .wo-flight-section .flight-card>div:nth-child(4){margin-left:30px!important}
+}
+</style>
+
+<style id="wo-lgg-step3-pill-refinement">
+.wo-flight-section .flight-card>div:nth-child(4){
+ display:flex!important;flex:0 1 auto!important;align-items:center!important;gap:5px!important;
+ width:auto!important;max-width:calc(100% - 32px)!important;margin:0 0 0 30px!important;
+ padding:0!important;background:transparent!important;border-radius:0!important;
+}
+.wo-flight-section .flight-card>div:nth-child(5){display:flex;flex:0 1 auto;align-items:center;max-width:100%;margin-left:30px}
+</style>
 
 </body>
 </html>
