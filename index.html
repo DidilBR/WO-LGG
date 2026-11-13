@@ -2827,6 +2827,103 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
 @media(max-width:1200px){#step-4 .crewbus-list-header{display:none!important}#step-4 .crewbus-unified-list .crewbus-flight-card{grid-template-columns:34px 78px minmax(150px,1fr) minmax(190px,1.15fr)!important;gap:10px!important;min-height:0!important}#step-4 .crewbus-flight-card .crewbus-check{grid-column:1!important;grid-row:1!important}#step-4 .crewbus-clean-flight-time{grid-column:2!important;grid-row:1!important}#step-4 .crewbus-clean-flight-main{grid-column:3!important;grid-row:1!important}#step-4 .cb90-reg-cell{grid-column:4!important;grid-row:1!important}#step-4 .cb90-handler,#step-4 .cb90-stand{grid-column:auto!important;grid-row:auto!important;display:block!important}#step-4 .cb90-handler{grid-column:2/4!important;grid-row:2!important;margin-top:5px!important}#step-4 .cb90-stand{grid-column:4!important;grid-row:2!important;margin-top:5px!important}#step-4 .crewbus-card-actions{grid-column:2/5!important;grid-row:3!important;flex-direction:row!important;flex-wrap:wrap!important;justify-content:flex-start!important;margin-top:7px!important}#step-4 .crewbus-wfs-mode{display:flex!important;flex-wrap:wrap!important;width:auto!important}#step-4 .crewbus-flight-card .crewbus-mode-btn,#step-4 .crewbus-flight-card .crewbus-hs-btn{min-height:44px!important;padding:9px 13px!important;font-size:12px!important}#step-4 .crewbus-registration-input{font-size:20px!important;min-height:48px!important}}
 @media(max-width:600px){#step-4 .crewbus-unified-list .crewbus-flight-card{grid-template-columns:30px 68px minmax(0,1fr)!important;padding:12px!important;gap:9px!important}#step-4 .crewbus-flight-card .crewbus-check{grid-column:1!important;grid-row:1!important}#step-4 .crewbus-clean-flight-time{grid-column:2!important;grid-row:1!important}#step-4 .crewbus-clean-flight-main{grid-column:3!important;grid-row:1!important}#step-4 .cb90-reg-cell{grid-column:2/4!important;grid-row:2!important;margin-top:4px!important}#step-4 .crewbus-registration-input{font-size:22px!important;min-height:52px!important}#step-4 .cb90-handler{grid-column:2/3!important;grid-row:3!important;font-size:11px!important}#step-4 .cb90-stand{grid-column:3!important;grid-row:3!important;font-size:12px!important}#step-4 .crewbus-card-actions{grid-column:1/4!important;grid-row:4!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;margin-top:7px!important}#step-4 .crewbus-wfs-mode{display:grid!important;grid-template-columns:1fr 1fr!important;width:100%!important}#step-4 .crewbus-flight-card .crewbus-mode-btn,#step-4 .crewbus-flight-card .crewbus-hs-btn{min-height:44px!important;font-size:12px!important}#step-4 .crewbus-clean-flight-time strong{font-size:20px!important}}
 </style>
+
+<style id="wo-lgg-v104-crewbus-friend-layout">
+/* V104 — Crew Bus: hierarchy inspired by the supplied Aero Services reference. */
+#step-4.crewbus-radical-v90 .cb90-workspace{display:grid;grid-template-columns:minmax(0,1fr)!important;gap:10px;width:100%;max-width:1240px;margin:0 auto}
+#step-4.crewbus-radical-v90 .cb90-board{border-radius:17px;background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.09)}
+#step-4.crewbus-radical-v90 .cb90-columns-head{display:none!important}
+#step-4.crewbus-radical-v90 #crewbus-flight-list{display:grid!important;gap:10px;padding:10px!important}
+#step-4.crewbus-radical-v90 .cb-friend-selected{border:1px solid rgba(255,255,255,.085);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.012)}
+#step-4.crewbus-radical-v90 .cb-friend-section-head{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.018)}
+#step-4.crewbus-radical-v90 .cb-friend-section-head>div{display:flex;flex-direction:column;gap:3px}
+#step-4.crewbus-radical-v90 .cb-friend-section-head>div>strong{font:900 11px var(--mono);letter-spacing:1.2px;color:var(--t1)}
+#step-4.crewbus-radical-v90 .cb-friend-total{font:800 8px var(--mono);color:var(--t3);padding:6px 9px;border:1px solid var(--b2);border-radius:20px}
+#step-4.crewbus-radical-v90 .cb-friend-total b{color:var(--t1);font-size:12px;margin-right:3px}
+#step-4.crewbus-radical-v90 .cb-friend-selected-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0}
+#step-4.crewbus-radical-v90 .cb-friend-column{min-width:0;padding-bottom:5px}
+#step-4.crewbus-radical-v90 .cb-friend-column+ .cb-friend-column{border-left:1px solid rgba(255,255,255,.07)}
+#step-4.crewbus-radical-v90 .cb-friend-column>header{display:flex;align-items:center;gap:7px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.012)}
+#step-4.crewbus-radical-v90 .cb-friend-column>header>span{font-size:14px;font-weight:900;color:#65eab2}
+#step-4.crewbus-radical-v90 .cb-friend-dep>header>span{color:#ff788f}
+#step-4.crewbus-radical-v90 .cb-friend-column>header>strong{font:900 9px var(--mono);letter-spacing:1px;color:var(--t1)}
+#step-4.crewbus-radical-v90 .cb-friend-column>header>b{margin-left:auto;min-width:23px;height:19px;display:grid;place-items:center;border-radius:20px;background:rgba(255,255,255,.06);font:900 8px var(--mono);color:var(--t2)}
+#step-4.crewbus-radical-v90 .cb-friend-card-list{display:grid;gap:4px;padding:5px 7px}
+#step-4.crewbus-radical-v90 .cb-friend-flight-card{display:grid!important;grid-template-columns:23px 58px minmax(72px,1fr) minmax(92px,1fr) minmax(62px,.75fr) auto!important;align-items:center!important;gap:7px!important;min-height:59px!important;padding:7px 8px!important;border:1px solid rgba(255,255,255,.075)!important;border-radius:10px!important;background:rgba(255,255,255,.018)!important;box-shadow:none!important;overflow:visible!important;cursor:pointer}
+#step-4.crewbus-radical-v90 .cb-friend-flight-card.selected{background:linear-gradient(90deg,rgba(96,220,171,.075),rgba(255,255,255,.018))!important;border-color:rgba(96,220,171,.24)!important}
+#step-4.crewbus-radical-v90 .cb-friend-select{width:22px!important;height:22px!important;min-width:22px!important;display:grid!important;place-items:center!important;border-radius:7px!important;border:1px solid rgba(255,255,255,.18)!important;background:rgba(255,255,255,.025)!important;color:var(--t2)!important;font:800 15px/1 var(--sans)!important;padding:0!important;cursor:pointer}
+#step-4.crewbus-radical-v90 .cb-friend-select.selected{border-color:rgba(255,111,111,.35)!important;background:rgba(255,100,100,.09)!important;color:#ff9696!important;font-size:18px!important}
+#step-4.crewbus-radical-v90 .cb-friend-time{display:flex!important;flex-direction:column!important;gap:3px!important;min-width:0}
+#step-4.crewbus-radical-v90 .cb-friend-time strong{font:900 15px/1 var(--mono)!important;color:var(--t1)!important;letter-spacing:-.4px}
+#step-4.crewbus-radical-v90 .cb-friend-time span{font:800 6px var(--mono)!important;color:var(--t3)!important;letter-spacing:.65px}
+#step-4.crewbus-radical-v90 .cb-friend-flight{min-width:0!important;display:flex!important;flex-direction:column!important;gap:4px!important}
+#step-4.crewbus-radical-v90 .cb-friend-flight .cb90-flight-line{min-width:0;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+#step-4.crewbus-radical-v90 .cb-friend-flight .cb90-flight-line>strong{font:900 10px/1 var(--mono)!important;color:var(--t1)!important;white-space:nowrap}
+#step-4.crewbus-radical-v90 .cb-friend-flight .crewbus-direction{font-size:6px!important;padding:3px 4px!important}
+#step-4.crewbus-radical-v90 .cb-friend-aircraft{font:700 7px var(--mono);color:var(--t3);min-height:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#step-4.crewbus-radical-v90 .cb-friend-reg-cell{min-width:0!important}
+#step-4.crewbus-radical-v90 .cb-friend-reg{width:100%!important;min-width:0!important;max-width:none!important;height:29px!important;min-height:29px!important;padding:0 7px!important;border:1px solid rgba(255,180,0,.25)!important;border-radius:7px!important;background:rgba(255,180,0,.045)!important;color:#f5d18a!important;font:900 9px var(--mono)!important;letter-spacing:.25px}
+#step-4.crewbus-radical-v90 .cb-friend-reg:focus{outline:none!important;border-color:rgba(255,180,0,.65)!important;box-shadow:0 0 0 2px rgba(255,180,0,.08)!important}
+#step-4.crewbus-radical-v90 .cb-friend-meta{min-width:0;display:flex;align-items:center}
+#step-4.crewbus-radical-v90 .cb-friend-meta .cb90-stand{font:800 7px var(--mono)!important;color:var(--t2)!important;white-space:normal;overflow-wrap:anywhere;line-height:1.35}
+#step-4.crewbus-radical-v90 .cb-friend-row-actions{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:center!important;gap:4px!important;min-width:0!important;margin:0!important}
+#step-4.crewbus-radical-v90 .cb-friend-actions{display:flex;align-items:center;gap:3px}
+#step-4.crewbus-radical-v90 .cb-friend-mode,#step-4.crewbus-radical-v90 .cb-friend-headset-btn{height:23px!important;min-height:23px!important;padding:0 6px!important;border-radius:6px!important;font:800 6px var(--mono)!important;white-space:nowrap}
+#step-4.crewbus-radical-v90 .cb-friend-headset-btn{width:100%;background:rgba(255,255,255,.025)!important;border:1px solid rgba(255,255,255,.12)!important;color:var(--t2)!important}
+#step-4.crewbus-radical-v90 .cb-friend-headset-btn.active{background:rgba(98,171,255,.12)!important;border-color:rgba(98,171,255,.32)!important;color:#9fcaff!important}
+#step-4.crewbus-radical-v90 .cb-friend-selected-other{padding:7px 9px;border-top:1px solid rgba(255,255,255,.06)}
+#step-4.crewbus-radical-v90 .cb-friend-selected-other>header{display:flex;justify-content:space-between;padding:4px 3px 7px;font:900 8px var(--mono);color:#ffd166}
+#step-4.crewbus-radical-v90 .cb-friend-extra-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+#step-4.crewbus-radical-v90 .cb-friend-available{border:1px solid rgba(255,255,255,.085);border-radius:13px;background:rgba(255,255,255,.014);overflow:hidden}
+#step-4.crewbus-radical-v90 .cb-friend-available>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;user-select:none}
+#step-4.crewbus-radical-v90 .cb-friend-available>summary::-webkit-details-marker{display:none}
+#step-4.crewbus-radical-v90 .cb-friend-plus{width:26px;height:26px;border:1px solid rgba(143,168,255,.18);border-radius:8px;display:grid;place-items:center;color:var(--a1);font-size:16px}
+#step-4.crewbus-radical-v90 .cb-friend-available-title{display:flex;flex-direction:column;gap:3px;min-width:0}
+#step-4.crewbus-radical-v90 .cb-friend-available-title strong{font:900 9px var(--mono);letter-spacing:1px;color:var(--t1)}
+#step-4.crewbus-radical-v90 .cb-friend-available-title small{font-size:8px;color:var(--t3)}
+#step-4.crewbus-radical-v90 .cb-friend-available>summary>b{margin-left:auto;padding:5px 9px;border-radius:20px;background:rgba(255,255,255,.055);font:900 9px var(--mono);color:var(--t2)}
+#step-4.crewbus-radical-v90 .cb-friend-chevron{color:var(--t3);transition:transform .18s}
+#step-4.crewbus-radical-v90 .cb-friend-available[open] .cb-friend-chevron{transform:rotate(180deg)}
+#step-4.crewbus-radical-v90 .cb-friend-available-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:9px;border-top:1px solid rgba(255,255,255,.06)}
+#step-4.crewbus-radical-v90 .cb-friend-available-grid>section{min-width:0}
+#step-4.crewbus-radical-v90 .cb-friend-available-grid>section>header{padding:5px 4px 8px;font:900 7px var(--mono);letter-spacing:.8px;color:var(--t3)}
+#step-4.crewbus-radical-v90 .cb-friend-empty{margin:3px!important;padding:15px 8px!important;border:1px dashed rgba(255,255,255,.08)!important;border-radius:8px!important;background:transparent!important;color:var(--t3)!important;font-size:8px}
+#step-4.crewbus-radical-v90 .cb-friend-headset{border:1px solid rgba(98,171,255,.16);border-radius:13px;overflow:hidden;background:rgba(98,171,255,.025)}
+#step-4.crewbus-radical-v90 .cb-friend-headset>header{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-bottom:1px solid rgba(98,171,255,.12)}
+#step-4.crewbus-radical-v90 .cb-friend-headset>header>div{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+#step-4.crewbus-radical-v90 .cb-friend-headset>header>div>strong{font:900 9px var(--mono);letter-spacing:1px;color:#9fcaff}
+#step-4.crewbus-radical-v90 .cb-friend-headset>header>div>small{font-size:8px;color:var(--t3)}
+#step-4.crewbus-radical-v90 .cb-friend-headset>header>b{font:800 8px var(--mono);color:var(--t2)}
+#step-4.crewbus-radical-v90 .cb-friend-headset-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:7px}
+#step-4.crewbus-radical-v90 .cb-friend-headset-list .is-headset-row{border-color:rgba(98,171,255,.18)!important;background:rgba(98,171,255,.035)!important}
+#step-4.crewbus-radical-v90 .cb90-manifest{position:relative!important;top:auto!important;max-height:none!important;display:grid!important;grid-template-columns:minmax(160px,.7fr) minmax(190px,.8fr) minmax(280px,1.5fr) minmax(205px,.9fr);gap:10px;align-items:center;padding:11px;border:1px solid rgba(255,255,255,.085);border-radius:14px;overflow:visible}
+#step-4.crewbus-radical-v90 .cb90-manifest-head{padding:0;border:0;background:none}
+#step-4.crewbus-radical-v90 .cb90-manifest-list{display:none!important}
+#step-4.crewbus-radical-v90 .cb90-manifest-order{border:0;padding:0;display:flex;align-items:center;gap:8px}
+#step-4.crewbus-radical-v90 .cb90-manifest-notes{margin:0;min-width:0}
+#step-4.crewbus-radical-v90 .cb90-manifest-notes textarea{min-height:58px!important;max-height:90px}
+#step-4.crewbus-radical-v90 .cb90-generate{margin:0;min-height:56px;width:100%}
+#step-4.crewbus-radical-v90 .cb90-back{grid-column:1/-1;justify-self:start;margin:0}
+#step-4.crewbus-radical-v90 .cb90-manual{max-width:1240px;margin:10px auto 0}
+@media(max-width:1050px){
+ #step-4.crewbus-radical-v90 .cb-friend-flight-card{grid-template-columns:22px 52px minmax(66px,1fr) minmax(82px,.95fr) minmax(55px,.7fr)!important}
+ #step-4.crewbus-radical-v90 .cb-friend-row-actions{grid-column:3/-1;flex-direction:row!important;justify-content:flex-end!important}
+ #step-4.crewbus-radical-v90 .cb90-manifest{grid-template-columns:minmax(150px,.7fr) minmax(260px,1.3fr)}
+ #step-4.crewbus-radical-v90 .cb90-generate{grid-column:auto}
+}
+@media(max-width:700px){
+ #step-4.crewbus-radical-v90 .cb-friend-selected-grid{grid-template-columns:1fr}
+ #step-4.crewbus-radical-v90 .cb-friend-column+.cb-friend-column{border-left:0;border-top:1px solid rgba(255,255,255,.07)}
+ #step-4.crewbus-radical-v90 .cb-friend-available-grid{grid-template-columns:1fr}
+ #step-4.crewbus-radical-v90 .cb-friend-headset-list,#step-4.crewbus-radical-v90 .cb-friend-extra-list{grid-template-columns:1fr}
+ #step-4.crewbus-radical-v90 .cb-friend-flight-card{grid-template-columns:22px 55px minmax(70px,1fr) minmax(96px,1fr)!important;gap:6px!important}
+ #step-4.crewbus-radical-v90 .cb-friend-meta{display:none}
+ #step-4.crewbus-radical-v90 .cb-friend-row-actions{grid-column:3/-1;flex-direction:row!important;justify-content:flex-start!important}
+ #step-4.crewbus-radical-v90 .cb90-manifest{grid-template-columns:1fr!important}
+ #step-4.crewbus-radical-v90 .cb90-generate,#step-4.crewbus-radical-v90 .cb90-back{grid-column:1}
+}
+</style>
+
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" class="lgg-auth-v1">
@@ -3553,21 +3650,44 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
         </div>
         <div class="cb90-board-badge"><span id="crewbus-filter-context">Tous</span></div>
       </div>
-      <div class="cb90-columns-head" aria-hidden="true">
-        <span></span><span>HEURE</span><span>VOL</span><span>IMMATR.</span><span>HANDLER</span><span>STAND</span><span>ACTIONS</span>
-      </div>
-      <div id="crewbus-flight-list" class="crewbus-unified-list" aria-live="polite">
-        <section class="cb90-flight-group cb90-flight-group-arr" data-crewbus-column="arr">
-          <header><span class="cb90-group-dot"></span><strong>ARRIVÉES</strong><b id="crewbus-col-arr-count">0</b><small>ETA / ATA</small></header>
-          <div id="crewbus-col-arr" class="cb90-group-list"><div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des données FIDS.</span></div></div>
+      <div id="crewbus-flight-list" class="crewbus-unified-list cb-friend-layout" aria-live="polite">
+        <section class="cb-friend-selected">
+          <div class="cb-friend-section-head">
+            <div><span class="cb90-kicker">SÉLECTION ACTIVE</span><strong>VOLS SÉLECTIONNÉS</strong></div>
+            <span class="cb-friend-total"><b id="crewbus-friend-selected-count">0</b> vols</span>
+          </div>
+          <div class="cb-friend-selected-grid">
+            <section class="cb-friend-column cb-friend-arr">
+              <header><span>＋</span><strong>ARRIVÉES</strong><b id="crewbus-col-arr-count">0</b></header>
+              <div id="crewbus-col-arr" class="cb-friend-card-list"><div class="crewbus-empty"><strong>Aucune arrivée sélectionnée</strong></div></div>
+            </section>
+            <section class="cb-friend-column cb-friend-dep">
+              <header><span>＋</span><strong>DÉPARTS · PICK UP</strong><b id="crewbus-col-dep-count">0</b></header>
+              <div id="crewbus-col-dep" class="cb-friend-card-list"><div class="crewbus-empty"><strong>Aucun départ sélectionné</strong></div></div>
+            </section>
+          </div>
+          <section id="crewbus-selected-other-wrap" class="cb-friend-selected-other" hidden>
+            <header><strong>AUTRES VOLS SÉLECTIONNÉS</strong><b id="crewbus-col-selected-other-count">0</b></header>
+            <div id="crewbus-col-selected-other" class="cb-friend-extra-list"></div>
+          </section>
         </section>
-        <section class="cb90-flight-group cb90-flight-group-dep" data-crewbus-column="dep">
-          <header><span class="cb90-group-dot"></span><strong>DÉPARTS</strong><b id="crewbus-col-dep-count">0</b><small>PICK UP / ETD</small></header>
-          <div id="crewbus-col-dep" class="cb90-group-list"><div class="crewbus-empty"><div class="crewbus-empty-icon">✈</div><strong>Chargement…</strong><span>Récupération des données FIDS.</span></div></div>
-        </section>
-        <section class="cb90-flight-group cb90-flight-group-other" data-crewbus-column="other">
-          <header><span class="cb90-group-dot"></span><strong>AUTRES</strong><b id="crewbus-col-other-count">0</b><small>VOLS NON HABITUELS</small></header>
-          <div id="crewbus-col-other" class="cb90-group-list"><div class="crewbus-empty"><div class="crewbus-empty-icon">＋</div><strong>Aucun autre vol</strong><span>Modifiez le filtre ou la recherche.</span></div></div>
+
+        <details class="cb-friend-available" id="crewbus-available-details">
+          <summary>
+            <span class="cb-friend-plus">＋</span>
+            <span class="cb-friend-available-title"><strong>AUTRES VOLS DISPONIBLES</strong><small>Vols non sélectionnés · ouvrir pour ajouter</small></span>
+            <b id="crewbus-available-count">0</b><span class="cb-friend-chevron">⌄</span>
+          </summary>
+          <div class="cb-friend-available-grid">
+            <section><header>ARRIVÉES À AJOUTER</header><div id="crewbus-avail-arr" class="cb-friend-card-list"></div></section>
+            <section><header>DÉPARTS À AJOUTER</header><div id="crewbus-avail-dep" class="cb-friend-card-list"></div></section>
+            <section><header>AUTRES / ASL 737</header><div id="crewbus-col-other" class="cb-friend-card-list"></div></section>
+          </div>
+        </details>
+
+        <section class="cb-friend-headset">
+          <header><div><span>🎧</span><strong>HEADSET</strong><small>Départs avec casque demandé</small></div><b id="crewbus-headset-count">0 sélectionné(s)</b></header>
+          <div id="crewbus-headset-list" class="cb-friend-headset-list"><div class="crewbus-empty"><strong>Aucun headset sélectionné</strong></div></div>
         </section>
       </div>
     </section>
@@ -3576,8 +3696,8 @@ button[aria-label="Ajouter à la flotte connue"]:active{transform:scale(.96)}
       <div class="cb90-manifest-head">
         <div>
           <span class="cb90-kicker">FEUILLE CREW BUS</span>
-          <strong>Votre sélection</strong>
-          <small>Ce qui partira sur la feuille.</small>
+          <strong>Préparation de la feuille</strong>
+          <small id="crewbus-selection-summary">Votre sélection est prête à être imprimée.</small>
         </div>
         <span class="cb90-manifest-count" id="crewbus-manifest-count">0</span>
       </div>
@@ -5018,6 +5138,35 @@ async function woLggLogout(){
     return d.toLocaleTimeString('fr-BE', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Brussels' });
   }
 
+  // V104 — Détection explicite des B734/B738 opérés par FEDEX sous numéros TAY/FDX.
+  // Les FIDS peuvent nommer le type d'appareil différemment selon le flux.
+  function woLggExtractAircraftType(rawOrValue){
+    const asText=value=>{
+      if(value==null)return '';
+      if(typeof value==='object'){
+        for(const k of ['icao','icaoCode','code','type','name','iata','label']){
+          if(value[k]!=null && String(value[k]).trim())return String(value[k]).trim().toUpperCase();
+        }
+        return '';
+      }
+      return String(value).trim().toUpperCase();
+    };
+    if(rawOrValue==null)return '';
+    if(typeof rawOrValue!=='object')return asText(rawOrValue);
+    const keys=['aircraftType','aircraftTypeIcao','aircraftTypeCode','aircraftModel','equipment','acType','aircraft','aircraft_type','typeCode'];
+    for(const key of keys){const value=asText(rawOrValue[key]);if(value)return value;}
+    return '';
+  }
+  function woLggIsFedexAsl737Flight(flight,handler,aircraftType){
+    const fl=String(flight||'').trim().toUpperCase();
+    const h=String(handler||'').trim().toUpperCase();
+    const raw=String(aircraftType||'').trim().toUpperCase();
+    const compact=raw.replace(/[^A-Z0-9]/g,'');
+    const isB734orB738=compact.includes('B734')||compact.includes('B738')||
+      /737[- ]?400/.test(raw)||/737[- ]?800/.test(raw);
+    return h.includes('FEDEX') && /^(TAY|FDX)/.test(fl) && isB734orB738;
+  }
+
   function isoToHHMM(iso) {
     const d = toBrusselsDate(iso);
     return d ? brusselsHHMM(d) : '';
@@ -5087,13 +5236,14 @@ async function woLggLogout(){
       const time = isoToHHMM(a.aTx) || isoToHHMM(a.eTx) || isoToHHMM(a.sTx) || '—';
       const flightUp = flight.toUpperCase();
       const regUp = reg.toUpperCase();
-
+      const aircraftType = woLggExtractAircraftType(a);
       const isTAYFedex   = flightUp.startsWith('TAY') && handler.includes('FEDEX');
       const isOEIMDFedex = regUp === 'OEIMD' && handler.includes('FEDEX');
-      if (!HANDLERS_OK2.some(h => handler.includes(h)) && !isTAYFedex && !isOEIMDFedex && flightUp !== 'FDX4797') return;
+      const isFedexAsl737 = woLggIsFedexAsl737Flight(flightUp,handler,aircraftType);
+      if (!HANDLERS_OK2.some(h => handler.includes(h)) && !isTAYFedex && !isOEIMDFedex && flightUp !== 'FDX4797' && !isFedexAsl737) return;
 
       if (!flight) return;
-      newFlights.push({ time, flight, reg, stand, handler, manual: false });
+      newFlights.push({ time, flight, reg, stand, handler, aircraftType, manual: false });
     });
 
     // Ne garder que les vols dans la fenetre d'affichage du shift choisi (heure reelle/estimee)
@@ -6273,6 +6423,7 @@ function restoreActiveTextField(saved) {
       const isASL737 = (
         f._manualASL737 === true ||
         flt === 'FDX4797' ||
+        woLggIsFedexAsl737Flight(flt,hnd,f.aircraftType) ||
         (flt.startsWith('TAY') && regR.startsWith('OEI') && !['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'].includes(regR)) ||
         (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'].includes(regR)) ||
         (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
@@ -6512,6 +6663,7 @@ function restoreActiveTextField(saved) {
         return (
           f2._manualASL737 === true ||
           f2lt === 'FDX4797' ||
+          woLggIsFedexAsl737Flight(f2lt,f2nd,f2.aircraftType) ||
           f2eg === 'OEIXK' ||
           (f2lt.startsWith('TAY') && f2eg.startsWith('OEI') && !ASL_B744_DISP.includes(f2eg)) ||
           (f2lt.startsWith('TAY') && (f2nd.includes('FEDEX') || f2nd.includes('AERO')) && !ASL_B744_DISP.includes(f2eg)) ||
@@ -6712,7 +6864,7 @@ function restoreActiveTextField(saved) {
       var flt2 = (f.flight||'').toUpperCase();
       var hnd2 = (f.handler||'').toUpperCase();
       var reg2c = (f.reg||'').toUpperCase();
-      var isA737 = f._manualASL737 === true || flt2 === 'FDX4797' ||
+      var isA737 = f._manualASL737 === true || flt2 === 'FDX4797' || woLggIsFedexAsl737Flight(flt2,hnd2,f.aircraftType) ||
         (flt2.startsWith('TAY') && reg2c.startsWith('OEI') && !ASL_B744_CHOSEN.includes(reg2c)) ||
         (flt2.startsWith('TAY') && (hnd2.includes('FEDEX') || hnd2.includes('AERO')) && !ASL_B744_CHOSEN.includes(reg2c)) ||
         (flt2.startsWith('FDX') && (hnd2.includes('FEDEX') || hnd2.includes('AERO'))) ||
@@ -6726,7 +6878,7 @@ function restoreActiveTextField(saved) {
     const asl737Selected = flights.filter(function(f, i) {
       return selectedASL737.has(i) && (function(){
         var flt=(f.flight||'').toUpperCase(), hnd=(f.handler||'').toUpperCase(), reg=(f.reg||'').toUpperCase();
-        return f._manualASL737 === true || flt === 'FDX4797' ||
+        return f._manualASL737 === true || flt === 'FDX4797' || woLggIsFedexAsl737Flight(flt,hnd,f.aircraftType) ||
           (flt.startsWith('TAY') && reg.startsWith('OEI') && !ASL_B744_CHOSEN.includes(reg)) ||
           (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_CHOSEN.includes(reg)) ||
           (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
@@ -7333,7 +7485,7 @@ ${(function(){
     var hnd = (f.handler || '').toUpperCase();
     var reg = (f.reg || '').toUpperCase();
     var aslB744 = ['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
-    var isASL737 = f._manualASL737 === true || flt === 'FDX4797' ||
+    var isASL737 = f._manualASL737 === true || flt === 'FDX4797' || woLggIsFedexAsl737Flight(flt,hnd,f.aircraftType) ||
       (flt.startsWith('TAY') && reg.startsWith('OEI') && !aslB744.includes(reg)) ||
       (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !aslB744.includes(reg)) ||
       (flt.startsWith('FDX') && (hnd.includes('FEDEX') || hnd.includes('AERO'))) ||
@@ -7530,6 +7682,7 @@ ${(function(){
       var isASL737 = (
         f._manualASL737 === true ||
         flt === 'FDX4797' ||
+        woLggIsFedexAsl737Flight(flt,hnd,f.aircraftType) ||
         reg2 === 'OEIXK' ||
         (flt.startsWith('TAY') && reg2.startsWith('OEI') && !ASL_B744_W.includes(reg2)) ||
         (flt.startsWith('TAY') && (hnd.includes('FEDEX') || hnd.includes('AERO')) && !ASL_B744_W.includes(reg2)) ||
@@ -7723,10 +7876,11 @@ ${(function(){
   function setCrewBusLoading(text){
     const el=document.getElementById('crewbus-loading-line'); if(el)el.textContent=text||'';
   }
-  function crewBusIsASL737Flight(flight,handler,reg){
+  function crewBusIsASL737Flight(flight,handler,reg,aircraftType){
     const fl=String(flight||'').toUpperCase().trim();
     const h=String(handler||'').toUpperCase();
     const r=String(reg||'').toUpperCase().trim();
+    if(woLggIsFedexAsl737Flight(fl,h,aircraftType))return true;
     const aslB744=['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
     // FDX4797 est une exception explicite : certains flux FIDS n'indiquent
     // pas de handler FedEx/Aero, mais le vol appartient bien aux ASL 737.
@@ -7738,11 +7892,11 @@ ${(function(){
     if(r==='OEIMD'&&(h.includes('FEDEX')||h.includes('AERO')))return true;
     return false;
   }
-  function crewBusEligibleBySource(flight,handler,reg){
+  function crewBusEligibleBySource(flight,handler,reg,aircraftType){
     const fl=String(flight||'').toUpperCase();
     const h=String(handler||'').toUpperCase();
     // Les ASL 737 sont toujours dans « Autres » et ne sont jamais pré-cochés.
-    if(crewBusIsASL737Flight(fl,h,reg))return false;
+    if(crewBusIsASL737Flight(fl,h,reg,aircraftType))return false;
     // Même principe que le système source : Challenge/WFS directs,
     // Swissport/AviaPartner via préfixes configurables, plus exceptions FedEx.
     const swissPrefixes=['TAY'];
@@ -7769,6 +7923,7 @@ ${(function(){
   }
   function crewBusMakeFlight(raw,type){
     const flight=String(raw.flightNumber||raw.flightPax||'').toUpperCase().trim();
+    const aircraftType=woLggExtractAircraftType(raw);
     if(!flight)return null;
     // ETH est volontairement hors détection FIDS, comme dans le circuit opérations.
     // Un ETH ne peut entrer que par une saisie manuelle de catering.
@@ -7781,11 +7936,11 @@ ${(function(){
     if(!dt)return null;
     if(type==='arr'){
       const eta=brusselsHHMM(dt);
-      return {key:'',flight,reg,stand,handler,type:'arr',eta,time:eta,iso,raw,fromFids:true,selected:false,asl737:crewBusIsASL737Flight(flight,handler,reg),eligible:crewBusEligibleBySource(flight,handler,reg),headset:false,wfsMode:null,wfsModeUserSet:false,userSelectionSet:false};
+      return {key:'',flight,reg,stand,handler,type:'arr',eta,time:eta,iso,raw,fromFids:true,selected:false,asl737:crewBusIsASL737Flight(flight,handler,reg,aircraftType),eligible:crewBusEligibleBySource(flight,handler,reg,aircraftType),headset:false,wfsMode:null,wfsModeUserSet:false,userSelectionSet:false};
     }
     const pickupDt=new Date(dt.getTime()-75*60000);
     const eta=brusselsHHMM(dt), pickup=brusselsHHMM(pickupDt);
-    return {key:'',flight,reg,stand,handler,type:'dep',eta,time:pickup,iso,raw,fromFids:true,selected:false,asl737:crewBusIsASL737Flight(flight,handler,reg),eligible:crewBusEligibleBySource(flight,handler,reg),headset:false,wfsMode:null,wfsModeUserSet:false,userSelectionSet:false};
+    return {key:'',flight,reg,stand,handler,type:'dep',eta,time:pickup,iso,raw,fromFids:true,selected:false,asl737:crewBusIsASL737Flight(flight,handler,reg,aircraftType),eligible:crewBusEligibleBySource(flight,handler,reg,aircraftType),headset:false,wfsMode:null,wfsModeUserSet:false,userSelectionSet:false};
   }
   function crewBusNormalizeList(arrivals,departures){
     const dateStr=document.getElementById('shift-date')?.value||todayBrusselsDateStr();
@@ -7830,7 +7985,7 @@ ${(function(){
       const next=crewBusNormalizeList(lastArrivals,lastDepartures);
       next.forEach(f=>{
         const old=oldByKey.get(f.key);
-        f.asl737=crewBusIsASL737Flight(f.flight,f.handler,crewBusEffectiveReg(f));
+        f.asl737=crewBusIsASL737Flight(f.flight,f.handler,crewBusEffectiveReg(f),woLggExtractAircraftType(f.raw));
         if(old){
           f.userSelectionSet=old.userSelectionSet===true;
           f.selected=f.asl737&&!f.userSelectionSet?false:!!old.selected;
@@ -7841,8 +7996,8 @@ ${(function(){
           f.stand=f.stand||old.stand;
           // Reclasser après récupération de l'ancienne immatriculation : elle
           // peut être nécessaire pour reconnaître un ASL 737 déjà connu.
-          f.asl737=crewBusIsASL737Flight(f.flight,f.handler,crewBusEffectiveReg(f));
-          f.eligible=crewBusEligibleBySource(f.flight,f.handler,crewBusEffectiveReg(f));
+          f.asl737=crewBusIsASL737Flight(f.flight,f.handler,crewBusEffectiveReg(f),woLggExtractAircraftType(f.raw));
+          f.eligible=crewBusEligibleBySource(f.flight,f.handler,crewBusEffectiveReg(f),woLggExtractAircraftType(f.raw));
           if(f.asl737 && f.userSelectionSet!==true) f.selected=false;
         }else if(f.eligible&&!f.asl737){
           f.selected=true;
@@ -7864,8 +8019,12 @@ ${(function(){
       console.error('Crew Bus FIDS error:',e);
       setCrewBusStatus('error','FIDS indisponible');
       setCrewBusLoading('Impossible de récupérer les données FIDS. Vérifiez la connexion puis réessayez.');
-      const list=document.getElementById('crewbus-flight-list');
-      if(list)list.innerHTML='<div class="crewbus-empty"><div class="crewbus-empty-icon">!</div><strong>Connexion FIDS impossible</strong><span>Le module Crew Bus reste indépendant. Vous pouvez réessayer avec « Actualiser ».</span></div>';
+      // Ne jamais remplacer le conteneur principal : cela détruirait les zones
+      // de rendu et empêcherait une actualisation FIDS ultérieure de les retrouver.
+      if(!(crewBusFlights||[]).length){
+        const msg='<div class="crewbus-empty cb-friend-empty"><strong>Connexion FIDS impossible</strong><span>Réessayez avec « Actualiser le FIDS ».</span></div>';
+        ['crewbus-col-arr','crewbus-col-dep','crewbus-col-other','crewbus-avail-arr','crewbus-avail-dep','crewbus-headset-list'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=msg;});
+      }
     }finally{
       if(btn){btn.disabled=false;btn.classList.remove('is-loading');}
     }
@@ -7877,7 +8036,7 @@ ${(function(){
   }
   function crewBusIsOther(f){
     if(!f)return false;
-    if(f.asl737===true||crewBusIsASL737Flight(f.flight,f.handler,crewBusEffectiveReg(f)))return true;
+    if(f.asl737===true||crewBusIsASL737Flight(f.flight,f.handler,crewBusEffectiveReg(f),woLggExtractAircraftType(f.raw)))return true;
     return f.manual!==true && f.eligible===false;
   }
   function crewBusVisibleFlights(){
@@ -7971,11 +8130,6 @@ ${(function(){
     if(a)a.textContent=arrAll;
     if(d)d.textContent=depAll;
 
-    const ca=document.getElementById('crewbus-col-arr-count'),cd=document.getElementById('crewbus-col-dep-count'),co=document.getElementById('crewbus-col-other-count');
-    if(ca)ca.textContent=arrAll;
-    if(cd)cd.textContent=depAll;
-    if(co)co.textContent=otherAll;
-
     const fa=document.getElementById('crewbus-filter-all-count'),fr=document.getElementById('crewbus-filter-arr-count'),fd=document.getElementById('crewbus-filter-dep-count'),fo=document.getElementById('crewbus-filter-other-count');
     if(fa)fa.textContent=total;
     if(fr)fr.textContent=arrAll;
@@ -7983,31 +8137,50 @@ ${(function(){
     if(fo)fo.textContent=otherAll;
 
     const hint=document.getElementById('crewbus-selection-hint');
-    if(hint)hint.textContent=selected+' sélectionné(s) · '+total+' vol(s) disponibles · '+otherAll+' autre(s) non habituel(s)';
+    if(hint)hint.textContent=selected+' sélectionné(s) · '+total+' vol(s) disponibles · '+otherAll+' autre(s)';
     const context=document.getElementById('crewbus-filter-context');
-    if(context){
-      const labels={all:'Tous',arr:'Arrivées',dep:'Départs',other:'Autres'};
-      context.textContent=labels[crewBusFilter]||'Tous';
-    }
+    if(context){const labels={all:'Tous',arr:'Arrivées',dep:'Départs',other:'Autres'};context.textContent=labels[crewBusFilter]||'Tous';}
 
-    const arr=visible.filter(f=>f.type==='arr' && !crewBusIsOther(f));
-    const dep=visible.filter(f=>f.type==='dep' && !crewBusIsOther(f));
-    const other=visible.filter(crewBusIsOther);
-    const fill=(id,list,label)=>{
-      const el=document.getElementById(id);
-      if(!el)return;
-      el.innerHTML=list.length
-        ? list.map(crewBusFlightCardHtml).join('')
-        : '<div class="crewbus-empty cb90-empty"><div class="crewbus-empty-icon">—</div><strong>'+label+'</strong><span>Modifiez le filtre ou la recherche.</span></div>';
+    const isNormal=f=>!crewBusIsOther(f);
+    const selectedArr=visible.filter(f=>f.selected&&f.type==='arr'&&isNormal(f));
+    const selectedDep=visible.filter(f=>f.selected&&f.type==='dep'&&isNormal(f));
+    const selectedOther=visible.filter(f=>f.selected&&crewBusIsOther(f));
+    const availableArr=visible.filter(f=>!f.selected&&f.type==='arr'&&isNormal(f));
+    const availableDep=visible.filter(f=>!f.selected&&f.type==='dep'&&isNormal(f));
+    const availableOther=visible.filter(f=>!f.selected&&crewBusIsOther(f));
+    const availableCount=availableArr.length+availableDep.length+availableOther.length;
+
+    const fill=(id,list,label,variant)=>{
+      const el=document.getElementById(id);if(!el)return;
+      el.innerHTML=list.length?list.map(f=>crewBusFlightCardHtml(f,variant)).join(''):
+        '<div class="crewbus-empty cb-friend-empty"><strong>'+label+'</strong></div>';
     };
-    fill('crewbus-col-arr',arr,'Aucune arrivée');
-    fill('crewbus-col-dep',dep,'Aucun départ');
-    fill('crewbus-col-other',other,'Aucun autre vol');
+    fill('crewbus-col-arr',selectedArr,'Aucune arrivée sélectionnée');
+    fill('crewbus-col-dep',selectedDep,'Aucun départ sélectionné');
+    fill('crewbus-col-selected-other',selectedOther,'Aucun autre vol sélectionné');
+    const selectedOtherWrap=document.getElementById('crewbus-selected-other-wrap');
+    if(selectedOtherWrap)selectedOtherWrap.hidden=!selectedOther.length;
+    const selectedOtherCount=document.getElementById('crewbus-col-selected-other-count');
+    if(selectedOtherCount)selectedOtherCount.textContent=String(selectedOther.length);
+    fill('crewbus-avail-arr',availableArr,'Aucune arrivée à ajouter');
+    fill('crewbus-avail-dep',availableDep,'Aucun départ à ajouter');
+    fill('crewbus-col-other',availableOther,'Aucun autre vol disponible');
+    const availCount=document.getElementById('crewbus-available-count');if(availCount)availCount.textContent=String(availableCount);
+    const availableDetails=document.getElementById('crewbus-available-details');
+    if(availableDetails){
+      availableDetails.classList.toggle('is-empty',availableCount===0);
+      if(availableCount===0)availableDetails.open=false;
+    }
+    const selectedTotal=document.getElementById('crewbus-friend-selected-count');
+    if(selectedTotal)selectedTotal.textContent=String(selectedArr.length+selectedDep.length+selectedOther.length);
 
-    root.querySelector('[data-crewbus-column="arr"]')?.classList.toggle('is-muted',crewBusFilter==='dep'||crewBusFilter==='other');
-    root.querySelector('[data-crewbus-column="dep"]')?.classList.toggle('is-muted',crewBusFilter==='arr'||crewBusFilter==='other');
-    root.querySelector('[data-crewbus-column="other"]')?.classList.toggle('is-muted',crewBusFilter==='arr'||crewBusFilter==='dep');
+    const headsetFlights=visible.filter(f=>f.type==='dep'&&f.headset);
+    fill('crewbus-headset-list',headsetFlights,'Aucun headset sélectionné','headset');
+    const headsetCount=document.getElementById('crewbus-headset-count');
+    if(headsetCount)headsetCount.textContent=headsetFlights.length+' sélectionné(s)';
 
+    const summary=document.getElementById('crewbus-selection-summary');
+    if(summary)summary.textContent=selected+' vol(s) seront intégrés à la feuille Crew Bus.';
     renderCrewBusManifest();
   }
 
@@ -8101,8 +8274,8 @@ ${(function(){
     if(Array.isArray(crewBusFlights)){
       crewBusFlights.forEach(function(f){
         if(woLggFlightOverrideKey(f.flight)!==woLggFlightOverrideKey(flight))return;
-        f.asl737=crewBusIsASL737Flight(f.flight,f.handler,crewBusEffectiveReg(f));
-        f.eligible=crewBusEligibleBySource(f.flight,f.handler,crewBusEffectiveReg(f));
+        f.asl737=crewBusIsASL737Flight(f.flight,f.handler,crewBusEffectiveReg(f),woLggExtractAircraftType(f.raw));
+        f.eligible=crewBusEligibleBySource(f.flight,f.handler,crewBusEffectiveReg(f),woLggExtractAircraftType(f.raw));
         if(f.asl737 && f.userSelectionSet!==true){
           f.selected=false;
           if(crewBusSelected && typeof crewBusSelected.delete==='function')crewBusSelected.delete(f.key);
@@ -8127,29 +8300,31 @@ ${(function(){
   function crewBusEffectiveReg(f){
     return woLggGetSharedRegistration(f?.flight,f?.reg);
   }
-  function crewBusFlightCardHtml(f){
+  function crewBusFlightCardHtml(f,variant){
     const sel=!!f.selected;
     const key=crewBusEscape(f.key);
     const isWfs=String(f.handler||'').toUpperCase()==='WFS';
-    const modeHtml=isWfs?('<div class="crewbus-wfs-mode">'
-      +'<button type="button" class="crewbus-mode-btn '+(f.wfsMode==='renting'?'active rent':'')+'" data-crewbus-action="wfs" data-mode="renting">🚙 Renting</button>'
-      +'<button type="button" class="crewbus-mode-btn '+(f.wfsMode==='handling'?'active hand':'')+'" data-crewbus-action="wfs" data-mode="handling">✈ Handling</button>'
+    const modeHtml=isWfs?('<div class="cb-friend-actions">'
+      +'<button type="button" class="crewbus-mode-btn cb-friend-mode '+(f.wfsMode==='renting'?'active rent':'')+'" data-crewbus-action="wfs" data-mode="renting" title="Choisir Renting">🚙 Renting</button>'
+      +'<button type="button" class="crewbus-mode-btn cb-friend-mode '+(f.wfsMode==='handling'?'active hand':'')+'" data-crewbus-action="wfs" data-mode="handling" title="Choisir Handling">✈ Handling</button>'
       +'</div>') : '';
-    const hsHtml=f.type==='dep'?'<button type="button" class="crewbus-hs-btn '+(f.headset?'active':'')+'" data-crewbus-action="headset">🎧 '+(f.headset?'Headset ✓':'Headset')+'</button>':'';
+    const hsHtml=f.type==='dep'?'<button type="button" class="crewbus-hs-btn cb-friend-headset-btn '+(f.headset?'active':'')+'" data-crewbus-action="headset">🎧 '+(f.headset?'Headset ✓':'Headset')+'</button>':'';
     const reg=crewBusEffectiveReg(f);
-    const regHtml='<input class="crewbus-registration-input cb90-reg" value="'+crewBusEscape(reg)+'" data-reg-flight="'+crewBusEscape(f.flight||'')+'" placeholder="Immatriculation" autocomplete="off" aria-label="Immatriculation '+crewBusEscape(f.flight||'')+'" onkeydown="woLggHandleRegistrationKeydown(event)" onblur="woLggHandleRegistrationBlur(event)" onclick="event.stopPropagation()">';
+    const regHtml='<input class="crewbus-registration-input cb90-reg cb-friend-reg" value="'+crewBusEscape(reg)+'" data-reg-flight="'+crewBusEscape(f.flight||'')+'" placeholder="Immatriculation" autocomplete="off" aria-label="Immatriculation '+crewBusEscape(f.flight||'')+'" onkeydown="woLggHandleRegistrationKeydown(event)" onblur="woLggHandleRegistrationBlur(event)" onclick="event.stopPropagation()">';
     const status=f.type==='arr'?'ARRIVÉE':'DÉPART';
-    return '<article class="crewbus-flight-card cb90-flight-row '+(sel?'selected':'')+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" data-crewbus-key="'+key+'">'
-      +'<button type="button" class="crewbus-check cb90-check" aria-label="'+(sel?'Désélectionner ':'Sélectionner ')+crewBusEscape(f.flight)+'" aria-pressed="'+(sel?'true':'false')+'" data-crewbus-action="flight">'+(sel?'✓':'')+'</button>'
-      +'<div class="crewbus-clean-flight-time cb90-time"><strong>'+crewBusEscape(f.time||'—')+'</strong><span>'+(f.type==='dep'?'PICK UP':'ETA')+'</span></div>'
-      +'<div class="crewbus-clean-flight-main cb90-flight">'
-        +'<div class="cb90-flight-line"><strong>'+crewBusEscape(f.flight||'—')+'</strong><span class="crewbus-direction '+(f.type==='arr'?'arr':'dep')+'">'+status+'</span>'+(f.asl737===true||crewBusIsASL737Flight(f.flight,f.handler,reg)?'<span class="cb90-asl-pill">ASL 737</span>':'')+(f.manual?'<span class="cb90-manual-pill">MANUEL</span>':'')+'</div>'
-        +'<div class="cb90-flight-type">'+crewBusEscape(f.raw?.aircraftType||f.raw?.aircraftModel||'')+'</div>'
-      +'</div>'
-      +'<div class="cb90-reg-cell">'+regHtml+'</div>'
-      +'<div class="cb90-handler">'+(f.handler?crewBusEscape(f.handler):'—')+'</div>'
-      +'<div class="cb90-stand">'+(f.stand?crewBusEscape(f.stand):'—')+'</div>'
-      +'<div class="crewbus-card-actions cb90-row-actions">'+modeHtml+hsHtml+'</div>'
+    const acType=woLggExtractAircraftType(f.raw)||f.aircraftType||'';
+    const meta=[f.stand?'Stand '+f.stand:'',f.handler||''].filter(Boolean).join(' · ');
+    const actionButton=sel
+      ? '<button type="button" class="cb-friend-select selected" data-crewbus-action="flight" aria-label="Retirer '+crewBusEscape(f.flight)+'">×</button>'
+      : '<button type="button" class="cb-friend-select" data-crewbus-action="flight" aria-label="Ajouter '+crewBusEscape(f.flight)+'">＋</button>';
+    return '<article class="crewbus-flight-card cb90-flight-row cb-friend-flight-card '+(sel?'selected':'')+(variant==='headset'?' is-headset-row':'')+'" role="button" tabindex="0" aria-pressed="'+(sel?'true':'false')+'" data-crewbus-key="'+key+'">'
+      +actionButton
+      +'<div class="cb90-time cb-friend-time"><strong>'+crewBusEscape(f.time||'—')+'</strong><span>'+(f.type==='dep'?'PICK UP':'ETA')+'</span></div>'
+      +'<div class="cb90-flight cb-friend-flight"><div class="cb90-flight-line"><strong>'+crewBusEscape(f.flight||'—')+'</strong><span class="crewbus-direction '+(f.type==='arr'?'arr':'dep')+'">'+status+'</span>'+(f.asl737===true||crewBusIsASL737Flight(f.flight,f.handler,reg,acType)?'<span class="cb90-asl-pill">ASL 737</span>':'')+(f.manual?'<span class="cb90-manual-pill">MANUEL</span>':'')+'</div>'
+      +'<div class="cb-friend-aircraft">'+crewBusEscape(acType||'')+'</div></div>'
+      +'<div class="cb90-reg-cell cb-friend-reg-cell">'+regHtml+'</div>'
+      +'<div class="cb-friend-meta"><span class="cb90-stand">'+crewBusEscape(meta||'—')+'</span></div>'
+      +'<div class="crewbus-card-actions cb90-row-actions cb-friend-row-actions">'+modeHtml+hsHtml+'</div>'
       +'</article>';
   }
 
@@ -8209,7 +8384,7 @@ ${(function(){
     crewBusSelected=new Set(Array.isArray(s.selected)?s.selected:crewBusFlights.filter(f=>f.selected).map(f=>f.key));
     crewBusFlights.forEach(f=>{
       f.selected=crewBusSelected.has(f.key);
-      f.asl737=f.asl737===true||crewBusIsASL737Flight(f.flight,f.handler,crewBusEffectiveReg(f));
+      f.asl737=f.asl737===true||crewBusIsASL737Flight(f.flight,f.handler,crewBusEffectiveReg(f),woLggExtractAircraftType(f.raw));
       if(f.asl737&&f.userSelectionSet!==true)f.selected=false;
     });
     crewBusSelected=new Set(crewBusFlights.filter(f=>f.selected).map(f=>f.key));
