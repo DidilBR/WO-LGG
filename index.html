@@ -9199,9 +9199,37 @@ ${(function(){
       }
     }
 
-    function buildServiceRows(predicate){
+    function buildHeadsetMovementRows(){
+      // Headset : une ligne par mouvement FIDS, triée par heure réelle/estimée.
+      // Un même avion en ARR et DEP possède donc deux lignes distinctes.
+      return allCrewBusFlights
+        .filter(f=>f.headset===true)
+        .map(function(f){
+          const ref=crewBusOperationalTime(f);
+          const displayTime=ref.time||f.eta||f.time||'';
+          const movement=f.type==='arr'?'ARR':'DEP';
+          return {
+            reg:String(crewBusEffectiveReg(f)||'').trim().toUpperCase(),
+            flight:String(f.flight||'').trim().toUpperCase(),
+            depArr:movement+' : '+displayTime,
+            sortTime:displayTime||'99:99',
+            sortType:movement,
+            sortFlight:String(f.flight||'').trim().toUpperCase(),
+            stableKey:String(f.key||'')
+          };
+        })
+        .sort(function(a,b){
+          const byTime=crewBusChrono(a.sortTime)-crewBusChrono(b.sortTime);
+          if(byTime)return byTime;
+          if(a.sortType!==b.sortType)return a.sortType==='ARR'?-1:1;
+          const byFlight=a.sortFlight.localeCompare(b.sortFlight);
+          return byFlight||a.stableKey.localeCompare(b.stableKey);
+        });
+    }
+
+    function buildHandlingRows(){
       const map=new Map();
-      allCrewBusFlights.filter(predicate).forEach(function(f){
+      allCrewBusFlights.filter(f=>f.handling===true||f.wfsMode==='handling').forEach(function(f){
         const reg=String(crewBusEffectiveReg(f)||'').trim().toUpperCase();
         const normalizedReg=reg.replace(/[^A-Z0-9]/g,'');
         const flight=String(f.flight||'').trim().toUpperCase();
@@ -9239,8 +9267,8 @@ ${(function(){
         };
       }).sort((a,b)=>crewBusChrono(a.sortTime)-crewBusChrono(b.sortTime));
     }
-    const headsetRows=buildServiceRows(f=>f.headset===true).slice(0,Math.max(5,rowCount));
-    const handlingRows=buildServiceRows(f=>f.handling===true||f.wfsMode==='handling').slice(0,Math.max(5,rowCount));
+    const headsetRows=buildHeadsetMovementRows();
+    const handlingRows=buildHandlingRows();
 
     const wfsCandidates=allCrewBusFlights
       .filter(f=>String(f.handler||'').toUpperCase().includes('WFS') && f.wfsMode);
@@ -9260,8 +9288,12 @@ ${(function(){
     // and only compact the lower block if the number of rows becomes unusually high.
     const lowerGroupPx=220;
     const lowerHeaderPx=220;
-    const lowerAvailablePx=Math.max(900,Math.floor((6876-lowerTop-80)-lowerGroupPx-lowerHeaderPx));
-    const lowerRowPx=Math.max(120,Math.min(220,Math.floor(lowerAvailablePx/lowerRowsCount)));
+    const lowerAvailablePx=Math.max(40,Math.floor((6876-lowerTop-80)-lowerGroupPx-lowerHeaderPx));
+    const lowerRowPx=Math.max(40,Math.min(220,Math.floor(lowerAvailablePx/lowerRowsCount)));
+    const lowerRowMm=lowerRowPx*25.4/600;
+    const lowerStrongFontMm=Math.max(1.85,Math.min(3.2,lowerRowMm*0.72));
+    const lowerFlightFontMm=Math.max(1.65,Math.min(2.8,lowerRowMm*0.62));
+    const lowerBodyFontMm=Math.max(1.55,Math.min(2.65,lowerRowMm*0.58));
 
     let lowerRows='';
     for(let i=0;i<lowerRowsCount;i++){
@@ -9329,9 +9361,9 @@ ${(function(){
       '.lower-data.headset-strong,.lower-data.handling-strong{font-size:'+Math.max(3.35,Math.min(4.15,lowerRowPx*0.0185)).toFixed(2)+'mm;font-weight:800!important}'+
       '.lower-group{font-size:3.75mm!important;line-height:1.05!important}'+
       '.lower-header{font-size:2.75mm!important;line-height:1.05!important;padding:0 .35mm!important}'+
-      '.lower-data{font-size:2.65mm!important;line-height:1.12!important;padding:0 .38mm!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important}'+
-      '.lower-data.headset-strong,.lower-data.handling-strong{font-size:3.2mm!important;font-weight:800!important;line-height:1.12!important}'+
-      '.lower-data.headset-flt,.lower-data.handling-flt{font-size:2.8mm!important;font-weight:650!important;line-height:1.14!important}'+
+      '.lower-data{font-size:'+lowerBodyFontMm.toFixed(2)+'mm!important;line-height:1.08!important;padding:0 .32mm!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important}'+
+      '.lower-data.headset-strong,.lower-data.handling-strong{font-size:'+lowerStrongFontMm.toFixed(2)+'mm!important;font-weight:800!important;line-height:1.08!important}'+
+      '.lower-data.headset-flt,.lower-data.handling-flt{font-size:'+lowerFlightFontMm.toFixed(2)+'mm!important;font-weight:650!important;line-height:1.08!important}'+
       '@media print{html,body{width:210mm!important;min-height:297mm!important}.crewbus-page{break-inside:avoid!important;page-break-inside:avoid!important}.crewbus-page:not(.crewbus-back-page){break-after:page!important;page-break-after:always!important}.crewbus-back-page{break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important}}'+
       '</style></head><body>'+
       '<div class="crewbus-page">'+
@@ -12212,6 +12244,54 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
 .app-wrap:not(.crewbus-combined) #step-3 #combined-action-bar,
 body:not(.crewbus-combined) #step-3 #combined-action-bar{
   display:none!important;
+}
+</style>
+
+
+<style id="wo-lgg-crewbus-document-rail-scroll-follow-v1">
+/* Mode séparé sur bureau : le document reste à droite et suit le scroll.
+   Il conserve sa position normale en haut, puis se cale sous l'en-tête sticky
+   quand l'utilisateur a dépassé la barre FIDS / recherche. */
+@media (min-width:981px){
+  #step-4.cb26 .cb26-layout{
+    align-items:start!important;
+    overflow:visible!important;
+  }
+  #step-4.cb26 .cb26-document-rail{
+    position:sticky!important;
+    top:78px!important;
+    align-self:start!important;
+    min-width:0!important;
+    max-height:calc(100dvh - 94px)!important;
+    height:max-content!important;
+    overflow:visible!important;
+    z-index:35!important;
+  }
+  #step-4.cb26 .cb26-document-card{
+    max-height:calc(100dvh - 94px)!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain!important;
+    scrollbar-width:thin;
+    scrollbar-color:#52635a #171d1a;
+  }
+  #step-4.cb26 .cb26-document-card::-webkit-scrollbar{width:6px}
+  #step-4.cb26 .cb26-document-card::-webkit-scrollbar-thumb{background:#52635a;border-radius:8px}
+}
+/* Le mode combiné garde son propre scroll et le layout mobile reste en flux normal. */
+.workflow-shell.crewbus-combined #step-4.cb26 .cb26-document-rail,
+.app-wrap.crewbus-combined #step-4.cb26 .cb26-document-rail{
+  position:static!important;top:auto!important;max-height:none!important;height:auto!important;
+}
+.workflow-shell.crewbus-combined #step-4.cb26 .cb26-document-card,
+.app-wrap.crewbus-combined #step-4.cb26 .cb26-document-card{
+  max-height:none!important;overflow:visible!important;
+}
+@media(max-width:980px){
+  #step-4.cb26 .cb26-document-rail{
+    position:static!important;top:auto!important;max-height:none!important;height:auto!important;
+  }
+  #step-4.cb26 .cb26-document-card{max-height:none!important;overflow:visible!important}
 }
 </style>
 
