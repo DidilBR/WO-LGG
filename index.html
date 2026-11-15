@@ -8092,103 +8092,192 @@ ${(function(){
   // puis le navigateur ouvre directement sa page/boîte d'impression native.
   function openPrintWindow(content, title) {
     var source = String(content || '');
-    var safeTitle = String(title || 'Document à imprimer').replace(/[<>]/g,'');
-    var printRules = [
-      '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">',
-      '<style id="wo-lgg-a4-print-rules">',
-      '@page{size:A4 portrait;margin:0}',
-      '*,*::before,*::after{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}',
-      'html,body{margin:0!important;padding:0!important;background:#fff!important;color:#111!important}',
-      'body{font-family:Arial,Helvetica,sans-serif}',
-      '.page{display:block!important;position:relative!important;width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;padding:8mm!important;margin:0 auto!important;overflow:hidden!important;box-sizing:border-box!important;break-inside:avoid!important;page-break-inside:avoid!important;break-after:page!important;page-break-after:always!important}',
-      '.page:last-of-type{break-after:avoid!important;page-break-after:avoid!important}',
-      '.page table{max-width:100%!important}',
-      '.crewbus-page{break-inside:avoid!important;page-break-inside:avoid!important;break-after:page!important;page-break-after:always!important}',
-      '.crewbus-page:last-of-type{break-after:avoid!important;page-break-after:avoid!important}',
-      '.crewbus-back-page{break-before:page!important;page-break-before:always!important}',
-      '@media screen{html,body{background:#252b28!important}body{padding:14px!important}.page{width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;padding:4%!important;aspect-ratio:210/297;margin:0 auto 14px!important;background:#fff!important;box-shadow:0 8px 28px rgba(0,0,0,.25);overflow:hidden!important}.crewbus-page{margin:0 auto 14px!important;box-shadow:0 8px 28px rgba(0,0,0,.25)}}',
-      '@media print{html,body{width:210mm!important;min-width:210mm!important;max-width:210mm!important;background:#fff!important;margin:0!important;padding:0!important}.page{margin:0!important;box-shadow:none!important}.crewbus-page{margin:0!important;box-shadow:none!important}}',
-      '</style>'
-    ].join('');
+    var safeTitle = String(title || 'Document à imprimer')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    // Déterminer le gabarit papier avant d'ajouter les règles d'impression.
+    // Chaque document garde ses marges métier : Crew Bus bord à bord,
+    // nettoyage avec 12 mm, worksheets avec 8 mm.
+    var isCrewBus = /class=["'][^"']*\bcrewbus-page\b/i.test(source);
+    var isCleaning = /class=["'][^"']*\bcleaning-fit-page\b/i.test(source);
+    var hasWorksheetPages = /class=["'][^"']*\bpage\b/i.test(source) && !isCrewBus && !isCleaning;
+
+    var pageCss = '';
+    if (isCrewBus) {
+      pageCss =
+        '@page{size:A4 portrait;margin:0}' +
+        'html,body{width:210mm!important;height:auto!important;margin:0!important;padding:0!important;background:#fff!important}' +
+        '.crewbus-page{display:block!important;position:relative!important;width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;overflow:hidden!important;break-inside:avoid!important;page-break-inside:avoid!important}' +
+        '.crewbus-page:not(.crewbus-back-page){break-after:page!important;page-break-after:always!important}' +
+        '.crewbus-back-page{break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important}';
+    } else if (isCleaning) {
+      pageCss =
+        '@page{size:A4 portrait;margin:12mm}' +
+        'html,body{margin:0!important;padding:0!important;background:#fff!important}' +
+        '.cleaning-fit-page{display:block!important;width:100%!important;height:273mm!important;min-height:273mm!important;max-height:273mm!important;margin:0 auto!important;overflow:hidden!important;position:relative!important;break-inside:avoid!important;page-break-inside:avoid!important;break-after:avoid!important;page-break-after:avoid!important}' +
+        '.cleaning-fit-content{width:100%!important;transform-origin:top left!important}';
+    } else if (hasWorksheetPages) {
+      pageCss =
+        '@page{size:A4 portrait;margin:8mm}' +
+        'html,body{margin:0!important;padding:0!important;background:#fff!important}' +
+        '.page{display:block!important;position:relative!important;width:100%!important;height:281mm!important;min-height:281mm!important;max-height:281mm!important;margin:0!important;overflow:hidden!important;break-inside:avoid!important;page-break-inside:avoid!important;break-after:page!important;page-break-after:always!important}' +
+        '.page:last-child{break-after:avoid!important;page-break-after:avoid!important}';
+    } else {
+      pageCss =
+        '@page{size:A4 portrait;margin:8mm}' +
+        'html,body{margin:0!important;padding:0!important;background:#fff!important}';
+    }
+
+    var printRules =
+      '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">' +
+      '<style id="wo-lgg-direct-print-rules">' +
+      '*,*::before,*::after{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}' +
+      'body{font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff}' +
+      pageCss +
+      '</style>';
 
     var fullDocument = /<html[\s>]/i.test(source) || /<!DOCTYPE/i.test(source);
     var printHtml;
-    if(fullDocument){
-      printHtml=source;
-      if(/<\/head>/i.test(printHtml))printHtml=printHtml.replace(/<\/head>/i,printRules+'</head>');
-      else printHtml=printHtml.replace(/<body/i, '<head>'+printRules+'</head><body');
-      if(!/<meta[^>]+name=["']viewport["']/i.test(printHtml)){
-        printHtml=printHtml.replace(/<head([^>]*)>/i,'<head$1><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">');
+    if (fullDocument) {
+      printHtml = source;
+      if (/<\/head>/i.test(printHtml)) {
+        printHtml = printHtml.replace(/<\/head>/i, printRules + '</head>');
+      } else {
+        printHtml = printHtml.replace(/<body/i, '<head>' + printRules + '</head><body');
       }
-    }else{
-      printHtml='<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>'+safeTitle+'</title>'+printRules+'</head><body>'+source+'</body></html>';
+      if (!/<meta[^>]+name=["']viewport["']/i.test(source)) {
+        printHtml = printHtml.replace(/<head([^>]*)>/i, '<head$1><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">');
+      }
+    } else {
+      printHtml = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>' +
+        safeTitle + '</title>' + printRules + '</head><body>' + source + '</body></html>';
     }
 
-    // The document remains inside WO-LGG. The system print sheet is invoked from
-    // the in-app preview iframe; no browser tab/window is created.
-    var modal=document.getElementById('wo-lgg-print-modal');
-    if(!modal){
-      modal=document.createElement('div');
-      modal.id='wo-lgg-print-modal';
-      modal.className='wo-lgg-print-modal';
-      modal.setAttribute('role','dialog');
-      modal.setAttribute('aria-modal','true');
-      modal.setAttribute('aria-labelledby','wo-lgg-print-modal-title');
-      modal.innerHTML=
-        '<div class="wo-lgg-print-modal-panel">'+
-          '<header class="wo-lgg-print-modal-header">'+
-            '<div class="wo-lgg-print-modal-heading">'+
-              '<span class="wo-lgg-print-modal-icon">▤</span>'+
-              '<div><strong id="wo-lgg-print-modal-title">Aperçu du document</strong><small id="wo-lgg-print-modal-subtitle">Format A4 · Prévisualisation avant impression</small></div>'+
-            '</div>'+
-            '<button type="button" class="wo-lgg-print-close" aria-label="Fermer l’aperçu">×</button>'+
-          '</header>'+
-          '<div class="wo-lgg-print-preview-wrap"><iframe id="wo-lgg-print-preview" title="Aperçu du document à imprimer"></iframe></div>'+
-          '<footer class="wo-lgg-print-modal-footer">'+
-            '<span class="wo-lgg-print-hint">A4 · Une worksheet par page</span>'+
-            '<div class="wo-lgg-print-actions">'+
-              '<button type="button" class="wo-lgg-print-cancel">Fermer</button>'+
-              '<button type="button" class="wo-lgg-print-go"><span>▣</span> Imprimer / PDF</button>'+
-            '</div>'+
-          '</footer>'+
-        '</div>';
-      document.body.appendChild(modal);
-      var close=function(){
-        modal.classList.remove('is-open');
-        document.body.classList.remove('wo-lgg-print-modal-open');
-        var frame=document.getElementById('wo-lgg-print-preview');
-        if(frame){try{frame.srcdoc='<!DOCTYPE html><html><body></body></html>';}catch(e){}}
-      };
-      modal.querySelector('.wo-lgg-print-close').addEventListener('click',close);
-      modal.querySelector('.wo-lgg-print-cancel').addEventListener('click',close);
-      modal.addEventListener('click',function(e){if(e.target===modal)close();});
-      modal._woLggClose=close;
-      modal.querySelector('.wo-lgg-print-go').addEventListener('click',function(){
-        var frame=document.getElementById('wo-lgg-print-preview');
-        if(!frame || !frame.contentWindow){alert('Le document est encore en préparation. Réessaie dans un instant.');return;}
-        try{
-          frame.contentWindow.focus();
-          frame.contentWindow.print();
-        }catch(err){
-          alert('Le navigateur ne permet pas de lancer l’impression depuis cet aperçu. Essaie depuis Safari ou Chrome à jour.');
-        }
-      });
-      document.addEventListener('keydown',function(e){
-        if(e.key==='Escape'&&modal.classList.contains('is-open'))close();
-      });
+    // Impression native dans l'onglet WO-LGG : pas de nouvel onglet,
+    // pas de fenêtre d'aperçu intégrée, le navigateur ouvre directement
+    // sa boîte d'impression Windows / macOS / iOS / Android.
+    var previousFrame = document.getElementById('wo-lgg-print-frame');
+    if (previousFrame && previousFrame.parentNode) previousFrame.parentNode.removeChild(previousFrame);
+
+    var frame = document.createElement('iframe');
+    frame.id = 'wo-lgg-print-frame';
+    frame.setAttribute('title', safeTitle);
+    frame.setAttribute('aria-hidden', 'true');
+    frame.setAttribute('tabindex', '-1');
+    frame.style.setProperty('position', 'fixed', 'important');
+    frame.style.setProperty('left', '0', 'important');
+    frame.style.setProperty('top', '0', 'important');
+    frame.style.setProperty('width', '210mm', 'important');
+    frame.style.setProperty('height', '297mm', 'important');
+    frame.style.setProperty('max-width', 'none', 'important');
+    frame.style.setProperty('max-height', 'none', 'important');
+    frame.style.setProperty('display', 'block', 'important');
+    frame.style.setProperty('border', '0', 'important');
+    frame.style.setProperty('opacity', '0', 'important');
+    frame.style.setProperty('pointer-events', 'none', 'important');
+    frame.style.setProperty('z-index', '-2147483000', 'important');
+    frame.style.setProperty('background', '#fff', 'important');
+
+    var cleaned = false;
+    var printStarted = false;
+    var retryToast = null;
+    var fallbackTimer = null;
+
+    function removeRetryToast() {
+      if (retryToast && retryToast.parentNode) retryToast.parentNode.removeChild(retryToast);
+      retryToast = null;
     }
 
-    modal.querySelector('#wo-lgg-print-modal-title').textContent=safeTitle;
-    var pageCount=(printHtml.match(/class=["'][^"']*\bpage\b[^"']*["']/gi)||[]).length;
-    var crewPages=(printHtml.match(/class=["'][^"']*\bcrewbus-page\b[^"']*["']/gi)||[]).length;
-    var count=Math.max(pageCount,crewPages,1);
-    modal.querySelector('#wo-lgg-print-modal-subtitle').textContent='Format A4 · '+count+' page'+(count>1?'s':'')+' · Aperçu avant impression';
-    var frame=modal.querySelector('#wo-lgg-print-preview');
-    frame.srcdoc=printHtml;
-    modal.classList.add('is-open');
-    document.body.classList.add('wo-lgg-print-modal-open');
-    var closeButton=modal.querySelector('.wo-lgg-print-close');
-    if(closeButton)setTimeout(function(){try{closeButton.focus({preventScroll:true});}catch(e){}},40);
+    function cleanup() {
+      if (cleaned) return;
+      cleaned = true;
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+      removeRetryToast();
+      setTimeout(function() {
+        if (frame.parentNode) frame.parentNode.removeChild(frame);
+      }, 250);
+    }
+
+    function showRetry(message) {
+      if (retryToast || cleaned) return;
+      retryToast = document.createElement('div');
+      retryToast.id = 'wo-lgg-print-retry-toast';
+      retryToast.setAttribute('role', 'status');
+      retryToast.style.cssText =
+        'position:fixed;z-index:2147483000;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));' +
+        'transform:translateX(-50%);display:flex;align-items:center;gap:12px;max-width:calc(100vw - 24px);' +
+        'padding:11px 13px;border:1px solid #526259;border-radius:10px;background:#1b211d;color:#f2f5f2;' +
+        'box-shadow:0 12px 32px rgba(0,0,0,.35);font:12px -apple-system,BlinkMacSystemFont,sans-serif';
+      var textNode = document.createElement('span');
+      textNode.textContent = message || 'L’impression n’a pas démarré automatiquement.';
+      var retry = document.createElement('button');
+      retry.type = 'button';
+      retry.textContent = 'Réessayer';
+      retry.style.cssText = 'min-height:34px;padding:0 11px;border:1px solid #6a9275;border-radius:7px;background:#2e573b;color:#fff;font-weight:700';
+      retry.addEventListener('click', function() { startNativePrint(true); });
+      var close = document.createElement('button');
+      close.type = 'button';
+      close.textContent = '×';
+      close.setAttribute('aria-label', 'Fermer');
+      close.style.cssText = 'min-height:30px;padding:0 7px;border:0;background:transparent;color:#d5ded7;font-size:20px';
+      close.addEventListener('click', function() { removeRetryToast(); });
+      retryToast.appendChild(textNode);
+      retryToast.appendChild(retry);
+      retryToast.appendChild(close);
+      document.body.appendChild(retryToast);
+    }
+
+    function startNativePrint(fromRetry) {
+      if (cleaned || printStarted && !fromRetry) return;
+      var win = frame.contentWindow;
+      if (!win) { showRetry('Le document n’est pas encore prêt.'); return; }
+      try {
+        printStarted = true;
+        try { win.addEventListener('afterprint', cleanup, { once: true }); } catch (e) {}
+        win.focus();
+        // Appel direct de l'API d'impression native sur le document du frame.
+        win.print();
+        removeRetryToast();
+      } catch (err) {
+        printStarted = false;
+        showRetry('Le navigateur a bloqué l’impression. Réessaie ici.');
+      }
+    }
+
+    frame.onload = function() {
+      var win = frame.contentWindow;
+      if (!win || !win.document) { showRetry('Document d’impression inaccessible.'); return; }
+      var doc = win.document;
+      var imageWaits = Array.from(doc.images || []).map(function(img) {
+        return new Promise(function(resolve) {
+          if (img.complete) { resolve(); return; }
+          img.addEventListener('load', resolve, { once: true });
+          img.addEventListener('error', resolve, { once: true });
+          setTimeout(resolve, 5000);
+        });
+      });
+      var fontsReady = (doc.fonts && doc.fonts.ready) ? doc.fonts.ready.catch(function() {}) : Promise.resolve();
+      Promise.all([fontsReady].concat(imageWaits)).then(function() {
+        var raf = win.requestAnimationFrame || function(cb) { return setTimeout(cb, 30); };
+        raf(function() {
+          raf(function() {
+            startNativePrint(false);
+          });
+        });
+      });
+    };
+
+    document.body.appendChild(frame);
+    frame.srcdoc = printHtml;
+
+    // Secours non intrusif : si un navigateur mobile tarde ou bloque l'API,
+    // on propose simplement de relancer l'impression, sans afficher le document.
+    fallbackTimer = setTimeout(function() {
+      if (!printStarted && !cleaned) showRetry('Toujours sur cette page : relancer l’impression.');
+    }, 9000);
+
+    // Nettoyage de sécurité si un navigateur ne déclenche pas afterprint.
+    setTimeout(function() { cleanup(); }, 180000);
     return true;
   }
 
@@ -9241,8 +9330,8 @@ ${(function(){
       '.lower-group{font-size:3.75mm!important;line-height:1.05!important}'+
       '.lower-header{font-size:2.75mm!important;line-height:1.05!important;padding:0 .35mm!important}'+
       '.lower-data{font-size:2.65mm!important;line-height:1.12!important;padding:0 .38mm!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important}'+
-      '.lower-data.headset-strong,.lower-data.handling-strong{font-size:2.9mm!important;font-weight:750!important;line-height:1.1!important}'+
-      '.lower-data.headset-flt,.lower-data.handling-flt{font-size:2.55mm!important;font-weight:600!important;line-height:1.12!important}'+
+      '.lower-data.headset-strong,.lower-data.handling-strong{font-size:3.2mm!important;font-weight:800!important;line-height:1.12!important}'+
+      '.lower-data.headset-flt,.lower-data.handling-flt{font-size:2.8mm!important;font-weight:650!important;line-height:1.14!important}'+
       '@media print{html,body{width:210mm!important;min-height:297mm!important}.crewbus-page{break-inside:avoid!important;page-break-inside:avoid!important}.crewbus-page:not(.crewbus-back-page){break-after:page!important;page-break-after:always!important}.crewbus-back-page{break-before:page!important;page-break-before:always!important;break-after:avoid!important;page-break-after:avoid!important}}'+
       '</style></head><body>'+
       '<div class="crewbus-page">'+
@@ -12112,6 +12201,17 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
  #wo-lgg-auth-overlay.wo-login-toast{right:8px!important;width:calc(100vw - 16px)!important}
  #wo-lgg-auth-overlay.wo-login-toast .wo-login-toast-form{padding:4px 10px 8px!important}
  #wo-lgg-auth-overlay.wo-login-toast .wo-login-toast-form label{margin-top:2px!important}
+}
+</style>
+
+
+<style id="wo-lgg-hide-combined-actions-in-separate-mode">
+/* En mode Pages séparées, masquer uniquement la barre des 6 actions.
+   Le sélecteur Affichage (Pages séparées / Étapes 3+4) reste visible. */
+.workflow-shell:not(.crewbus-combined) #step-3 #combined-action-bar,
+.app-wrap:not(.crewbus-combined) #step-3 #combined-action-bar,
+body:not(.crewbus-combined) #step-3 #combined-action-bar{
+  display:none!important;
 }
 </style>
 
