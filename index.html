@@ -20,7 +20,7 @@
 </script>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>LGG - Cleaning Ops</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0a0e18">
@@ -540,7 +540,7 @@ header .logo-sub{white-space:nowrap}
 #wo-lgg-save-state{font-size:13px!important;padding:8px 12px!important}
 </style><style id="wo-lgg-security-ui">
 #wo-lgg-logout-btn{pointer-events:auto!important;position:relative!important;z-index:1000!important;cursor:pointer!important}
-#wo-lgg-auth-overlay input[type="email"],#wo-lgg-auth-overlay input[type="password"]{autocomplete:none}
+#wo-lgg-auth-overlay input[type="email"] input[type="password"]{autocomplete:none}
 </style>
 <style id="wo-lgg-auth-layout-fix">
 
@@ -3293,79 +3293,29 @@ html body #step-4.cb26 *{box-sizing:border-box}
 </style>
 </head>
 <body>
-<div id="wo-lgg-auth-overlay" class="lgg-auth-v1">
-  <div class="lgg-auth-runway" aria-hidden="true">
-    <span class="runway-plane">✈</span><i></i><i></i><i></i><i></i><i></i>
-    <span class="runway-coordinates">LGG · 50°38′ N · 005°26′ E</span>
+<div id="wo-lgg-auth-overlay" class="wo-login-toast" role="region" aria-label="Connexion à votre compte" style="display:none">
+  <div class="wo-login-toast-progress" aria-hidden="true"></div>
+  <div class="wo-login-toast-head">
+    <div class="wo-login-toast-brand"><span class="wo-login-toast-mark">✈</span><span><strong>Connexion</strong><small>Votre espace LGG Operations</small></span></div>
+    <button type="button" class="wo-login-toast-close" onclick="woLggDismissLoginNotice()" aria-label="Fermer la notification">×</button>
   </div>
-  <section class="lgg-auth-card" role="dialog" aria-modal="true" aria-labelledby="lgg-auth-title">
-    <div class="lgg-auth-brand">
-      <div class="lgg-auth-logo">✈</div>
-      <div><h1 id="lgg-auth-title">LGG · Cleaning Ops</h1><p>OPERATIONS · LIÈGE AIRPORT</p></div>
+  <form id="wo-lgg-auth-form" class="wo-login-toast-form" onsubmit="event.preventDefault();woLggLogin()">
+    <label for="wo-lgg-email">Adresse e-mail</label>
+    <input type="email" id="wo-lgg-email" autocomplete="username" placeholder="nom@entreprise.be" onfocus="woLggKeepLoginNotice()" oninput="woLggKeepLoginNotice()" required>
+    <label for="wo-lgg-password">Mot de passe</label>
+    <div class="wo-login-toast-password">
+      <input type="password" id="wo-lgg-password" autocomplete="current-password" placeholder="Votre mot de passe" onfocus="woLggKeepLoginNotice()" oninput="woLggKeepLoginNotice()" required>
+      <button type="button" aria-label="Afficher ou masquer le mot de passe" onclick="const p=document.getElementById('wo-lgg-password');p.type=p.type==='password'?'text':'password';this.setAttribute('aria-pressed',p.type==='text')">◉</button>
     </div>
-    <div class="lgg-auth-status"><span></span>SYSTÈME OPÉRATIONNEL</div>
-    <p class="lgg-auth-intro">Connexion sécurisée à votre espace opérations.</p>
-    <form class="lgg-auth-form" onsubmit="event.preventDefault();woLggLogin()">
-      <label for="wo-lgg-email">E-MAIL</label>
-      <input type="email" id="wo-lgg-email" autocomplete="username" placeholder="adresse e-mail" required>
-      <label for="wo-lgg-password">MOT DE PASSE</label>
-      <div class="lgg-auth-password">
-        <input type="password" id="wo-lgg-password" autocomplete="current-password" placeholder="mot de passe" required>
-        <button type="button" aria-label="Afficher ou masquer le mot de passe" onclick="const p=document.getElementById('wo-lgg-password');p.type=p.type==='password'?'text':'password';this.classList.toggle('is-visible',p.type==='text')"><span></span></button>
-      </div>
-      <div id="wo-lgg-auth-message" role="status" aria-live="polite"></div>
-      <button type="submit" class="lgg-auth-submit">SE CONNECTER <span>⟶</span></button>
-    </form>
-    <div class="lgg-auth-divider"><span>OU</span></div>
-    <button type="button" id="wo-lgg-visitor-btn" class="lgg-auth-visitor" onclick="woLggContinueAsVisitor()">Continuer en tant que visiteur <span>↗</span></button>
-    <p class="lgg-auth-footnote">Session temporaire · aucune donnée de compte enregistrée</p>
-    <div class="lgg-auth-signature">LGG · CLEANING OPERATIONS</div>
-  </section>
+    <div id="wo-lgg-auth-message" role="status" aria-live="polite"></div>
+    <div class="wo-login-toast-actions">
+      <button type="submit" class="wo-login-toast-submit">Se connecter <span>→</span></button>
+      <button type="button" id="wo-lgg-visitor-btn" class="wo-login-toast-visitor" onclick="woLggContinueAsVisitor()">Continuer en visiteur</button>
+    </div>
+    <p class="wo-login-toast-foot">La notification se ferme automatiquement après 10 secondes.</p>
+  </form>
 </div>
-<style id="lgg-auth-production-interface">
-#wo-lgg-auth-overlay.lgg-auth-v1{position:fixed!important;inset:0!important;z-index:100000!important;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:26px 18px!important;box-sizing:border-box;background:#030b12!important;color:#edf5fa;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-.lgg-auth-v1 *{box-sizing:border-box}
-.lgg-auth-runway{position:absolute;inset:0;overflow:hidden;pointer-events:none;background:radial-gradient(ellipse at 50% 43%,rgba(15,101,119,.18),transparent 43%),linear-gradient(115deg,transparent 48%,rgba(56,121,139,.06) 48.1%,transparent 48.4%),repeating-linear-gradient(0deg,transparent 0 51px,rgba(87,147,160,.035) 52px,transparent 53px 103px)}
-.lgg-auth-runway:before,.lgg-auth-runway:after{content:"";position:absolute;width:2px;height:130%;top:-15%;background:linear-gradient(transparent,rgba(80,151,169,.07),transparent);transform:rotate(25deg)}
-.lgg-auth-runway:before{left:19%}.lgg-auth-runway:after{right:20%}
-.lgg-auth-runway i{position:absolute;width:3px;height:42px;border-radius:2px;background:rgba(159,190,200,.26);transform:rotate(22deg)}
-.lgg-auth-runway i:nth-of-type(1){top:17%;right:21%}.lgg-auth-runway i:nth-of-type(2){top:26%;right:27%}.lgg-auth-runway i:nth-of-type(3){top:35%;right:33%}.lgg-auth-runway i:nth-of-type(4){bottom:22%;left:28%}.lgg-auth-runway i:nth-of-type(5){bottom:13%;left:20%}
-.lgg-auth-runway .runway-plane{position:absolute;top:21%;left:50%;font-size:23px;opacity:.18;transform:rotate(-22deg)}
-.lgg-auth-runway .runway-coordinates{position:absolute;bottom:7%;left:5%;font:8px/1.5 ui-monospace,monospace;letter-spacing:3px;color:rgba(135,176,190,.28)}
-.lgg-auth-card{position:relative;width:min(100%,494px);padding:36px 36px 31px;border-radius:25px;border:1px solid rgba(147,192,204,.25);background:linear-gradient(145deg,rgba(25,43,51,.96),rgba(7,22,29,.98));box-shadow:0 32px 100px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.035);backdrop-filter:blur(20px)}
-.lgg-auth-brand{display:flex;align-items:center;gap:16px;margin-bottom:24px}
-.lgg-auth-logo{width:51px;height:51px;display:grid;place-items:center;flex:0 0 auto;border-radius:13px;background:linear-gradient(145deg,#ffc928,#ff9d00);font-size:27px;box-shadow:0 8px 25px rgba(255,166,0,.15)}
-.lgg-auth-brand h1{font-size:19px;line-height:1.2;font-weight:750;letter-spacing:-.35px;margin:0;color:#f3f7f9}
-.lgg-auth-brand p{font:700 8px/1.5 ui-monospace,SFMono-Regular,monospace;letter-spacing:3px;color:#8faab3;margin:6px 0 0}
-.lgg-auth-status{display:inline-flex;align-items:center;gap:9px;padding:7px 12px;border-radius:30px;border:1px solid rgba(38,203,163,.19);background:rgba(20,185,145,.055);font:700 9px/1.2 ui-monospace,monospace;letter-spacing:1.8px;color:#78c6b4}
-.lgg-auth-status span{width:7px;height:7px;border-radius:50%;background:#2ce0ad;box-shadow:0 0 12px rgba(44,224,173,.7)}
-.lgg-auth-intro{margin:22px 0 25px;color:#b1c0c7;font-size:14px;line-height:1.6}
-.lgg-auth-form{display:flex;flex-direction:column}
-.lgg-auth-form>label{font-size:10px;letter-spacing:2px;font-weight:800;color:#d2dfe4;margin:0 0 9px}
-.lgg-auth-form>input,.lgg-auth-password input{width:100%;height:56px;border-radius:12px;border:1px solid rgba(148,181,193,.22);background:rgba(232,244,248,.055);color:#f4f8fa;padding:0 17px;font:500 14px/1.3 inherit;outline:none;transition:border-color .2s,box-shadow .2s}
-.lgg-auth-form>input{margin-bottom:17px}
-.lgg-auth-form input::placeholder{color:#d3dde2}
-.lgg-auth-form>input:focus,.lgg-auth-password input:focus{border-color:rgba(54,215,195,.75);box-shadow:0 0 0 3px rgba(54,215,195,.09)}
-.lgg-auth-password{position:relative;margin-bottom:8px}
-.lgg-auth-password input{padding-right:53px}
-.lgg-auth-password button{position:absolute;right:7px;top:7px;width:40px;height:40px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer}
-.lgg-auth-password button span{width:14px;height:14px;border:1.5px solid #9eb8c0;border-radius:50%;position:relative}
-.lgg-auth-password button span:after{content:"";position:absolute;inset:3px;border-radius:50%;background:#9eb8c0}
-.lgg-auth-password button.is-visible span:after{background:#2ce0ad}
-#wo-lgg-auth-message{min-height:17px;margin:0 0 8px;color:#ff9999;font-size:11px;line-height:1.4}
-.lgg-auth-submit{width:100%;height:56px;border:0;border-radius:12px;background:linear-gradient(105deg,#6d80ff,#bd55f4);color:#fff;font-size:12px;font-weight:850;letter-spacing:1.6px;cursor:pointer;box-shadow:0 10px 26px rgba(121,91,255,.2);transition:filter .2s,transform .2s}
-.lgg-auth-submit:hover{filter:brightness(1.08);transform:translateY(-1px)}
-.lgg-auth-submit span{font-size:18px;margin-left:8px;vertical-align:-1px}
-.lgg-auth-divider{display:flex;align-items:center;gap:12px;margin:19px 0 15px;color:#738a93;font:8px ui-monospace,monospace}
-.lgg-auth-divider:before,.lgg-auth-divider:after{content:"";height:1px;flex:1;background:rgba(144,176,186,.13)}
-.lgg-auth-visitor{width:100%;min-height:52px;border-radius:12px;border:1px solid rgba(148,181,193,.2);background:rgba(232,244,248,.025);color:#d8e3e7;font-size:12px;font-weight:750;cursor:pointer;transition:background .2s,border-color .2s}
-.lgg-auth-visitor:hover{background:rgba(232,244,248,.06);border-color:rgba(148,211,220,.4)}
-.lgg-auth-visitor span{font-size:16px;vertical-align:-1px}
-.lgg-auth-footnote{text-align:center;margin:14px 0 0;color:#738992;font:8px/1.7 ui-monospace,monospace;letter-spacing:.3px}
-.lgg-auth-signature{text-align:center;margin-top:25px;color:#60757e;font:8px ui-monospace,monospace;letter-spacing:3px}
-@media(max-width:520px){#wo-lgg-auth-overlay.lgg-auth-v1{padding:18px!important}.lgg-auth-card{padding:26px 24px 25px;border-radius:22px}.lgg-auth-brand{gap:12px;margin-bottom:21px}.lgg-auth-logo{width:47px;height:47px;font-size:25px}.lgg-auth-brand h1{font-size:17px}.lgg-auth-brand p{font-size:7px;letter-spacing:2px}.lgg-auth-intro{font-size:13px;margin:19px 0 22px}.lgg-auth-form>input,.lgg-auth-password input{height:53px}.lgg-auth-submit{height:54px}.lgg-auth-runway .runway-coordinates{font-size:7px;letter-spacing:2px}}
-@media(max-height:700px){.lgg-auth-card{padding-top:22px;padding-bottom:20px}.lgg-auth-brand{margin-bottom:15px}.lgg-auth-intro{margin:14px 0 17px}.lgg-auth-form>input{height:48px;margin-bottom:12px}.lgg-auth-password input{height:48px}.lgg-auth-password button{top:4px}.lgg-auth-submit{height:49px}.lgg-auth-signature{margin-top:15px}}
-</style>
+
 
 <header id="app-header">
   <div class="header-inner app-header-clean">
@@ -3381,6 +3331,7 @@ html body #step-4.cb26 *{box-sizing:border-box}
       </div>
     </div>
 
+    <button type="button" id="wo-lgg-login-trigger" class="wo-login-trigger" onclick="woLggShowLogin()" style="display:none" aria-label="Ouvrir la connexion">Connexion</button>
     <button class="app-menu-trigger" id="app-menu-trigger" type="button" aria-expanded="false" aria-controls="app-menu-panel" onclick="toggleAppHeaderMenu()" title="Menu principal">
       <span class="menu-trigger-label">Menu</span><span class="menu-trigger-icon">&#8942;</span>
     </button>
@@ -4158,11 +4109,23 @@ html body #step-4.cb26 *{box-sizing:border-box}
   let woLggUser = null, woLggProfile = null;
   async function woLggLoadIdentity(){
     const {data:{session},error}=await woLggSupabase.auth.getSession();
-    if(error){woLggShowLogin('Impossible de vérifier la session.');return;}
-    if(session?.user) await woLggAcceptSession(session.user); else woLggShowLogin();
+    if(error){
+      woLggContinueAsVisitor();
+      woLggShowLogin('Session non vérifiable. Tu peux continuer en visiteur.');
+      return;
+    }
+    if(session?.user){
+      await woLggAcceptSession(session.user);
+    }else{
+      // L'application est immédiatement utilisable en mode visiteur.
+      woLggContinueAsVisitor();
+      woLggShowLogin();
+    }
   }
   async function woLggAcceptSession(user){
+    woLggVisitorMode=false;
     woLggUser=user;
+    woLggProfile=null;
     const {data:profile,error}=await woLggSupabase.from('profiles').select('display_name,role').eq('id',user.id).maybeSingle();
     if(error||!profile){woLggShowLogin(error?'Profil inaccessible.':'Compte non initialisé dans WO-LGG.');return;}
     woLggProfile=profile;
@@ -4175,23 +4138,58 @@ html body #step-4.cb26 *{box-sizing:border-box}
     window.woLggDeferredRemoteRow=null;
     woLggHideLogin(); woLggShowIdentity(); woLggUpdateCrewBusAccessUI(); await woLggInitializeCloudSession();
   }
-  function woLggShowLogin(message){
-    const o=document.getElementById('wo-lgg-auth-overlay'),b=document.getElementById('wo-lgg-logout-btn');
-    if(o)o.style.display='flex';
-    if(b){b.style.display='none';b.disabled=false;b.style.pointerEvents='auto';}
-    document.querySelectorAll('#wo-lgg-auth-overlay input[type="email"],#wo-lgg-auth-overlay input[type="password"]').forEach(el=>{try{el.value='';el.setAttribute('autocomplete','off');el.setAttribute('value','');}catch(e){}});
-    const m=document.getElementById('wo-lgg-auth-message');if(m)m.textContent=message||'';
+  function woLggClearLoginNoticeTimer(){
+    if(window.__woLggLoginNoticeTimer){
+      clearTimeout(window.__woLggLoginNoticeTimer);
+      window.__woLggLoginNoticeTimer=null;
+    }
+    const toast=document.getElementById('wo-lgg-auth-overlay');
+    if(toast)toast.classList.remove('is-counting');
   }
-  function woLggHideLogin(){const o=document.getElementById('wo-lgg-auth-overlay');if(o)o.style.display='none';}
+  function woLggKeepLoginNotice(){
+    woLggClearLoginNoticeTimer();
+  }
+  function woLggDismissLoginNotice(){
+    woLggClearLoginNoticeTimer();
+    woLggHideLogin();
+    if(!woLggUser && !woLggVisitorMode)woLggContinueAsVisitor();
+  }
+  function woLggShowLogin(message){
+    const o=document.getElementById('wo-lgg-auth-overlay');
+    const b=document.getElementById('wo-lgg-logout-btn');
+    const trigger=document.getElementById('wo-lgg-login-trigger');
+    woLggClearLoginNoticeTimer();
+    if(o){o.style.display='block';o.classList.add('is-counting');}
+    if(trigger)trigger.style.display='none';
+    if(b){b.style.display='none';b.disabled=false;b.style.pointerEvents='auto';}
+    const m=document.getElementById('wo-lgg-auth-message');if(m)m.textContent=message||'';
+    window.__woLggLoginNoticeTimer=setTimeout(function(){
+      const email=document.getElementById('wo-lgg-email');
+      const password=document.getElementById('wo-lgg-password');
+      if(!(email&&email.value.trim()) && !(password&&password.value)){
+        // Pas d'action après 10 secondes : on reste en visiteur et le panneau disparaît.
+        woLggContinueAsVisitor();
+      }
+    },10000);
+  }
+  function woLggHideLogin(){
+    woLggClearLoginNoticeTimer();
+    const o=document.getElementById('wo-lgg-auth-overlay');
+    if(o)o.style.display='none';
+    const trigger=document.getElementById('wo-lgg-login-trigger');
+    if(trigger)trigger.style.display=((!woLggProfile)||woLggVisitorMode?'inline-flex':'none');
+  }
   function woLggShowIdentity(){
     const n=document.getElementById('wo-lgg-user-name'),r=document.getElementById('wo-lgg-user-role'),b=document.getElementById('wo-lgg-logout-btn');
     if(n)n.textContent=woLggProfile?.display_name||'';
     if(r)r.textContent=woLggProfile?.role||'';
     if(b)b.style.display='inline-flex';
+    const trigger=document.getElementById('wo-lgg-login-trigger');if(trigger)trigger.style.display='none';
   }
   async function woLggLogin(){
+    woLggKeepLoginNotice();
     const email=document.getElementById('wo-lgg-email').value.trim(),password=document.getElementById('wo-lgg-password').value,m=document.getElementById('wo-lgg-auth-message');
-    if(!email||!password){m.textContent='Entre ton e-mail et ton mot de passe.';return;} m.textContent='Connexion…';
+    if(!email||!password){if(m)m.textContent='Entre ton e-mail et ton mot de passe.';return;} if(m)m.textContent='Connexion…';
     const {data,error}=await woLggSupabase.auth.signInWithPassword({email,password});
     if(error){m.textContent='Connexion refusée : '+error.message;return;} await woLggAcceptSession(data.user);
   }
@@ -4202,8 +4200,9 @@ html body #step-4.cb26 *{box-sizing:border-box}
     woLggVisitorMode = true;
     woLggUser = null;
     woLggProfile = { display_name:'Visiteur', role:'VISITOR' };
-    const overlay = document.getElementById('wo-lgg-auth-overlay');
-    if (overlay) overlay.style.display = 'none';
+    woLggHideLogin();
+    const loginTrigger=document.getElementById('wo-lgg-login-trigger');
+    if(loginTrigger)loginTrigger.style.display='inline-flex';
     const n = document.getElementById('wo-lgg-user-name');
     const r = document.getElementById('wo-lgg-user-role');
     const b = document.getElementById('wo-lgg-logout-btn');
@@ -4257,7 +4256,7 @@ function woLggResetVisitorState(){
 async function woLggLogout(){
     const b=document.getElementById('wo-lgg-logout-btn');
     const clearLogin=()=>{
-      document.querySelectorAll('#wo-lgg-auth-overlay input[type="email"],#wo-lgg-auth-overlay input[type="password"],input[type="email"],input[type="password"]').forEach(el=>{
+      document.querySelectorAll('#wo-lgg-auth-overlay input[type="email"] input[type="password"],input[type="email"],input[type="password"]').forEach(el=>{
         try{el.value='';el.setAttribute('autocomplete','off');el.setAttribute('value','');}catch(e){}
       });
       const form=document.getElementById('wo-lgg-auth-form');
@@ -7972,10 +7971,6 @@ ${(function(){
   function openPrintWindow(content, title) {
     var source = String(content || '');
     var safeTitle = String(title || 'Worksheet').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-    // Les fonctions historiques peuvent fournir soit le document HTML complet,
-    // soit uniquement le contenu d'une/des worksheet(s). Dans le second cas,
-    // on conserve exactement le wrapper A4 utilisé auparavant.
     var html = /<html[\s>]/i.test(source) || /<!DOCTYPE/i.test(source)
       ? source
       : '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>'+safeTitle+'</title>'
@@ -7984,58 +7979,111 @@ ${(function(){
         +'.page{page-break-after:always;page-break-inside:avoid;break-inside:avoid;height:281mm;max-height:281mm;overflow:hidden;position:relative}'
         +'.page:last-child{page-break-after:avoid}</style></head><body>'+source+'</body></html>';
 
-    // Nettoyage d'un éventuel ancien frame d'impression.
+    var isPhone = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent||'') ||
+      (window.matchMedia && window.matchMedia('(max-width: 760px)').matches);
+
+    if(isPhone){
+      // window.open is called synchronously from the print button's click handler.
+      // iOS Safari prints top-level tabs much more reliably than a hidden iframe.
+      var openPhonePrint = function(){
+        var win=window.open('about:blank','_blank');
+        if(!win)return null;
+        var toolbarCss='<style id="wo-lgg-phone-print-ui">'
+          +'html{scroll-padding-top:58px}body{padding-top:58px!important}'
+          +'#wo-lgg-phone-print-toolbar{position:fixed;z-index:2147483000;top:0;left:0;right:0;display:flex;align-items:center;gap:8px;padding:9px 12px;background:#171b1a;color:#f2f5f2;font:13px -apple-system,BlinkMacSystemFont,sans-serif;box-shadow:0 2px 12px rgba(0,0,0,.24)}'
+          +'#wo-lgg-phone-print-toolbar .wo-lgg-print-title{flex:1;min-width:0;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+          +'#wo-lgg-phone-print-toolbar button{min-height:38px;padding:0 12px;border:1px solid #65766b;border-radius:8px;background:#2b4233;color:white;font:650 12px -apple-system,BlinkMacSystemFont,sans-serif}'
+          +'#wo-lgg-phone-print-toolbar button:last-child{background:#252b28;border-color:#49514c}'
+          +'@media print{body{padding-top:0!important}#wo-lgg-phone-print-toolbar{display:none!important}}'
+          +'</style>';
+        var toolbar='<div id="wo-lgg-phone-print-toolbar"><span class="wo-lgg-print-title">'+safeTitle+'</span>'
+          +'<button type="button" onclick="window.focus();window.print()">Imprimer / PDF</button>'
+          +'<button type="button" onclick="window.close()">Fermer</button></div>';
+        var output=html;
+        if(/<\/head>/i.test(output))output=output.replace(/<\/head>/i,toolbarCss+'</head>');
+        else output=toolbarCss+output;
+        if(/<body[^>]*>/i.test(output))output=output.replace(/<body([^>]*)>/i,'<body$1>'+toolbar);
+        else output=output.replace(/<\/html>/i,toolbar+'</html>');
+        try{
+          win.document.open();
+          win.document.write(output);
+          win.document.close();
+          // L'auto-ouverture est un confort ; le bouton persiste si Safari la bloque.
+          setTimeout(function(){
+            try{if(!win.closed){win.focus();win.print();}}catch(e){}
+          },650);
+          return win;
+        }catch(e){
+          try{win.close();}catch(ignore){}
+          return null;
+        }
+      };
+
+      var phoneWindow=openPhonePrint();
+      if(phoneWindow)return true;
+
+      // Si Safari bloque le premier popup, proposer une seconde ouverture déclenchée
+      // par un vrai tap dans une notification au lieu d'échouer silencieusement.
+      window.__woLggPendingPrintHtml=html;
+      window.__woLggPendingPrintTitle=safeTitle;
+      window.woLggRetryPhonePrint=function(){
+        var pending=window.__woLggPendingPrintHtml;
+        if(!pending)return;
+        var w=window.open('about:blank','_blank');
+        if(!w){alert('Autorise les fenêtres surgissantes pour imprimer ce document.');return;}
+        var css='<style id="wo-lgg-phone-print-ui">body{padding-top:58px!important}#wo-lgg-phone-print-toolbar{position:fixed;z-index:2147483000;top:0;left:0;right:0;display:flex;gap:8px;align-items:center;padding:9px 12px;background:#171b1a;color:#f2f5f2;font:13px -apple-system,BlinkMacSystemFont,sans-serif}#wo-lgg-phone-print-toolbar .wo-lgg-print-title{flex:1}#wo-lgg-phone-print-toolbar button{min-height:38px;padding:0 12px;border:1px solid #65766b;border-radius:8px;background:#2b4233;color:#fff}@media print{body{padding-top:0!important}#wo-lgg-phone-print-toolbar{display:none!important}}</style>';
+        var bar='<div id="wo-lgg-phone-print-toolbar"><span class="wo-lgg-print-title">'+(window.__woLggPendingPrintTitle||'Document')+'</span><button onclick="window.focus();window.print()">Imprimer / PDF</button><button onclick="window.close()">Fermer</button></div>';
+        var out=pending.replace(/<\/head>/i,css+'</head>').replace(/<body([^>]*)>/i,'<body$1>'+bar);
+        w.document.open();w.document.write(out);w.document.close();
+        setTimeout(function(){try{w.focus();w.print();}catch(e){}},650);
+        var fallback=document.getElementById('wo-lgg-print-fallback');if(fallback)fallback.remove();
+      };
+      var fallback=document.getElementById('wo-lgg-print-fallback');
+      if(!fallback){
+        fallback=document.createElement('div');fallback.id='wo-lgg-print-fallback';
+        fallback.innerHTML='<div class="wo-lgg-print-fallback-card"><strong>Le navigateur a bloqué l’ouverture du document.</strong><p>Appuie ci-dessous pour ouvrir la feuille et lancer son impression.</p><button type="button" onclick="woLggRetryPhonePrint()">Ouvrir la feuille</button><button type="button" class="secondary" onclick=&quot;document.getElementById(\'wo-lgg-print-fallback\').remove()&quot;>Fermer</button></div>';
+        document.body.appendChild(fallback);
+      }
+      return false;
+    }
+
+    // Desktop/tablette : conserver le flux iframe qui fonctionne déjà sur ces appareils.
     var old = document.getElementById('wo-lgg-print-frame');
     if (old) old.remove();
-
     var frame = document.createElement('iframe');
     frame.id = 'wo-lgg-print-frame';
     frame.setAttribute('aria-hidden','true');
-    // Viewport A4 réel : les documents qui calculent leur réduction à l'impression
-    // doivent être mesurés à la bonne largeur/hauteur, et non dans un iframe 1×1 px.
     frame.style.cssText = 'position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0;opacity:0;pointer-events:none;z-index:-1;';
     document.body.appendChild(frame);
-
     var cleaned = false;
     var cleanup = function(){
-      if(cleaned) return;
-      cleaned = true;
-      setTimeout(function(){ if(frame.parentNode) frame.parentNode.removeChild(frame); }, 100);
+      if(cleaned)return;cleaned=true;
+      setTimeout(function(){if(frame.parentNode)frame.parentNode.removeChild(frame);},100);
     };
-
     var printFrame = function(){
-      var w = frame.contentWindow;
-      if(!w) { cleanup(); alert('Impossible d’ouvrir la page d’impression.'); return; }
-      try { w.focus(); w.print(); }
-      catch(e) { cleanup(); alert('Impossible d’ouvrir la page d’impression.'); return; }
-      // Chrome/Edge déclenchent afterprint quand l'aperçu est fermé/imprimé.
-      try { w.addEventListener('afterprint', cleanup, {once:true}); } catch(e) {}
-      setTimeout(cleanup, 120000);
+      var w=frame.contentWindow;
+      if(!w){cleanup();alert('Impossible d’ouvrir la page d’impression.');return;}
+      try{w.focus();w.print();}
+      catch(e){cleanup();alert('Impossible d’ouvrir la page d’impression.');return;}
+      try{w.addEventListener('afterprint',cleanup,{once:true});}catch(e){}
+      setTimeout(cleanup,120000);
     };
-
-    frame.onload = function(){
-      var w = frame.contentWindow;
-      if(!w) return;
-      var waitImages = Array.from(w.document.images || []).map(function(img){
+    frame.onload=function(){
+      var w=frame.contentWindow;if(!w)return;
+      var waitImages=Array.from(w.document.images||[]).map(function(img){
         return new Promise(function(resolve){
-          if(img.complete){ resolve(); return; }
+          if(img.complete){resolve();return;}
           img.addEventListener('load',resolve,{once:true});
           img.addEventListener('error',resolve,{once:true});
         });
       });
-      var fontsReady = (w.document.fonts && w.document.fonts.ready) ? w.document.fonts.ready.catch(function(){}) : Promise.resolve();
+      var fontsReady=(w.document.fonts&&w.document.fonts.ready)?w.document.fonts.ready.catch(function(){}):Promise.resolve();
       Promise.all([fontsReady].concat(waitImages)).then(function(){
-        // Deux frames permettent au moteur de mise en page d'appliquer les règles
-        // @page et les dimensions A4 avant l'ouverture de l'aperçu natif.
-        if(w.requestAnimationFrame){
-          w.requestAnimationFrame(function(){ w.requestAnimationFrame(printFrame); });
-        } else {
-          setTimeout(printFrame,30);
-        }
+        if(w.requestAnimationFrame)w.requestAnimationFrame(function(){w.requestAnimationFrame(printFrame);});
+        else setTimeout(printFrame,30);
       });
     };
-
-    frame.srcdoc = html;
+    frame.srcdoc=html;
     return true;
   }
 
@@ -8714,7 +8762,10 @@ ${(function(){
     const modeHtml=isWfs?('<div class="cb-friend-actions">'
       +'<button type="button" class="crewbus-mode-btn cb-friend-mode '+(f.wfsMode==='renting'?'active rent':'')+'" data-crewbus-action="wfs" data-mode="renting" title="Choisir Renting">🚙 Renting</button>'
       +'</div>') : '';
-    const hsHtml='';
+    const hsHtml='<div class="cb-friend-actions cb-friend-service-actions">'
+      +'<button type="button" class="cb26-service-action cb26-service-headset '+(f.headset?'is-active':'')+'" data-crewbus-action="headset" aria-pressed="'+(f.headset?'true':'false')+'" title="Activer / désactiver Headset">🎧 Headset</button>'
+      +'<button type="button" class="cb26-service-action cb26-service-handling '+((f.handling===true||f.wfsMode==="handling")?'is-active':'')+'" data-crewbus-action="handling" aria-pressed="'+((f.handling===true||f.wfsMode==="handling")?'true':'false')+'" title="Activer / désactiver Handling">✈ Handling</button>'
+      +'</div>';
     const reg=crewBusEffectiveReg(f);
     const regHtml='<input class="crewbus-registration-input cb90-reg cb-friend-reg" value="'+crewBusEscape(reg)+'" data-reg-flight="'+crewBusEscape(f.flight||'')+'" placeholder="Immatriculation" autocomplete="off" aria-label="Immatriculation '+crewBusEscape(f.flight||'')+'" onkeydown="woLggHandleRegistrationKeydown(event)" onblur="woLggHandleRegistrationBlur(event)" onclick="event.stopPropagation()">';
     const status=f.type==='arr'?'ARRIVÉE':'DÉPART';
@@ -8741,7 +8792,7 @@ ${(function(){
     if(window.__woCrewBusInteractionsReady)return;
     window.__woCrewBusInteractionsReady=true;
     document.addEventListener('click',function(e){
-      const el=e.target && e.target.closest ? e.target.closest('#crewbus-flight-list [data-crewbus-action], #crewbus-flight-list .crewbus-flight-card') : null;
+      const el=e.target && e.target.closest ? e.target.closest('#crewbus-flight-list [data-crewbus-action], #crewbus-flight-list .crewbus-flight-card, #crewbus-service-arr-list [data-crewbus-action], #crewbus-service-dep-list [data-crewbus-action], #crewbus-service-arr-list .crewbus-flight-card, #crewbus-service-dep-list .crewbus-flight-card') : null;
       if(!el)return;
       const card=el.closest('.crewbus-flight-card');
       if(!card)return;
@@ -9489,7 +9540,7 @@ body.wo-lgg-scroll-locked{
   'use strict';
 
   var overlayIds=[
-    'wo-lgg-auth-overlay','settings-modal-overlay','refresh-settings-overlay',
+    'settings-modal-overlay','refresh-settings-overlay',
     'layout-settings-overlay','history-modal-overlay',
     'fleet-modal-overlay','edit-flight-overlay','fids-change-details-overlay',
     'swissport-manhour-form','swp-manhour-backdrop','edit-mode-launcher','print-overlay','wo-lgg-resume-modal'
@@ -11683,6 +11734,272 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
 @media(max-width:520px){
  #step-4.cb26 .cb26-service-flight-list{grid-template-columns:minmax(0,1fr)}
  #step-4.cb26 .cb26-flight-list{max-height:420px!important}
+}
+</style>
+
+
+<style id="wo-lgg-crewbus-base-service-actions">
+#step-4.cb26 .cb-friend-service-actions{display:flex!important;align-items:center!important;gap:5px!important;flex-wrap:nowrap!important}
+#step-4.cb26 .cb-friend-service-actions .cb26-service-action{height:21px!important;min-height:21px!important;padding:0 7px!important;font-size:7px!important;line-height:1!important;white-space:nowrap!important}
+#step-4.cb26 .cb-friend-row-actions{flex-wrap:wrap!important;align-items:center!important}
+#step-4.cb26 .cb-friend-row-actions .cb-friend-actions{display:flex!important;align-items:center!important;gap:5px!important}
+#step-4.cb26 .cb-friend-service-actions .cb26-service-action.is-active{border-color:#5b9a70!important;background:#244331!important;color:#c8f0d2!important}
+</style>
+
+
+<style id="wo-lgg-mobile-professional-v1">
+/* ---------- Non-blocking account prompt ---------- */
+.wo-login-toast{
+ position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 12px)!important;right:14px!important;
+ z-index:100000!important;width:min(390px,calc(100vw - 28px))!important;display:none;
+ overflow:hidden;border:1px solid rgba(129,160,141,.36);border-radius:14px;
+ background:linear-gradient(145deg,rgba(27,34,31,.985),rgba(17,22,20,.99));
+ color:#eef3ef;box-shadow:0 18px 55px rgba(0,0,0,.48),0 3px 14px rgba(0,0,0,.22);
+ font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+ animation:woLoginToastIn .22s ease-out both
+}
+@keyframes woLoginToastIn{from{opacity:0;transform:translateY(-9px)}to{opacity:1;transform:translateY(0)}}
+.wo-login-toast-progress{height:3px;width:100%;background:rgba(255,255,255,.07)}
+.wo-login-toast-progress:after{content:"";display:block;width:100%;height:100%;background:#70d69b;transform-origin:left;transform:scaleX(1)}
+.wo-login-toast.is-counting .wo-login-toast-progress:after{animation:woLoginToastProgress 10s linear forwards}
+@keyframes woLoginToastProgress{to{transform:scaleX(0)}}
+.wo-login-toast-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px 7px}
+.wo-login-toast-brand{display:flex;align-items:center;gap:9px;min-width:0}
+.wo-login-toast-mark{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:9px;background:#294b37;color:#9ee7b4;font-size:18px}
+.wo-login-toast-brand strong{display:block;font-size:13px;font-weight:750}
+.wo-login-toast-brand small{display:block;margin-top:2px;color:#9ba99f;font-size:9px}
+.wo-login-toast-close{width:30px;height:30px;flex:0 0 30px;border:1px solid #3b4940;border-radius:7px;background:#222b25;color:#cbd7ce;font-size:20px;cursor:pointer}
+.wo-login-toast-form{display:grid;grid-template-columns:minmax(0,1fr);gap:5px;padding:5px 14px 12px}
+.wo-login-toast-form label{margin-top:4px;color:#aebbb1;font-size:9px;font-weight:750;letter-spacing:.55px}
+.wo-login-toast-form input{width:100%;min-width:0;min-height:38px;padding:8px 10px;border:1px solid #3e4942;border-radius:7px;background:#101513;color:#f1f5f1;font:500 12px -apple-system,BlinkMacSystemFont,sans-serif;outline:none}
+.wo-login-toast-form input:focus{border-color:#7bab8a;box-shadow:0 0 0 2px rgba(112,214,155,.12)}
+.wo-login-toast-password{position:relative}
+.wo-login-toast-password input{padding-right:42px}
+.wo-login-toast-password button{position:absolute;right:4px;top:4px;width:30px;height:30px;border:0;border-radius:5px;background:transparent;color:#acb9af;cursor:pointer}
+#wo-lgg-auth-message{min-height:0;margin:2px 0;color:#e5ae9e;font-size:10px;line-height:1.4}
+.wo-login-toast-actions{display:grid;grid-template-columns:1.1fr .9fr;gap:7px;margin-top:2px}
+.wo-login-toast-actions button{min-height:39px;border-radius:7px;font-size:10px;font-weight:750;cursor:pointer}
+.wo-login-toast-submit{border:1px solid #5b9a70;background:#2e7447;color:#fff}
+.wo-login-toast-visitor{border:1px solid #46524a;background:#242b26;color:#d8e1da}
+.wo-login-toast-foot{margin:2px 0 0;color:#849188;font-size:8px;text-align:center}
+.wo-login-trigger{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:0 11px;margin-left:auto;border:1px solid #4b5b50;border-radius:8px;background:#243129;color:#dce8df;font-size:10px;font-weight:750;white-space:nowrap;cursor:pointer}
+.wo-login-trigger:hover{background:#2c3b31;border-color:#73917b}
+#wo-lgg-print-fallback{position:fixed;inset:0;z-index:100001;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.7);backdrop-filter:blur(8px)}
+.wo-lgg-print-fallback-card{width:min(420px,100%);padding:20px;border:1px solid #46554a;border-radius:14px;background:#1b211e;color:#edf2ee;box-shadow:0 18px 60px rgba(0,0,0,.45)}
+.wo-lgg-print-fallback-card strong{font-size:14px}
+.wo-lgg-print-fallback-card p{color:#a8b4ab;font-size:11px;line-height:1.5}
+.wo-lgg-print-fallback-card button{width:100%;min-height:42px;margin-top:8px;border:1px solid #5b9a70;border-radius:8px;background:#2e7447;color:#fff;font-weight:750}
+.wo-lgg-print-fallback-card button.secondary{border-color:#48524c;background:transparent;color:#c5d0c8}
+#wo-lgg-print-frame{max-width:none!important}
+
+/* ---------- Phone layout, all four workflow steps ---------- */
+@media(max-width:760px){
+ html,body{width:100%;max-width:100%;overflow-x:hidden!important;-webkit-text-size-adjust:100%;overscroll-behavior-x:none}
+ body{padding-bottom:env(safe-area-inset-bottom,0px)}
+ #app-header{position:sticky!important;top:0!important;z-index:800!important}
+ .header-inner.app-header-clean{height:58px!important;min-height:58px!important;max-width:none!important;width:100%!important;padding:0 9px!important;gap:7px!important}
+ .fleet-menu-btn{width:36px!important;height:36px!important;min-width:36px!important}
+ .app-brand-center{max-width:calc(100% - 150px)!important;gap:6px!important}
+ .app-brand-mark{width:26px!important;height:26px!important}
+ .app-brand-copy .logo-text{font-size:11px!important;white-space:nowrap}
+ .app-brand-copy .logo-sub{font-size:6px!important;letter-spacing:1.35px!important}
+ .wo-login-trigger{min-height:34px!important;padding:0 8px!important;font-size:9px!important}
+ .app-menu-trigger{width:36px!important;min-width:36px!important;height:36px!important}
+ .app-menu-backdrop{inset:58px 0 0!important}
+ .app-header-menu{top:64px!important;right:8px!important;width:min(340px,calc(100vw - 16px))!important;max-height:calc(100dvh - 78px)!important;overflow:auto!important}
+ .progress-bar{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;align-items:center!important;gap:3px!important;width:100%!important;max-width:none!important;margin:0 0 14px!important;padding:8px 5px!important;border-radius:0 0 10px 10px!important}
+ .progress-bar .prog-line{display:none!important}
+ .progress-bar .prog-step{display:flex!important;min-width:0!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;padding:3px 1px!important}
+ .progress-bar .prog-num{width:25px!important;height:25px!important;flex:0 0 25px!important;font-size:10px!important}
+ .progress-bar .prog-label{display:block!important;font-size:8px!important;line-height:1.1!important;letter-spacing:0!important;white-space:nowrap!important}
+ .app-wrap:not(.crewbus-active){width:100%!important;max-width:100%!important;margin:0!important;padding:13px 11px calc(26px + env(safe-area-inset-bottom,0px))!important}
+ .app-wrap.crewbus-active{width:100%!important;max-width:100%!important;margin:0!important;padding:12px 10px calc(28px + env(safe-area-inset-bottom,0px))!important}
+ .wo-step{width:100%!important;max-width:100%!important;min-width:0!important}
+ .wo-step-heading{align-items:flex-start!important;gap:9px!important;margin-bottom:14px!important}
+ .wo-step-title{font-size:23px!important;line-height:1.12!important;letter-spacing:-.55px!important}
+ .wo-step-subtitle{max-width:none!important;margin-top:6px!important;font-size:11px!important;line-height:1.5!important}
+ .wo-step-index{display:none!important}
+ .wo-surface{width:100%!important;min-width:0!important;margin-bottom:10px!important;padding:14px!important;border-radius:12px!important}
+ .wo-surface-heading{gap:9px!important;flex-wrap:wrap!important}
+ .wo-surface-heading h2{font-size:15px!important}
+ .wo-overline,.wo-surface-tag,.wo-optional-tag{font-size:8px!important}
+ .wo-context-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important}
+ .wo-input-group{width:100%!important;min-width:0!important}
+ .wo-step input[type="text"],.wo-step input[type="date"],.wo-step select,.wo-step textarea{min-height:44px!important;width:100%!important;max-width:100%!important;font-size:16px!important;padding:10px 12px!important}
+ .wo-input-group .field-label{font-size:9px!important;margin-bottom:6px!important}
+ .wo-field-note{font-size:9px!important}
+ .wo-shift-divider{margin:15px 0 12px!important}
+ .wo-shift-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:7px!important}
+ .wo-shift-card{display:grid!important;grid-template-columns:34px minmax(0,1fr) auto!important;grid-template-rows:auto auto!important;align-items:center!important;min-height:0!important;width:100%!important;max-width:none!important;padding:11px 12px!important;border-radius:9px!important}
+ .wo-shift-card-top{grid-column:1!important;grid-row:1/3!important;display:flex!important;margin:0!important}
+ .wo-shift-symbol{width:29px!important;height:29px!important}
+ .wo-shift-period{display:none!important}
+ .wo-shift-card .shift-name{grid-column:2!important;grid-row:1!important;margin:0!important;font-size:13px!important}
+ .wo-shift-card .shift-time{grid-column:2!important;grid-row:2!important;font-size:10px!important}
+ .wo-shift-card-foot{grid-column:3!important;grid-row:1/3!important;margin:0!important;padding:0!important;font-size:8px!important;text-align:right!important}
+ .wo-step-footer{align-items:stretch!important;flex-direction:column!important;gap:10px!important;margin-top:12px!important}
+ .wo-footer-caption{font-size:9px!important}
+ .wo-step-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;width:100%!important}
+ .wo-step-actions .btn{width:100%!important;min-width:0!important;min-height:44px!important;margin:0!important;padding:0 8px!important;font-size:9px!important}
+ .wo-step-actions .wo-primary-action{grid-column:1/-1!important}
+
+ /* Step 2 — one column, large touch targets, manual source comfortably editable. */
+ .wo-import-layout{display:flex!important;flex-direction:column!important;gap:10px!important;width:100%!important}
+ .wo-import-main,.wo-catering-import{width:100%!important;min-width:0!important;max-width:none!important;padding:14px!important}
+ .wo-section-copy{margin:2px 0 12px!important;font-size:10px!important;line-height:1.5!important}
+ .wo-api-action{min-height:48px!important;padding:0 12px!important;font-size:10px!important}
+ .wo-manual-import-toggle{min-height:48px!important;padding:11px!important}
+ .wo-manual-import-panel{padding:0 10px 12px!important}
+ .wo-import-instructions{padding:9px!important;font-size:9px!important}
+ #fids-text,#catering-text,.wo-catering-textarea{min-height:140px!important;font-size:14px!important;line-height:1.5!important}
+ .wo-format-example{overflow-wrap:anywhere!important}
+ .wo-note-inline{font-size:9px!important;line-height:1.45!important}
+
+ /* Step 3 — efficient phone controls and less vertical dead space. */
+ .wo-step3-heading .section-title{min-width:0!important;flex-wrap:wrap!important}
+ .wo-step3-tools{display:flex!important;flex-wrap:wrap!important;gap:8px!important;margin-bottom:10px!important}
+ .wo-layout-toggle{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;width:100%!important;padding:9px!important}
+ .wo-layout-toggle .crewbus-layout-label,.wo-layout-toggle .crewbus-layout-hint{grid-column:1/-1!important}
+ .wo-layout-toggle .crewbus-layout-btn{width:100%!important;min-width:0!important;min-height:38px!important;padding:7px 5px!important;font-size:8px!important;white-space:normal!important}
+ .combined-action-bar.wo-combined-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}
+ .combined-action-bar.wo-combined-actions .btn{width:100%!important;min-width:0!important;min-height:40px!important;padding:0 6px!important;font-size:8px!important}
+ .wo-step3-overview{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:8px!important}
+ .wo-step3-overview .stats-row{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+ .wo-step3-overview .stat-card{min-width:0!important;padding:10px!important}
+ .wo-step3-overview .stat-card .num{font-size:21px!important}
+ .wo-flight-search{width:100%!important;min-height:44px!important;margin:8px 0 10px!important;padding:10px 12px!important;font-size:14px!important}
+ .wo-flight-section{padding:10px!important}
+ .wo-section-heading{align-items:center!important;gap:8px!important}
+ .wo-section-heading h2{font-size:14px!important}
+ .wo-section-note{max-width:48%!important;font-size:8px!important}
+ .wo-flight-section .flights-list{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:7px!important}
+ .wo-flight-section .flight-card{display:grid!important;grid-template-columns:26px minmax(0,1fr) auto!important;grid-template-rows:auto auto!important;align-items:center!important;gap:5px 8px!important;min-width:0!important;padding:9px!important;border-radius:8px!important}
+ .wo-flight-section .flight-card>.check{grid-column:1!important;grid-row:1/3!important;width:22px!important;height:22px!important}
+ .wo-flight-section .flight-card>.flight-info{grid-column:2!important;grid-row:1!important;display:flex!important;flex-wrap:wrap!important;gap:4px 7px!important;min-width:0!important}
+ .wo-flight-section .flight-card>div:nth-child(3){grid-column:3!important;grid-row:1!important;display:flex!important;flex-wrap:wrap!important;gap:4px!important;min-width:0!important;margin:0!important}
+ .wo-flight-section .flight-card>div:nth-child(4){grid-column:2/4!important;grid-row:2!important;display:flex!important;flex-wrap:wrap!important;gap:5px!important;min-width:0!important;margin:0!important;max-width:100%!important}
+ .wo-flight-section .flight-card>div:nth-child(5){grid-column:2/4!important;grid-row:3!important;margin:0!important}
+ .wo-catering-section{height:auto!important;min-height:0!important;padding:12px!important}
+ #catering-list{min-height:90px!important;height:auto!important}
+ #catering-list .empty-state,.wo-catering-section .empty-state{min-height:90px!important;padding:20px 8px!important}
+ .wo-catering-section .stats-row{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+ .wo-catering-section .stat-card{min-width:0!important;padding:10px!important}
+ .wo-manual-toggle{width:100%!important;min-height:44px!important;margin:8px 0!important}
+ .wo-manual-flight-form .field-row{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:8px!important}
+ .wo-notes-surface{margin-top:10px!important;padding:12px!important}
+ #extra-notes{min-height:86px!important;font-size:14px!important}
+ .wo-step3-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;margin-top:12px!important}
+ .wo-step3-actions .btn{width:100%!important;min-width:0!important;min-height:43px!important;padding:0 7px!important;font-size:8px!important;white-space:normal!important;flex:initial!important}
+ .wo-step3-actions .crewbus-next-step-btn{grid-column:1/-1!important}
+ .wo-step3-actions .btn-danger{grid-column:1/-1!important}
+
+ /* Step 4 — compact but readable flight cards; no horizontal overflow. */
+ #step-4.cb26 .cb26-heading{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:10px!important}
+ #step-4.cb26 .cb26-heading-left{gap:10px!important}
+ #step-4.cb26 .cb26-app-icon{width:45px!important;height:45px!important;flex-basis:45px!important}
+ #step-4.cb26 .cb26-app-icon svg{width:25px!important;height:25px!important}
+ #step-4.cb26 .cb26-title-row h1{font-size:22px!important}
+ #step-4.cb26 .cb26-heading-copy p{font-size:10px!important}
+ #step-4.cb26 .cb26-fids-control{display:flex!important;align-items:center!important;gap:8px!important;padding:9px!important}
+ #step-4.cb26 .cb26-fids-time{min-width:0!important;flex:1!important}
+ #step-4.cb26 .cb26-fids-time strong{font-size:9px!important}
+ #step-4.cb26 .cb26-kpis{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+ #step-4.cb26 .cb26-kpi{min-width:0!important;padding:10px!important;gap:8px!important}
+ #step-4.cb26 .cb26-kpi-primary{grid-column:1/-1!important}
+ #step-4.cb26 .cb26-kpi-icon{width:27px!important;height:27px!important}
+ #step-4.cb26 .cb26-kpi strong{font-size:20px!important}
+ #step-4.cb26 .cb26-kpi span:not(.cb26-kpi-icon){font-size:8px!important}
+ #step-4.cb26 .cb26-toolbar{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:8px!important;padding:9px!important}
+ #step-4.cb26 .cb26-search{width:100%!important;min-width:0!important;min-height:42px!important}
+ #step-4.cb26 .cb26-filter-group{display:flex!important;max-width:100%!important;overflow-x:auto!important;flex-wrap:nowrap!important;gap:5px!important;padding-bottom:2px!important}
+ #step-4.cb26 .cb26-filter-group button{flex:0 0 auto!important;min-height:34px!important;padding:0 9px!important;font-size:8px!important}
+ #step-4.cb26 .cb26-toolbar-actions{display:grid!important;grid-template-columns:minmax(0,1fr) repeat(2,auto)!important;align-items:center!important;gap:6px!important;width:100%!important}
+ #step-4.cb26 .cb26-sort{min-width:0!important;width:100%!important}
+ #step-4.cb26 .cb26-sort select{width:100%!important;min-width:0!important}
+ #step-4.cb26 .cb26-quiet-action{min-height:36px!important;padding:0 8px!important;font-size:8px!important;white-space:nowrap!important}
+ #step-4.cb26 .cb26-layout{display:flex!important;flex-direction:column!important;gap:10px!important;min-width:0!important}
+ #step-4.cb26 .cb26-main{width:100%!important;min-width:0!important;gap:10px!important}
+ #step-4.cb26 .cb26-flight-panels{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:9px!important}
+ #step-4.cb26 .cb26-flight-list{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:5px!important;max-height:420px!important;min-height:0!important;padding:7px!important;overflow-y:auto!important;overscroll-behavior:contain}
+ #step-4.cb26 .cb-friend-flight-card{grid-template-columns:25px 48px minmax(0,1fr)!important;grid-template-rows:25px 24px 18px!important;gap:3px 6px!important;min-height:74px!important;padding:7px!important}
+ #step-4.cb26 .cb-friend-select{grid-column:1!important;grid-row:1/4!important;align-self:center!important;justify-self:center!important;width:23px!important;height:23px!important;min-width:23px!important;min-height:23px!important;margin:0!important;font-size:14px!important}
+ #step-4.cb26 .cb-friend-time{grid-column:2!important;grid-row:1!important}
+ #step-4.cb26 .cb-friend-time strong{font-size:12px!important}
+ #step-4.cb26 .cb-friend-flight{grid-column:3!important;grid-row:1!important;min-width:0!important}
+ #step-4.cb26 .cb-friend-flight .cb90-flight-line>strong{font-size:9px!important}
+ #step-4.cb26 .cb-friend-reg-cell{grid-column:2/4!important;grid-row:2!important}
+ #step-4.cb26 .cb-friend-reg{height:22px!important;min-height:22px!important;padding:2px 6px!important;font-size:9px!important}
+ #step-4.cb26 .cb-friend-meta{grid-column:2/4!important;grid-row:3!important;font-size:7px!important;white-space:nowrap!important}
+ #step-4.cb26 .cb-friend-row-actions{grid-column:2/4!important;grid-row:4!important;gap:4px!important}
+ #step-4.cb26 .cb-friend-row-actions button{height:20px!important;min-height:20px!important;padding:0 6px!important;font-size:7px!important}
+ #step-4.cb26 .cb26-secondary-panels{display:flex!important;flex-direction:column!important;gap:8px!important}
+ #step-4.cb26 .cb26-other-grid,#step-4.cb26 #crewbus-col-other{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}
+ #step-4.cb26 .cb26-service-grid{grid-template-columns:minmax(0,1fr)!important;gap:8px!important}
+ #step-4.cb26 .cb26-service-flight-list{grid-template-columns:repeat(2,minmax(0,1fr))!important;max-height:280px!important;gap:5px!important}
+ #step-4.cb26 .cb26-service-flight{padding:7px!important}
+ #step-4.cb26 .cb26-service-actions{gap:4px!important}
+ #step-4.cb26 .cb26-service-action{min-height:25px!important;padding:0 7px!important;font-size:8px!important}
+ #step-4.cb26 .cb26-manual-fields{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+ #step-4.cb26 .cb26-manual-fields>*{min-width:0!important}
+ #step-4.cb26 .cb26-add-manual{grid-column:1/-1!important;width:100%!important;min-height:42px!important}
+ #step-4.cb26 .cb26-document-rail{position:static!important;width:100%!important;min-width:0!important}
+ #step-4.cb26 .cb26-document-card{display:block!important;width:100%!important}
+ #step-4.cb26 .cb26-manifest-wrap{width:100%!important;max-height:none!important;overflow:visible!important}
+ #step-4.cb26 .cb26-generate{width:100%!important;min-height:47px!important}
+ #step-4.cb26 .cb26-back-operations{width:100%!important;min-height:42px!important}
+}
+@media(max-width:430px){
+ .wo-login-toast{top:calc(env(safe-area-inset-top,0px) + 8px)!important;right:8px!important;width:calc(100vw - 16px)!important}
+ .wo-login-toast-form{padding:4px 11px 10px!important}
+ .wo-login-toast-brand strong{font-size:12px!important}
+ .wo-login-toast-actions button{min-height:37px!important;font-size:9px!important}
+ .header-inner.app-header-clean{gap:5px!important;padding:0 7px!important}
+ .app-brand-center{max-width:calc(100% - 136px)!important}
+ .app-brand-copy .logo-text{font-size:10px!important}
+ .wo-step-title{font-size:21px!important}
+ .wo-step-subtitle{font-size:10px!important}
+ .wo-step3-actions{grid-template-columns:minmax(0,1fr)!important}
+ .wo-step3-actions .crewbus-next-step-btn,.wo-step3-actions .btn-danger{grid-column:auto!important}
+ #step-4.cb26 .cb26-toolbar-actions{grid-template-columns:minmax(0,1fr) repeat(2,auto)!important}
+ #step-4.cb26 .cb26-other-grid,#step-4.cb26 #crewbus-col-other{grid-template-columns:minmax(0,1fr)!important}
+ #step-4.cb26 .cb26-service-flight-list{grid-template-columns:minmax(0,1fr)!important}
+ #step-4.cb26 .cb26-manual-fields{grid-template-columns:minmax(0,1fr)!important}
+}
+@media print{
+ .wo-login-toast,.wo-login-trigger,#wo-lgg-print-fallback{display:none!important}
+}
+</style>
+
+
+<style id="wo-lgg-login-toast-compact-hardening">
+#wo-lgg-auth-overlay.wo-login-toast{
+ position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 10px)!important;
+ right:12px!important;left:auto!important;bottom:auto!important;
+ width:min(390px,calc(100vw - 24px))!important;max-width:390px!important;min-width:0!important;
+ max-height:calc(100dvh - env(safe-area-inset-top,0px) - 20px)!important;
+ padding:0!important;margin:0!important;overflow:hidden!important;box-sizing:border-box!important;
+}
+#wo-lgg-auth-overlay.wo-login-toast>div{
+ display:block!important;position:static!important;flex:none!important;
+ width:auto!important;max-width:none!important;min-width:0!important;
+ margin:0!important;padding:0!important;box-sizing:border-box!important;
+}
+#wo-lgg-auth-overlay.wo-login-toast>.wo-login-toast-progress{height:3px!important;width:100%!important}
+#wo-lgg-auth-overlay.wo-login-toast>.wo-login-toast-head{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ height:auto!important;padding:10px 12px 6px!important
+}
+#wo-lgg-auth-overlay.wo-login-toast .wo-login-toast-form{padding:5px 12px 10px!important;gap:4px!important}
+#wo-lgg-auth-overlay.wo-login-toast .wo-login-toast-form input{
+ width:100%!important;height:35px!important;min-height:35px!important;
+ padding:7px 9px!important;font-size:13px!important
+}
+#wo-lgg-auth-overlay.wo-login-toast .wo-login-toast-password button{top:2px!important}
+#wo-lgg-auth-overlay.wo-login-toast .wo-login-toast-actions{margin-top:3px!important}
+@media(max-width:430px){
+ #wo-lgg-auth-overlay.wo-login-toast{right:8px!important;width:calc(100vw - 16px)!important}
+ #wo-lgg-auth-overlay.wo-login-toast .wo-login-toast-form{padding:4px 10px 8px!important}
+ #wo-lgg-auth-overlay.wo-login-toast .wo-login-toast-form label{margin-top:2px!important}
 }
 </style>
 
