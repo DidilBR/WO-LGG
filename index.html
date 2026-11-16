@@ -12249,19 +12249,21 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
 
 
 
-<style id="wo-lgg-crewbus-document-rail-follow-v2">
-/* Floating document rail:
-   - natural position until the search/filter toolbar leaves the viewport;
-   - then follows the current viewport at a comfortable vertical position;
-   - an invisible grid spacer preserves the right-hand column;
-   - no floating on mobile or in combined 3+4 mode. */
-#step-4.cb26 .cb26-layout{align-items:start!important;overflow:visible!important}
+
+<style id="wo-lgg-crewbus-document-rail-follow-v3">
+/* Stable floating document rail: keep its grid column reserved, move the whole rail,
+   and never shrink the rail just because the bottom of the page approaches. */
+#step-4.cb26 .cb26-layout{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 355px!important;
+  align-items:start!important;
+  overflow:visible!important;
+}
 #step-4.cb26 .cb26-document-rail{position:static!important;top:auto!important;transform:none!important}
 #step-4.cb26 .cb26-document-rail.cb26-rail-following{
   position:fixed!important;
   z-index:950!important;
   margin:0!important;
-  align-self:start!important;
   transform:none!important;
 }
 #step-4.cb26 .cb26-document-rail-spacer{
@@ -12274,14 +12276,14 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
   pointer-events:none!important;
 }
 #step-4.cb26 .cb26-document-rail.cb26-rail-following .cb26-document-card{
-  max-height:var(--cb26-rail-max-height,76vh)!important;
-  overflow-y:auto!important;
-  overflow-x:hidden!important;
-  overscroll-behavior:contain!important;
-  scrollbar-width:thin!important;
-  scrollbar-color:#52635a #171d1a!important;
+  overflow:visible!important;
+  max-height:none!important;
+}
+@media(max-width:1200px){
+  #step-4.cb26 .cb26-layout{grid-template-columns:minmax(0,1fr) 325px!important}
 }
 @media(max-width:980px){
+  #step-4.cb26 .cb26-layout{grid-template-columns:minmax(0,1fr)!important}
   #step-4.cb26 .cb26-document-rail,
   #step-4.cb26 .cb26-document-rail.cb26-rail-following{
     position:static!important;top:auto!important;left:auto!important;width:100%!important;
@@ -12295,66 +12297,71 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
 </style>
 
 
-<script id="wo-lgg-crewbus-document-rail-follow-controller-v2">
+<script id="wo-lgg-crewbus-document-rail-follow-controller-v3">
 (function(){
-  if(window.__woLggCrewBusRailFollowV2)return;
-  window.__woLggCrewBusRailFollowV2=true;
+  if(window.__woLggCrewBusRailFollowV3)return;
+  window.__woLggCrewBusRailFollowV3=true;
 
-  var ROOT='#step-4.cb26';
-  var TOOLBAR=ROOT+' .cb26-toolbar';
-  var LAYOUT=ROOT+' .cb26-layout';
-  var RAIL=ROOT+' .cb26-document-rail';
-  var BREAKPOINT=981;
-  var TOP_GAP=82;
-  var BOTTOM_GAP=22;
-  var state={root:null,toolbar:null,layout:null,rail:null,spacer:null,active:false,raf:false};
+  var SELECTOR={
+    root:'#step-4.cb26',
+    toolbar:'#step-4.cb26 .cb26-toolbar',
+    layout:'#step-4.cb26 .cb26-layout',
+    rail:'#step-4.cb26 .cb26-document-rail'
+  };
+  var DESKTOP_MIN=981;
+  var TOP_OFFSET=82;
+  var BOTTOM_OFFSET=22;
+  var state={root:null,toolbar:null,layout:null,rail:null,spacer:null,active:false,raf:0};
 
-  function isCombined(root){
-    if(!root)return false;
-    return !!root.closest('.workflow-shell.crewbus-combined, .app-wrap.crewbus-combined, body.crewbus-combined');
+  function combinedMode(root){
+    return !!(root && root.closest('.workflow-shell.crewbus-combined,.app-wrap.crewbus-combined,body.crewbus-combined'));
   }
 
-  function clearRail(){
-    var rail=state.rail || document.querySelector(RAIL);
-    var spacer=state.spacer || (rail && rail.parentNode && rail.parentNode.querySelector('.cb26-document-rail-spacer'));
-    if(rail){
-      rail.classList.remove('cb26-rail-following');
-      ['position','top','left','right','width','height','max-height','min-height','margin','transform','z-index','--cb26-rail-max-height'].forEach(function(prop){
-        rail.style.removeProperty(prop);
-      });
-      var card=rail.querySelector('.cb26-document-card');
-      if(card){
-        ['max-height','overflow-y','overflow-x'].forEach(function(prop){card.style.removeProperty(prop);});
-      }
-    }
+  function removeInlineRailStyles(rail){
+    if(!rail)return;
+    rail.classList.remove('cb26-rail-following');
+    ['position','top','left','right','bottom','width','height','max-height','min-height',
+     'margin','transform','z-index'].forEach(function(name){rail.style.removeProperty(name);});
+  }
+
+  function clear(){
+    var rail=state.rail || document.querySelector(SELECTOR.rail);
+    var spacer=state.spacer;
+    removeInlineRailStyles(rail);
     if(spacer && spacer.parentNode)spacer.parentNode.removeChild(spacer);
     state.spacer=null;
     state.active=false;
   }
 
   function resolve(){
-    var root=document.querySelector(ROOT);
-    if(!root){clearRail();state.root=null;return false;}
+    var root=document.querySelector(SELECTOR.root);
+    if(!root){
+      clear();
+      state.root=state.toolbar=state.layout=state.rail=null;
+      return false;
+    }
     var toolbar=root.querySelector('.cb26-toolbar');
     var layout=root.querySelector('.cb26-layout');
     var rail=root.querySelector('.cb26-document-rail');
-    if(state.root!==root || state.toolbar!==toolbar || state.layout!==layout || state.rail!==rail){
-      clearRail();
+    if(root!==state.root || toolbar!==state.toolbar || layout!==state.layout || rail!==state.rail){
+      clear();
       state.root=root;state.toolbar=toolbar;state.layout=layout;state.rail=rail;
     }
     return !!(toolbar && layout && rail);
   }
 
   function ensureSpacer(){
+    if(state.spacer && state.spacer.parentNode)return state.spacer;
     var rail=state.rail;
     if(!rail || !rail.parentNode)return null;
-    if(state.spacer && state.spacer.parentNode)return state.spacer;
+
+    // Measure the rail while it is still in its normal grid cell.
     var rect=rail.getBoundingClientRect();
     var spacer=document.createElement('div');
     spacer.className='cb26-document-rail-spacer';
     spacer.setAttribute('aria-hidden','true');
-    spacer.style.minHeight=Math.max(1,rect.height)+'px';
-    spacer.style.width='100%';
+    spacer.style.width=Math.max(1,rect.width)+'px';
+    spacer.style.height=Math.max(1,rail.offsetHeight)+'px';
     spacer.style.gridColumn='2';
     spacer.style.gridRow='1';
     rail.parentNode.insertBefore(spacer,rail);
@@ -12362,105 +12369,106 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
     return spacer;
   }
 
-  function setNormal(){
-    if(state.active)clearRail();
+  function normalFlow(){
+    if(state.active)clear();
   }
 
-  function updateNow(){
-    state.raf=false;
+  function update(){
+    state.raf=0;
     if(!resolve())return;
-    var root=state.root, toolbar=state.toolbar, layout=state.layout, rail=state.rail;
 
-    var isDesktop=window.innerWidth>=BREAKPOINT;
-    var isVisible=!!(root.getClientRects().length) && getComputedStyle(root).display!=='none' && !root.classList.contains('hidden');
-    if(!isDesktop || !isVisible || isCombined(root)){
-      setNormal();
+    var root=state.root;
+    var toolbar=state.toolbar;
+    var layout=state.layout;
+    var rail=state.rail;
+    var visible=root.getClientRects().length>0 &&
+      getComputedStyle(root).display!=='none' &&
+      !root.classList.contains('hidden');
+
+    if(window.innerWidth<DESKTOP_MIN || !visible || combinedMode(root)){
+      normalFlow();
       return;
     }
 
+    // Start only when the search/filter toolbar has passed the sticky header.
     var toolbarRect=toolbar.getBoundingClientRect();
-    // Only activate after the full search/filter bar has moved past the header zone.
-    var shouldFollow=toolbarRect.bottom<=TOP_GAP;
-    if(!shouldFollow){
-      setNormal();
+    if(toolbarRect.bottom>TOP_OFFSET){
+      normalFlow();
       return;
     }
 
     var spacer=ensureSpacer();
     if(!spacer)return;
-    var spacerRect=spacer.getBoundingClientRect();
-    var rootRect=root.getBoundingClientRect();
-    var viewportH=window.innerHeight || document.documentElement.clientHeight;
-    var maxPanelH=Math.max(260,viewportH-TOP_GAP-BOTTOM_GAP);
-    var card=rail.querySelector('.cb26-document-card');
-    if(card){
-      card.style.setProperty('max-height',maxPanelH+'px','important');
-      card.style.setProperty('overflow-y','auto','important');
-      card.style.setProperty('overflow-x','hidden','important');
+
+    // Preserve exact grid-column geometry. Do not derive the width from the viewport.
+    var slot=spacer.getBoundingClientRect();
+    var viewportHeight=window.innerHeight || document.documentElement.clientHeight;
+    var availableHeight=Math.max(260,viewportHeight-TOP_OFFSET-BOTTOM_OFFSET);
+    var naturalHeight=Math.max(rail.offsetHeight,rail.scrollHeight);
+    var panelHeight=Math.min(naturalHeight,availableHeight);
+    var top=TOP_OFFSET;
+
+    // Center vertically when the whole document panel fits. If it is taller than
+    // the available viewport, keep its full width and allow page scrolling rather
+    // than making its inner content independently scroll and disappear.
+    if(naturalHeight<=availableHeight){
+      top=Math.max(TOP_OFFSET,Math.round((viewportHeight-naturalHeight)/2));
     }
 
     rail.classList.add('cb26-rail-following');
     rail.style.setProperty('position','fixed','important');
-    rail.style.setProperty('left',Math.round(spacerRect.left)+'px','important');
-    rail.style.setProperty('width',Math.round(spacerRect.width)+'px','important');
+    rail.style.setProperty('left',Math.round(slot.left)+'px','important');
+    rail.style.setProperty('width',Math.round(slot.width)+'px','important');
     rail.style.setProperty('right','auto','important');
     rail.style.setProperty('bottom','auto','important');
+    rail.style.setProperty('top',Math.round(top)+'px','important');
     rail.style.setProperty('height','auto','important');
-    rail.style.setProperty('max-height',maxPanelH+'px','important');
+    rail.style.setProperty('max-height','none','important');
     rail.style.setProperty('z-index','950','important');
 
-    // Center the panel in the currently visible work area; if the end of
-    // step 4 approaches, lift it so it never spills outside the Crew Bus step.
-    var railHeight=Math.min(rail.getBoundingClientRect().height || maxPanelH,maxPanelH);
-    var top=Math.max(TOP_GAP,(viewportH-railHeight)/2);
-    var rootBottom=rootRect.bottom;
-    var maxTop=rootBottom-railHeight-BOTTOM_GAP;
-    if(maxTop>=TOP_GAP)top=Math.min(top,maxTop);
-    else top=TOP_GAP;
-
-    // If the rail is temporarily taller than the remaining step area, cap
-    // its own scrolling area rather than letting it overlap the next step.
-    var stepAvailable=Math.max(220,rootBottom-TOP_GAP-BOTTOM_GAP);
-    var finalMaxH=Math.min(maxPanelH,stepAvailable);
-    rail.style.setProperty('--cb26-rail-max-height',finalMaxH+'px');
-    rail.style.setProperty('max-height',finalMaxH+'px','important');
-    if(card)card.style.setProperty('max-height',finalMaxH+'px','important');
-    rail.style.setProperty('top',Math.round(top)+'px','important');
+    // Never clip the card to the remaining height of step 4. That was the V8 bug:
+    // at the bottom it collapsed to a tiny 220px viewport showing only the button.
+    var card=rail.querySelector('.cb26-document-card');
+    if(card){
+      card.style.setProperty('max-height','none','important');
+      card.style.setProperty('height','auto','important');
+      card.style.setProperty('overflow','visible','important');
+    }
 
     state.active=true;
   }
 
   function schedule(){
     if(state.raf)return;
-    state.raf=true;
-    (window.requestAnimationFrame || function(fn){return setTimeout(fn,16)})(updateNow);
+    state.raf=(window.requestAnimationFrame || function(fn){return setTimeout(fn,16);})(update);
   }
 
-  // Capture nested scrollable ancestors as well as normal window scrolling.
-  document.addEventListener('scroll',schedule,{passive:true,capture:true});
+  // Capture scroll from window and any app-level scroll container.
+  document.addEventListener('scroll',schedule,{capture:true,passive:true});
   window.addEventListener('scroll',schedule,{passive:true});
   window.addEventListener('resize',schedule,{passive:true});
-  window.addEventListener('orientationchange',function(){setTimeout(schedule,100)},{passive:true});
+  window.addEventListener('orientationchange',function(){setTimeout(schedule,120);},{passive:true});
 
-  // React to step navigation and combined/separate mode toggles.
+  // Reset after step/mode switches, but avoid observing inline style writes from this controller.
   if(window.MutationObserver && document.body){
     var observer=new MutationObserver(schedule);
-    observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class','style']});
+    observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
   }
 
-  // Re-evaluate after FIDS rendering, card count changes and layout updates.
   if(window.ResizeObserver){
     var ro=new ResizeObserver(schedule);
-    function observeTargets(){
+    function watch(){
       if(!resolve())return;
-      [state.root,state.toolbar,state.layout].forEach(function(el){if(el)try{ro.observe(el)}catch(e){}});
+      [state.root,state.toolbar,state.layout].forEach(function(el){if(el)try{ro.observe(el);}catch(e){}});
     }
-    document.addEventListener('DOMContentLoaded',observeTargets,{once:true});
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch,{once:true});
+    else watch();
   }
 
-  document.addEventListener('DOMContentLoaded',schedule,{once:true});
-  window.addEventListener('load',function(){setTimeout(schedule,180)},{once:true});
-  setTimeout(schedule,400);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});
+  else schedule();
+  window.addEventListener('load',function(){setTimeout(schedule,180);},{once:true});
+  setTimeout(schedule,500);
 })();
 </script>
 
