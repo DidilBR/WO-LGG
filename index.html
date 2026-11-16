@@ -12250,228 +12250,302 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
 
 
 
-<style id="wo-lgg-crewbus-document-rail-follow-v3">
-/* Stable floating document rail: keep its grid column reserved, move the whole rail,
-   and never shrink the rail just because the bottom of the page approaches. */
-#step-4.cb26 .cb26-layout{
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) 355px!important;
-  align-items:start!important;
-  overflow:visible!important;
+<style id="wo-lgg-crewbus-document-portal-style">
+/* Mirror of the existing Step 4 document-rail styles, preserved in source cascade order. */
+.cb26-document-portal-scope{box-sizing:border-box;isolation:isolate;}
+.cb90-board,.cb90-manifest{border:1px solid rgba(255,255,255,.08);border-radius:15px;background:rgba(255,255,255,.015);overflow:hidden}
+.cb90-board-head,.cb90-manifest-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;border-bottom:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,rgba(255,255,255,.018),transparent)}
+.cb90-board-head>div:first-child,.cb90-manifest-head>div{min-width:0;display:flex;flex-direction:column;gap:3px}
+.cb90-board-head strong,.cb90-manifest-head strong{font-size:12px;color:var(--t1);line-height:1.1}
+.cb90-board-head small,.cb90-manifest-head small{font-size:8px;color:var(--t3)}
+.cb90-manifest{position:sticky;top:76px;max-height:calc(100dvh - 92px);display:flex;flex-direction:column}
+.cb90-manifest-head{padding:12px 13px}
+.cb90-manifest-count{min-width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:linear-gradient(135deg,rgba(143,168,255,.13),rgba(201,85,255,.08));border:1px solid rgba(143,168,255,.18);font:900 14px var(--mono);color:var(--t1)}
+.cb90-manifest-list{padding:7px;display:grid;gap:3px;overflow:auto;min-height:125px;max-height:39vh}
+.crewbus-selected-empty{min-height:130px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;border:1px dashed rgba(255,255,255,.08);border-radius:10px;color:var(--t3);padding:18px}
+.crewbus-selected-empty>span{font-size:18px;opacity:.5}
+.crewbus-selected-empty strong{font-size:10px;color:var(--t2)}
+.crewbus-selected-empty small{font-size:8px;line-height:1.35;color:var(--t3)}
+.cb90-manifest-row{display:grid;grid-template-columns:24px 44px minmax(0,1fr) 22px;gap:7px;align-items:center;padding:7px;border-radius:8px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.018)}
+.cb90-manifest-row:hover{background:rgba(255,255,255,.035);border-color:rgba(143,168,255,.15)}
+.cb90-manifest-index{font:900 7px var(--mono);color:var(--t3);text-align:center}
+.cb90-manifest-time{font:900 11px var(--mono);color:var(--t1);line-height:1}
+.cb90-manifest-time small{display:block;margin-top:4px;font:800 5px var(--mono);letter-spacing:.7px;color:var(--t3)}
+.cb90-manifest-main{min-width:0}
+.cb90-manifest-main strong{display:block;font:900 9px var(--mono);color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb90-manifest-main span{display:block;margin-top:3px;font-size:7px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb90-manifest-remove{width:22px;height:22px;border:0;border-radius:6px;background:transparent;color:var(--t3);font-size:16px;cursor:pointer}
+.cb90-manifest-remove:hover{background:rgba(255,95,122,.08);color:#ff718d}
+.cb90-manifest-order{margin:5px 7px 7px;padding:9px 10px;border:1px solid rgba(255,255,255,.07);border-radius:9px;background:rgba(255,255,255,.014);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cb90-manifest-order div{min-width:0;display:flex;flex-direction:column;gap:3px}
+.cb90-manifest-order span{font:800 6px var(--mono);letter-spacing:.9px;color:var(--t3)}
+.cb90-manifest-order strong{font-size:9px;color:var(--t1)}
+.cb90-manifest-notes{padding:0 7px 7px}
+.cb90-manifest-notes label{display:flex;align-items:center;gap:6px;margin-bottom:5px;font:800 7px var(--mono);letter-spacing:.8px;text-transform:uppercase;color:var(--t3)}
+.cb90-manifest-notes textarea{width:100%!important;min-height:70px!important;margin:0!important;resize:vertical!important;padding:8px!important;border-radius:8px!important;font-size:8px!important;line-height:1.45!important;background:rgba(0,0,0,.1)!important;border:1px solid rgba(255,255,255,.07)!important}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest{position:relative!important;top:auto!important;max-height:none!important;display:grid!important;grid-template-columns:minmax(160px,.7fr) minmax(190px,.8fr) minmax(280px,1.5fr) minmax(205px,.9fr);gap:10px;align-items:center;padding:11px;border:1px solid rgba(255,255,255,.085);border-radius:14px;overflow:visible}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-head{padding:0;border:0;background:none}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-list{display:none!important}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-order{border:0;padding:0;display:flex;align-items:center;gap:8px}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-notes{margin:0;min-width:0}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-notes textarea{min-height:58px!important;max-height:90px}
+.cb26-document-portal-scope.cb-pro .cb90-manifest-list{grid-column:1!important;grid-row:2/5!important;max-height:340px!important;padding:12px 18px!important}
+.cb26-document-portal-scope.cb-pro .cb90-manifest-order{grid-column:2!important;margin:12px 16px 0!important}
+.cb26-document-portal-scope.cb-pro .cb90-manifest-notes{grid-column:2!important;padding:12px 16px!important}
+.cb26-document-portal-scope.cb26 .cb26-flight-list::-webkit-scrollbar,.cb26-document-portal-scope.cb26 .cb26-other-list::-webkit-scrollbar,.cb26-document-portal-scope.cb26 .cb26-manifest-list::-webkit-scrollbar{width:7px}
+.cb26-document-portal-scope.cb26 .cb26-flight-list::-webkit-scrollbar-thumb,.cb26-document-portal-scope.cb26 .cb26-other-list::-webkit-scrollbar-thumb,.cb26-document-portal-scope.cb26 .cb26-manifest-list::-webkit-scrollbar-thumb{background:#4a565d;border-radius:10px}
+.cb26-document-portal-scope.cb26 .cb26-document-rail{min-width:0;position:sticky;top:14px}
+.cb26-document-portal-scope.cb26 .cb26-document-card{overflow:hidden;border:1px solid #3c474d;border-radius:13px;background:#151a1d;box-shadow:0 8px 25px rgba(0,0,0,.2)}
+.cb26-document-portal-scope.cb26 .cb26-document-header{display:flex;align-items:center;gap:12px;padding:15px 16px 12px;border-bottom:1px solid #323c42;background:linear-gradient(145deg,#1c2527,#171d20)}
+.cb26-document-portal-scope.cb26 .cb26-doc-icon{width:45px;height:45px;display:grid;place-items:center;flex:0 0 45px;border:1px solid #468a62;border-radius:10px;background:#1d3b2b;color:#9af0b7}
+.cb26-document-portal-scope.cb26 .cb26-doc-icon svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.cb26-document-portal-scope.cb26 .cb26-doc-kicker{color:#93a29c;font-size:8px;font-weight:850;letter-spacing:1px}
+.cb26-document-portal-scope.cb26 .cb26-document-header h2{margin:4px 0 2px;color:#f1f5f5;font-size:16px;font-weight:760;letter-spacing:-.3px}
+.cb26-document-portal-scope.cb26 .cb26-document-header p{margin:0;color:#9ba7ac;font-size:9px}
+.cb26-document-portal-scope.cb26 .cb26-doc-summary{margin:12px 12px 8px;padding:11px 12px;border:1px solid #37434a;border-radius:9px;background:#1a2125}
+.cb26-document-portal-scope.cb26 .cb26-doc-summary-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:8px;border-bottom:1px solid #354047}
+.cb26-document-portal-scope.cb26 .cb26-doc-summary-head strong{color:#eff3f4;font-size:11px}
+.cb26-document-portal-scope.cb26 .cb26-doc-summary-head b{padding:4px 8px;border-radius:20px;background:#1d422e;color:#8cf0b1;font-size:9px}
+.cb26-document-portal-scope.cb26 .cb26-breakdown{display:grid;gap:7px;padding-top:9px}
+.cb26-document-portal-scope.cb26 .cb26-breakdown>div{display:flex;align-items:center;gap:8px;color:#d0d8db;font-size:9px}
+.cb26-document-portal-scope.cb26 .cb26-check{display:grid;place-items:center;width:15px;height:15px;border-radius:50%;background:#1d3e2b;color:#69ed9e;font-size:11px;font-style:normal;font-weight:900}
+.cb26-document-portal-scope.cb26 .cb26-breakdown b{color:#f4f6f6;font-weight:750}
+.cb26-document-portal-scope.cb26 .cb26-doc-order{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 12px;padding:10px 11px;border:1px solid #354148;border-radius:8px;background:#1a2125}
+.cb26-document-portal-scope.cb26 .cb26-doc-section-label{display:block;color:#8b9ba1;font-size:8px;font-weight:850;letter-spacing:.8px}
+.cb26-document-portal-scope.cb26 .cb26-doc-order strong{display:block;margin-top:4px;color:#eaf0f2;font-size:10px}
+.cb26-document-portal-scope.cb26 .cb26-manifest-wrap{margin:8px 12px;border:1px solid #354148;border-radius:8px;background:#121719;overflow:hidden}
+.cb26-document-portal-scope.cb26 .cb26-manifest-heading{display:flex;flex-direction:column;gap:4px;padding:10px 11px;border-bottom:1px solid #303b41}
+.cb26-document-portal-scope.cb26 .cb26-manifest-heading strong{color:#eaf0f2;font-size:10px}
+.cb26-document-portal-scope.cb26 .cb26-manifest-heading span{color:#86949a;font-size:8px}
+.cb26-document-portal-scope.cb26 .cb26-manifest-list{display:grid;gap:0;max-height:220px;overflow:auto;padding:0 10px;scrollbar-color:#536169 #182024;scrollbar-width:thin}
+.cb26-document-portal-scope.cb26 .cb90-manifest-row{display:grid;grid-template-columns:23px 47px minmax(0,1fr) 23px;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid #293338}
+.cb26-document-portal-scope.cb26 .cb90-manifest-index{color:#718087;font-size:8px;font-variant-numeric:tabular-nums}
+.cb26-document-portal-scope.cb26 .cb90-manifest-time{color:#f1f5f6;font-size:10px;font-weight:800;font-variant-numeric:tabular-nums}
+.cb26-document-portal-scope.cb26 .cb90-manifest-time small{display:block;margin-top:2px;color:#829197;font-size:7px;letter-spacing:.4px}
+.cb26-document-portal-scope.cb26 .cb90-manifest-main{min-width:0}
+.cb26-document-portal-scope.cb26 .cb90-manifest-main strong{display:block;color:#eaf0f2;font-size:9px;font-weight:750}
+.cb26-document-portal-scope.cb26 .cb90-manifest-main span{display:block;margin-top:2px;color:#89979d;font-size:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb26-document-portal-scope.cb26 .cb90-manifest-remove{width:22px;height:22px;border:1px solid #4b4145;border-radius:5px;background:#2a2023;color:#e5a4a4;font-size:14px;cursor:pointer}
+.cb26-document-portal-scope.cb26 .crewbus-selected-empty{display:flex;flex-direction:column;align-items:center;gap:5px;padding:18px 8px;color:#acb7bb;text-align:center}
+.cb26-document-portal-scope.cb26 .crewbus-selected-empty strong{font-size:9px;color:#d9e0e2}
+.cb26-document-portal-scope.cb26 .crewbus-selected-empty small{font-size:8px;color:#829096}
+.cb26-document-portal-scope.cb26 .cb26-notes{margin:8px 12px 10px}
+.cb26-document-portal-scope.cb26 .cb26-notes label{display:block;margin-bottom:6px;color:#d5dddf;font-size:9px;font-weight:750}
+.cb26-document-portal-scope.cb26 .cb26-notes label small{color:#819096;font-size:7px;letter-spacing:.5px}
+.cb26-document-portal-scope.cb26 .cb26-notes textarea{display:block;width:100%;min-height:66px;resize:vertical;padding:9px 10px;border:1px solid #3b474d;border-radius:7px;background:#111719;color:#edf2f3;font-size:9px;line-height:1.4;outline:none}
+.cb26-document-portal-scope.cb26 .cb26-notes textarea:focus{border-color:#52926a;box-shadow:0 0 0 2px rgba(84,230,154,.08)}
+.cb26-document-portal-scope.cb26 .cb26-notes textarea::placeholder{color:#77858b}
+.cb26-document-portal-scope.cb26 .cb26-generate{width:calc(100% - 24px);min-height:45px;display:flex;align-items:center;gap:10px;margin:0 12px 8px;padding:9px 13px;border:1px solid #54d98b;border-radius:8px;background:linear-gradient(105deg,#1a8f50,#207b46);color:#fff;box-shadow:0 5px 14px rgba(22,140,75,.15);text-align:left;cursor:pointer;transition:.18s}
+.cb26-document-portal-scope.cb26 .cb26-generate:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.cb26-document-portal-scope.cb26 .cb26-generate svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cb26-document-portal-scope.cb26 .cb26-generate span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cb26-document-portal-scope.cb26 .cb26-generate strong{font-size:10px;font-weight:800}
+.cb26-document-portal-scope.cb26 .cb26-generate small{font-size:7px;color:#d4f5df}
+.cb26-document-portal-scope.cb26 .cb26-generate>b{margin-left:auto;font-size:22px;font-weight:400}
+.cb26-document-portal-scope.cb26 .cb26-reset{width:calc(100% - 24px);display:flex;align-items:center;justify-content:center;gap:7px;margin:0 12px 11px;padding:9px;border:0;border-top:1px solid #303a40;border-radius:0;background:transparent;color:#a2afb4;font-size:9px;cursor:pointer}
+.cb26-document-portal-scope.cb26 .cb26-reset:hover{color:#f1f5f6}
+.cb26-document-portal-scope.cb26 .cb26-reset svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest{border-color:rgba(255,255,255,.11)!important;background:linear-gradient(180deg,rgba(13,19,29,.98),rgba(9,13,20,.96))!important}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-head{padding:14px!important}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-head strong{font-size:14px!important}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-list{max-height:42vh!important;padding:9px!important;gap:5px!important}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-row{padding:9px!important;grid-template-columns:26px 48px minmax(0,1fr) 26px!important}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-main strong{font-size:10px!important}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-main span{font-size:8px!important}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-remove{width:25px!important;height:25px!important}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest{width:100%;min-width:0;grid-template-columns:minmax(0,1fr) minmax(150px,.72fr) minmax(0,1fr) minmax(210px,.95fr)!important;gap:12px!important;overflow:hidden!important}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest>*{min-width:0}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-head strong{font-size:16px}
+.cb26-document-portal-scope.crewbus-radical-v90 .cb90-manifest-notes textarea{width:100%;min-width:0;box-sizing:border-box}
+.cb26-document-portal-scope.cb26 .cb26-back-operations{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin-top:8px;padding:10px 12px;border:1px solid #48564d;border-radius:7px;background:transparent;color:#c3d0c6;font-size:10px;font-weight:700;cursor:pointer}
+.cb26-document-portal-scope.cb26 .cb26-back-operations:hover{background:#202a23;border-color:#78927d;color:#fff}
+.cb26-document-portal-scope.cb26 .cb26-document-card{padding-bottom:12px!important}
+
+.cb26-document-portal-scope{
+  position:fixed!important;z-index:2147482000!important;
+  margin:0!important;padding:0!important;min-width:0!important;max-width:none!important;
+  overflow:visible!important;transform:none!important;filter:none!important;contain:none!important;
 }
-#step-4.cb26 .cb26-document-rail{position:static!important;top:auto!important;transform:none!important}
-#step-4.cb26 .cb26-document-rail.cb26-rail-following{
-  position:fixed!important;
-  z-index:950!important;
-  margin:0!important;
-  transform:none!important;
+.cb26-document-portal-scope .cb26-document-rail{
+  position:static!important;display:block!important;width:100%!important;
+  min-width:0!important;max-width:none!important;margin:0!important;
 }
-#step-4.cb26 .cb26-document-rail-spacer{
-  display:block!important;
-  grid-column:2!important;
-  grid-row:1!important;
-  width:100%!important;
-  min-width:0!important;
-  visibility:hidden!important;
-  pointer-events:none!important;
+.cb26-document-portal-scope .cb26-document-card{
+  width:100%!important;max-width:100%!important;margin:0!important;
+  overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;
 }
-#step-4.cb26 .cb26-document-rail.cb26-rail-following .cb26-document-card{
-  overflow:visible!important;
-  max-height:none!important;
-}
-@media(max-width:1200px){
-  #step-4.cb26 .cb26-layout{grid-template-columns:minmax(0,1fr) 325px!important}
+.cb26-document-portal-placeholder{
+  display:block!important;grid-column:2!important;grid-row:1!important;
+  min-width:0!important;width:100%!important;visibility:hidden!important;pointer-events:none!important;
 }
 @media(max-width:980px){
-  #step-4.cb26 .cb26-layout{grid-template-columns:minmax(0,1fr)!important}
-  #step-4.cb26 .cb26-document-rail,
-  #step-4.cb26 .cb26-document-rail.cb26-rail-following{
-    position:static!important;top:auto!important;left:auto!important;width:100%!important;
-    max-height:none!important;transform:none!important
-  }
-  #step-4.cb26 .cb26-document-rail-spacer{display:none!important}
-  #step-4.cb26 .cb26-document-rail .cb26-document-card{
-    max-height:none!important;overflow:visible!important
-  }
+  .cb26-document-portal-scope{display:none!important}
+  .cb26-document-portal-placeholder{display:none!important}
 }
 </style>
 
-
-<script id="wo-lgg-crewbus-document-rail-follow-controller-v3">
+<script id="wo-lgg-crewbus-document-portal-controller">
 (function(){
-  if(window.__woLggCrewBusRailFollowV3)return;
-  window.__woLggCrewBusRailFollowV3=true;
+  if(window.__woLggCrewBusDocumentPortal)return;
+  window.__woLggCrewBusDocumentPortal=true;
 
-  var SELECTOR={
-    root:'#step-4.cb26',
-    toolbar:'#step-4.cb26 .cb26-toolbar',
-    layout:'#step-4.cb26 .cb26-layout',
-    rail:'#step-4.cb26 .cb26-document-rail'
-  };
-  var DESKTOP_MIN=981;
-  var TOP_OFFSET=82;
-  var BOTTOM_OFFSET=22;
-  var state={root:null,toolbar:null,layout:null,rail:null,spacer:null,active:false,raf:0};
+  var ROOT='#step-4.cb26', MIN_WIDTH=981, SEARCH_CLEARANCE=84, VIEW_TOP=84, VIEW_BOTTOM=20;
+  var root=null, toolbar=null, layout=null, rail=null, portal=null, placeholder=null;
+  var originalParent=null, originalNext=null, active=false, ticking=false;
 
-  function combinedMode(root){
+  function inCombinedMode(){
     return !!(root && root.closest('.workflow-shell.crewbus-combined,.app-wrap.crewbus-combined,body.crewbus-combined'));
   }
-
-  function removeInlineRailStyles(rail){
-    if(!rail)return;
-    rail.classList.remove('cb26-rail-following');
-    ['position','top','left','right','bottom','width','height','max-height','min-height',
-     'margin','transform','z-index'].forEach(function(name){rail.style.removeProperty(name);});
-  }
-
-  function clear(){
-    var rail=state.rail || document.querySelector(SELECTOR.rail);
-    var spacer=state.spacer;
-    removeInlineRailStyles(rail);
-    if(spacer && spacer.parentNode)spacer.parentNode.removeChild(spacer);
-    state.spacer=null;
-    state.active=false;
-  }
-
-  function resolve(){
-    var root=document.querySelector(SELECTOR.root);
-    if(!root){
-      clear();
-      state.root=state.toolbar=state.layout=state.rail=null;
-      return false;
+  function parts(){
+    var nextRoot=document.querySelector(ROOT);
+    if(nextRoot!==root){
+      restore();
+      root=nextRoot;
+      toolbar=root?root.querySelector('.cb26-toolbar'):null;
+      layout=root?root.querySelector('.cb26-layout'):null;
+      rail=root?root.querySelector('.cb26-document-rail'):null;
+    }else if(root){
+      toolbar=root.querySelector('.cb26-toolbar');
+      layout=root.querySelector('.cb26-layout');
+      // Once portaled, the real rail is intentionally outside #step-4.
+      if(!active){
+        var found=root.querySelector('.cb26-document-rail');
+        if(found)rail=found;
+      }
     }
-    var toolbar=root.querySelector('.cb26-toolbar');
-    var layout=root.querySelector('.cb26-layout');
-    var rail=root.querySelector('.cb26-document-rail');
-    if(root!==state.root || toolbar!==state.toolbar || layout!==state.layout || rail!==state.rail){
-      clear();
-      state.root=root;state.toolbar=toolbar;state.layout=layout;state.rail=rail;
-    }
-    return !!(toolbar && layout && rail);
+    return !!(root && toolbar && layout && rail);
   }
-
-  function ensureSpacer(){
-    if(state.spacer && state.spacer.parentNode)return state.spacer;
-    var rail=state.rail;
-    if(!rail || !rail.parentNode)return null;
-
-    // Measure the rail while it is still in its normal grid cell.
+  function visibleStep(){
+    if(!root || !root.isConnected || !root.getClientRects().length)return false;
+    var cs=getComputedStyle(root);
+    return cs.display!=='none' && cs.visibility!=='hidden' && !root.classList.contains('hidden');
+  }
+  function prepareSlot(){
+    if(placeholder && placeholder.isConnected)return placeholder;
+    if(!rail || !rail.parentElement)return null;
+    originalParent=rail.parentElement;
+    originalNext=rail.nextSibling;
     var rect=rail.getBoundingClientRect();
-    var spacer=document.createElement('div');
-    spacer.className='cb26-document-rail-spacer';
-    spacer.setAttribute('aria-hidden','true');
-    spacer.style.width=Math.max(1,rect.width)+'px';
-    spacer.style.height=Math.max(1,rail.offsetHeight)+'px';
-    spacer.style.gridColumn='2';
-    spacer.style.gridRow='1';
-    rail.parentNode.insertBefore(spacer,rail);
-    state.spacer=spacer;
-    return spacer;
+    placeholder=document.createElement('div');
+    placeholder.className='cb26-document-portal-placeholder';
+    placeholder.setAttribute('aria-hidden','true');
+    placeholder.style.width=Math.max(1,rect.width)+'px';
+    placeholder.style.height=Math.max(1,rail.offsetHeight)+'px';
+    placeholder.style.gridColumn='2';
+    placeholder.style.gridRow='1';
+    originalParent.insertBefore(placeholder,rail);
+    return placeholder;
   }
-
-  function normalFlow(){
-    if(state.active)clear();
+  function portalRail(){
+    if(active)return true;
+    if(!rail || !prepareSlot())return false;
+    portal=document.createElement('div');
+    portal.className='cb26-document-portal-scope cb26 cb-pro crewbus-radical-v90';
+    portal.setAttribute('aria-label','Document Crew Bus — panneau flottant');
+    portal.setAttribute('data-crewbus-document-portal','true');
+    document.body.appendChild(portal);
+    portal.appendChild(rail);
+    active=true;
+    return true;
   }
-
-  function update(){
-    state.raf=0;
-    if(!resolve())return;
-
-    var root=state.root;
-    var toolbar=state.toolbar;
-    var layout=state.layout;
-    var rail=state.rail;
-    var visible=root.getClientRects().length>0 &&
-      getComputedStyle(root).display!=='none' &&
-      !root.classList.contains('hidden');
-
-    if(window.innerWidth<DESKTOP_MIN || !visible || combinedMode(root)){
-      normalFlow();
+  function restore(){
+    if(!active){
+      if(portal && portal.parentNode)portal.parentNode.removeChild(portal);
+      portal=null;
+      if(placeholder && placeholder.parentNode)placeholder.parentNode.removeChild(placeholder);
+      placeholder=null;
       return;
     }
-
-    // Start only when the search/filter toolbar has passed the sticky header.
-    var toolbarRect=toolbar.getBoundingClientRect();
-    if(toolbarRect.bottom>TOP_OFFSET){
-      normalFlow();
-      return;
+    if(rail && placeholder && placeholder.parentNode){
+      placeholder.parentNode.insertBefore(rail,placeholder);
+      placeholder.parentNode.removeChild(placeholder);
+    }else if(rail && originalParent && originalParent.isConnected){
+      originalParent.insertBefore(rail,originalNext && originalNext.parentNode===originalParent?originalNext:null);
     }
-
-    var spacer=ensureSpacer();
-    if(!spacer)return;
-
-    // Preserve exact grid-column geometry. Do not derive the width from the viewport.
-    var slot=spacer.getBoundingClientRect();
-    var viewportHeight=window.innerHeight || document.documentElement.clientHeight;
-    var availableHeight=Math.max(260,viewportHeight-TOP_OFFSET-BOTTOM_OFFSET);
-    var naturalHeight=Math.max(rail.offsetHeight,rail.scrollHeight);
-    var panelHeight=Math.min(naturalHeight,availableHeight);
-    var top=TOP_OFFSET;
-
-    // Center vertically when the whole document panel fits. If it is taller than
-    // the available viewport, keep its full width and allow page scrolling rather
-    // than making its inner content independently scroll and disappear.
-    if(naturalHeight<=availableHeight){
-      top=Math.max(TOP_OFFSET,Math.round((viewportHeight-naturalHeight)/2));
+    if(portal && portal.parentNode)portal.parentNode.removeChild(portal);
+    portal=null;placeholder=null;active=false;
+    if(rail){
+      ['width','max-width','height','max-height','position'].forEach(function(k){rail.style.removeProperty(k);});
+      var card=rail.querySelector('.cb26-document-card');
+      if(card) ['width','height','max-height','overflow-y','overflow-x','overscroll-behavior'].forEach(function(k){card.style.removeProperty(k);});
     }
+  }
+  function positionPortal(){
+    if(!portal || !placeholder || !rail)return;
+    var slot=placeholder.getBoundingClientRect();
+    var vw=document.documentElement.clientWidth || window.innerWidth;
+    var vh=window.innerHeight || document.documentElement.clientHeight;
+    var width=Math.min(slot.width,vw-24);
+    var left=Math.max(8,Math.min(slot.left,vw-width-8));
+    var available=Math.max(260,vh-VIEW_TOP-VIEW_BOTTOM);
 
-    rail.classList.add('cb26-rail-following');
-    rail.style.setProperty('position','fixed','important');
-    rail.style.setProperty('left',Math.round(slot.left)+'px','important');
-    rail.style.setProperty('width',Math.round(slot.width)+'px','important');
-    rail.style.setProperty('right','auto','important');
-    rail.style.setProperty('bottom','auto','important');
-    rail.style.setProperty('top',Math.round(top)+'px','important');
-    rail.style.setProperty('height','auto','important');
-    rail.style.setProperty('max-height','none','important');
-    rail.style.setProperty('z-index','950','important');
+    portal.style.setProperty('left',Math.round(left)+'px','important');
+    portal.style.setProperty('top',VIEW_TOP+'px','important');
+    portal.style.setProperty('width',Math.round(width)+'px','important');
+    portal.style.setProperty('height',available+'px','important');
+    portal.style.setProperty('max-height',available+'px','important');
+    portal.style.setProperty('right','auto','important');
 
-    // Never clip the card to the remaining height of step 4. That was the V8 bug:
-    // at the bottom it collapsed to a tiny 220px viewport showing only the button.
+    rail.style.setProperty('width','100%','important');
+    rail.style.setProperty('max-width','100%','important');
+    rail.style.setProperty('height','100%','important');
+    rail.style.setProperty('max-height','100%','important');
+    rail.style.setProperty('position','static','important');
+
     var card=rail.querySelector('.cb26-document-card');
     if(card){
-      card.style.setProperty('max-height','none','important');
-      card.style.setProperty('height','auto','important');
-      card.style.setProperty('overflow','visible','important');
+      card.style.setProperty('height','100%','important');
+      card.style.setProperty('max-height','100%','important');
+      card.style.setProperty('overflow-y','auto','important');
+      card.style.setProperty('overflow-x','hidden','important');
+      card.style.setProperty('overscroll-behavior','contain','important');
     }
-
-    state.active=true;
   }
-
+  function update(){
+    ticking=false;
+    if(!parts())return;
+    if(window.innerWidth<MIN_WIDTH || !visibleStep() || inCombinedMode()){
+      restore();return;
+    }
+    // Float only after the search/filter row has left the top of the viewport.
+    if(toolbar.getBoundingClientRect().bottom>SEARCH_CLEARANCE){
+      restore();return;
+    }
+    if(!portalRail())return;
+    positionPortal();
+  }
   function schedule(){
-    if(state.raf)return;
-    state.raf=(window.requestAnimationFrame || function(fn){return setTimeout(fn,16);})(update);
+    if(ticking)return;
+    ticking=true;
+    (window.requestAnimationFrame || function(fn){return setTimeout(fn,16)})(update);
   }
 
-  // Capture scroll from window and any app-level scroll container.
+  // This rail is a BODY-level fixed portal now, so no step/grid/overflow ancestor
+  // can clip it or make its horizontal coordinate drift during vertical scrolling.
   document.addEventListener('scroll',schedule,{capture:true,passive:true});
   window.addEventListener('scroll',schedule,{passive:true});
   window.addEventListener('resize',schedule,{passive:true});
-  window.addEventListener('orientationchange',function(){setTimeout(schedule,120);},{passive:true});
-
-  // Reset after step/mode switches, but avoid observing inline style writes from this controller.
+  window.addEventListener('orientationchange',function(){setTimeout(schedule,120)},{passive:true});
   if(window.MutationObserver && document.body){
     var observer=new MutationObserver(schedule);
     observer.observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
   }
-
   if(window.ResizeObserver){
     var ro=new ResizeObserver(schedule);
     function watch(){
-      if(!resolve())return;
-      [state.root,state.toolbar,state.layout].forEach(function(el){if(el)try{ro.observe(el);}catch(e){}});
+      if(!parts())return;
+      [root,toolbar,layout].forEach(function(el){if(el)try{ro.observe(el)}catch(e){}});
     }
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch,{once:true});
     else watch();
   }
-
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});
   else schedule();
-  window.addEventListener('load',function(){setTimeout(schedule,180);},{once:true});
-  setTimeout(schedule,500);
+  window.addEventListener('load',function(){setTimeout(schedule,200)},{once:true});
+  window.addEventListener('pagehide',restore);
+  setTimeout(schedule,450);
 })();
 </script>
-
 </body>
 </html>
 
