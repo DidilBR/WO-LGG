@@ -5907,7 +5907,9 @@ async function woLggLogout(){
           reg: f.reg,
           remarks: f.remarks,
           handling: f._handling === true,
-          lhaCatering: f._lhaCatering === true
+          lhaCatering: f._lhaCatering === true,
+          checkboxSelections: Object.assign({}, f._checkboxSelections || {}),
+          swissportSelections: Object.assign({}, f._swissportSelections || {})
         };
       });
       fresh.forEach(f => {
@@ -5917,6 +5919,8 @@ async function woLggLogout(){
         if (old.remarks) f.remarks = old.remarks;
         if (old.handling) f._handling = true;
         if (old.lhaCatering) f._lhaCatering = true;
+        if (old.checkboxSelections) f._checkboxSelections = Object.assign({}, old.checkboxSelections);
+        if (old.swissportSelections) f._swissportSelections = Object.assign({}, old.swissportSelections);
       });
 
       const key = f => String(f.flight||'') + '|' + String(f.time||'') + '|' + String(f.stand||'');
@@ -8233,7 +8237,16 @@ ${(function(){
       if (!win) { showRetry('Le document n’est pas encore prêt.'); return; }
       try {
         printStarted = true;
-        try { win.addEventListener('afterprint', cleanup, { once: true }); } catch (e) {}
+        try {
+          win.addEventListener('afterprint', function(){
+            cleanup();
+            try {
+              if(window.parent && typeof window.parent.woLggAfterPrintRestore==='function'){
+                window.parent.woLggAfterPrintRestore();
+              }
+            } catch(e) {}
+          }, { once: true });
+        } catch (e) {}
         win.focus();
         // Appel direct de l'API d'impression native sur le document du frame.
         win.print();
@@ -9458,6 +9471,7 @@ ${(function(){
 
   function resetAll() {
     if (!confirm('Recommencer depuis le début ?')) return;
+    if(typeof woLggClearShiftSelectionMemory==='function')woLggClearShiftSelectionMemory();
     window.woLggCloudSwissportSelections = {};
     flights = [];
     selectedFlights = new Set();
@@ -12546,6 +12560,475 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
   setTimeout(schedule,450);
 })();
 </script>
+
+<script id="wo-lgg-shift-selection-memory-v1">
+(function(){
+  if(window.__woLggShiftSelectionMemoryV1)return;
+  window.__woLggShiftSelectionMemoryV1=true;
+
+  var STORE_KEY='wo_lgg_shift_selection_memory_v1';
+  var STORE_VERSION=1;
+  var applying=false;
+
+  function norm(v){return String(v==null?'':v).trim().toUpperCase().replace(/\s+/g,' ')}
+  function step3Key(f){return norm(f && f.flight)}
+  function crewKey(f){return norm(f && f.type)+'|'+norm(f && f.flight)}
+  function crewExactKey(f){return crewKey(f)+'|'+norm(f && f.reg).replace(/[\s-]+/g,'')}
+  function cateringKey(c){
+    return [c&&c.flight,c&&c.reg,c&&(c.company||c.handler),c&&(c.delivery||c.time)]
+      .map(norm).join('|');
+  }
+  function currentScope(){
+    var dateEl=document.getElementById('shift-date');
+    var date=(dateEl&&dateEl.value)||'NO-DATE';
+    var shiftName='';
+    try{if(typeof selectedShift!=='undefined'&&selectedShift&&selectedShift.name)shiftName=selectedShift.name;}catch(e){}
+    if(!shiftName){
+      try{if(typeof crewBusSelectedShift!=='undefined'&&crewBusSelectedShift&&crewBusSelectedShift.name)shiftName=crewBusSelectedShift.name;}catch(e){}
+    }
+    if(!shiftName){
+      var active=document.querySelector('.shift-btn.active');
+      shiftName=active?(active.dataset.shift||active.textContent||'SHIFT'):'NO-SHIFT';
+    }
+    return String(date)+'|'+norm(shiftName);
+  }
+  function safeRead(){
+    try{
+      var raw=localStorage.getItem(STORE_KEY);
+      if(!raw)return {version:STORE_VERSION,shifts:{}};
+      var parsed=JSON.parse(raw);
+      if(!parsed||typeof parsed!=='object'||!parsed.shifts)return {version:STORE_VERSION,shifts:{}};
+      return parsed;
+    }catch(e){return {version:STORE_VERSION,shifts:{}}}
+  }
+  function mergeRecords(oldList,newList,keyFn){
+    var map=new Map();
+    (Array.isArray(oldList)?oldList:[]).forEach(function(item){if(item)map.set(keyFn(item),item)});
+    (Array.isArray(newList)?newList:[]).forEach(function(item){if(item)map.set(keyFn(item),item)});
+    return Array.from(map.values());
+  }
+  function buildCurrentShiftRecord(){
+    var result={scope:currentScope(),savedAt:new Date().toISOString(),step3Flights:[],caterings:[],crewBusFlights:[]};
+    try{
+      if(typeof flights!=='undefined'&&Array.isArray(flights)){
+        result.step3Flights=flights.map(function(f,i){
+          var checkboxes=Object.assign({},f._checkboxSelections||{});
+          // Capture live DOM state as the final authority for checkboxes currently rendered.
+          ['wfs-handling','sva-handling','asl737-handling','lha-catering'].forEach(function(prefix){
+            var cb=document.getElementById(prefix+'-'+i);
+            if(cb)checkboxes[prefix]=!!cb.checked;
+          });
+          ['ft','cl','lav','wat','hds'].forEach(function(k){
+            var cb=document.getElementById('swi-'+k+'-'+i);
+            if(cb)checkboxes['swi-'+k]=!!cb.checked;
+          });
+          return {
+            key:step3Key(f),
+            flight:String(f.flight||''),
+            reg:String(f.reg||''),
+            handler:String(f.handler||''),
+            selected:typeof selectedFlights!=='undefined'&&selectedFlights instanceof Set?selectedFlights.has(i):false,
+            aslSelected:typeof selectedASL737!=='undefined'&&selectedASL737 instanceof Set?selectedASL737.has(i):false,
+            aslInitialized:typeof selectedASL737Initialized!=='undefined'&&selectedASL737Initialized instanceof Set?selectedASL737Initialized.has(i):false,
+            checkboxes:checkboxes,
+            swissport:Object.assign({},f._swissportSelections||{}),
+            handling: f._handling===true,
+            lhaCatering: f._lhaCatering===true,
+            remarks:String(f.remarks||''),
+            manual:f.manual===true
+          };
+        }).filter(function(x){return !!x.key});
+      }
+    }catch(e){console.warn('WO-LGG memory: step 3 capture',e)}
+    try{
+      if(typeof caterings!=='undefined'&&Array.isArray(caterings)){
+        result.caterings=caterings.map(function(c,i){
+          return {key:cateringKey(c),selected:typeof selectedCaterings!=='undefined'&&selectedCaterings instanceof Set?selectedCaterings.has(i):false};
+        }).filter(function(x){return !!x.key});
+      }
+    }catch(e){}
+    try{
+      if(typeof crewBusFlights!=='undefined'&&Array.isArray(crewBusFlights)){
+        result.crewBusFlights=crewBusFlights.map(function(f){
+          return {
+            key:String(f.key||''),
+            stableKey:crewKey(f),
+            exactKey:crewExactKey(f),
+            flight:String(f.flight||''),
+            type:String(f.type||''),
+            reg:String(f.reg||''),
+            stand:String(f.stand||''),
+            handler:String(f.handler||''),
+            time:String(f.time||''),
+            eta:String(f.eta||''),
+            iso:String(f.iso||''),
+            manual:f.manual===true,
+            selected:f.selected===true,
+            userSelectionSet:f.userSelectionSet===true,
+            headset:f.headset===true,
+            handling:f.handling===true||f.wfsMode==='handling',
+            wfsMode:f.wfsMode==='renting'?'renting':null,
+            wfsModeUserSet:f.wfsModeUserSet===true&&f.wfsMode==='renting',
+            eligible:f.eligible!==false,
+            asl737:f.asl737===true
+          };
+        }).filter(function(x){return !!x.flight});
+      }
+    }catch(e){console.warn('WO-LGG memory: crew bus capture',e)}
+    return result;
+  }
+
+  function persist(reason){
+    if(applying)return;
+    try{
+      var state=buildCurrentShiftRecord();
+      var store=safeRead();
+      var previous=store.shifts[state.scope]||{};
+      // Keep previously known records if a temporary FIDS refresh omits a flight.
+      // Values from the current screen replace the old values, including explicit false/unselected.
+      if(state.step3Flights.length){
+        state.step3Flights=mergeRecords(previous.step3Flights,state.step3Flights,function(x){return x.key});
+      }else state.step3Flights=Array.isArray(previous.step3Flights)?previous.step3Flights:[];
+      if(state.caterings.length){
+        state.caterings=mergeRecords(previous.caterings,state.caterings,function(x){return x.key});
+      }else state.caterings=Array.isArray(previous.caterings)?previous.caterings:[];
+      if(state.crewBusFlights.length){
+        state.crewBusFlights=mergeRecords(previous.crewBusFlights,state.crewBusFlights,function(x){return x.stableKey||x.exactKey||x.key});
+      }else state.crewBusFlights=Array.isArray(previous.crewBusFlights)?previous.crewBusFlights:[];
+      state.savedAt=new Date().toISOString();
+      state.reason=String(reason||'selection-change');
+      store.version=STORE_VERSION;
+      store.shifts=store.shifts||{};
+      store.shifts[state.scope]=state;
+      // Keep the most recent 16 shifts only.
+      var keys=Object.keys(store.shifts).sort(function(a,b){
+        return String(store.shifts[b].savedAt||'').localeCompare(String(store.shifts[a].savedAt||''));
+      });
+      keys.slice(16).forEach(function(k){delete store.shifts[k]});
+      localStorage.setItem(STORE_KEY,JSON.stringify(store));
+      window.__woLggCurrentShiftSelectionMemory=state;
+    }catch(e){console.warn('WO-LGG memory: local save failed',e)}
+  }
+
+  function readCurrent(){
+    var store=safeRead();
+    return store.shifts[currentScope()]||null;
+  }
+
+  function matchStep3Record(f,records,used){
+    var key=step3Key(f);
+    if(!key)return null;
+    var candidates=(records||[]).filter(function(r){return r&&r.key===key});
+    for(var i=0;i<candidates.length;i++){
+      var r=candidates[i];
+      if(used.has(r))continue;
+      if(norm(r.handler)===norm(f.handler)&&norm(r.reg)===norm(f.reg)){used.add(r);return r}
+    }
+    for(var j=0;j<candidates.length;j++){
+      if(!used.has(candidates[j])){used.add(candidates[j]);return candidates[j]}
+    }
+    return null;
+  }
+
+  function styleRestoredCheckbox(cb,kind){
+    if(!cb)return;
+    var label=cb.closest('label');
+    if(!label)return;
+    if(kind==='swi-ft'||kind==='swi-cl'||kind==='swi-lav'||kind==='swi-wat'||kind==='swi-hds'){
+      var colors={'swi-ft':'#a78bfa','swi-cl':'#34d399','swi-lav':'#38bdf8','swi-wat':'#60a5fa','swi-hds':'#f472b6'};
+      var color=colors[kind]||'#aab4b8';
+      label.style.background=cb.checked?color+'33':'rgba(255,255,255,0.04)';
+      label.style.borderColor=cb.checked?color:color+'44';
+      label.style.color=cb.checked?'#fff':color;
+      label.style.boxShadow=cb.checked?'0 0 8px '+color+'66':'none';
+    }else if(kind==='wfs-handling'){
+      label.style.background=cb.checked?'linear-gradient(135deg,rgba(0,200,255,.28),rgba(0,200,255,.15))':'linear-gradient(135deg,rgba(0,200,255,.1),rgba(0,200,255,.05))';
+      label.style.borderColor=cb.checked?'rgb(0,200,255)':'rgba(0,200,255,.35)';
+      label.style.boxShadow=cb.checked?'0 0 12px rgba(0,200,255,.4)':'0 0 6px rgba(0,200,255,.12)';
+    }
+  }
+
+  function applyStep3(record){
+    if(!record||!Array.isArray(record.step3Flights))return false;
+    if(typeof flights==='undefined'||!Array.isArray(flights)||!flights.length)return false;
+    var used=new Set();
+    var nextSelected=new Set(typeof selectedFlights!=='undefined'&&selectedFlights instanceof Set?selectedFlights:[]);
+    var nextAsl=new Set(typeof selectedASL737!=='undefined'&&selectedASL737 instanceof Set?selectedASL737:[]);
+    var nextAslInit=new Set(typeof selectedASL737Initialized!=='undefined'&&selectedASL737Initialized instanceof Set?selectedASL737Initialized:[]);
+    var changed=false;
+    flights.forEach(function(f,i){
+      var r=matchStep3Record(f,record.step3Flights,used);
+      if(!r)return;
+      changed=true;
+      if(typeof r.selected==='boolean'){if(r.selected)nextSelected.add(i);else nextSelected.delete(i)}
+      if(typeof r.aslSelected==='boolean'){if(r.aslSelected)nextAsl.add(i);else nextAsl.delete(i)}
+      if(typeof r.aslInitialized==='boolean'){if(r.aslInitialized)nextAslInit.add(i);else nextAslInit.delete(i)}
+      f._checkboxSelections=Object.assign({},f._checkboxSelections||{},r.checkboxes||{});
+      f._swissportSelections=Object.assign({},f._swissportSelections||{},r.swissport||{});
+      if(r.handling===true)f._handling=true;
+      else if(Object.prototype.hasOwnProperty.call(r.checkboxes||{},'wfs-handling')||Object.prototype.hasOwnProperty.call(r.checkboxes||{},'sva-handling'))f._handling=!!(r.checkboxes['wfs-handling']||r.checkboxes['sva-handling']);
+      if(r.lhaCatering===true)f._lhaCatering=true;
+      else if(Object.prototype.hasOwnProperty.call(r.checkboxes||{},'lha-catering'))f._lhaCatering=!!r.checkboxes['lha-catering'];
+      if(typeof r.remarks==='string'&&(!f.remarks||f.remarks===''))f.remarks=r.remarks;
+    });
+    selectedFlights=nextSelected;
+    selectedASL737=nextAsl;
+    selectedASL737Initialized=nextAslInit;
+    return changed;
+  }
+
+  function applyCatering(record){
+    if(!record||!Array.isArray(record.caterings)||typeof caterings==='undefined'||!Array.isArray(caterings))return;
+    var used=new Set();
+    var next=new Set(typeof selectedCaterings!=='undefined'&&selectedCaterings instanceof Set?selectedCaterings:[]);
+    caterings.forEach(function(c,i){
+      var key=cateringKey(c);
+      var r=record.caterings.find(function(x){return x&&x.key===key&&!used.has(x)});
+      if(!r)return;
+      used.add(r);
+      if(r.selected)next.add(i);else next.delete(i);
+    });
+    selectedCaterings=next;
+  }
+
+  function applyCrewBus(record){
+    if(!record||!Array.isArray(record.crewBusFlights)||typeof crewBusFlights==='undefined'||!Array.isArray(crewBusFlights))return false;
+    var used=new Set();
+    var changed=false;
+    crewBusFlights.forEach(function(f){
+      var exact=crewExactKey(f), stable=crewKey(f);
+      var r=record.crewBusFlights.find(function(x){return x&&x.exactKey===exact&&!used.has(x)});
+      if(!r)r=record.crewBusFlights.find(function(x){return x&&x.stableKey===stable&&!used.has(x)});
+      if(!r)return;
+      used.add(r);
+      changed=true;
+      // Preserve the logical movement key across FIDS time/ISO refreshes.
+      if(r.key)f.key=r.key;
+      f.selected=!!r.selected;
+      f.userSelectionSet=!!r.userSelectionSet;
+      f.headset=!!r.headset;
+      f.handling=!!r.handling;
+      f.wfsMode=r.wfsMode==='renting'?'renting':null;
+      f.wfsModeUserSet=r.wfsModeUserSet===true&&f.wfsMode==='renting';
+      if((!f.reg||!String(f.reg).trim())&&r.reg)f.reg=r.reg;
+      if((!f.stand||!String(f.stand).trim())&&r.stand)f.stand=r.stand;
+    });
+
+    // A manually added flight should not disappear merely because FIDS is refreshed.
+    record.crewBusFlights.forEach(function(r){
+      if(!r||r.manual!==true)return;
+      var exists=crewBusFlights.some(function(f){return crewKey(f)===r.stableKey});
+      if(exists)return;
+      var f={
+        key:r.key||('memory|'+r.stableKey),
+        flight:r.flight,type:r.type,reg:r.reg||'',stand:r.stand||'',handler:r.handler||'',
+        time:r.time||'',eta:r.eta||r.time||'',iso:r.iso||null,manual:true,fromFids:false,
+        selected:!!r.selected,userSelectionSet:true,headset:!!r.headset,handling:!!r.handling,
+        wfsMode:r.wfsMode==='renting'?'renting':null,wfsModeUserSet:r.wfsModeUserSet===true,
+        eligible:r.eligible!==false,asl737:!!r.asl737
+      };
+      crewBusFlights.push(f);
+      changed=true;
+    });
+
+    if(typeof crewBusSelected!=='undefined')crewBusSelected=new Set(crewBusFlights.filter(function(f){return f.selected}).map(function(f){return f.key}));
+    return changed;
+  }
+
+  function restoreVisibleStep3Checkboxes(){
+    if(typeof flights==='undefined'||!Array.isArray(flights))return;
+    try{if(typeof restoreHandlingSelections==='function')restoreHandlingSelections()}catch(e){}
+    flights.forEach(function(f,i){
+      var map=f._checkboxSelections||{};
+      ['wfs-handling','sva-handling','asl737-handling','lha-catering'].forEach(function(prefix){
+        if(!Object.prototype.hasOwnProperty.call(map,prefix))return;
+        var cb=document.getElementById(prefix+'-'+i);
+        if(cb){cb.checked=!!map[prefix];styleRestoredCheckbox(cb,prefix)}
+      });
+      ['ft','cl','lav','wat','hds'].forEach(function(k){
+        var name='swi-'+k;
+        if(!Object.prototype.hasOwnProperty.call(map,name)&&!Object.prototype.hasOwnProperty.call(f._swissportSelections||{},k))return;
+        var wanted=Object.prototype.hasOwnProperty.call(map,name)?!!map[name]:!!f._swissportSelections[k];
+        var cb=document.getElementById(name+'-'+i);
+        if(cb){cb.checked=wanted;styleRestoredCheckbox(cb,name)}
+      });
+    });
+  }
+
+  function applyMemoryToCurrent(options){
+    var record=options&&options.record?options.record:readCurrent();
+    if(!record)return false;
+    applying=true;
+    try{
+      var a=applyStep3(record);
+      applyCatering(record);
+      var b=applyCrewBus(record);
+      if(options&&options.render!==false){
+        if(a&&typeof renderFlights==='function')renderFlights();
+        restoreVisibleStep3Checkboxes();
+        if(b&&typeof renderCrewBusFlights==='function')renderCrewBusFlights();
+        if(typeof updateSelectedCount==='function')updateSelectedCount();
+        if(typeof updateCateringCount==='function')updateCateringCount();
+      }else{
+        restoreVisibleStep3Checkboxes();
+      }
+      return a||b;
+    }finally{applying=false}
+  }
+
+  function clearMemory(){
+    try{localStorage.removeItem(STORE_KEY)}catch(e){}
+    window.__woLggCurrentShiftSelectionMemory=null;
+  }
+
+  function installWrapper(name,after){
+    var original=window[name];
+    if(typeof original!=='function'||original.__woLggMemoryWrapped)return;
+    var wrapped=function(){
+      var args=arguments;
+      var result=original.apply(this,args);
+      if(result&&typeof result.then==='function'){
+        return result.then(function(value){try{after&&after.apply(this,args);persist(name)}catch(e){console.warn('WO-LGG memory wrapper '+name,e)}return value;});
+      }
+      try{after&&after.apply(this,args);persist(name)}catch(e){console.warn('WO-LGG memory wrapper '+name,e)}
+      return result;
+    };
+    wrapped.__woLggMemoryWrapped=true;
+    wrapped.__woLggOriginal=original;
+    window[name]=wrapped;
+  }
+
+  // Public hooks used by the cloud session layer and the print subsystem.
+  window.woLggBuildShiftSelectionMemory=buildCurrentShiftRecord;
+  window.woLggPersistShiftSelectionMemory=persist;
+  window.woLggClearShiftSelectionMemory=clearMemory;
+  window.woLggApplyShiftSelectionMemory=function(record,options){return applyMemoryToCurrent({record:record,render:!(options&&options.render===false)})};
+  window.woLggRestoreStoredShiftSelectionMemory=function(options){return applyMemoryToCurrent(options||{})};
+  window.woLggAfterPrintRestore=function(){
+    applyMemoryToCurrent({render:true});
+    persist('after-print');
+  };
+
+  // Local persistence also covers visitor mode; cloud persistence remains handled by WO-LGG.
+  function selectionChangeListener(event){
+    if(applying)return;
+    var el=event.target;
+    if(!el||el.tagName!=='INPUT'||el.type!=='checkbox')return;
+    var id=String(el.id||'');
+    var m=id.match(/^(wfs-handling|sva-handling|asl737-handling|lha-catering)-(\d+)$/);
+    var swi=id.match(/^swi-(ft|cl|lav|wat|hds)-(\d+)$/);
+    if(m&&typeof flights!=='undefined'&&flights[Number(m[2])]){
+      var f=flights[Number(m[2])];
+      f._checkboxSelections=f._checkboxSelections||{};
+      f._checkboxSelections[m[1]]=!!el.checked;
+      if(m[1]==='wfs-handling'||m[1]==='sva-handling')f._handling=!!el.checked;
+      if(m[1]==='asl737-handling')f._asl737Handling=!!el.checked;
+      if(m[1]==='lha-catering')f._lhaCatering=!!el.checked;
+    }else if(swi&&typeof flights!=='undefined'&&flights[Number(swi[2])]){
+      var sf=flights[Number(swi[2])];
+      sf._checkboxSelections=sf._checkboxSelections||{};
+      sf._checkboxSelections['swi-'+swi[1]]=!!el.checked;
+      sf._swissportSelections=sf._swissportSelections||{};
+      sf._swissportSelections[swi[1]]=!!el.checked;
+    }else{
+      return;
+    }
+    setTimeout(function(){persist('checkbox:'+id)},0);
+  }
+  document.addEventListener('change',selectionChangeListener,true);
+
+  // Every selection entry point updates local memory after its original action.
+  [
+    'toggleFlight','toggleASL737','toggleCatering',
+    'toggleCrewBusFlight','toggleCrewBusWfs','toggleCrewBusHeadset','toggleCrewBusHandling',
+    'selectAllCrewBusVisible','clearCrewBusSelection','addCrewBusManualFlight'
+  ].forEach(function(name){installWrapper(name)});
+
+  // A fresh FIDS fetch can reorder flights or change the timestamp/ISO key.
+  // Restore by flight identity after the normal fetch has completed.
+  [
+    'loadFromFidsAPI','checkForFlightUpdates','analyzeFids','handleAnalyzeClick',
+    'parseCaterings','loadCrewBusFromFids'
+  ].forEach(function(name){
+    installWrapper(name,function(){
+      var record=readCurrent();
+      if(record){
+        applyMemoryToCurrent({record:record,render:true});
+        // Keep the current data and persist any genuinely new FIDS flights/default selections.
+        persist('post-refresh:'+name);
+      }
+    });
+  });
+
+  // Wrap print entry points. Printing is read-only: selections must remain checked.
+  [
+    'generatePDF','generateWorksheets','generateCrewBusSheet','generateAllPrint',
+    'printSingleWorksheet','printBlankWorksheet','printASL737WorksheetsOnly'
+  ].forEach(function(name){
+    installWrapper(name,function(){persist('before-print:'+name)});
+  });
+
+  // Also protect direct calls to the common print engine.
+  if(typeof window.openPrintWindow==='function'&&!window.openPrintWindow.__woLggMemoryWrapped){
+    var originalOpenPrint=window.openPrintWindow;
+    var wrappedOpenPrint=function(){
+      persist('before-print');
+      return originalOpenPrint.apply(this,arguments);
+    };
+    wrappedOpenPrint.__woLggMemoryWrapped=true;
+    window.openPrintWindow=wrappedOpenPrint;
+  }
+
+  // Add the memory to cloud snapshots so account sessions sync the same choices
+  // across devices. Older snapshots without this field remain supported.
+  if(typeof window.woLggBuildSessionState==='function'&&!window.woLggBuildSessionState.__woLggMemoryWrapped){
+    var originalBuildSession=window.woLggBuildSessionState;
+    var wrappedBuildSession=function(){
+      var state=originalBuildSession.apply(this,arguments);
+      if(state)state.selectionMemory=buildCurrentShiftRecord();
+      return state;
+    };
+    wrappedBuildSession.__woLggMemoryWrapped=true;
+    window.woLggBuildSessionState=wrappedBuildSession;
+  }
+  if(typeof window.woLggApplyCloudState==='function'&&!window.woLggApplyCloudState.__woLggMemoryWrapped){
+    var originalApplyCloud=window.woLggApplyCloudState;
+    var wrappedApplyCloud=function(row,options){
+      var ok=originalApplyCloud.apply(this,arguments);
+      if(ok){
+        var cloudRecord=row&&row.state&&row.state.selectionMemory;
+        if(cloudRecord)applyMemoryToCurrent({record:cloudRecord,render:true});
+        else applyMemoryToCurrent({render:true});
+        persist('cloud-session-restored');
+      }
+      return ok;
+    };
+    wrappedApplyCloud.__woLggMemoryWrapped=true;
+    window.woLggApplyCloudState=wrappedApplyCloud;
+  }
+
+  // Save immediately before leaving/reloading and when the app goes to background.
+  window.addEventListener('beforeprint',function(){persist('beforeprint')});
+  window.addEventListener('afterprint',function(){window.woLggAfterPrintRestore()});
+  window.addEventListener('pagehide',function(){persist('pagehide')});
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='hidden')persist('visibility-hidden');
+  });
+
+  // Restore an existing local memory after each shift's data has been loaded.
+  // Never force navigation or change the active step.
+  window.addEventListener('load',function(){
+    setTimeout(function(){
+      var record=readCurrent();
+      if(record)applyMemoryToCurrent({record:record,render:true});
+    },350);
+  },{once:true});
+
+  // A print initiated in the hidden iframe also invokes this parent-page hook.
+  // The iframe callback will call woLggAfterPrintRestore once its dialog closes.
+})();
+</script>
+
 </body>
 </html>
 
