@@ -3441,9 +3441,11 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
 
 <header id="app-header">
   <div class="header-inner app-header-clean">
-    <button class="fleet-menu-btn" type="button" onclick="openHistoryModal()" title="Flotte connue">
-      <span class="fleet-menu-icon">&#9776;</span><span class="fleet-menu-label">Flotte connue</span>
-    </button>
+    <div class="header-left-actions" aria-label="Actions rapides">
+      <button class="fleet-menu-btn" type="button" onclick="openHistoryModal()" title="Flotte connue">
+        <span class="fleet-menu-icon">&#9776;</span><span class="fleet-menu-label">Flotte connue</span>
+      </button>
+    </div>
 
     <div class="app-brand-center" aria-label="LGG Cleaning Ops">
       <div class="app-brand-mark">&#9992;</div>
@@ -13031,6 +13033,9 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
 
 
 <style id="wo-lgg-saved-actions-menu-style-v2">
+.header-left-actions{display:flex;align-items:center;gap:6px;flex:0 0 auto;position:relative;z-index:3;min-width:0}
+.header-left-actions #wo-lgg-saved-actions-trigger{margin-left:0!important;position:relative!important;inset:auto!important;transform:none!important;flex:0 0 34px!important}
+@media(max-width:600px){.header-left-actions{gap:5px}.header-left-actions #wo-lgg-saved-actions-trigger{width:31px!important;height:31px!important;flex-basis:31px!important}}
 #wo-lgg-saved-actions-trigger{display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;width:34px;height:34px;margin-left:6px;padding:0;border:1px solid rgba(149,126,255,.40);border-radius:10px;background:linear-gradient(145deg,rgba(119,91,255,.20),rgba(62,188,129,.15));color:#d9cbff;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.16);transition:transform .16s ease,border-color .16s ease,background .16s ease}
 #wo-lgg-saved-actions-trigger:hover{transform:translateY(-1px);border-color:rgba(175,151,255,.8);background:linear-gradient(145deg,rgba(119,91,255,.30),rgba(62,188,129,.22))}
 #wo-lgg-saved-actions-trigger .wosa-star{font-size:19px;line-height:1;text-shadow:0 0 12px rgba(168,139,255,.42)}
@@ -13268,7 +13273,9 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
   function ensureMenu(){
     var header=document.querySelector('#app-header .header-inner');if(!header)return false;
     trigger=document.getElementById('wo-lgg-saved-actions-trigger');
-    if(!trigger){var fleet=header.querySelector('.fleet-menu-btn');if(!fleet)return false;trigger=document.createElement('button');trigger.type='button';trigger.id='wo-lgg-saved-actions-trigger';trigger.setAttribute('aria-label','Actions enregistrées');trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-controls','wo-lgg-saved-actions-menu');trigger.title='Actions enregistrées';trigger.innerHTML='<span class="wosa-star">✦</span>';fleet.insertAdjacentElement('afterend',trigger);trigger.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggleMenu()})}
+    var fleet=header.querySelector('.fleet-menu-btn');var leftGroup=header.querySelector('.header-left-actions');if(!leftGroup&&fleet){leftGroup=document.createElement('div');leftGroup.className='header-left-actions';fleet.parentNode.insertBefore(leftGroup,fleet);leftGroup.appendChild(fleet)}
+    if(!trigger){if(!fleet)return false;trigger=document.createElement('button');trigger.type='button';trigger.id='wo-lgg-saved-actions-trigger';trigger.setAttribute('aria-label','Actions enregistrées');trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-controls','wo-lgg-saved-actions-menu');trigger.title='Actions enregistrées';trigger.innerHTML='<span class="wosa-star">✦</span>';(leftGroup||fleet.parentNode).appendChild(trigger);trigger.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggleMenu()})}
+    if(trigger&&leftGroup&&trigger.parentNode!==leftGroup)leftGroup.appendChild(trigger);
     menu=document.getElementById('wo-lgg-saved-actions-menu');
     if(!menu){menu=document.createElement('aside');menu.id='wo-lgg-saved-actions-menu';menu.setAttribute('aria-label','Actions enregistrées');menu.innerHTML='<div class="wosa-menu-head"><div class="wosa-menu-mark">✦</div><div><div class="wosa-menu-title">Actions enregistrées</div><div class="wosa-menu-sub">Pré-cochage automatique selon les critères du vol.</div></div><span class="wosa-menu-count" id="wosa-menu-count">0 règle</span><button type="button" class="wosa-menu-close" data-cmd="close-menu" aria-label="Fermer">×</button></div><div class="wosa-menu-actions" id="wosa-menu-list"></div><div id="wosa-menu-suggestions" hidden></div><div class="wosa-add-row"><button type="button" class="wosa-create" data-cmd="new">＋ Ajouter une action</button></div><div id="wosa-editor-mount" hidden></div>';document.body.appendChild(menu);menu.addEventListener('click',function(e){if(e.target.closest('[data-cmd="close-menu"]')){e.preventDefault();e.stopPropagation();closeMenu();return}handleMenuClick(e)});menu.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.matches('input:not([type="checkbox"])')){e.preventDefault();e.stopPropagation();var save=menu.querySelector('[data-cmd="save-action"]');if(save)save.click()}})}
     updateTriggerCount();return true;
