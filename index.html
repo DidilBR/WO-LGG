@@ -3456,14 +3456,16 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
       </div>
     </div>
 
-    <button type="button" id="wo-lgg-login-trigger" class="wo-login-trigger" onclick="woLggShowLogin()" style="display:none" aria-label="Ouvrir la connexion">Connexion</button>
-    <button type="button" id="wo-lgg-lock-invite" class="wo-lock-invite" onclick="woLggOpenLockInvite()" aria-label="Se connecter à WO-LGG" title="Connexion sécurisée">
+    <div class="header-right-auth" id="header-right-auth" aria-label="Accès au compte">
+      <button type="button" id="wo-lgg-login-trigger" class="wo-login-trigger" onclick="woLggShowLogin()" style="display:none" aria-label="Ouvrir la connexion">Connexion</button>
+      <button type="button" id="wo-lgg-lock-invite" class="wo-lock-invite" onclick="woLggOpenLockInvite()" aria-label="Se connecter à WO-LGG" title="Connexion sécurisée" aria-hidden="true">
       <svg class="wo-lock-invite-svg" viewBox="0 0 48 48" aria-hidden="true">
         <circle class="wo-lock-ring-track" cx="24" cy="24" r="21" pathLength="132"></circle>
         <circle class="wo-lock-ring-progress" cx="24" cy="24" r="21" pathLength="132"></circle>
         <path class="wo-lock-glyph" d="M15.5 21v-5.2a8.5 8.5 0 0 1 17 0V21M13 21h22v17H13zM24 27v5"></path>
       </svg>
-    </button>
+      </button>
+    </div>
     <button class="app-menu-trigger" id="app-menu-trigger" type="button" aria-expanded="false" aria-controls="app-menu-panel" onclick="toggleAppHeaderMenu()" title="Menu principal">
       <span class="menu-trigger-label">Menu</span><span class="menu-trigger-icon">&#8942;</span>
     </button>
@@ -4240,30 +4242,71 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
   let woLggUser = null, woLggProfile = null;
   let woLggLockInviteShowTimer=null;
   let woLggLockInviteHideTimer=null;
+  let woLggLockInviteExitTimer=null;
+  let woLggLoginTriggerTimer=null;
+
+  function woLggSetLoginTriggerVisible(visible){
+    const trigger=document.getElementById('wo-lgg-login-trigger');
+    if(!trigger)return;
+    if(woLggLoginTriggerTimer){clearTimeout(woLggLoginTriggerTimer);woLggLoginTriggerTimer=null;}
+    if(visible){
+      if(woLggUser || !woLggVisitorMode){trigger.style.display='none';trigger.classList.remove('is-visible');return;}
+      trigger.style.display='inline-flex';
+      trigger.setAttribute('aria-hidden','false');
+      requestAnimationFrame(()=>requestAnimationFrame(()=>trigger.classList.add('is-visible')));
+    }else{
+      trigger.classList.remove('is-visible');
+      trigger.setAttribute('aria-hidden','true');
+      woLggLoginTriggerTimer=setTimeout(()=>{
+        if(!trigger.classList.contains('is-visible'))trigger.style.display='none';
+        woLggLoginTriggerTimer=null;
+      },190);
+    }
+  }
+
   function woLggHideLockInvitation(restoreLogin=true){
     if(woLggLockInviteShowTimer){clearTimeout(woLggLockInviteShowTimer);woLggLockInviteShowTimer=null;}
     if(woLggLockInviteHideTimer){clearTimeout(woLggLockInviteHideTimer);woLggLockInviteHideTimer=null;}
+    if(woLggLockInviteExitTimer){clearTimeout(woLggLockInviteExitTimer);woLggLockInviteExitTimer=null;}
     const lock=document.getElementById('wo-lgg-lock-invite');
-    const loginTrigger=document.getElementById('wo-lgg-login-trigger');
-    if(loginTrigger)loginTrigger.style.display='none';
-    if(!lock){if(restoreLogin&&loginTrigger&&!woLggUser&&woLggVisitorMode)loginTrigger.style.display='inline-flex';return;}
+    woLggSetLoginTriggerVisible(false);
+    if(!lock){if(restoreLogin)woLggSetLoginTriggerVisible(true);return;}
+    const wasVisible=lock.classList.contains('is-visible') || lock.style.display!=='none';
     lock.classList.remove('is-visible');
     lock.setAttribute('aria-hidden','true');
-    setTimeout(()=>{if(!lock.classList.contains('is-visible')){lock.style.display='none';if(restoreLogin&&loginTrigger&&!woLggUser&&woLggVisitorMode)loginTrigger.style.display='inline-flex';}},420);
+    if(!wasVisible){
+      lock.style.display='none';
+      if(restoreLogin)woLggSetLoginTriggerVisible(true);
+      return;
+    }
+    // Keep the login button hidden until the slide-out has completely ended.
+    woLggLockInviteExitTimer=setTimeout(()=>{
+      if(!lock.classList.contains('is-visible'))lock.style.display='none';
+      woLggLockInviteExitTimer=null;
+      if(restoreLogin && !woLggUser && woLggVisitorMode)woLggSetLoginTriggerVisible(true);
+    },420);
   }
+
   function woLggScheduleLockInvitation(){
-    woLggHideLockInvitation();
+    // Reserve the auth slot immediately: Connexion must not flash during the 0.8 s delay.
+    woLggHideLockInvitation(false);
+    woLggSetLoginTriggerVisible(false);
     if(woLggUser || !woLggVisitorMode)return;
     woLggLockInviteShowTimer=setTimeout(function(){
       const lock=document.getElementById('wo-lgg-lock-invite');
       if(!lock || woLggUser || !woLggVisitorMode)return;
-      const loginTrigger=document.getElementById('wo-lgg-login-trigger');if(loginTrigger)loginTrigger.style.display='none';
+      woLggSetLoginTriggerVisible(false);
       lock.style.display='grid';
       lock.setAttribute('aria-hidden','false');
+      // Restart countdown animation on each appearance.
+      const ring=lock.querySelector('.wo-lock-ring-progress');
+      if(ring){ring.style.animation='none';void ring.getBoundingClientRect();ring.style.animation='';}
       requestAnimationFrame(()=>requestAnimationFrame(()=>lock.classList.add('is-visible')));
-      woLggLockInviteHideTimer=setTimeout(woLggHideLockInvitation,5000);
+      woLggLockInviteHideTimer=setTimeout(function(){woLggHideLockInvitation(true);},5000);
+      woLggLockInviteShowTimer=null;
     },800);
   }
+
   function woLggOpenLockInvite(){
     woLggHideLockInvitation(false);
     woLggShowLogin();
@@ -4322,7 +4365,7 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
     const trigger=document.getElementById('wo-lgg-login-trigger');
     woLggClearLoginNoticeTimer();
     if(o){o.style.display='block';o.classList.add('is-counting');}
-    if(trigger)trigger.style.display='none';
+    if(trigger)woLggSetLoginTriggerVisible(false);
     if(b){b.style.display='none';b.disabled=false;b.style.pointerEvents='auto';}
     const m=document.getElementById('wo-lgg-auth-message');if(m)m.textContent=message||'';
     window.__woLggLoginNoticeTimer=setTimeout(function(){
@@ -4339,7 +4382,7 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
     const o=document.getElementById('wo-lgg-auth-overlay');
     if(o)o.style.display='none';
     const trigger=document.getElementById('wo-lgg-login-trigger');
-    if(trigger)trigger.style.display=((!woLggProfile)||woLggVisitorMode?'inline-flex':'none');
+    if(trigger)woLggSetLoginTriggerVisible((!woLggProfile)||woLggVisitorMode);
   }
   function woLggShowIdentity(){
     woLggHideLockInvitation();
@@ -4347,7 +4390,7 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
     if(n)n.textContent=woLggProfile?.display_name||'';
     if(r)r.textContent=woLggProfile?.role||'';
     if(b)b.style.display='inline-flex';
-    const trigger=document.getElementById('wo-lgg-login-trigger');if(trigger)trigger.style.display='none';
+    const trigger=document.getElementById('wo-lgg-login-trigger');if(trigger)woLggSetLoginTriggerVisible(false);
   }
   async function woLggLogin(){
     woLggKeepLoginNotice();
@@ -4365,7 +4408,7 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
     woLggProfile = { display_name:'Visiteur', role:'VISITOR' };
     woLggHideLogin();
     const loginTrigger=document.getElementById('wo-lgg-login-trigger');
-    if(loginTrigger)loginTrigger.style.display='inline-flex';
+    if(loginTrigger)woLggSetLoginTriggerVisible(true);
     const n = document.getElementById('wo-lgg-user-name');
     const r = document.getElementById('wo-lgg-user-role');
     const b = document.getElementById('wo-lgg-logout-btn');
@@ -13675,33 +13718,7 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
 }
 @media(prefers-reduced-motion:reduce){#deicing-overlay *{scroll-behavior:auto!important;transition:none!important}}
 </style>
-<style id="wo-lgg-lock-invite-and-deicing-presets-v17">
-/* Temporary secure-lock invitation: permanent Connexion button remains visible. */
-.wo-lock-invite{
-  display:none;position:relative;place-items:center;flex:0 0 42px;width:42px;height:42px;padding:0;margin:0 4px 0 0;
-  border:1px solid rgba(96,218,145,.55);border-radius:50%;background:radial-gradient(circle at 35% 25%,#21a968,#087844 72%);
-  color:#f5fff8;cursor:pointer;opacity:0;transform:translateX(110px) scale(.9);pointer-events:none;
-  box-shadow:0 0 0 0 rgba(42,205,121,0),0 5px 18px rgba(0,110,64,.18);
-  transition:opacity .26s ease,transform .38s cubic-bezier(.2,.82,.2,1),box-shadow .4s ease;
-}
-.wo-lock-invite.is-visible{opacity:1;transform:translateX(0) scale(1);pointer-events:auto;animation:woLockBreathing 3.8s ease-in-out infinite}
-.wo-lock-invite:not(.is-visible){transition:opacity .24s ease,transform .36s cubic-bezier(.5,0,.85,.25),box-shadow .4s ease;transform:translateX(110px) scale(.9);opacity:0}
-.wo-lock-invite-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.wo-lock-ring-track,.wo-lock-ring-progress{fill:none;stroke-width:1.65;transform:rotate(-90deg);transform-origin:24px 24px}
-.wo-lock-ring-track{stroke:rgba(230,255,238,.2)}
-.wo-lock-ring-progress{stroke:#e1ffeb;stroke-linecap:round;stroke-dasharray:132 132;stroke-dashoffset:0}
-.wo-lock-invite.is-visible .wo-lock-ring-progress{animation:woLockCountdown 5s linear forwards}
-.wo-lock-glyph{fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.18))}
-@keyframes woLockCountdown{to{stroke-dashoffset:132}}
-@keyframes woLockBreathing{0%,100%{box-shadow:0 0 0 0 rgba(42,205,121,0),0 5px 18px rgba(0,110,64,.18);filter:brightness(1)}50%{box-shadow:0 0 0 5px rgba(42,205,121,.07),0 7px 22px rgba(0,145,80,.28);filter:brightness(1.045)}}
-@media(max-width:760px){
- .wo-lock-invite{flex-basis:34px!important;width:34px!important;height:34px!important;margin-right:1px!important}
- .header-inner.app-header-clean{gap:6px!important}
- .wo-lock-invite-svg{inset:0}
-}
-@media(prefers-reduced-motion:reduce){.wo-lock-invite,.wo-lock-invite.is-visible{animation:none!important;transition:none!important}.wo-lock-invite.is-visible .wo-lock-ring-progress{animation:none!important;stroke-dashoffset:132}}
-
-/* Deicing shift presets */
+<style id="wo-lgg-deicing-presets-preserved">/* Deicing shift presets */
 .deicing-controls{grid-template-columns:minmax(0,1.1fr) minmax(0,.8fr) minmax(0,.8fr) auto auto!important}
 .deicing-shift-presets{display:flex;align-items:center;gap:5px;min-height:42px;padding:4px 6px;border:1px solid rgba(140,190,220,.17);border-radius:10px;background:rgba(5,17,28,.62)}
 .deicing-presets-label{padding:0 5px;color:#7897aa;font:800 7px var(--mono,monospace);letter-spacing:1px}
@@ -13718,6 +13735,53 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
 }
 @media(prefers-reduced-motion:reduce){.deicing-shift-btn{transition:none!important}}
 </style>
+
+<style id="wo-lgg-lock-auth-slot-polish-v19">
+/* Stable right-hand auth slot: Connexion and the lock share one reserved position. */
+#app-header .header-inner.app-header-clean{position:relative!important;display:flex!important;align-items:center!important;}
+#app-header .header-right-auth{
+  position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 84px!important;width:84px!important;min-width:84px!important;height:42px!important;
+  margin-left:auto!important;overflow:visible!important;z-index:8!important;
+}
+#app-header #wo-lgg-login-trigger{
+  position:relative!important;display:none;flex:0 0 84px!important;width:84px!important;min-width:84px!important;
+  margin:0!important;opacity:0;transform:translate3d(7px,0,0);
+  transition:opacity .18s ease,transform .22s cubic-bezier(.2,.8,.2,1)!important;
+}
+#app-header #wo-lgg-login-trigger.is-visible{opacity:1;transform:translate3d(0,0,0)}
+#app-header #wo-lgg-lock-invite{
+  position:absolute!important;left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;
+  display:none;place-items:center!important;flex:0 0 42px!important;width:42px!important;height:42px!important;
+  min-width:42px!important;margin:0!important;padding:0!important;
+  transform:translate3d(calc(-50% + 76px),-50%,0) scale(.92)!important;
+  opacity:0;pointer-events:none;z-index:9!important;
+  transition:opacity .24s ease,transform .42s cubic-bezier(.18,.82,.22,1),box-shadow .4s ease!important;
+  will-change:transform,opacity;
+}
+#app-header #wo-lgg-lock-invite.is-visible{
+  opacity:1!important;pointer-events:auto!important;
+  transform:translate3d(-50%,-50%,0) scale(1)!important;
+  animation:woLockBreathing 3.8s ease-in-out infinite!important;
+}
+#app-header #wo-lgg-lock-invite:not(.is-visible){
+  opacity:0!important;pointer-events:none!important;
+  transform:translate3d(calc(-50% + 76px),-50%,0) scale(.92)!important;
+}
+#app-header #wo-lgg-lock-invite .wo-lock-invite-svg{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
+#app-header #app-menu-trigger{position:relative!important;z-index:8!important;flex:0 0 auto!important}
+@media(max-width:760px){
+  #app-header .header-right-auth{flex-basis:76px!important;width:76px!important;min-width:76px!important;height:38px!important}
+  #app-header #wo-lgg-login-trigger{flex-basis:76px!important;width:76px!important;min-width:76px!important;padding:0 6px!important;font-size:9px!important}
+  #app-header #wo-lgg-lock-invite{width:36px!important;height:36px!important;flex-basis:36px!important;min-width:36px!important;transform:translate3d(calc(-50% + 68px),-50%,0) scale(.92)!important}
+  #app-header #wo-lgg-lock-invite.is-visible{transform:translate3d(-50%,-50%,0) scale(1)!important}
+  #app-header #wo-lgg-lock-invite:not(.is-visible){transform:translate3d(calc(-50% + 68px),-50%,0) scale(.92)!important}
+}
+@media(prefers-reduced-motion:reduce){
+  #app-header #wo-lgg-lock-invite,#app-header #wo-lgg-login-trigger{transition:none!important;animation:none!important}
+}
+</style>
+
 </body>
 </html>
 
