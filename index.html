@@ -4240,14 +4240,16 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
   let woLggUser = null, woLggProfile = null;
   let woLggLockInviteShowTimer=null;
   let woLggLockInviteHideTimer=null;
-  function woLggHideLockInvitation(){
+  function woLggHideLockInvitation(restoreLogin=true){
     if(woLggLockInviteShowTimer){clearTimeout(woLggLockInviteShowTimer);woLggLockInviteShowTimer=null;}
     if(woLggLockInviteHideTimer){clearTimeout(woLggLockInviteHideTimer);woLggLockInviteHideTimer=null;}
     const lock=document.getElementById('wo-lgg-lock-invite');
-    if(!lock)return;
+    const loginTrigger=document.getElementById('wo-lgg-login-trigger');
+    if(loginTrigger)loginTrigger.style.display='none';
+    if(!lock){if(restoreLogin&&loginTrigger&&!woLggUser&&woLggVisitorMode)loginTrigger.style.display='inline-flex';return;}
     lock.classList.remove('is-visible');
     lock.setAttribute('aria-hidden','true');
-    setTimeout(()=>{if(!lock.classList.contains('is-visible'))lock.style.display='none';},260);
+    setTimeout(()=>{if(!lock.classList.contains('is-visible')){lock.style.display='none';if(restoreLogin&&loginTrigger&&!woLggUser&&woLggVisitorMode)loginTrigger.style.display='inline-flex';}},420);
   }
   function woLggScheduleLockInvitation(){
     woLggHideLockInvitation();
@@ -4255,14 +4257,15 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
     woLggLockInviteShowTimer=setTimeout(function(){
       const lock=document.getElementById('wo-lgg-lock-invite');
       if(!lock || woLggUser || !woLggVisitorMode)return;
+      const loginTrigger=document.getElementById('wo-lgg-login-trigger');if(loginTrigger)loginTrigger.style.display='none';
       lock.style.display='grid';
       lock.setAttribute('aria-hidden','false');
-      requestAnimationFrame(()=>lock.classList.add('is-visible'));
+      requestAnimationFrame(()=>requestAnimationFrame(()=>lock.classList.add('is-visible')));
       woLggLockInviteHideTimer=setTimeout(woLggHideLockInvitation,5000);
     },800);
   }
   function woLggOpenLockInvite(){
-    woLggHideLockInvitation();
+    woLggHideLockInvitation(false);
     woLggShowLogin();
   }
   async function woLggLoadIdentity(){
@@ -4313,7 +4316,7 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
     if(!woLggUser && !woLggVisitorMode)woLggContinueAsVisitor();
   }
   function woLggShowLogin(message){
-    woLggHideLockInvitation();
+    woLggHideLockInvitation(false);
     const o=document.getElementById('wo-lgg-auth-overlay');
     const b=document.getElementById('wo-lgg-logout-btn');
     const trigger=document.getElementById('wo-lgg-login-trigger');
@@ -13677,11 +13680,12 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
 .wo-lock-invite{
   display:none;position:relative;place-items:center;flex:0 0 42px;width:42px;height:42px;padding:0;margin:0 4px 0 0;
   border:1px solid rgba(96,218,145,.55);border-radius:50%;background:radial-gradient(circle at 35% 25%,#21a968,#087844 72%);
-  color:#f5fff8;cursor:pointer;opacity:0;transform:translateX(24px) scale(.94);pointer-events:none;
+  color:#f5fff8;cursor:pointer;opacity:0;transform:translateX(110px) scale(.9);pointer-events:none;
   box-shadow:0 0 0 0 rgba(42,205,121,0),0 5px 18px rgba(0,110,64,.18);
   transition:opacity .26s ease,transform .38s cubic-bezier(.2,.82,.2,1),box-shadow .4s ease;
 }
 .wo-lock-invite.is-visible{opacity:1;transform:translateX(0) scale(1);pointer-events:auto;animation:woLockBreathing 3.8s ease-in-out infinite}
+.wo-lock-invite:not(.is-visible){transition:opacity .24s ease,transform .36s cubic-bezier(.5,0,.85,.25),box-shadow .4s ease;transform:translateX(110px) scale(.9);opacity:0}
 .wo-lock-invite-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .wo-lock-ring-track,.wo-lock-ring-progress{fill:none;stroke-width:1.65;transform:rotate(-90deg);transform-origin:24px 24px}
 .wo-lock-ring-track{stroke:rgba(230,255,238,.2)}
