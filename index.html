@@ -3413,6 +3413,7 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
 }
 </style>
 
+
 </head>
 <body>
 <div id="wo-lgg-auth-overlay" class="wo-login-toast" role="region" aria-label="Connexion à votre compte" style="display:none">
@@ -3456,6 +3457,13 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
     </div>
 
     <button type="button" id="wo-lgg-login-trigger" class="wo-login-trigger" onclick="woLggShowLogin()" style="display:none" aria-label="Ouvrir la connexion">Connexion</button>
+    <button type="button" id="wo-lgg-lock-invite" class="wo-lock-invite" onclick="woLggOpenLockInvite()" aria-label="Se connecter à WO-LGG" title="Connexion sécurisée">
+      <svg class="wo-lock-invite-svg" viewBox="0 0 48 48" aria-hidden="true">
+        <circle class="wo-lock-ring-track" cx="24" cy="24" r="21" pathLength="132"></circle>
+        <circle class="wo-lock-ring-progress" cx="24" cy="24" r="21" pathLength="132"></circle>
+        <path class="wo-lock-glyph" d="M15.5 21v-5.2a8.5 8.5 0 0 1 17 0V21M13 21h22v17H13zM24 27v5"></path>
+      </svg>
+    </button>
     <button class="app-menu-trigger" id="app-menu-trigger" type="button" aria-expanded="false" aria-controls="app-menu-panel" onclick="toggleAppHeaderMenu()" title="Menu principal">
       <span class="menu-trigger-label">Menu</span><span class="menu-trigger-icon">&#8942;</span>
     </button>
@@ -4230,19 +4238,46 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
     }
   });
   let woLggUser = null, woLggProfile = null;
+  let woLggLockInviteShowTimer=null;
+  let woLggLockInviteHideTimer=null;
+  function woLggHideLockInvitation(){
+    if(woLggLockInviteShowTimer){clearTimeout(woLggLockInviteShowTimer);woLggLockInviteShowTimer=null;}
+    if(woLggLockInviteHideTimer){clearTimeout(woLggLockInviteHideTimer);woLggLockInviteHideTimer=null;}
+    const lock=document.getElementById('wo-lgg-lock-invite');
+    if(!lock)return;
+    lock.classList.remove('is-visible');
+    lock.setAttribute('aria-hidden','true');
+    setTimeout(()=>{if(!lock.classList.contains('is-visible'))lock.style.display='none';},260);
+  }
+  function woLggScheduleLockInvitation(){
+    woLggHideLockInvitation();
+    if(woLggUser || !woLggVisitorMode)return;
+    woLggLockInviteShowTimer=setTimeout(function(){
+      const lock=document.getElementById('wo-lgg-lock-invite');
+      if(!lock || woLggUser || !woLggVisitorMode)return;
+      lock.style.display='grid';
+      lock.setAttribute('aria-hidden','false');
+      requestAnimationFrame(()=>lock.classList.add('is-visible'));
+      woLggLockInviteHideTimer=setTimeout(woLggHideLockInvitation,5000);
+    },800);
+  }
+  function woLggOpenLockInvite(){
+    woLggHideLockInvitation();
+    woLggShowLogin();
+  }
   async function woLggLoadIdentity(){
     const {data:{session},error}=await woLggSupabase.auth.getSession();
     if(error){
       woLggContinueAsVisitor();
-      woLggShowLogin('Session non vérifiable. Tu peux continuer en visiteur.');
+      woLggScheduleLockInvitation();
       return;
     }
     if(session?.user){
       await woLggAcceptSession(session.user);
     }else{
-      // L'application est immédiatement utilisable en mode visiteur.
+      // Visiteur directement : la connexion n'apparaît que si l'utilisateur choisit le cadenas.
       woLggContinueAsVisitor();
-      woLggShowLogin();
+      woLggScheduleLockInvitation();
     }
   }
   async function woLggAcceptSession(user){
@@ -4278,6 +4313,7 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
     if(!woLggUser && !woLggVisitorMode)woLggContinueAsVisitor();
   }
   function woLggShowLogin(message){
+    woLggHideLockInvitation();
     const o=document.getElementById('wo-lgg-auth-overlay');
     const b=document.getElementById('wo-lgg-logout-btn');
     const trigger=document.getElementById('wo-lgg-login-trigger');
@@ -4303,6 +4339,7 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
     if(trigger)trigger.style.display=((!woLggProfile)||woLggVisitorMode?'inline-flex':'none');
   }
   function woLggShowIdentity(){
+    woLggHideLockInvitation();
     const n=document.getElementById('wo-lgg-user-name'),r=document.getElementById('wo-lgg-user-role'),b=document.getElementById('wo-lgg-logout-btn');
     if(n)n.textContent=woLggProfile?.display_name||'';
     if(r)r.textContent=woLggProfile?.role||'';
@@ -11055,6 +11092,12 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
       <div class="deicing-field"><label for="deicing-date">Date locale (Belgique)</label><input id="deicing-date" type="date"></div>
       <div class="deicing-field"><label for="deicing-from">De</label><input id="deicing-from" type="time" value="00:00"></div>
       <div class="deicing-field"><label for="deicing-to">À</label><input id="deicing-to" type="time" value="23:59"></div>
+      <div class="deicing-shift-presets" role="group" aria-label="Plages horaires prédéfinies">
+        <span class="deicing-presets-label">SHIFT</span>
+        <button type="button" class="deicing-shift-btn" data-deicing-shift="E" onclick="setDeicingShiftPreset('E')" aria-label="Early 06 heures à 15 heures">E</button>
+        <button type="button" class="deicing-shift-btn" data-deicing-shift="L" onclick="setDeicingShiftPreset('L')" aria-label="Late 14 heures à 23 heures">L</button>
+        <button type="button" class="deicing-shift-btn" data-deicing-shift="N" onclick="setDeicingShiftPreset('N')" aria-label="Night 22 heures à 07 heures">N</button>
+      </div>
       <button type="button" class="deicing-btn" id="deicing-refresh" onclick="loadDeicingDepartures()">↻ Actualiser</button>
 
     </div>
@@ -11095,6 +11138,7 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
   let deicingDefaultsInitialized=false;
   let deicingRows=[];
   let deicingLoaded=false;
+  let deicingLoadRequestId=0;
   let deicingRawDepartures=[];
   let deicingLastRange=null;
   let deicingCheckRunning=false;
@@ -11409,16 +11453,23 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
   };
   window.closeDeicingOperations=function(){const o=deicingEl('deicing-overlay');if(o){o.classList.remove('open');o.setAttribute('aria-hidden','true');}};
   window.loadDeicingDepartures=async function(){
+    const requestId=++deicingLoadRequestId;
     const btn=deicingEl('deicing-refresh');if(btn){btn.disabled=true;btn.textContent='Chargement…';}
     deicingSetStatus('Récupération des départs FIDS…');
     try{
       const range=deicingWindow();if(!range)throw new Error('Plage horaire invalide.');
       const raw=await fetchJsonWithFallback(FIDS_DEPARTURES_URL);
+      // If the user changed the range during an earlier request, ignore that stale response.
+      if(requestId!==deicingLoadRequestId)return;
       deicingRawDepartures=Array.isArray(raw)?raw:(Array.isArray(raw?.departures)?raw.departures:[]);
       deicingLastRange=range;deicingRows=deicingNormalizeRows(deicingRawDepartures,range);deicingLoaded=true;deicingRender();deicingRenderRisk();
       deicingSetStatus('Heure locale belge · '+range.from+' → '+range.to+(range.to<=range.from?' (lendemain)':'')+' · FIDS actualisé à '+deicingFormatTime(new Date()));
-    }catch(e){console.error('Deicing Operations:',e);deicingLoaded=false;deicingRows=[];deicingRender();deicingSetStatus('Erreur FIDS : '+(e?.message||'récupération impossible'));}
-    finally{if(btn){btn.disabled=false;btn.textContent='↻ Actualiser';}}
+    }catch(e){
+      if(requestId!==deicingLoadRequestId)return;
+      console.error('Deicing Operations:',e);deicingLoaded=false;deicingRows=[];deicingRender();deicingSetStatus('Erreur FIDS : '+(e?.message||'récupération impossible'));
+    }finally{
+      if(requestId===deicingLoadRequestId&&btn){btn.disabled=false;btn.textContent='↻ Actualiser';}
+    }
   };
   function deicingPrintHtml(rows,range){
     const esc=deicingEscape;const now=new Date();
@@ -11540,12 +11591,51 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
     await loadDeicingDepartures();
     if(deicingLoaded)printDeicingSheet();else alert('Impossible de charger les départs FIDS pour cette plage.');
   };
+  let deicingRangeRefreshTimer=null;
+  function deicingSetPresetActive(code){
+    document.querySelectorAll('.deicing-shift-btn').forEach(btn=>{
+      const active=btn.getAttribute('data-deicing-shift')===code;
+      btn.classList.toggle('active',active);
+      btn.setAttribute('aria-pressed',active?'true':'false');
+    });
+  }
+  window.setDeicingShiftPreset=function(code){
+    const presets={E:{from:'06:00',to:'15:00'},L:{from:'14:00',to:'23:00'},N:{from:'22:00',to:'07:00'}};
+    const preset=presets[String(code||'').toUpperCase()];if(!preset)return;
+    const from=deicingEl('deicing-from'),to=deicingEl('deicing-to');
+    if(from)from.value=preset.from;if(to)to.value=preset.to;
+    deicingSetPresetActive(String(code).toUpperCase());
+    deicingRenderRisk();
+    if(deicingRangeRefreshTimer)clearTimeout(deicingRangeRefreshTimer);
+    loadDeicingDepartures();
+  };
+  function deicingScheduleRangeRefresh(){
+    deicingRenderRisk();
+    // A time/date change made manually also refreshes the FIDS list automatically.
+    if(deicingRangeRefreshTimer)clearTimeout(deicingRangeRefreshTimer);
+    deicingRangeRefreshTimer=setTimeout(function(){
+      const date=deicingEl('deicing-date')?.value;
+      const from=deicingEl('deicing-from')?.value;
+      const to=deicingEl('deicing-to')?.value;
+      if(date&&from&&to)loadDeicingDepartures();
+    },420);
+  }
   const deicingRowsHost=deicingEl('deicing-rows');
   if(deicingRowsHost)deicingRowsHost.addEventListener('change',function(e){
     const input=e.target&&e.target.closest?e.target.closest('.deicing-task-check'):null;if(!input)return;
     deicingSetCheck(input.getAttribute('data-deicing-key')||'',input.getAttribute('data-deicing-task')||'',input.checked);
   });
-  ['deicing-date','deicing-from','deicing-to'].forEach(id=>{const el=deicingEl(id);if(el)el.addEventListener('change',()=>deicingRenderRisk());});
+  ['deicing-date','deicing-from','deicing-to'].forEach(id=>{
+    const el=deicingEl(id);if(!el)return;
+    el.addEventListener('change',function(){deicingSetPresetActive('');deicingScheduleRangeRefresh();});
+    el.addEventListener('input',function(){deicingSetPresetActive('');deicingScheduleRangeRefresh();});
+  });
+  // Defensive cleanup: only the single footer print action is kept in the Deicing panel.
+  function deicingKeepSinglePrintButton(){
+    const keep=deicingEl('deicing-print-bottom');
+    document.querySelectorAll('#deicing-overlay button[onclick*="printDeicingSheet"]').forEach(btn=>{if(btn!==keep)btn.remove();});
+  }
+  deicingKeepSinglePrintButton();
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDeicingOperations();closeDeicingAlert();}});
   ['deicing-overlay','deicing-alert-overlay'].forEach(id=>{const o=deicingEl(id);if(o)o.addEventListener('pointerdown',e=>{if(e.target===o){if(id==='deicing-overlay')closeDeicingOperations();else closeDeicingAlert();}});});
   // Le suivi démarre une heure après la dernière impression / vérification, même si la page a été rechargée.
@@ -13581,6 +13671,48 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
   #deicing-overlay .deicing-foot-actions .deicing-btn.primary{min-width:0!important}
 }
 @media(prefers-reduced-motion:reduce){#deicing-overlay *{scroll-behavior:auto!important;transition:none!important}}
+</style>
+<style id="wo-lgg-lock-invite-and-deicing-presets-v17">
+/* Temporary secure-lock invitation: permanent Connexion button remains visible. */
+.wo-lock-invite{
+  display:none;position:relative;place-items:center;flex:0 0 42px;width:42px;height:42px;padding:0;margin:0 4px 0 0;
+  border:1px solid rgba(96,218,145,.55);border-radius:50%;background:radial-gradient(circle at 35% 25%,#21a968,#087844 72%);
+  color:#f5fff8;cursor:pointer;opacity:0;transform:translateX(24px) scale(.94);pointer-events:none;
+  box-shadow:0 0 0 0 rgba(42,205,121,0),0 5px 18px rgba(0,110,64,.18);
+  transition:opacity .26s ease,transform .38s cubic-bezier(.2,.82,.2,1),box-shadow .4s ease;
+}
+.wo-lock-invite.is-visible{opacity:1;transform:translateX(0) scale(1);pointer-events:auto;animation:woLockBreathing 3.8s ease-in-out infinite}
+.wo-lock-invite-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.wo-lock-ring-track,.wo-lock-ring-progress{fill:none;stroke-width:1.65;transform:rotate(-90deg);transform-origin:24px 24px}
+.wo-lock-ring-track{stroke:rgba(230,255,238,.2)}
+.wo-lock-ring-progress{stroke:#e1ffeb;stroke-linecap:round;stroke-dasharray:132 132;stroke-dashoffset:0}
+.wo-lock-invite.is-visible .wo-lock-ring-progress{animation:woLockCountdown 5s linear forwards}
+.wo-lock-glyph{fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.18))}
+@keyframes woLockCountdown{to{stroke-dashoffset:132}}
+@keyframes woLockBreathing{0%,100%{box-shadow:0 0 0 0 rgba(42,205,121,0),0 5px 18px rgba(0,110,64,.18);filter:brightness(1)}50%{box-shadow:0 0 0 5px rgba(42,205,121,.07),0 7px 22px rgba(0,145,80,.28);filter:brightness(1.045)}}
+@media(max-width:760px){
+ .wo-lock-invite{flex-basis:34px!important;width:34px!important;height:34px!important;margin-right:1px!important}
+ .header-inner.app-header-clean{gap:6px!important}
+ .wo-lock-invite-svg{inset:0}
+}
+@media(prefers-reduced-motion:reduce){.wo-lock-invite,.wo-lock-invite.is-visible{animation:none!important;transition:none!important}.wo-lock-invite.is-visible .wo-lock-ring-progress{animation:none!important;stroke-dashoffset:132}}
+
+/* Deicing shift presets */
+.deicing-controls{grid-template-columns:minmax(0,1.1fr) minmax(0,.8fr) minmax(0,.8fr) auto auto!important}
+.deicing-shift-presets{display:flex;align-items:center;gap:5px;min-height:42px;padding:4px 6px;border:1px solid rgba(140,190,220,.17);border-radius:10px;background:rgba(5,17,28,.62)}
+.deicing-presets-label{padding:0 5px;color:#7897aa;font:800 7px var(--mono,monospace);letter-spacing:1px}
+.deicing-shift-btn{display:grid;place-items:center;width:32px;height:31px;min-width:32px;border:1px solid rgba(110,165,195,.22);border-radius:7px;background:rgba(255,255,255,.035);color:#b8d0de;font:850 11px var(--mono,monospace);cursor:pointer;transition:background .16s,border-color .16s,color .16s,transform .16s}
+.deicing-shift-btn:hover{border-color:rgba(77,194,238,.55);color:#e9faff;transform:translateY(-1px)}
+.deicing-shift-btn.active{border-color:#39b8e5;background:linear-gradient(145deg,rgba(13,150,205,.28),rgba(24,100,180,.2));color:#fff;box-shadow:inset 0 0 0 1px rgba(74,194,238,.13),0 0 12px rgba(35,160,220,.1)}
+@media(max-width:760px){
+ #deicing-overlay .deicing-controls{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #deicing-overlay .deicing-field:first-child{grid-column:1/-1!important}
+ #deicing-overlay .deicing-shift-presets{grid-column:1/-1!important;min-height:37px;justify-content:center;padding:3px 6px}
+ #deicing-overlay .deicing-presets-label{margin-right:8px;font-size:7px}
+ #deicing-overlay .deicing-shift-btn{width:42px;height:29px;min-width:42px}
+ #deicing-overlay .deicing-controls #deicing-refresh{grid-column:1/-1!important}
+}
+@media(prefers-reduced-motion:reduce){.deicing-shift-btn{transition:none!important}}
 </style>
 </body>
 </html>
