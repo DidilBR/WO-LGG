@@ -11485,13 +11485,18 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
       if(handler.includes('FEDEX'))return;
       const flight=deicingRawText(raw,['flightNumber','flightPax','flight','callsign']).toUpperCase();
       if(!flight)return;
+      const reg=deicingRawText(raw,['aircraftRegistration','registration','reg']).toUpperCase();
+      const aircraft=deicingRawText(raw,['aircraftType','aircraftTypeIcao','aircraftModel','equipment','acType','aircraft']);
+      // Exclure tous les ASL 737 de la liste Deicing, en utilisant le même
+      // classificateur que le module Crew Bus pour conserver les exceptions.
+      if(typeof crewBusIsASL737Flight==='function' && crewBusIsASL737Flight(flight,handler,reg,aircraft))return;
       const dt=deicingUtcFromRaw(raw); if(!dt)return;
       const ms=dt.getTime(); if(ms<range.startMs||ms>range.endMs)return;
       const localDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Brussels',year:'numeric',month:'2-digit',day:'2-digit'}).format(dt);
       const row={
         flight,
-        reg:deicingRawText(raw,['aircraftRegistration','registration','reg']).toUpperCase(),
-        aircraft:deicingRawText(raw,['aircraftType','aircraftTypeIcao','aircraftModel','equipment','acType','aircraft']),
+        reg,
+        aircraft,
         handler:handler||'—',
         stand:deicingRawText(raw,['stand','standCode','parkingStand'])||'—',
         time:deicingFormatTime(dt),
