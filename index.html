@@ -4312,11 +4312,24 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
       woLggSetLoginTriggerVisible(false);
       lock.style.display='grid';
       lock.setAttribute('aria-hidden','false');
-      // Restart countdown animation on each appearance.
+      // Re-initialize the SVG countdown ring explicitly on every appearance.
       const ring=lock.querySelector('.wo-lock-ring-progress');
-      if(ring){ring.style.animation='none';void ring.getBoundingClientRect();ring.style.animation='';}
-      requestAnimationFrame(()=>requestAnimationFrame(()=>lock.classList.add('is-visible')));
-      woLggLockInviteHideTimer=setTimeout(function(){woLggHideLockInvitation(true);},5000);
+      if(ring){
+        ring.style.animation='none';
+        ring.style.strokeDasharray='132';
+        ring.style.strokeDashoffset='0';
+        ring.style.opacity='1';
+        void ring.getBoundingClientRect();
+      }
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        lock.classList.add('is-visible');
+        if(ring){
+          // A dedicated countdown animation is kept even when the OS requests
+          // reduced motion: it communicates the invitation's five-second expiry.
+          ring.style.animation='woLockCountdownV21 5s linear forwards';
+        }
+        woLggLockInviteHideTimer=setTimeout(function(){woLggHideLockInvitation(true);},5000);
+      }));
       woLggLockInviteShowTimer=null;
     },800);
   }
@@ -13818,8 +13831,36 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
 }
 @media(prefers-reduced-motion:reduce){
   #app-header #wo-lgg-lock-invite,#app-header #wo-lgg-login-trigger{transition:none!important;animation:none!important}
-  #app-header #wo-lgg-lock-invite.is-visible .wo-lock-ring-progress{animation:none!important;stroke-dashoffset:0!important}
+  /* Keep the explicit five-second countdown ring: it is a time indicator, not decoration. */
+  #app-header #wo-lgg-lock-invite.is-visible .wo-lock-ring-progress{animation:woLockCountdownV21 5s linear forwards!important}
 }
+</style>
+
+
+<style id="wo-lgg-lock-countdown-ring-v21">
+#app-header #header-right-auth #wo-lgg-lock-invite .wo-lock-invite-svg{
+  display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+  overflow:visible!important;pointer-events:none!important;opacity:1!important
+}
+#app-header #header-right-auth #wo-lgg-lock-invite .wo-lock-ring-track{
+  display:inline!important;visibility:visible!important;fill:none!important;
+  stroke:rgba(232,255,239,.36)!important;stroke-width:1.8!important;opacity:1!important
+}
+#app-header #header-right-auth #wo-lgg-lock-invite .wo-lock-ring-progress{
+  display:inline!important;visibility:visible!important;fill:none!important;
+  stroke:#edfff2!important;stroke-width:2.45!important;stroke-linecap:round!important;
+  stroke-dasharray:132!important;stroke-dashoffset:0!important;
+  transform:rotate(-90deg)!important;transform-origin:24px 24px!important;
+  opacity:1!important;filter:drop-shadow(0 0 2px rgba(220,255,231,.58))!important
+}
+#app-header #header-right-auth #wo-lgg-lock-invite.is-visible .wo-lock-ring-progress{
+  animation:woLockCountdownV21 5s linear forwards!important
+}
+#app-header #header-right-auth #wo-lgg-lock-invite .wo-lock-glyph{
+  fill:none!important;stroke:#fff!important;stroke-width:2.5!important;
+  stroke-linecap:round!important;stroke-linejoin:round!important
+}
+@keyframes woLockCountdownV21{from{stroke-dashoffset:0}to{stroke-dashoffset:132}}
 </style>
 
 </body>
