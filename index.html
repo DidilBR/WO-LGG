@@ -11056,7 +11056,7 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
       <div class="deicing-field"><label for="deicing-from">De</label><input id="deicing-from" type="time" value="00:00"></div>
       <div class="deicing-field"><label for="deicing-to">À</label><input id="deicing-to" type="time" value="23:59"></div>
       <button type="button" class="deicing-btn" id="deicing-refresh" onclick="loadDeicingDepartures()">↻ Actualiser</button>
-      <button type="button" class="deicing-btn primary" id="deicing-print" onclick="printDeicingSheet()" disabled>▣ Imprimer la feuille</button>
+
     </div>
     <div class="deicing-summary"><div class="deicing-count"><strong id="deicing-count">0</strong> départ(s) dans la plage sélectionnée</div><div id="deicing-local-status">Heures affichées en heure belge (Europe/Brussels)</div></div>
     <div class="deicing-table-wrap"><table class="deicing-table"><thead><tr><th>Immatriculation</th><th>Heure</th><th>Stand</th><th>Vol</th><th>Handler</th><th>AC Type</th><th class="deicing-check-head">Deicing confirmé</th><th class="deicing-check-head">Fait</th></tr></thead><tbody id="deicing-rows"><tr><td colspan="8"><div class="deicing-empty">Choisissez une plage horaire puis actualisez les départs.</div></td></tr></tbody></table></div>
@@ -13458,6 +13458,129 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
 #wo-lgg-saved-actions-menu .wosa-create-dispatch{border-color:rgba(88,170,220,.28);background:rgba(50,130,185,.10)}
 #wo-lgg-saved-actions-menu .wosa-editor [data-field="direction"]{width:100%;min-height:37px;padding:8px 10px;border:1px solid var(--b2,rgba(255,255,255,.12));border-radius:8px;background:var(--bg2,#18202a);color:var(--t1,#edf2f5);font:600 11px var(--sans,system-ui)}
 #wo-lgg-saved-actions-menu .wosa-dispatch-section .wosa-action{border-color:rgba(92,154,197,.17)}
+</style>
+
+<style id="wo-lgg-deicing-compact-ui-v16">
+/* Compact operational controls. Only the on-screen Deicing panel is affected;
+   deicingPrintHtml() and the generated A4 sheet remain unchanged. */
+#deicing-overlay .deicing-dialog{
+  width:min(1120px,100%);
+}
+#deicing-overlay .deicing-controls{
+  grid-template-columns:minmax(0,1.1fr) minmax(0,.8fr) minmax(0,.8fr) auto!important;
+}
+#deicing-overlay .deicing-controls #deicing-refresh{grid-column:auto!important}
+#deicing-overlay .deicing-summary{align-items:center}
+#deicing-overlay .deicing-foot-actions{display:flex;gap:9px}
+#deicing-overlay .deicing-foot-actions .deicing-btn.primary{min-width:190px}
+
+@media(max-width:760px){
+  #deicing-overlay{
+    padding:calc(8px + env(safe-area-inset-top,0px)) 8px calc(8px + env(safe-area-inset-bottom,0px))!important;
+    align-items:center!important;
+  }
+  #deicing-overlay .deicing-dialog{
+    width:100%!important;
+    max-height:calc(100dvh - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;
+    max-height:calc(100vh - 16px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;
+    border-radius:15px!important;
+  }
+  #deicing-overlay .deicing-head{padding:11px 13px!important;gap:9px!important}
+  #deicing-overlay .deicing-brand{align-items:flex-start!important;gap:9px!important}
+  #deicing-overlay .deicing-icon{width:36px!important;height:36px!important;min-width:36px!important;border-radius:10px!important;font-size:19px!important}
+  #deicing-overlay .deicing-kicker{font-size:7px!important;letter-spacing:1.15px!important}
+  #deicing-overlay .deicing-title{font-size:16px!important;line-height:1.15!important;margin-top:2px!important}
+  #deicing-overlay .deicing-subtitle{font-size:9px!important;margin-top:3px!important}
+  #deicing-overlay .deicing-weather{font-size:9px!important;line-height:1.3!important;margin-top:5px!important}
+  #deicing-overlay .deicing-risk{font-size:9px!important;line-height:1.3!important;gap:5px!important;margin-top:4px!important}
+  #deicing-overlay .deicing-risk small{font-size:8px!important}
+  #deicing-overlay .deicing-close{width:32px!important;height:32px!important;min-width:32px!important;font-size:19px!important}
+
+  #deicing-overlay .deicing-controls{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:7px!important;
+    padding:10px 12px!important;
+  }
+  #deicing-overlay .deicing-field:first-child{grid-column:1/-1!important}
+  #deicing-overlay .deicing-field label{font-size:7px!important;letter-spacing:.9px!important;margin-bottom:4px!important}
+  #deicing-overlay .deicing-field input{height:38px!important;padding:0 9px!important;font-size:13px!important;border-radius:8px!important}
+  #deicing-overlay .deicing-controls #deicing-refresh{
+    grid-column:1/-1!important;width:100%!important;height:37px!important;min-height:37px!important;
+    padding:0 10px!important;border-radius:8px!important;font-size:9px!important;
+  }
+
+  #deicing-overlay .deicing-summary{
+    display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+    gap:3px!important;padding:8px 13px!important;font-size:9px!important;
+  }
+  #deicing-overlay .deicing-count{font-size:10px!important}
+  #deicing-overlay .deicing-count strong{font-size:16px!important}
+  #deicing-overlay #deicing-local-status{font-size:8px!important;line-height:1.25!important}
+
+  /* Mobile aircraft list: compact cards instead of a clipped 1040px-wide table. */
+  #deicing-overlay .deicing-table-wrap{
+    margin:0 9px 9px!important;padding:0!important;min-height:0!important;
+    max-height:38vh!important;max-height:38dvh!important;overflow:auto!important;
+    border-radius:9px!important;
+  }
+  #deicing-overlay .deicing-table{
+    display:block!important;width:100%!important;min-width:0!important;table-layout:fixed!important;
+  }
+  #deicing-overlay .deicing-table thead{display:none!important}
+  #deicing-overlay .deicing-table tbody{display:grid!important;width:100%!important}
+  #deicing-overlay .deicing-table tbody tr{
+    display:grid!important;width:100%!important;
+    grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr) minmax(0,.7fr)!important;
+    grid-template-rows:auto auto auto!important;gap:5px 7px!important;
+    padding:8px 9px!important;border-bottom:1px solid rgba(150,190,215,.16)!important;
+    background:transparent!important;
+  }
+  #deicing-overlay .deicing-table tbody tr:nth-child(even){background:rgba(255,255,255,.025)!important}
+  #deicing-overlay .deicing-table td{
+    display:block!important;min-width:0!important;padding:0!important;border:0!important;
+    white-space:normal!important;overflow-wrap:anywhere!important;
+    font-size:10px!important;line-height:1.2!important;background:transparent!important;
+  }
+  #deicing-overlay .deicing-table td::before{
+    display:block!important;margin-bottom:2px!important;color:#7799ad!important;
+    font:700 6px/1.1 var(--mono)!important;letter-spacing:.65px!important;text-transform:uppercase!important;
+  }
+  #deicing-overlay .deicing-table td:nth-child(1){grid-column:1!important;grid-row:1!important}
+  #deicing-overlay .deicing-table td:nth-child(1)::before{content:"IMMATRICULATION"}
+  #deicing-overlay .deicing-table td:nth-child(1).reg{font-size:12px!important;line-height:1.1!important}
+  #deicing-overlay .deicing-table td:nth-child(2){grid-column:2!important;grid-row:1!important}
+  #deicing-overlay .deicing-table td:nth-child(2)::before{content:"HEURE"}
+  #deicing-overlay .deicing-table td:nth-child(2).time{font-size:13px!important;line-height:1.1!important}
+  #deicing-overlay .deicing-table td:nth-child(2) small{font-size:6px!important}
+  #deicing-overlay .deicing-table td:nth-child(3){grid-column:3!important;grid-row:1!important}
+  #deicing-overlay .deicing-table td:nth-child(3)::before{content:"STAND"}
+  #deicing-overlay .deicing-table td:nth-child(4){grid-column:1!important;grid-row:2!important}
+  #deicing-overlay .deicing-table td:nth-child(4)::before{content:"VOL"}
+  #deicing-overlay .deicing-table td:nth-child(5){grid-column:2!important;grid-row:2!important}
+  #deicing-overlay .deicing-table td:nth-child(5)::before{content:"HANDLER"}
+  #deicing-overlay .deicing-table td:nth-child(6){grid-column:3!important;grid-row:2!important}
+  #deicing-overlay .deicing-table td:nth-child(6)::before{content:"AC TYPE"}
+  #deicing-overlay .deicing-table td:nth-child(7){grid-column:1/3!important;grid-row:3!important;display:flex!important;align-items:center!important;gap:7px!important}
+  #deicing-overlay .deicing-table td:nth-child(7)::before{content:"DEICING CONFIRMÉ";margin:0!important}
+  #deicing-overlay .deicing-table td:nth-child(8){grid-column:3!important;grid-row:3!important;display:flex!important;align-items:center!important;gap:7px!important}
+  #deicing-overlay .deicing-table td:nth-child(8)::before{content:"FAIT";margin:0!important}
+  #deicing-overlay .deicing-table .deicing-check-cell{min-width:0!important}
+  #deicing-overlay .deicing-table .deicing-task-check{width:19px!important;height:19px!important;min-width:19px!important}
+  #deicing-overlay .deicing-table .deicing-empty{grid-column:1/-1!important;padding:23px 12px!important;font-size:11px!important}
+  #deicing-overlay .deicing-table td[colspan]{grid-column:1/-1!important}
+
+  #deicing-overlay .deicing-foot{
+    display:flex!important;flex-direction:row!important;align-items:center!important;
+    gap:8px!important;padding:9px 12px calc(10px + env(safe-area-inset-bottom,0px))!important;
+    border-top:1px solid rgba(145,190,220,.12)!important;
+  }
+  #deicing-overlay .deicing-foot-note{display:none!important}
+  #deicing-overlay .deicing-foot-actions{display:grid!important;grid-template-columns:.75fr 1.25fr!important;gap:7px!important;width:100%!important}
+  #deicing-overlay .deicing-foot-actions .deicing-btn{width:100%!important;min-width:0!important;height:38px!important;min-height:38px!important;padding:0 8px!important;font-size:9px!important}
+  #deicing-overlay .deicing-foot-actions .deicing-btn.primary{min-width:0!important}
+}
+@media(prefers-reduced-motion:reduce){#deicing-overlay *{scroll-behavior:auto!important;transition:none!important}}
 </style>
 </body>
 </html>
