@@ -8643,11 +8643,11 @@ ${(function(){
     const r=String(reg||'').toUpperCase().trim();
     if(woLggIsFedexAsl737Flight(fl,h,aircraftType))return true;
     const aslB744=['OEIFB','OEIFK','OEIFD','OEILC','OEIFM'];
-    // FDX4797 est une exception explicite : certains flux FIDS n'indiquent
-    // pas de handler FedEx/Aero, mais le vol appartient bien aux ASL 737.
-    if(fl==='FDX4797')return true;
+    // Exceptions explicites ASL 737 : le FIDS peut ne pas fournir le handler.
+    // FDX4797 et FDX4648 sont des vols ASL 737, OEIXK et OEIXR des registrations ASL 737.
+    if(fl==='FDX4797'||fl==='FDX4648')return true;
     if(fl.startsWith('FDX')&&(h.includes('FEDEX')||h.includes('AERO')))return true;
-    if(r==='OEIXK')return true;
+    if(r==='OEIXK'||r==='OEIXR')return true;
     if(fl.startsWith('TAY')&&r.startsWith('OEI')&&!aslB744.includes(r))return true;
     if(fl.startsWith('TAY')&&(h.includes('FEDEX')||h.includes('AERO'))&&!aslB744.includes(r))return true;
     if(r==='OEIMD'&&(h.includes('FEDEX')||h.includes('AERO')))return true;
