@@ -4244,13 +4244,20 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
   let woLggLockInviteHideTimer=null;
   let woLggLockInviteExitTimer=null;
   let woLggLoginTriggerTimer=null;
+  // Keep Connexion hidden from first paint until the lock invitation has fully exited.
+  let woLggLockInvitationPending=true;
 
   function woLggSetLoginTriggerVisible(visible){
     const trigger=document.getElementById('wo-lgg-login-trigger');
     if(!trigger)return;
     if(woLggLoginTriggerTimer){clearTimeout(woLggLoginTriggerTimer);woLggLoginTriggerTimer=null;}
     if(visible){
-      if(woLggUser || !woLggVisitorMode){trigger.style.display='none';trigger.classList.remove('is-visible');return;}
+      if(woLggLockInvitationPending || woLggUser || !woLggVisitorMode){
+        trigger.style.display='none';
+        trigger.classList.remove('is-visible');
+        trigger.setAttribute('aria-hidden','true');
+        return;
+      }
       trigger.style.display='inline-flex';
       trigger.setAttribute('aria-hidden','false');
       requestAnimationFrame(()=>requestAnimationFrame(()=>trigger.classList.add('is-visible')));
@@ -4276,19 +4283,26 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
     lock.setAttribute('aria-hidden','true');
     if(!wasVisible){
       lock.style.display='none';
-      if(restoreLogin)woLggSetLoginTriggerVisible(true);
+      if(restoreLogin){
+        woLggLockInvitationPending=false;
+        if(!woLggUser && woLggVisitorMode)woLggSetLoginTriggerVisible(true);
+      }
       return;
     }
     // Keep the login button hidden until the slide-out has completely ended.
     woLggLockInviteExitTimer=setTimeout(()=>{
       if(!lock.classList.contains('is-visible'))lock.style.display='none';
       woLggLockInviteExitTimer=null;
-      if(restoreLogin && !woLggUser && woLggVisitorMode)woLggSetLoginTriggerVisible(true);
-    },420);
+      if(restoreLogin){
+        woLggLockInvitationPending=false;
+        if(!woLggUser && woLggVisitorMode)woLggSetLoginTriggerVisible(true);
+      }
+    },460);
   }
 
   function woLggScheduleLockInvitation(){
     // Reserve the auth slot immediately: Connexion must not flash during the 0.8 s delay.
+    woLggLockInvitationPending=true;
     woLggHideLockInvitation(false);
     woLggSetLoginTriggerVisible(false);
     if(woLggUser || !woLggVisitorMode)return;
@@ -4308,6 +4322,7 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
   }
 
   function woLggOpenLockInvite(){
+    woLggLockInvitationPending=false;
     woLggHideLockInvitation(false);
     woLggShowLogin();
   }
@@ -4359,6 +4374,8 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
     if(!woLggUser && !woLggVisitorMode)woLggContinueAsVisitor();
   }
   function woLggShowLogin(message){
+    // Opening the login panel ends the invitation lifecycle; no Connexion button between them.
+    woLggLockInvitationPending=false;
     woLggHideLockInvitation(false);
     const o=document.getElementById('wo-lgg-auth-overlay');
     const b=document.getElementById('wo-lgg-logout-btn');
@@ -13736,49 +13753,72 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
 @media(prefers-reduced-motion:reduce){.deicing-shift-btn{transition:none!important}}
 </style>
 
-<style id="wo-lgg-lock-auth-slot-polish-v19">
-/* Stable right-hand auth slot: Connexion and the lock share one reserved position. */
-#app-header .header-inner.app-header-clean{position:relative!important;display:flex!important;align-items:center!important;}
+<style id="wo-lgg-lock-auth-slot-polish-v20">
+/* First paint: reserve the auth slot but show neither Connexion nor the lock. */
+#app-header .header-inner.app-header-clean{position:relative!important;display:flex!important;align-items:center!important}
 #app-header .header-right-auth{
   position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;
   flex:0 0 84px!important;width:84px!important;min-width:84px!important;height:42px!important;
-  margin-left:auto!important;overflow:visible!important;z-index:8!important;
+  margin-left:auto!important;overflow:visible!important;z-index:8!important
 }
 #app-header #wo-lgg-login-trigger{
-  position:relative!important;display:none;flex:0 0 84px!important;width:84px!important;min-width:84px!important;
-  margin:0!important;opacity:0;transform:translate3d(7px,0,0);
-  transition:opacity .18s ease,transform .22s cubic-bezier(.2,.8,.2,1)!important;
+  position:relative!important;display:none;visibility:hidden!important;flex:0 0 84px!important;width:84px!important;min-width:84px!important;
+  margin:0!important;opacity:0;transform:translate3d(0,0,0);
+  transition:opacity .2s ease,background-color .2s ease,border-color .2s ease!important
 }
-#app-header #wo-lgg-login-trigger.is-visible{opacity:1;transform:translate3d(0,0,0)}
+#app-header #wo-lgg-login-trigger.is-visible{display:inline-flex!important;visibility:visible!important;opacity:1!important;transform:none!important}
 #app-header #wo-lgg-lock-invite{
   position:absolute!important;left:50%!important;top:50%!important;right:auto!important;bottom:auto!important;
   display:none;place-items:center!important;flex:0 0 42px!important;width:42px!important;height:42px!important;
-  min-width:42px!important;margin:0!important;padding:0!important;
-  transform:translate3d(calc(-50% + 76px),-50%,0) scale(.92)!important;
+  min-width:42px!important;margin:0!important;padding:0!important;overflow:visible!important;
+  border:1px solid rgba(116,255,169,.8)!important;border-radius:13px!important;
+  background:linear-gradient(145deg,#0b9852 0%,#08713e 58%,#075c35 100%)!important;
+  color:#fff!important;box-shadow:0 0 0 1px rgba(67,224,128,.13),0 5px 18px rgba(0,150,75,.22),inset 0 1px 0 rgba(255,255,255,.2)!important;
+  transform:translate3d(calc(-50% + 92px),-50%,0) scale(.9)!important;
   opacity:0;pointer-events:none;z-index:9!important;
-  transition:opacity .24s ease,transform .42s cubic-bezier(.18,.82,.22,1),box-shadow .4s ease!important;
-  will-change:transform,opacity;
+  transition:opacity .22s ease,transform .42s cubic-bezier(.18,.82,.22,1),box-shadow .45s ease!important;
+  will-change:transform,opacity
 }
 #app-header #wo-lgg-lock-invite.is-visible{
-  opacity:1!important;pointer-events:auto!important;
+  display:grid!important;opacity:1!important;pointer-events:auto!important;
   transform:translate3d(-50%,-50%,0) scale(1)!important;
-  animation:woLockBreathing 3.8s ease-in-out infinite!important;
+  animation:woLockBreathingV20 3.8s ease-in-out infinite!important
 }
 #app-header #wo-lgg-lock-invite:not(.is-visible){
   opacity:0!important;pointer-events:none!important;
-  transform:translate3d(calc(-50% + 76px),-50%,0) scale(.92)!important;
+  transform:translate3d(calc(-50% + 92px),-50%,0) scale(.9)!important
 }
-#app-header #wo-lgg-lock-invite .wo-lock-invite-svg{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
+#app-header #wo-lgg-lock-invite .wo-lock-invite-svg{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;overflow:visible!important}
+#app-header #wo-lgg-lock-invite .wo-lock-ring-track{
+  fill:none!important;stroke:rgba(255,255,255,.32)!important;stroke-width:1.8!important
+}
+#app-header #wo-lgg-lock-invite .wo-lock-ring-progress{
+  fill:none!important;stroke:#e7ffef!important;stroke-width:2.35!important;stroke-linecap:round!important;
+  stroke-dasharray:132!important;stroke-dashoffset:132!important;transform:rotate(-90deg)!important;transform-origin:24px 24px!important
+}
+#app-header #wo-lgg-lock-invite.is-visible .wo-lock-ring-progress{
+  animation:woLockCountdownV20 5s linear forwards!important
+}
+#app-header #wo-lgg-lock-invite .wo-lock-glyph{
+  fill:none!important;stroke:#fff!important;stroke-width:2.5!important;stroke-linecap:round!important;stroke-linejoin:round!important;
+  filter:drop-shadow(0 1px 2px rgba(0,45,20,.4))
+}
+@keyframes woLockCountdownV20{from{stroke-dashoffset:0}to{stroke-dashoffset:132}}
+@keyframes woLockBreathingV20{
+  0%,100%{box-shadow:0 0 0 1px rgba(67,224,128,.12),0 5px 18px rgba(0,150,75,.2),inset 0 1px 0 rgba(255,255,255,.2);filter:saturate(1)}
+  50%{box-shadow:0 0 0 3px rgba(90,245,145,.09),0 0 23px rgba(45,215,110,.38),inset 0 1px 0 rgba(255,255,255,.28);filter:saturate(1.12)}
+}
 #app-header #app-menu-trigger{position:relative!important;z-index:8!important;flex:0 0 auto!important}
 @media(max-width:760px){
   #app-header .header-right-auth{flex-basis:76px!important;width:76px!important;min-width:76px!important;height:38px!important}
   #app-header #wo-lgg-login-trigger{flex-basis:76px!important;width:76px!important;min-width:76px!important;padding:0 6px!important;font-size:9px!important}
-  #app-header #wo-lgg-lock-invite{width:36px!important;height:36px!important;flex-basis:36px!important;min-width:36px!important;transform:translate3d(calc(-50% + 68px),-50%,0) scale(.92)!important}
+  #app-header #wo-lgg-lock-invite{width:36px!important;height:36px!important;flex-basis:36px!important;min-width:36px!important;transform:translate3d(calc(-50% + 84px),-50%,0) scale(.9)!important;border-radius:11px!important}
   #app-header #wo-lgg-lock-invite.is-visible{transform:translate3d(-50%,-50%,0) scale(1)!important}
-  #app-header #wo-lgg-lock-invite:not(.is-visible){transform:translate3d(calc(-50% + 68px),-50%,0) scale(.92)!important}
+  #app-header #wo-lgg-lock-invite:not(.is-visible){transform:translate3d(calc(-50% + 84px),-50%,0) scale(.9)!important}
 }
 @media(prefers-reduced-motion:reduce){
   #app-header #wo-lgg-lock-invite,#app-header #wo-lgg-login-trigger{transition:none!important;animation:none!important}
+  #app-header #wo-lgg-lock-invite.is-visible .wo-lock-ring-progress{animation:none!important;stroke-dashoffset:0!important}
 }
 </style>
 
