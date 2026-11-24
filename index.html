@@ -3500,9 +3500,6 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
       <button type="button" class="app-menu-item" id="app-menu-shift-settings" style="display:none" onclick="closeAppHeaderMenu();openShiftSettings()">
         <span class="app-menu-item-icon">&#9881;</span><span><b>Paramètres de shift</b><small>Horaires et fenêtres FIDS</small></span>
       </button>
-      <button type="button" class="app-menu-item app-menu-deicing-item" id="app-menu-deicing" onclick="closeAppHeaderMenu();openDeicingOperations()">
-        <span class="app-menu-item-icon">❄</span><span><b>Deicing Operations</b><small>Départs potentiels à traiter · suivi des changements horaires</small></span>
-      </button>
       <button type="button" class="app-menu-item" onclick="closeAppHeaderMenu();openLayoutSettings()">
         <span class="app-menu-item-icon">&#10024;</span><span><b>Interface &amp; thème</b><small>Choisir l'interface de travail</small></span>
       </button>
@@ -3822,8 +3819,10 @@ body.wo-lgg-print-modal-open{overflow:hidden!important}
       </div>
     </section>
 
-    <div class="wo-step-footer">
-      <div class="wo-footer-caption"><span class="wo-footer-indicator"></span> Les informations seront reprises dans les documents générés.</div>
+    <div class="wo-step-footer wo-step1-footer-deicing">
+      <div class="wo-step1-deicing-slot">
+        <button type="button" class="wo-step1-deicing-btn" onclick="openDeicingOperations()"><span aria-hidden="true">❄</span> Deicing Operations</button>
+      </div>
       <div class="actions wo-step-actions">
         <button class="btn btn-primary wo-primary-action" onclick="goToStep(2)">Continuer vers le FIDS <span aria-hidden="true">→</span></button>
       </div>
@@ -8728,14 +8727,14 @@ ${(function(){
   function toggleCrewBusHeadset(key,event){
     if(event)event.stopPropagation();
     const f=crewBusFlights.find(x=>x.key===key);if(!f)return;
-    f.headset=!f.headset;
+    f.headset=!f.headset;f.headsetUserSet=true;
     renderCrewBusFlights();
     if(typeof woLggMarkWorkChanged==='function')woLggMarkWorkChanged('crewBusHeadset');
   }
   function toggleCrewBusHandling(key,event){
     if(event)event.stopPropagation();
     const f=crewBusFlights.find(x=>x.key===key);if(!f)return;
-    f.handling=!(f.handling===true || f.wfsMode==='handling');
+    f.handling=!(f.handling===true || f.wfsMode==='handling');f.handlingUserSet=true;
     // Compatibility with older saved states: the dedicated handling flag is authoritative.
     if(f.wfsMode==='handling'){f.wfsMode=null;f.wfsModeUserSet=false;}
     renderCrewBusFlights();
@@ -8749,6 +8748,14 @@ ${(function(){
     crewBusVisibleFlights().forEach(f=>{f.userSelectionSet=true;f.selected=false;crewBusSelected.delete(f.key);});
     renderCrewBusFlights();
   }
+  function crewBusManualPickupFromEtd(value){
+    const match=String(value||'').trim().match(/^(\d{1,2}):(\d{2})$/);
+    if(!match)return '';
+    const hours=Number(match[1]),minutes=Number(match[2]);
+    if(hours>23||minutes>59)return '';
+    let total=(hours*60+minutes-75+1440)%1440;
+    return String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0');
+  }
   function updateCrewBusManualTimeLabel(){
     const dep=document.getElementById('crewbus-man-type')?.value==='dep';
     const l=document.getElementById('crewbus-man-time-label'); if(l)l.textContent=dep?'ETD':'ETA';
@@ -8761,9 +8768,10 @@ ${(function(){
     const stand=(document.getElementById('crewbus-man-stand')?.value||'').trim();
     const handler=(document.getElementById('crewbus-man-handler')?.value||'').toUpperCase().trim();
     if(!flight){alert('Numéro de vol obligatoire.');return;}
-    if(!/^\d{1,2}:\d{2}$/.test(rawTime)){alert('Heure invalide.');return;}
-    if((crewBusFlights||[]).some(f=>f.flight===flight)){alert('Ce vol est déjà présent dans le Crew Bus.');return;}
-    const time=type==='dep'?pickup(rawTime):rawTime;
+    if(!/^\d{1,2}:\d{2}$/.test(rawTime)||Number(rawTime.split(':')[0])>23||Number(rawTime.split(':')[1])>59){alert('Heure invalide.');return;}
+    if((crewBusFlights||[]).some(f=>f.flight===flight&&f.type===type)){alert('Ce vol est déjà présent dans cette colonne du Crew Bus.');return;}
+    const time=type==='dep'?crewBusManualPickupFromEtd(rawTime):rawTime;
+    if(!time){alert('Impossible de calculer l’heure Pick-up pour ce départ.');return;}
     const isASL737=crewBusIsASL737Flight(flight,handler,reg);
     const f={key:'manual|'+type+'|'+flight+'|'+Date.now(),flight,reg,stand,handler,type,eta:rawTime,time,iso:null,raw:null,fromFids:false,manual:true,selected:true,eligible:!isASL737,asl737:isASL737,headset:false,handling:false,wfsMode:null,wfsModeUserSet:false,userSelectionSet:true};
     // L'ajout manuel constitue une action explicite de l'agent ; contrairement
@@ -8795,6 +8803,7 @@ ${(function(){
   }
 
   function renderCrewBusFlights(){
+    try{if(typeof window.woLggApplyDispatchSavedActions==='function')window.woLggApplyDispatchSavedActions();}catch(e){console.warn('Dispatch saved actions:',e)}
     const root=document.getElementById('crewbus-flight-list');
     if(!root)return;
     const visible=crewBusVisibleFlights();
@@ -10992,8 +11001,26 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
 <style id="lgg-deicing-operations-css">
 .app-menu-deicing-item{border-color:rgba(64,190,255,.24)!important;background:linear-gradient(105deg,rgba(20,150,220,.09),rgba(255,255,255,.012))!important}
 .app-menu-deicing-item .app-menu-item-icon{color:#59caff!important}
-#deicing-overlay,#deicing-alert-overlay{position:fixed;inset:0;z-index:10080;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,7,16,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-#deicing-overlay.open,#deicing-alert-overlay.open{display:flex}
+#deicing-overlay{position:fixed;inset:0;z-index:10080;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(2,7,16,.78);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#deicing-overlay.open{display:flex}
+/* Hourly Deicing change notification: compact top-left toast, never a full-screen blocker. */
+#deicing-alert-overlay{position:fixed;inset:auto auto auto 18px;top:calc(14px + env(safe-area-inset-top,0px));z-index:10120;display:block;width:min(440px,calc(100vw - 28px));max-height:min(72vh,620px);padding:0;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;pointer-events:none;opacity:0;visibility:hidden;transform:translateX(-28px);transition:opacity .24s ease,transform .32s cubic-bezier(.2,.8,.2,1),visibility .24s ease}
+#deicing-alert-overlay.open{opacity:1;visibility:visible;transform:translateX(0);pointer-events:auto}
+#deicing-alert-overlay.is-closing{opacity:0;transform:translateX(-28px);visibility:hidden;pointer-events:none}
+#deicing-alert-overlay .deicing-alert-dialog{width:100%;max-height:min(72vh,620px);border-radius:15px;border:1px solid rgba(100,190,235,.32);box-shadow:0 18px 55px rgba(0,0,0,.48)}
+#deicing-alert-overlay .deicing-head{padding:12px 14px;gap:9px}
+#deicing-alert-overlay .deicing-icon{width:34px;height:34px;min-width:34px;border-radius:10px;font-size:18px}
+#deicing-alert-overlay .deicing-title{font-size:14px}
+#deicing-alert-overlay .deicing-subtitle{font-size:9px}
+#deicing-alert-overlay .deicing-kicker{font-size:7px;letter-spacing:1.2px}
+#deicing-alert-overlay .deicing-alert-body{padding:12px 14px;overflow:auto;max-height:calc(72vh - 140px)}
+#deicing-alert-overlay .deicing-alert-status{font-size:11px;line-height:1.4}
+#deicing-alert-overlay .deicing-change-list{display:grid;gap:6px;margin-top:8px}
+#deicing-alert-overlay .deicing-change-item{padding:8px 9px;border-radius:8px}
+#deicing-alert-overlay .deicing-alert-actions{display:flex;justify-content:flex-end;gap:7px;padding:9px 12px;border-top:1px solid rgba(145,190,220,.12)}
+#deicing-alert-overlay .deicing-alert-actions .deicing-btn{min-height:34px;padding:7px 10px;font-size:10px}
+@media(max-width:600px){#deicing-alert-overlay{left:10px;top:calc(10px + env(safe-area-inset-top,0px));width:calc(100vw - 20px);max-height:68vh}#deicing-alert-overlay .deicing-alert-dialog{max-height:68vh}#deicing-alert-overlay .deicing-alert-body{max-height:calc(68vh - 135px)}}
+@media(prefers-reduced-motion:reduce){#deicing-alert-overlay{transition:none}}
 .deicing-dialog{width:min(1120px,100%);max-height:min(92vh,1000px);overflow:hidden;display:flex;flex-direction:column;border:1px solid rgba(100,190,235,.25);border-radius:20px;background:linear-gradient(155deg,#101d2a,#08121e 62%,#0b1926);color:#eaf5ff;box-shadow:0 30px 100px rgba(0,0,0,.55)}
 .deicing-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 24px;border-bottom:1px solid rgba(145,190,220,.15);background:linear-gradient(100deg,rgba(31,143,200,.13),rgba(255,255,255,.015))}
 .deicing-brand{display:flex;align-items:center;gap:13px;min-width:0}.deicing-icon{width:44px;height:44px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,#0aa5e9,#176bd4);font-size:23px;box-shadow:0 8px 24px rgba(0,150,230,.25)}
@@ -11415,19 +11442,56 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
   }
   function deicingReadBaseline(){try{const s=localStorage.getItem(DEICING_BASELINE_KEY);if(!s)return null;const b=JSON.parse(s);return b&&b.version===1&&Array.isArray(b.rows)&&b.range?b:null;}catch(e){return null;}}
   function deicingOpenPrint(html,onPrint){
-    const frame=document.createElement('iframe');frame.setAttribute('aria-hidden','true');frame.style.cssText='position:fixed;left:-12000px;top:0;width:210mm;height:297mm;border:0;opacity:0;pointer-events:none';document.body.appendChild(frame);
-    let done=false;const finish=()=>{if(done)return;done=true;try{onPrint&&onPrint();}catch(e){console.error(e);}setTimeout(()=>frame.remove(),500);};
-    frame.onload=()=>{try{const w=frame.contentWindow;if(!w)throw new Error('Fenêtre impression indisponible');w.addEventListener('afterprint',finish,{once:true});w.focus();w.print();setTimeout(finish,1500);}catch(e){frame.remove();alert('Impossible d’ouvrir l’impression : '+e.message);}};
+    // Keep the print frame inside the viewport. iOS Safari can render an empty
+    // page when the iframe is placed far outside the visible area and printed
+    // before srcdoc/fonts/layout have finished loading.
+    const old=document.getElementById('deicing-print-frame');if(old)old.remove();
+    const frame=document.createElement('iframe');frame.id='deicing-print-frame';frame.setAttribute('title','Feuille Deicing Operations');frame.setAttribute('aria-hidden','true');frame.tabIndex=-1;
+    frame.style.cssText='position:fixed;left:0;top:0;width:210mm;height:297mm;max-width:none;border:0;opacity:0;pointer-events:none;z-index:-1;background:#fff';
+    document.body.appendChild(frame);
+    let finished=false,started=false,cleanupTimer=null;
+    const finish=()=>{if(finished)return;finished=true;if(cleanupTimer)clearTimeout(cleanupTimer);try{onPrint&&onPrint();}catch(e){console.error(e);}setTimeout(()=>{if(frame.isConnected)frame.remove();},700);};
+    const showRetry=(message)=>{
+      let toast=document.getElementById('deicing-print-retry');if(toast)return;
+      toast=document.createElement('div');toast.id='deicing-print-retry';toast.style.cssText='position:fixed;z-index:10130;left:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #567184;border-radius:10px;background:#102131;color:#eff8ff;font:12px system-ui;box-shadow:0 12px 34px rgba(0,0,0,.4)';
+      const txt=document.createElement('span');txt.textContent=message||'L’impression n’a pas démarré.';
+      const btn=document.createElement('button');btn.type='button';btn.textContent='Réessayer';btn.style.cssText='padding:7px 10px;border:0;border-radius:7px;background:#1687b8;color:#fff;font-weight:800';
+      btn.addEventListener('click',()=>{toast.remove();startPrint(true)});toast.append(txt,btn);document.body.appendChild(toast);
+    };
+    const startPrint=(retry)=>{
+      if(finished||started&&!retry)return;
+      const w=frame.contentWindow;if(!w){showRetry('Document indisponible.');return;}
+      try{
+        started=true;
+        w.addEventListener('afterprint',finish,{once:true});
+        w.focus();
+        w.print();
+        try{onPrint&&onPrint();}catch(e){console.error(e);}
+        // Do not remove the frame on a short timer: mobile print sheets can remain
+        // open while the user chooses printer, pages or Save as PDF.
+        cleanupTimer=setTimeout(()=>{if(!finished&&frame.isConnected){frame.remove();finished=true;}},180000);
+      }catch(e){started=false;showRetry('Le navigateur a bloqué l’impression.');}
+    };
+    frame.onload=()=>{
+      const w=frame.contentWindow,doc=frame.contentDocument;
+      if(!w||!doc){showRetry('Le document d’impression est inaccessible.');return;}
+      const images=Array.from(doc.images||[]).map(img=>new Promise(resolve=>{
+        if(img.complete){resolve();return;}
+        img.addEventListener('load',resolve,{once:true});img.addEventListener('error',resolve,{once:true});setTimeout(resolve,5000);
+      }));
+      const fonts=(doc.fonts&&doc.fonts.ready)?doc.fonts.ready.catch(()=>{}):Promise.resolve();
+      Promise.all([fonts].concat(images)).then(()=>{
+        const raf=w.requestAnimationFrame||((fn)=>setTimeout(fn,50));
+        raf(()=>raf(()=>setTimeout(()=>startPrint(false),180)));
+      });
+    };
     frame.srcdoc=html;
   }
-  window.printDeicingSheet=async function(){
-    if(!deicingWeather)await deicingLoadWeather(false);
+  window.printDeicingSheet=function(){
     if(!deicingLoaded||!deicingLastRange){alert('Chargez d’abord les départs FIDS avant l’impression.');return;}
     const rows=deicingRows.map(r=>({...r}));const range={...deicingLastRange};
     const html=deicingPrintHtml(rows,range);
     deicingOpenPrint(html,()=>deicingSaveBaseline(rows,range));
-    // Le point de comparaison est initialisé dès l'ouverture de la boîte d'impression.
-    deicingSaveBaseline(rows,range);
     closeDeicingOperations();
   };
   function deicingDiff(base,current){
@@ -11451,10 +11515,10 @@ html[data-layout="orbit"] body { background-position:50% 50%,50% 50%,0 0,0 0!imp
       if(reprint)reprint.style.display='inline-flex';
     }
     const sub=deicingEl('deicing-alert-subtitle');if(sub)sub.textContent='Dernière feuille : '+deicingFormatDate(new Date(base.printedAt))+' à '+deicingFormatTime(new Date(base.printedAt))+' · comparaison FIDS en heure belge';
-    o.classList.add('open');o.setAttribute('aria-hidden','false');
+    o.classList.remove('is-closing');o.classList.add('open');o.setAttribute('aria-hidden','false');
     try{if('Notification'in window&&Notification.permission==='granted'){new Notification('Deicing Operations',{body:hasError?'Vérification FIDS impossible':!total?'Aucun changement depuis la dernière impression':status.textContent});}}catch(e){}
   }
-  window.closeDeicingAlert=function(){const o=deicingEl('deicing-alert-overlay');if(o){o.classList.remove('open');o.setAttribute('aria-hidden','true');}};
+  window.closeDeicingAlert=function(){const o=deicingEl('deicing-alert-overlay');if(o){o.classList.add('is-closing');o.setAttribute('aria-hidden','true');setTimeout(()=>{o.classList.remove('open','is-closing');},260);}};
   async function deicingCheckHourly(){
     if(deicingCheckRunning)return;const base=deicingReadBaseline();if(!base)return;
     deicingCheckRunning=true;
@@ -12667,8 +12731,8 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
             manual:f.manual===true,
             selected:f.selected===true,
             userSelectionSet:f.userSelectionSet===true,
-            headset:f.headset===true,
-            handling:f.handling===true||f.wfsMode==='handling',
+            headset:f.headset===true,headsetUserSet:f.headsetUserSet===true,
+            handling:f.handling===true||f.wfsMode==='handling',handlingUserSet:f.handlingUserSet===true,
             wfsMode:f.wfsMode==='renting'?'renting':null,
             wfsModeUserSet:f.wfsModeUserSet===true&&f.wfsMode==='renting',
             eligible:f.eligible!==false,
@@ -12808,8 +12872,8 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
       if(r.key)f.key=r.key;
       f.selected=!!r.selected;
       f.userSelectionSet=!!r.userSelectionSet;
-      f.headset=!!r.headset;
-      f.handling=!!r.handling;
+      f.headset=!!r.headset;f.headsetUserSet=r.headsetUserSet===true;
+      f.handling=!!r.handling;f.handlingUserSet=r.handlingUserSet===true;
       f.wfsMode=r.wfsMode==='renting'?'renting':null;
       f.wfsModeUserSet=r.wfsModeUserSet===true&&f.wfsMode==='renting';
       if((!f.reg||!String(f.reg).trim())&&r.reg)f.reg=r.reg;
@@ -12825,7 +12889,7 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
         key:r.key||('memory|'+r.stableKey),
         flight:r.flight,type:r.type,reg:r.reg||'',stand:r.stand||'',handler:r.handler||'',
         time:r.time||'',eta:r.eta||r.time||'',iso:r.iso||null,manual:true,fromFids:false,
-        selected:!!r.selected,userSelectionSet:true,headset:!!r.headset,handling:!!r.handling,
+        selected:!!r.selected,userSelectionSet:true,headset:!!r.headset,headsetUserSet:r.headsetUserSet===true,handling:!!r.handling,handlingUserSet:r.handlingUserSet===true,
         wfsMode:r.wfsMode==='renting'?'renting':null,wfsModeUserSet:r.wfsModeUserSet===true,
         eligible:r.eligible!==false,asl737:!!r.asl737
       };
@@ -13089,7 +13153,7 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
 </style>
 
 
-<script id="wo-lgg-saved-actions-library-v2">
+<script id="wo-lgg-saved-actions-library-v3">
 (function(){
   'use strict';
   if(window.__woLggSavedActionsV2)return;
@@ -13105,8 +13169,9 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
     {key:'sva-handling',label:'SVA Handling',description:'Handling SVA'},
     {key:'asl737-handling',label:'ASL 737',description:'Handling ASL 737'}
   ];
-  var TASK_BY_KEY={};TASKS.forEach(function(t){TASK_BY_KEY[t.key]=t});
-  var state=readState(),trigger=null,menu=null,editorOpen=false,editingId=null,pendingTimers={};
+  var DISPATCH_TASKS=[{key:'headset',label:'Headset',description:'Headset avion'},{key:'handling',label:'Handling',description:'Handling avion'}];
+  var TASK_BY_KEY={};TASKS.concat(DISPATCH_TASKS).forEach(function(t){TASK_BY_KEY[t.key]=t});
+  var state=readState(),trigger=null,menu=null,editorOpen=false,editingId=null,editingScope='operations',pendingTimers={};
 
   function norm(v){return String(v==null?'':v).trim().toUpperCase().replace(/\s+/g,' ')}
   function normReg(v){return norm(v).replace(/[\s-]+/g,'')}
@@ -13114,9 +13179,9 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
   function readState(){
     try{
       var x=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
-      if(!x||typeof x!=='object')return {version:2,actions:[],observations:{},dismissed:{},seededDefaults:[]};
-      return {version:2,actions:Array.isArray(x.actions)?x.actions:[],observations:x.observations&&typeof x.observations==='object'?x.observations:{},dismissed:x.dismissed&&typeof x.dismissed==='object'?x.dismissed:{},seededDefaults:Array.isArray(x.seededDefaults)?x.seededDefaults:[]};
-    }catch(e){return {version:2,actions:[],observations:{},dismissed:{},seededDefaults:[]}}
+      if(!x||typeof x!=='object')return {version:3,actions:[],observations:{},dismissed:{},dispatchObservations:{},seededDefaults:[]};
+      return {version:3,actions:Array.isArray(x.actions)?x.actions.map(function(a){if(a&&!a.scope)a.scope='operations';return a}):[],observations:x.observations&&typeof x.observations==='object'?x.observations:{},dismissed:x.dismissed&&typeof x.dismissed==='object'?x.dismissed:{},dispatchObservations:x.dispatchObservations&&typeof x.dispatchObservations==='object'?x.dispatchObservations:{},seededDefaults:Array.isArray(x.seededDefaults)?x.seededDefaults:[]};
+    }catch(e){return {version:3,actions:[],observations:{},dismissed:{},seededDefaults:[]}}
   }
   function saveState(reason){
     try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){console.warn('WO-LGG saved actions local storage:',e)}
@@ -13124,15 +13189,22 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
     updateTriggerCount();
   }
   function ensureDefaultActions(){
-    var seedId='default-lha-cln-lav-hds-v1';
-    if(state.seededDefaults.indexOf(seedId)>=0)return;
-    var tasks=['swi-cl','swi-lav','swi-hds'];
-    var exists=state.actions.some(function(a){
-      var m=a.match||{};
-      return norm(m.flightPrefix||m.flightContains)==='LHA'&&!norm(m.handlerContains)&&!norm(m.registrationContains)&&Array.isArray(a.tasks)&&a.tasks.slice().sort().join('|')===tasks.slice().sort().join('|');
+    var opsSeedId='default-lha-cln-lav-hds-v1';
+    if(state.seededDefaults.indexOf(opsSeedId)<0){
+      var opsTasks=['swi-cl','swi-lav','swi-hds'];
+      var existsOps=state.actions.some(function(a){var m=a.match||{};return (a.scope||'operations')==='operations'&&norm(m.flightPrefix||m.flightContains)==='LHA'&&!norm(m.handlerContains)&&!norm(m.registrationContains)&&Array.isArray(a.tasks)&&a.tasks.slice().sort().join('|')===opsTasks.slice().sort().join('|')});
+      if(!existsOps){var nowOps=new Date().toISOString();state.actions.push({id:opsSeedId,scope:'operations',name:'LHA — Nettoyage standard',match:{flightPrefix:'LHA',flightContains:'',handlerContains:'',registrationContains:''},tasks:opsTasks,enabled:true,createdAt:nowOps,updatedAt:nowOps,defaultSeed:true});}
+      state.seededDefaults.push(opsSeedId);
+    }
+    // Dispatch defaults are seeded independently of the Operations default.
+    ['LHA','LSI'].forEach(function(prefix){
+      var dispatchId='default-dispatch-'+prefix.toLowerCase()+'-departure-headset-v1';
+      if(state.seededDefaults.indexOf(dispatchId)>=0)return;
+      var existsDispatch=state.actions.some(function(a){var m=a.match||{};return a.scope==='dispatch'&&norm(m.flightContains||m.flightPrefix)===prefix&&m.type==='dep'&&(a.tasks||[]).indexOf('headset')>=0});
+      if(!existsDispatch){var nowDispatch=new Date().toISOString();state.actions.push({id:dispatchId,scope:'dispatch',name:prefix+' — Headset départ',match:{flightContains:prefix,flightPrefix:'',handlerContains:'',registrationContains:'',type:'dep'},tasks:['headset'],enabled:true,createdAt:nowDispatch,updatedAt:nowDispatch,defaultSeed:true});}
+      state.seededDefaults.push(dispatchId);
     });
-    if(!exists){var now=new Date().toISOString();state.actions.push({id:seedId,name:'LHA — Nettoyage standard',match:{flightPrefix:'LHA',flightContains:'',handlerContains:'',registrationContains:''},tasks:tasks,enabled:true,createdAt:now,updatedAt:now,defaultSeed:true})}
-    state.seededDefaults.push(seedId);saveState('default-lha-action');
+    state.version=3;saveState('defaults-operations-dispatch');
   }
   function actionId(){return 'wosa-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8)}
   function currentFlightTasks(f,i){
@@ -13154,12 +13226,13 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
     if(flightCriterion&&!flight.includes(flightCriterion))return false;
     if(handler&&!norm(f.handler).includes(handler))return false;
     if(registration&&!normReg(flightRegistration(f)).includes(registration))return false;
+    if(m.type&&m.type!=='all'&&String(f.type||'')!==m.type)return false;
     return true;
   }
   function actionAlreadyExists(flight,handler,registration,tasks){
     var sig=(tasks||[]).slice().sort().join('|');
     return state.actions.some(function(a){
-      if(a.enabled===false||!Array.isArray(a.tasks)||a.tasks.slice().sort().join('|')!==sig)return false;
+      if(a.scope==='dispatch'||a.enabled===false||!Array.isArray(a.tasks)||a.tasks.slice().sort().join('|')!==sig)return false;
       var m=a.match||{};
       var acFlight=norm(m.flightContains||m.flightNumber||m.flightPrefix),acHandler=norm(m.handlerContains),acReg=normReg(m.registrationContains||m.registration);
       return (!acFlight||norm(flight).includes(acFlight))&&(!acHandler||norm(handler).includes(acHandler))&&(!acReg||normReg(registration).includes(acReg));
@@ -13187,12 +13260,66 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
   }
   function applyActionsToFlights(forceActionIdValue){
     if(typeof flights==='undefined'||!Array.isArray(flights))return false;var changed=false;
-    flights.forEach(function(f,i){state.actions.forEach(function(a){if(!matches(a,f))return;var force=!!forceActionIdValue&&a.id===forceActionIdValue;(a.tasks||[]).forEach(function(key){if(applyTaskToFlight(f,i,key,force))changed=true})})});
+    flights.forEach(function(f,i){state.actions.forEach(function(a){if(a.scope==='dispatch'||!matches(a,f))return;var force=!!forceActionIdValue&&a.id===forceActionIdValue;(a.tasks||[]).forEach(function(key){if(applyTaskToFlight(f,i,key,force))changed=true})})});
     if(changed){try{if(typeof getHandlingSelectionsForSnapshot==='function')window.woLggCloudHandlingSelections=Object.assign({},window.woLggCloudHandlingSelections||{},getHandlingSelectionsForSnapshot())}catch(e){};saveState('auto-apply');try{if(typeof window.woLggPersistShiftSelectionMemory==='function')window.woLggPersistShiftSelectionMemory('saved-action-auto-apply')}catch(e){}}
     return changed;
   }
+  function applyDispatchActions(forceActionIdValue){
+    if(typeof crewBusFlights==='undefined'||!Array.isArray(crewBusFlights))return false;
+    var changed=false;
+    crewBusFlights.forEach(function(f){
+      if(!f)return;
+      state.actions.forEach(function(a){
+        if(a.scope!=='dispatch'||!matches(a,f))return;
+        var force=!!forceActionIdValue&&a.id===forceActionIdValue;
+        (a.tasks||[]).forEach(function(task){
+          if(task==='headset'&&!f.headsetUserSet&&(force||f.headset!==true)){f.headset=true;changed=true;}
+          if(task==='handling'&&!f.handlingUserSet&&(force||f.handling!==true)){f.handling=true;changed=true;}
+        });
+      });
+    });
+    if(changed){try{if(typeof window.woLggPersistShiftSelectionMemory==='function')window.woLggPersistShiftSelectionMemory('dispatch-saved-action-auto-apply')}catch(e){}}
+    return changed;
+  }
+  window.woLggApplyDispatchSavedActions=applyDispatchActions;
+  function actionAlreadyExistsDispatch(prefix,handler,type,tasks){
+    var wanted=(tasks||[]).slice().sort().join('|');
+    return state.actions.some(function(a){if(a.scope!=='dispatch'||a.enabled===false||(a.tasks||[]).slice().sort().join('|')!==wanted)return false;var m=a.match||{};return norm(m.flightContains||m.flightPrefix)===norm(prefix)&&norm(m.handlerContains)===norm(handler)&&(!m.type||m.type==='all'||m.type===type)});
+  }
+  function renderDispatchSuggestions(){
+    if(!menu)return;var box=menu.querySelector('#wosa-dispatch-suggestions');if(!box)return;
+    var candidates=Object.keys(state.dispatchObservations||{}).map(function(key){return Object.assign({key:key},state.dispatchObservations[key])}).filter(function(o){return o&&Array.isArray(o.samples)&&o.samples.length>=3&&!state.dismissed['dispatch:'+o.key]&&!actionAlreadyExistsDispatch(o.prefix,o.handler,o.type,o.tasks)}).sort(function(a,b){return String(b.updatedAt||'').localeCompare(String(a.updatedAt||''))}).slice(0,2);
+    if(!candidates.length){box.innerHTML='';box.hidden=true;return;}box.hidden=false;
+    box.innerHTML=candidates.map(function(o){return '<div class="wosa-suggestion"><div class="wosa-suggestion-title">✦ Habitude Dispatch détectée : '+esc(o.prefix)+' · '+(o.type==='dep'?'Départs':'Arrivées')+'</div><div class="wosa-suggestion-copy">'+o.samples.length+' vols avec '+taskTags(o.tasks)+'. Enregistrer comme action automatique ?</div><div class="wosa-controls"><button type="button" class="wosa-save" data-cmd="accept-dispatch-suggestion" data-key="'+esc(o.key)+'">Enregistrer</button><button type="button" class="wosa-mini" data-cmd="dismiss-dispatch-suggestion" data-key="'+esc(o.key)+'">Pas maintenant</button></div></div>'}).join('');
+  }
+  function observeDispatchFlight(key){
+    if(typeof crewBusFlights==='undefined'||!Array.isArray(crewBusFlights))return;
+    var f=crewBusFlights.find(function(x){return String(x.key)===String(key)});if(!f)return;
+    var tasks=[];if(f.headset===true)tasks.push('headset');if(f.handling===true||f.wfsMode==='handling')tasks.push('handling');
+    if(!tasks.length)return;
+    var prefix=(norm(f.flight).match(/^[A-Z]+/)||[''])[0];if(!prefix)return;
+    var type=f.type==='dep'?'dep':'arr',handler=norm(f.handler),pattern=prefix+'::'+handler+'::'+type+'::'+tasks.slice().sort().join('|');
+    if(actionAlreadyExistsDispatch(prefix,handler,type,tasks))return;
+    var date=document.getElementById('shift-date');var shift='';try{if(typeof crewBusSelectedShift!=='undefined'&&crewBusSelectedShift)shift=crewBusSelectedShift.name||''}catch(e){};if(!shift){try{if(typeof selectedShift!=='undefined'&&selectedShift)shift=selectedShift.name||''}catch(e){}}
+    var sample=(date&&date.value?date.value:'NO-DATE')+'|'+norm(shift)+'|'+type+'|'+norm(f.flight)+'|'+norm(f.reg).replace(/[\s-]+/g,'');
+    var o=state.dispatchObservations[pattern]||{prefix:prefix,handler:handler,type:type,tasks:tasks.slice(),samples:[],updatedAt:''};
+    o.tasks=tasks.slice();if(o.samples.indexOf(sample)<0)o.samples.push(sample);o.samples=o.samples.slice(-30);o.updatedAt=new Date().toISOString();state.dispatchObservations[pattern]=o;
+    saveState('dispatch-pattern-observed');renderDispatchSuggestions();
+  }
+  var dispatchObserveTimers={};
+  function scheduleDispatchObservation(key){
+    if(dispatchObserveTimers[key])clearTimeout(dispatchObserveTimers[key]);
+    dispatchObserveTimers[key]=setTimeout(function(){delete dispatchObserveTimers[key];observeDispatchFlight(key)},1800);
+  }
+  function wrapDispatchToggle(name){
+    var original=window[name];if(typeof original!=='function'||original.__wosaDispatchWrapped)return;
+    var wrapped=function(key){var result=original.apply(this,arguments);scheduleDispatchObservation(key);return result};
+    wrapped.__wosaDispatchWrapped=true;wrapped.__wosaDispatchOriginal=original;window[name]=wrapped;
+  }
   function taskTags(tasks){return (tasks||[]).map(function(k){return TASK_BY_KEY[k]?'<span class="wosa-tag">'+esc(TASK_BY_KEY[k].label)+'</span>':''}).join('')}
-  function matchLabel(a){var m=a.match||{},bits=[];if(m.flightContains||m.flightNumber||m.flightPrefix)bits.push('Vol '+esc(m.flightContains||m.flightNumber||m.flightPrefix));if(m.handlerContains)bits.push('Handler '+esc(m.handlerContains));if(m.registrationContains||m.registration)bits.push('Immat. '+esc(m.registrationContains||m.registration));return bits.join(' · ')}
+  function matchLabel(a){var m=a.match||{},bits=[];if(m.flightContains||m.flightNumber||m.flightPrefix)bits.push('Vol '+esc(m.flightContains||m.flightNumber||m.flightPrefix));if(m.handlerContains)bits.push('Handler '+esc(m.handlerContains));if(m.registrationContains||m.registration)bits.push('Immat. '+esc(m.registrationContains||m.registration));if(a.scope==='dispatch'&&m.type&&m.type!=='all')bits.push(m.type==='dep'?'Départs':'Arrivées');return bits.join(' · ')}
+  function actionCards(actions){if(!actions.length)return '<div class="wosa-empty">Aucune action enregistrée.</div>';return actions.map(function(a){var on=a.enabled!==false;return '<article class="wosa-action"><div class="wosa-action-top"><span class="wosa-action-name">'+esc(a.name||'Action sans nom')+'</span><span class="wosa-state '+(on?'':'off')+'">'+(on?'ACTIVE':'PAUSE')+'</span></div><div class="wosa-match">'+matchLabel(a)+'</div><div class="wosa-tags">'+taskTags(a.tasks)+'</div><div class="wosa-controls"><button type="button" class="wosa-mini" data-cmd="toggle" data-id="'+esc(a.id)+'">'+(on?'Désactiver':'Activer')+'</button><button type="button" class="wosa-mini" data-cmd="edit" data-id="'+esc(a.id)+'">Modifier</button><button type="button" class="wosa-mini delete" data-cmd="delete" data-id="'+esc(a.id)+'">Supprimer</button></div></article>'}).join('')}
+  function matchesForScope(a,scope){return (a.scope||'operations')===scope}
   function updateTriggerCount(){if(!trigger)return;trigger.setAttribute('data-count',String(state.actions.filter(function(a){return a.enabled!==false}).length));trigger.setAttribute('aria-label','Actions enregistrées ('+state.actions.length+')')}
   function positionMenu(){
     if(!trigger||!menu||!menu.classList.contains('is-open'))return;
@@ -13207,12 +13334,12 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
   function toggleMenu(){if(menu&&menu.classList.contains('is-open'))closeMenu();else openMenu()}
   function renderActions(){
     if(!menu)return;
-    var list=menu.querySelector('#wosa-menu-list');if(!list)return;
+    var ops=menu.querySelector('#wosa-operations-list'),dispatch=menu.querySelector('#wosa-dispatch-list');
     var actions=state.actions.slice().sort(function(a,b){return String(b.updatedAt||b.createdAt||'').localeCompare(String(a.updatedAt||a.createdAt||''))});
+    if(ops)ops.innerHTML=actionCards(actions.filter(function(a){return (a.scope||'operations')==='operations'}));
+    if(dispatch)dispatch.innerHTML=actionCards(actions.filter(function(a){return a.scope==='dispatch'}));
     var count=menu.querySelector('#wosa-menu-count');if(count)count.textContent=actions.length+' règle'+(actions.length>1?'s':'');
-    if(!actions.length)list.innerHTML='<div class="wosa-empty">Aucune action enregistrée. Crée ta première règle pour précocher automatiquement les tâches des vols correspondants.</div>';
-    else list.innerHTML=actions.map(function(a){var on=a.enabled!==false;return '<article class="wosa-action"><div class="wosa-action-top"><span class="wosa-action-name">'+esc(a.name||'Action sans nom')+'</span><span class="wosa-state '+(on?'':'off')+'">'+(on?'ACTIVE':'PAUSE')+'</span></div><div class="wosa-match">'+matchLabel(a)+'</div><div class="wosa-tags">'+taskTags(a.tasks)+'</div><div class="wosa-controls"><button type="button" class="wosa-mini" data-cmd="toggle" data-id="'+esc(a.id)+'">'+(on?'Désactiver':'Activer')+'</button><button type="button" class="wosa-mini" data-cmd="edit" data-id="'+esc(a.id)+'">Modifier</button><button type="button" class="wosa-mini delete" data-cmd="delete" data-id="'+esc(a.id)+'">Supprimer</button></div></article>'}).join('');
-    renderSuggestions();updateTriggerCount();
+    renderSuggestions();renderDispatchSuggestions();updateTriggerCount();
   }
   function candidateSuggestions(){return Object.keys(state.observations).map(function(key){return Object.assign({key:key},state.observations[key])}).filter(function(o){return o&&Array.isArray(o.samples)&&o.samples.length>=3&&!state.dismissed[o.key]&&!actionAlreadyExists(o.prefix,o.handler||'', '',o.tasks||[])}).sort(function(a,b){return (b.updatedAt||'').localeCompare(a.updatedAt||'')}).slice(0,2)}
   function renderSuggestions(){
@@ -13220,55 +13347,60 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
     if(!candidates.length){box.innerHTML='';box.hidden=true;return}box.hidden=false;
     box.innerHTML=candidates.map(function(o){return '<div class="wosa-suggestion"><div class="wosa-suggestion-title">✦ Habitude détectée : '+esc(o.prefix)+' · '+o.samples.length+' vols</div><div class="wosa-suggestion-copy">Combinaison répétée : '+taskTags(o.tasks)+'. En faire une règle automatique ?</div><div class="wosa-controls"><button type="button" class="wosa-save" data-cmd="accept-suggestion" data-key="'+esc(o.key)+'">Enregistrer</button><button type="button" class="wosa-mini" data-cmd="dismiss-suggestion" data-key="'+esc(o.key)+'">Pas maintenant</button></div></div>'}).join('');
   }
-  function formMarkup(action){
-    var a=action||{},m=a.match||{},chosen=new Set(a.tasks||[]);
+  function formMarkup(action,scope){
+    var a=action||{},m=a.match||{},chosen=new Set(a.tasks||[]),kind=scope||a.scope||'operations',catalog=kind==='dispatch'?DISPATCH_TASKS:TASKS;
     var flightValue=m.flightContains||m.flightNumber||m.flightPrefix||'';
-    return '<div class="wosa-editor" id="wosa-editor"><h3>'+(a.id?'Modifier une action':'Nouvelle action enregistrée')+'</h3><div class="wosa-field" style="margin-bottom:8px"><span>Nom de l’action</span><input data-field="name" maxlength="60" placeholder="Ex. LHA — Nettoyage standard" value="'+esc(a.name||'')+'"></div><div class="wosa-fields">'+
+    return '<div class="wosa-editor" id="wosa-editor"><h3>'+(a.id?'Modifier une action':'Nouvelle action · '+(kind==='dispatch'?'Dispatch':'Opérations'))+'</h3><div class="wosa-field" style="margin-bottom:8px"><span>Nom de l’action</span><input data-field="name" maxlength="60" placeholder="Ex. LHA — Headset départ" value="'+esc(a.name||'')+'"></div><div class="wosa-fields">'+
       '<label class="wosa-field"><span>Numéro / préfixe du vol</span><input data-field="flight" maxlength="20" placeholder="Ex. LHA ou LHA123" value="'+esc(flightValue)+'"></label>'+
       '<label class="wosa-field"><span>Handler</span><input data-field="handler" maxlength="40" placeholder="Ex. SWISSPORT" value="'+esc(m.handlerContains||'')+'"></label>'+
-      '<label class="wosa-field" style="grid-column:1/-1"><span>Immatriculation</span><input data-field="registration" maxlength="20" placeholder="Ex. OO-ABC" value="'+esc(m.registrationContains||m.registration||'')+'"></label></div>'+
-      '<div class="wosa-task-title">Tâches à précocher</div><div class="wosa-task-grid">'+TASKS.map(function(t){return '<label class="wosa-task"><input type="checkbox" data-task="'+t.key+'" '+(chosen.has(t.key)?'checked':'')+'><span>'+esc(t.label)+'</span></label>'}).join('')+'</div>'+
-      '<div class="wosa-editor-foot"><span class="wosa-note">Renseigne au moins un critère.</span><button type="button" class="wosa-cancel" data-cmd="cancel-editor">Annuler</button><button type="button" class="wosa-save" data-cmd="save-action" data-id="'+esc(a.id||'')+'">Enregistrer</button></div></div>';
+      '<label class="wosa-field" style="grid-column:1/-1"><span>Immatriculation</span><input data-field="registration" maxlength="20" placeholder="Ex. OO-ABC" value="'+esc(m.registrationContains||m.registration||'')+'"></label>'+
+      (kind==='dispatch'?'<label class="wosa-field" style="grid-column:1/-1"><span>Mouvement</span><select data-field="direction"><option value="all" '+((!m.type||m.type==='all')?'selected':'')+'>Arrivées et départs</option><option value="arr" '+(m.type==='arr'?'selected':'')+'>Arrivées uniquement</option><option value="dep" '+(m.type==='dep'?'selected':'')+'>Départs uniquement</option></select></label>':'')+'</div>'+
+      '<div class="wosa-task-title">'+(kind==='dispatch'?'Services à activer':'Tâches à précocher')+'</div><div class="wosa-task-grid">'+catalog.map(function(t){return '<label class="wosa-task"><input type="checkbox" data-task="'+t.key+'" '+(chosen.has(t.key)?'checked':'')+'><span>'+esc(t.label)+'</span></label>'}).join('')+'</div>'+
+      '<div class="wosa-editor-foot"><span class="wosa-note">Renseigne au moins un critère.</span><button type="button" class="wosa-cancel" data-cmd="cancel-editor">Annuler</button><button type="button" class="wosa-save" data-cmd="save-action" data-scope="'+kind+'" data-id="'+esc(a.id||'')+'">Enregistrer</button></div></div>';
   }
-  function openEditor(action){
-    editingId=action&&action.id?action.id:null;var mount=menu&&menu.querySelector('#wosa-editor-mount');if(!mount)return;
-    mount.innerHTML=formMarkup(action);mount.hidden=false;editorOpen=true;positionMenu();
+  function openEditor(action,scope){
+    editingId=action&&action.id?action.id:null;editingScope=scope||(action&&action.scope)||'operations';var mount=menu&&menu.querySelector('#wosa-editor-mount');if(!mount)return;
+    mount.innerHTML=formMarkup(action,editingScope);mount.hidden=false;editorOpen=true;positionMenu();
     var first=mount.querySelector('[data-field="flight"]');if(first)first.focus({preventScroll:true});
   }
   function closeEditor(){editorOpen=false;editingId=null;var mount=menu&&menu.querySelector('#wosa-editor-mount');if(mount){mount.innerHTML='';mount.hidden=true}}
-  function commitAction(data){
-    var flight=norm(data.flight),handler=norm(data.handler),registration=norm(data.registration),tasks=(data.tasks||[]).filter(function(k){return !!TASK_BY_KEY[k]}).sort();
+  function commitAction(data,scope){
+    var kind=scope||data.scope||editingScope||'operations',catalog=kind==='dispatch'?DISPATCH_TASKS:TASKS;
+    var flight=norm(data.flight),handler=norm(data.handler),registration=norm(data.registration),tasks=(data.tasks||[]).filter(function(k){return catalog.some(function(t){return t.key===k})}).sort();
     if(!flight&&!handler&&!registration){alert('Renseigne au moins un critère : numéro de vol, handler ou immatriculation.');return false}
     if(!tasks.length){alert('Sélectionne au moins une tâche à précocher.');return false}
     var id=data.id||actionId(),existing=state.actions.find(function(a){return a.id===id}),now=new Date().toISOString();
-    var record={id:id,name:String(data.name||'').trim()||((flight||handler||registration)+' — '+tasks.map(function(k){return TASK_BY_KEY[k].label}).join(' + ')),match:{flightContains:flight,flightPrefix:'',handlerContains:handler,registrationContains:registration},tasks:tasks,enabled:true,createdAt:existing?existing.createdAt:now,updatedAt:now};
+    var record={id:id,scope:kind,name:String(data.name||'').trim()||((flight||handler||registration)+' — '+tasks.map(function(k){return TASK_BY_KEY[k].label}).join(' + ')),match:{flightContains:flight,flightPrefix:'',handlerContains:handler,registrationContains:registration,type:kind==='dispatch'?(data.direction||'all'):'all'},tasks:tasks,enabled:true,createdAt:existing?existing.createdAt:now,updatedAt:now};
     var index=state.actions.findIndex(function(a){return a.id===id});if(index>=0)state.actions[index]=record;else state.actions.push(record);
     saveState('action-saved');closeEditor();renderActions();
-    // A newly created or explicitly edited action applies once to current matches.
-    applyActionsToFlights(id);saveState('action-applied');
+    if(kind==='dispatch'){applyDispatchActions(id);if(typeof renderCrewBusFlights==='function')renderCrewBusFlights();}
+    else{applyActionsToFlights(id);if(typeof renderFlights==='function')renderFlights();}
+    saveState('action-applied');
     try{if(typeof window.woLggPersistShiftSelectionMemory==='function')window.woLggPersistShiftSelectionMemory('saved-action-created')}catch(e){}
-    if(typeof renderFlights==='function')renderFlights();
-    setTimeout(function(){applyActionsToFlights()},0);return true;
+    setTimeout(function(){applyActionsToFlights();applyDispatchActions()},0);return true;
   }
   function saveFromEditor(btn){
     var mount=menu&&menu.querySelector('#wosa-editor-mount');if(!mount)return;
     var value=function(name){var el=mount.querySelector('[data-field="'+name+'"]');return el?el.value:''};
     var tasks=Array.from(mount.querySelectorAll('[data-task]:checked')).map(function(x){return x.getAttribute('data-task')});
-    commitAction({id:btn.getAttribute('data-id')||editingId||null,name:value('name'),flight:value('flight'),handler:value('handler'),registration:value('registration'),tasks:tasks});
+    var scope=btn.getAttribute('data-scope')||editingScope||'operations';
+    commitAction({id:btn.getAttribute('data-id')||editingId||null,scope:scope,name:value('name'),flight:value('flight'),handler:value('handler'),registration:value('registration'),direction:value('direction')||'all',tasks:tasks},scope);
     positionMenu();
   }
   function handleMenuClick(event){
     var btn=event.target.closest('button[data-cmd]');if(!btn||!menu.contains(btn))return;
     event.preventDefault();event.stopPropagation();
     var cmd=btn.getAttribute('data-cmd'),id=btn.getAttribute('data-id'),key=btn.getAttribute('data-key');
-    if(cmd==='new'){openEditor(null);return}
+    if(cmd==='new'){openEditor(null,btn.getAttribute('data-scope')||'operations');return}
     if(cmd==='cancel-editor'){closeEditor();positionMenu();return}
     if(cmd==='save-action'){saveFromEditor(btn);return}
-    if(cmd==='toggle'){var a=state.actions.find(function(x){return x.id===id});if(!a)return;a.enabled=a.enabled===false; a.updatedAt=new Date().toISOString();saveState('action-toggle');renderActions();if(a.enabled){applyActionsToFlights();if(typeof renderFlights==='function')renderFlights()}return}
-    if(cmd==='edit'){var a2=state.actions.find(function(x){return x.id===id});if(a2)openEditor(a2);return}
+    if(cmd==='toggle'){var a=state.actions.find(function(x){return x.id===id});if(!a)return;a.enabled=a.enabled===false; a.updatedAt=new Date().toISOString();saveState('action-toggle');renderActions();if(a.enabled){if(a.scope==='dispatch'){applyDispatchActions();if(typeof renderCrewBusFlights==='function')renderCrewBusFlights()}else{applyActionsToFlights();if(typeof renderFlights==='function')renderFlights()}}return}
+    if(cmd==='edit'){var a2=state.actions.find(function(x){return x.id===id});if(a2)openEditor(a2,a2.scope||'operations');return}
     if(cmd==='delete'){var a3=state.actions.find(function(x){return x.id===id});if(!a3)return;if(!confirm('Supprimer l’action « '+a3.name+' » ? Les cases déjà cochées ne seront pas décochées.'))return;state.actions=state.actions.filter(function(x){return x.id!==id});saveState('action-delete');renderActions();return}
     if(cmd==='dismiss-suggestion'&&key){state.dismissed[key]=true;saveState('suggestion-dismissed');renderActions();return}
-    if(cmd==='accept-suggestion'&&key){var o=state.observations[key];if(!o)return;commitAction({name:o.prefix+' — '+o.tasks.map(function(k){return TASK_BY_KEY[k]?TASK_BY_KEY[k].label:k}).join(' + '),flight:o.prefix,handler:o.handler||'',registration:'',tasks:o.tasks});state.dismissed[key]=true;saveState('suggestion-accepted');renderActions();return}
+    if(cmd==='accept-suggestion'&&key){var o=state.observations[key];if(!o)return;commitAction({name:o.prefix+' — '+o.tasks.map(function(k){return TASK_BY_KEY[k]?TASK_BY_KEY[k].label:k}).join(' + '),flight:o.prefix,handler:o.handler||'',registration:'',tasks:o.tasks},'operations');state.dismissed[key]=true;saveState('suggestion-accepted');renderActions();return}
+    if(cmd==='dismiss-dispatch-suggestion'&&key){state.dismissed['dispatch:'+key]=true;saveState('dispatch-suggestion-dismissed');renderActions();return}
+    if(cmd==='accept-dispatch-suggestion'&&key){var od=state.dispatchObservations[key];if(!od)return;commitAction({name:od.prefix+' — '+(od.type==='dep'?'Départ':'Arrivée')+' — '+od.tasks.map(function(k){return TASK_BY_KEY[k]?TASK_BY_KEY[k].label:k}).join(' + '),flight:od.prefix,handler:od.handler||'',registration:'',direction:od.type,tasks:od.tasks},'dispatch');state.dismissed['dispatch:'+key]=true;saveState('dispatch-suggestion-accepted');renderActions();return}
   }
   function ensureMenu(){
     var header=document.querySelector('#app-header .header-inner');if(!header)return false;
@@ -13277,7 +13409,7 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
     if(!trigger){if(!fleet)return false;trigger=document.createElement('button');trigger.type='button';trigger.id='wo-lgg-saved-actions-trigger';trigger.setAttribute('aria-label','Actions enregistrées');trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-controls','wo-lgg-saved-actions-menu');trigger.title='Actions enregistrées';trigger.innerHTML='<span class="wosa-star">✦</span>';(leftGroup||fleet.parentNode).appendChild(trigger);trigger.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();toggleMenu()})}
     if(trigger&&leftGroup&&trigger.parentNode!==leftGroup)leftGroup.appendChild(trigger);
     menu=document.getElementById('wo-lgg-saved-actions-menu');
-    if(!menu){menu=document.createElement('aside');menu.id='wo-lgg-saved-actions-menu';menu.setAttribute('aria-label','Actions enregistrées');menu.innerHTML='<div class="wosa-menu-head"><div class="wosa-menu-mark">✦</div><div><div class="wosa-menu-title">Actions enregistrées</div><div class="wosa-menu-sub">Pré-cochage automatique selon les critères du vol.</div></div><span class="wosa-menu-count" id="wosa-menu-count">0 règle</span><button type="button" class="wosa-menu-close" data-cmd="close-menu" aria-label="Fermer">×</button></div><div class="wosa-menu-actions" id="wosa-menu-list"></div><div id="wosa-menu-suggestions" hidden></div><div class="wosa-add-row"><button type="button" class="wosa-create" data-cmd="new">＋ Ajouter une action</button></div><div id="wosa-editor-mount" hidden></div>';document.body.appendChild(menu);menu.addEventListener('click',function(e){if(e.target.closest('[data-cmd="close-menu"]')){e.preventDefault();e.stopPropagation();closeMenu();return}handleMenuClick(e)});menu.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.matches('input:not([type="checkbox"])')){e.preventDefault();e.stopPropagation();var save=menu.querySelector('[data-cmd="save-action"]');if(save)save.click()}})}
+    if(!menu){menu=document.createElement('aside');menu.id='wo-lgg-saved-actions-menu';menu.setAttribute('aria-label','Actions enregistrées');menu.innerHTML='<div class="wosa-menu-head"><div class="wosa-menu-mark">✦</div><div><div class="wosa-menu-title">Actions enregistrées</div><div class="wosa-menu-sub">Règles automatiques pour les Opérations et le Dispatch.</div></div><span class="wosa-menu-count" id="wosa-menu-count">0 règle</span><button type="button" class="wosa-menu-close" data-cmd="close-menu" aria-label="Fermer">×</button></div><section class="wosa-scope-section"><div class="wosa-scope-heading">Actions enregistrées : Opérations</div><div class="wosa-menu-actions" id="wosa-operations-list"></div><div class="wosa-add-row"><button type="button" class="wosa-create" data-cmd="new" data-scope="operations">＋ Ajouter une action Opérations</button></div></section><div id="wosa-menu-suggestions" hidden></div><section class="wosa-scope-section wosa-dispatch-section"><div class="wosa-scope-heading">Actions enregistrées : Dispatch</div><div class="wosa-menu-actions" id="wosa-dispatch-list"></div><div class="wosa-add-row"><button type="button" class="wosa-create wosa-create-dispatch" data-cmd="new" data-scope="dispatch">＋ Ajouter une action Dispatch</button></div></section><div id="wosa-editor-mount" hidden></div>';document.body.appendChild(menu);menu.addEventListener('click',function(e){if(e.target.closest('[data-cmd="close-menu"]')){e.preventDefault();e.stopPropagation();closeMenu();return}handleMenuClick(e)});menu.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.matches('input:not([type="checkbox"])')){e.preventDefault();e.stopPropagation();var save=menu.querySelector('[data-cmd="save-action"]');if(save)save.click()}})}
     updateTriggerCount();return true;
   }
   function outsideClick(event){if(!menu||!menu.classList.contains('is-open'))return;if(menu.contains(event.target)||trigger.contains(event.target))return;closeMenu()}
@@ -13292,14 +13424,14 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
   }
   function scheduleObservation(index){var f=typeof flights!=='undefined'&&flights[index];if(!f)return;var key=norm(f.flight)+'|'+norm(f.reg);if(pendingTimers[key])clearTimeout(pendingTimers[key]);pendingTimers[key]=setTimeout(function(){delete pendingTimers[key];if(typeof flights!=='undefined'&&Array.isArray(flights)){var i=flights.findIndex(function(x){return norm(x.flight)+'|'+norm(x.reg)===key});if(i>=0)observeFlight(i)}},2600)}
   function installObservationListener(){document.addEventListener('change',function(event){var el=event.target;if(!el||el.tagName!=='INPUT'||el.type!=='checkbox'||!event.isTrusted)return;var m=String(el.id||'').match(/^(?:swi-(?:ft|cl|lav|wat|hds)|wfs-handling|sva-handling|asl737-handling|lha-catering)-(\d+)$/);if(m)scheduleObservation(Number(m[1]))},false)}
-  function wrapRenderer(name){var original=window[name];if(typeof original!=='function'||original.__wosaWrapped)return;var wrapped=function(){var result=original.apply(this,arguments);setTimeout(function(){try{applyActionsToFlights();renderSuggestions()}catch(e){console.warn('WO-LGG actions apply:',e)}},0);return result};wrapped.__wosaWrapped=true;wrapped.__wosaOriginal=original;window[name]=wrapped}
+  function wrapRenderer(name){var original=window[name];if(typeof original!=='function'||original.__wosaWrapped)return;var wrapped=function(){var result=original.apply(this,arguments);setTimeout(function(){try{applyActionsToFlights();applyDispatchActions();renderSuggestions()}catch(e){console.warn('WO-LGG actions apply:',e)}},0);return result};wrapped.__wosaWrapped=true;wrapped.__wosaOriginal=original;window[name]=wrapped}
   function wrapCloudState(){
     if(typeof window.woLggBuildSessionState==='function'&&!window.woLggBuildSessionState.__wosaCloudWrapped){var originalBuild=window.woLggBuildSessionState;var wrappedBuild=function(){var s=originalBuild.apply(this,arguments);if(s)s.savedActionsLibrary=state;return s};wrappedBuild.__wosaCloudWrapped=true;window.woLggBuildSessionState=wrappedBuild}
-    if(typeof window.woLggApplyCloudState==='function'&&!window.woLggApplyCloudState.__wosaCloudWrapped){var originalApply=window.woLggApplyCloudState;var wrappedApply=function(row,options){var result=originalApply.apply(this,arguments);try{var cloud=row&&row.state&&row.state.savedActionsLibrary;if(result&&cloud&&typeof cloud==='object'){state={version:2,actions:Array.isArray(cloud.actions)?cloud.actions:[],observations:cloud.observations||{},dismissed:cloud.dismissed||{},seededDefaults:Array.isArray(cloud.seededDefaults)?cloud.seededDefaults:[]};ensureDefaultActions();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));renderActions();setTimeout(function(){applyActionsToFlights();if(typeof window.woLggPersistShiftSelectionMemory==='function')window.woLggPersistShiftSelectionMemory('cloud-actions-restored')},0)}}catch(e){console.warn('WO-LGG saved actions cloud restore:',e)}return result};wrappedApply.__wosaCloudWrapped=true;window.woLggApplyCloudState=wrappedApply}
+    if(typeof window.woLggApplyCloudState==='function'&&!window.woLggApplyCloudState.__wosaCloudWrapped){var originalApply=window.woLggApplyCloudState;var wrappedApply=function(row,options){var result=originalApply.apply(this,arguments);try{var cloud=row&&row.state&&row.state.savedActionsLibrary;if(result&&cloud&&typeof cloud==='object'){state={version:3,actions:Array.isArray(cloud.actions)?cloud.actions.map(function(a){if(a&&!a.scope)a.scope='operations';return a}):[],observations:cloud.observations||{},dismissed:cloud.dismissed||{},dispatchObservations:cloud.dispatchObservations||{},seededDefaults:Array.isArray(cloud.seededDefaults)?cloud.seededDefaults:[]};ensureDefaultActions();localStorage.setItem(STORAGE_KEY,JSON.stringify(state));renderActions();setTimeout(function(){applyActionsToFlights();if(typeof window.woLggPersistShiftSelectionMemory==='function')window.woLggPersistShiftSelectionMemory('cloud-actions-restored')},0)}}catch(e){console.warn('WO-LGG saved actions cloud restore:',e)}return result};wrappedApply.__wosaCloudWrapped=true;window.woLggApplyCloudState=wrappedApply}
   }
-  function installStorageSync(){window.addEventListener('storage',function(event){if(event.key!==STORAGE_KEY||!event.newValue)return;try{var x=JSON.parse(event.newValue);state={version:2,actions:Array.isArray(x.actions)?x.actions:[],observations:x.observations||{},dismissed:x.dismissed||{},seededDefaults:Array.isArray(x.seededDefaults)?x.seededDefaults:[]};ensureDefaultActions();renderActions();setTimeout(function(){applyActionsToFlights()},0)}catch(e){}})}
+  function installStorageSync(){window.addEventListener('storage',function(event){if(event.key!==STORAGE_KEY||!event.newValue)return;try{var x=JSON.parse(event.newValue);state={version:3,actions:Array.isArray(x.actions)?x.actions.map(function(a){if(a&&!a.scope)a.scope='operations';return a}):[],observations:x.observations||{},dismissed:x.dismissed||{},dispatchObservations:x.dispatchObservations||{},seededDefaults:Array.isArray(x.seededDefaults)?x.seededDefaults:[]};ensureDefaultActions();renderActions();setTimeout(function(){applyActionsToFlights()},0)}catch(e){}})}
   function boot(){
-    ensureDefaultActions();ensureMenu();renderActions();wrapRenderer('renderFlights');wrapRenderer('renderASL737');wrapCloudState();installObservationListener();installStorageSync();
+    ensureDefaultActions();ensureMenu();renderActions();wrapRenderer('renderFlights');wrapRenderer('renderASL737');wrapRenderer('renderCrewBusFlights');wrapDispatchToggle('toggleCrewBusHeadset');wrapDispatchToggle('toggleCrewBusHandling');wrapCloudState();installObservationListener();installStorageSync();
     document.addEventListener('pointerdown',outsideClick,true);window.addEventListener('resize',positionOnViewport,{passive:true});window.addEventListener('scroll',positionOnViewport,{passive:true,capture:true});document.addEventListener('keydown',function(e){if(e.key==='Escape')closeMenu()});
     var tries=0,retry=setInterval(function(){tries++;ensureMenu();wrapCloudState();if(tries>=10)clearInterval(retry)},500);
     setTimeout(function(){applyActionsToFlights();renderActions()},500);
@@ -13308,6 +13440,25 @@ body:not(.crewbus-combined) #step-3 #combined-action-bar{
 })();
 </script>
 
+
+<style id="wo-lgg-step1-deicing-button">
+.wo-step1-footer-deicing{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;flex-wrap:wrap!important}
+.wo-step1-deicing-slot{display:flex;align-items:center;justify-content:flex-start;min-width:0}
+.wo-step1-deicing-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:0 17px;border:1px solid rgba(75,190,235,.34);border-radius:10px;background:linear-gradient(135deg,rgba(15,145,200,.16),rgba(10,70,120,.12));color:#bfeaff;font:800 10px/1.2 var(--sans,system-ui);letter-spacing:.45px;cursor:pointer;transition:transform .16s ease,border-color .16s ease,background .16s ease}
+.wo-step1-deicing-btn>span{font-size:16px;color:#62caff}
+.wo-step1-deicing-btn:hover{transform:translateY(-1px);border-color:rgba(75,190,235,.65);background:linear-gradient(135deg,rgba(15,145,200,.24),rgba(10,70,120,.18))}
+@media(max-width:600px){.wo-step1-footer-deicing{align-items:stretch!important}.wo-step1-deicing-slot,.wo-step1-deicing-btn{width:100%}.wo-step1-footer-deicing .wo-step-actions{width:100%}.wo-step1-footer-deicing .wo-primary-action{width:100%}}
+</style>
+
+<style id="wo-lgg-saved-actions-dispatch-v3">
+#wo-lgg-saved-actions-menu .wosa-scope-section{padding:10px 12px 4px;border-top:1px solid rgba(255,255,255,.075)}
+#wo-lgg-saved-actions-menu .wosa-scope-heading{margin:0 0 7px;color:#aebbc3;font:800 9px/1.3 var(--mono,monospace);letter-spacing:1.1px;text-transform:uppercase}
+#wo-lgg-saved-actions-menu .wosa-scope-section .wosa-add-row{padding:6px 0 8px}
+#wo-lgg-saved-actions-menu .wosa-dispatch-section .wosa-scope-heading{color:#a9c4df}
+#wo-lgg-saved-actions-menu .wosa-create-dispatch{border-color:rgba(88,170,220,.28);background:rgba(50,130,185,.10)}
+#wo-lgg-saved-actions-menu .wosa-editor [data-field="direction"]{width:100%;min-height:37px;padding:8px 10px;border:1px solid var(--b2,rgba(255,255,255,.12));border-radius:8px;background:var(--bg2,#18202a);color:var(--t1,#edf2f5);font:600 11px var(--sans,system-ui)}
+#wo-lgg-saved-actions-menu .wosa-dispatch-section .wosa-action{border-color:rgba(92,154,197,.17)}
+</style>
 </body>
 </html>
 
